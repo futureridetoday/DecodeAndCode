@@ -8,6 +8,7 @@ tags: [dev-units, decode-and-code, principios, guardrails, guidelines, plugin, h
 
 # alvo
 plan_id: ""
+plan_size: grande
 core: model
 module: decode-and-code
 block: ""
@@ -16,7 +17,7 @@ block: ""
 author: Bortoli
 created: 2026-08-21
 status: draft
-version: 2.0.0
+version: 2.2.0
 updated: 2026-08-22
 
 # system
@@ -97,72 +98,78 @@ preservado inteiro.
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 01 | `decouple-and-fixtures` | Os scripts deixam de assumir `docs/plan/`, os cores do AmFlow e a norma em caminho fixo — tudo vira configuração. As **36 linhas da norma** que citam cores, caminhos e serviços do AmFlow saem junto. E os **34 testes que usam arquivos reais do AmFlow como fixture** ganham fixtures próprios. Oráculo direto: `unittest discover` verde |
+| 01 | `config-and-paths` | Os 6 scripts acoplados deixam de assumir `docs/plan/`, os cores do AmFlow e a norma em caminho fixo: tudo resolve por `config.json` com defaults embutidos (`D-11`). As **36 linhas da norma** que citam cores e caminhos do AmFlow saem no mesmo movimento, porque são **sobre a mesma coisa** |
+| 02 | `test-fixtures` | Os **26 testes que usam arquivos reais do AmFlow como fixture** ganham fixtures próprios. Oráculo direto: `unittest discover` verde |
 
-**Vem primeiro por medição, não por gosto.** A suíte migrada roda 145 testes e 34 falham — todos por
-apontarem para arquivos como `docs/plan/hub/0001-mcp/01-handler-auth.md`, que não existem aqui.
+**Vem primeiro por medição, não por gosto.** A suíte migrada roda 145 testes: **118 passam, 26 falham**
+e 1 é pulado — as 26 por apontarem para arquivos como `docs/plan/hub/0001-mcp/01-handler-auth.md`,
+que não existem aqui.
 Enquanto ela estiver vermelha, **nenhuma unidade posterior consegue passar pelo gate de saída**, que
 exige teste passando. É pré-requisito de tudo.
+
+**São duas unidades porque são dois oráculos.** A `01` afirma que caminho resolve por configuração; a
+`02` afirma que a suíte fica verde. Juntá-las daria uma unidade com três frentes e um oráculo só —
+acima do teto de 8 passos, e logo na unidade que destrava todas as outras.
 
 ### Fase 2 — A norma ganha princípios, a primeira imposição e como se verificar
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 02 | `principles-rule` | Os princípios e o fluxo de decodificação (`Clarificar → Evitar → Reduzir`, Gate A/B) viram regra sempre carregada em `.claude/rules/` |
-| 03 | `ddl-guardrail-hook` | O **mecanismo** de guardrail: hook `PreToolUse` que casa a ferramenta por regex e **inspeciona o conteúdo**. A instância de prova é a proibição de DDL remoto **instalada no AmFlow**, onde o incidente existe — `SELECT` diagnóstico passa, DDL é recusado com exit 2 |
-| 04 | `activation-notice` | Ativação de norma deixa de ser silenciosa: hook `InstructionsLoaded` anuncia **qual** arquivo entrou em contexto, **quando** e **por quê** (`load_reason`), somado a `SubagentStart` para agente e à expansão de skill. É o instrumento que prova a `02` |
+| 03 | `principles-rule` | Os **três princípios** fechados na `D-03` — *código é custo*, *subtração antes de adição*, *evidência acima de opinião* — e o fluxo de decodificação (`Clarificar → Evitar → Reduzir`, Gate A/B) viram regra sempre carregada em `.claude/rules/`, sem `paths:` |
+| 04 | `ddl-guardrail-hook` | O **mecanismo** de guardrail: hook `PreToolUse` que casa a ferramenta por regex e **inspeciona o conteúdo**. O incidente do `notifications_hub_id_fkey` **escolhe** a regra; o teste a **prova** com o statement real como fixture — aquele DDL é recusado, aquele `SELECT` diagnóstico passa. Instalar no AmFlow é consequência reportada, nunca gated |
+| 05 | `activation-notice` | Ativação de norma deixa de ser silenciosa: hook `InstructionsLoaded` anuncia **qual** arquivo entrou em contexto, **quando** e **por quê** (`load_reason`), somado a `SubagentStart` para agente e à expansão de skill. É o instrumento que prova a `03` |
 
 ### Fase 3 — Guideline vira artefato
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 05 | `guideline-manifest` | O que é uma guideline: manifesto, escopo declarado por `paths:`, e a fronteira escrita contra skill. A instância de prova é a extração da parte normativa da skill `hub-front` **do AmFlow** — não um arquivo novo |
-| 06 | `guideline-registry` | Registry por projeto e a operação que liga e desliga uma guideline sem editar arquivo à mão |
+| 06 | `guideline-manifest` | O que é uma guideline: manifesto, escopo declarado por `paths:`, e a fronteira escrita contra skill. A instância de prova usa o conteúdo normativo da `AmFlow:hub-front` como **material** — o artefato vive aqui, e a instalação lá é consequência |
+| 07 | `guideline-registry` | Registry por projeto e a operação que liga e desliga uma guideline sem editar arquivo à mão |
 
 ### Fase 4 — O plano ganha porte, e o processo deixa de cobrar o mesmo de todos
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 07 | `plan-size-field` | `plan_size: pequeno \| médio \| grande` no frontmatter, **declarado pelo humano**. O gate recusa o campo **vazio**, nunca um valor — recusar ausência é procedimental, recusar valor seria julgamento, e a norma proíbe teto de unidades por escrito |
-| 08 | `plan-formats` | O que cada porte dispensa, na norma e no template. Pequeno sem `## Independência` e sem decomposição; médio com lista de tarefas; grande como hoje. Pequeno e médio **não ganham diretório** — pasta para um arquivo é custo puro |
-| 09 | `derive-by-size` | O `derive` ramifica: **não roda** no pequeno, projeta **tarefas** na região de backlog no médio, cria estrutura e arquivo por unidade no grande |
-| 10 | `size-instrumentation` | No fechamento, o script registra o porte **declarado** ao lado do resultado **real** — arquivos tocados, linhas alteradas, número de tarefas ou unidades. É o que transforma a métrica em medição em vez de palpite que envelhece |
+| 08 | `plan-size-field` | `plan_size: pequeno \| médio \| grande` no frontmatter, **declarado pelo humano**. O gate recusa o campo **vazio**, nunca um valor — recusar ausência é procedimental, recusar valor seria julgamento, e a norma proíbe teto de unidades por escrito |
+| 09 | `plan-formats` | O que cada porte dispensa, na norma e no template. Pequeno sem `## Independência` e sem decomposição; médio com lista de tarefas; grande como hoje. Pequeno e médio **não ganham diretório** — pasta para um arquivo é custo puro |
+| 10 | `derive-by-size` | O `derive` ramifica: **não roda** no pequeno, projeta **tarefas** na região de backlog no médio, cria estrutura e arquivo por unidade no grande |
+| 11 | `size-instrumentation` | No fechamento, o script registra o porte **declarado** ao lado do resultado **real** — arquivos tocados, linhas alteradas, número de tarefas ou unidades. É o que transforma a métrica em medição em vez de palpite que envelhece |
 
 ### Fase 5 — O modelo vira plugin
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 11 | `plugin-package` | Empacotamento como plugin Claude Code, e a operação que **materializa** as guidelines escolhidas em `.claude/rules/` do projeto que instala |
-| 12 | `reconcile-consumers` | O mecanismo de verificação de versão entre o plugin e as cópias instaladas, e o **diff** contra o `dev-units` congelado do AmFlow — preparado e reportado, **não publicado**. Publicar em repositório público é ato humano |
+| 12 | `plugin-package` | Empacotamento como plugin Claude Code, e a operação que **materializa** as guidelines escolhidas em `.claude/rules/` do projeto que instala |
+| 13 | `reconcile-consumers` | O mecanismo de verificação de versão entre o plugin e as cópias instaladas, e o **diff** contra o `dev-units` congelado do AmFlow — preparado e reportado, **não publicado**. Publicar em repositório público é ato humano |
 
 ### Fase 6 — O método ganha operadores
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 13 | `reopen-agent-decision` | A norma registra que o gate dela mesma abriu, e as duas pendências que dependiam de agent fecham — a **decisão 18** (modelo por modo, hoje política operacional manual) e a **pendência 2**. Vem primeiro da fase: escrever unidade de agente enquanto a norma diz *"fora de escopo"* é contradição |
-| 14 | `planner-agent` | Agente de planejamento — `model: opus`, `skills: [decode-and-code]`, escrita restrita a `docs/plan/**`. Cobre revisar e derivar como subagente, e planejar do zero como **fork** |
-| 15 | `developer-agent` | Agente de execução — `model: sonnet`, `skills: [decode-and-code]`, escrita em código e teste, **sem `memory:`**. Cobre codar e testar |
+| 14 | `reopen-agent-decision` | A norma registra que o gate dela mesma abriu, e as duas pendências que dependiam de agent fecham — a **decisão 18** (modelo por modo, hoje política operacional manual) e a **pendência 2**. Vem primeiro da fase: escrever unidade de agente enquanto a norma diz *"fora de escopo"* é contradição |
+| 15 | `planner-agent` | Agente de planejamento — `model: opus`, `skills: [decode-and-code]`, escrita restrita a `docs/plan/**`. Cobre revisar e derivar como subagente, e planejar do zero como **fork** |
+| 16 | `developer-agent` | Agente de execução — `model: sonnet`, `skills: [decode-and-code]`, escrita em código e teste, **sem `memory:`**. Cobre codar e testar |
 
 ### Fase 7 — O time ganha um canal
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 16 | `huddle-log` | O `huddle.md`: formato de entrada com vocabulário fechado de **cinco** tipos, regra de despejo, os cinco gatilhos de escrita e a regra de momento — *no fecho do trabalho, e só o que continuou aberto*. Alcança o contrato de relatório dos três modos, não só o do `implement`. **Formaliza o que sobreviver ao uso do protótipo** escrito em 2026-08-22, em vez de desenhar às cegas |
+| 17 | `huddle-log` | O `huddle.md`: formato de entrada com vocabulário fechado de **cinco** tipos, regra de despejo, os cinco gatilhos de escrita e a regra de momento — *no fecho do trabalho, e só o que continuou aberto*. Alcança o contrato de relatório dos três modos, não só o do `implement`. **Formaliza o que sobreviver ao uso do protótipo** escrito em 2026-08-22, em vez de desenhar às cegas |
 
 **Fase própria, com uma unidade só, e por escolha.** O huddle não é camada de norma nem operador —
 dobrá-lo na Fase 2 ou na 6 seria rotulá-lo errado, e rótulo errado aqui é o defeito que o plano
 inteiro persegue. Plano separado custaria mais do que economiza: a norma diz que **dividir tem custo**,
 e isto é uma unidade.
 
-**Dezesseis unidades, sete fases — e o plano não é pequeno.** Vale dizer sem rodeio: ele nasceu com
-onze, a absorção do `B-01` acrescentou quatro, e a mudança de repositório acrescentou a Fase 1. Cada
-fase segue entregando uma capacidade completa, e três coisas continuam cortadas na redação — um
-verificador de invariantes de guideline (é o `B-02` do backlog, e a norma diz para escrevê-lo na
-primeira divergência observada, não numa data), a separação entre desacoplar e empacotar, e a
-migração das **outras seis skills normativas** do AmFlow (`hub-env`, `security-testing`,
-`data-architecture`, `data-privacy-lgpd`, `digital-twin-product`, `user-modeling`), que vira item de
-backlog. Migrar sete de uma vez é o exato over-engineering que o plano combate; migrar uma prova o
-mecanismo e **mede o custo real** da migração.
+**Dezessete unidades, sete fases — e o plano não é pequeno.** Vale dizer sem rodeio: ele nasceu com
+onze, a absorção do `B-01` acrescentou quatro, a mudança de repositório acrescentou a Fase 1, e a
+revisão de 2026-08-22 dividiu a primeira unidade em duas. Cada fase segue entregando uma capacidade
+completa, e três coisas continuam cortadas na redação — um verificador de invariantes de guideline (é
+o `B-02` do backlog do AmFlow, e a norma diz para escrevê-lo na primeira divergência observada, não
+numa data), a separação entre desacoplar e empacotar, e a migração das **outras seis skills
+normativas** do AmFlow (`hub-env`, `security-testing`, `data-architecture`, `data-privacy-lgpd`,
+`digital-twin-product`, `user-modeling`), que vira item de backlog. Migrar sete de uma vez é o exato
+over-engineering que o plano combate; migrar uma prova o mecanismo e **mede o custo real** da migração.
 
 **O que a mudança de repositório apagou.** Duas unidades perderam objeto e não estão acima: a
 extração de três seções do `CLAUDE.md` de 458 linhas do AmFlow, que era metade da antiga
@@ -264,7 +271,7 @@ guideline   toda mudança de schema entra por migration
 guardrail   DDL em ambiente remoto é recusado    verificável por inspeção do statement
 ```
 
-A unidade `03` percorre esse pipeline inteiro, e é por isso que vem cedo: um hook funcionando prova
+A unidade `04` percorre esse pipeline inteiro, e é por isso que vem cedo: um hook funcionando prova
 mais sobre a camada do que qualquer página de norma sobre hooks. Inspecionar conteúdo — e não apenas
 caminho ou nome de ferramenta — é deliberado: é o que prova a capacidade real do mecanismo, já que
 `SELECT` diagnóstico é permitido e DDL não.
@@ -301,7 +308,7 @@ path-specific rules."* Ele expõe `load_reason` — `session_start`, `path_glob_
 **Anunciar não é carregar.** A opção C da tabela acima foi recusada como mecanismo de carregamento, e
 com razão: reimplementa `paths:`. Como mecanismo de **anúncio** não tem concorrente, e não duplica
 conteúdo nenhum — o hook nomeia o arquivo, nunca copia o texto. É monitoramento puro por construção:
-o evento *"cannot block instruction loading"*, o que o mantém categoricamente distinto da `03`, que impõe.
+o evento *"cannot block instruction loading"*, o que o mantém categoricamente distinto da `04`, que impõe.
 
 > **Skill e agente entram por requisito declarado, não por lacuna medida.** Ambos já renderizam como
 > tool call. Ficam no escopo porque o pedido é explícito, e o custo é marginal — `SubagentStart`
@@ -317,8 +324,8 @@ o evento *"cannot block instruction loading"*, o que o mantém categoricamente d
 **Por que não a regra de dependência da arquitetura declarada, que é a violação maior.** Porque ela
 reprovaria `hub/lib/catalog.ts`, `licenses.ts` e `queries.ts` na primeira execução. **Guardrail que
 falha no código existente é guardrail que ninguém liga** — vira exatamente o obstáculo a contornar que
-a norma já avisa em *O que a avaliação não faz*. Ele entra depois da conformação, nunca antes dela; e a
-conformação é a `L-06`.
+a norma já avisa em *O que a avaliação não faz*. Ele entra depois da conformação, nunca antes dela — e
+a conformação é do AmFlow, endereçada pelo plano `describe-as-built` daquele repositório.
 
 ### O porte do plano, e o único artefato novo que ele obriga
 
@@ -352,7 +359,7 @@ recusar *"seu plano é grande demais"* seria julgamento, e a norma proíbe teto 
 argumento próprio — *"um número sem base empírica competiria com o teste de independência e dividiria
 planos coesos"*.
 
-> **A métrica é hipótese, não achado — e por isso a `10` existe.** Os critérios de porte vieram do uso
+> **A métrica é hipótese, não achado — e por isso a `11` existe.** Os critérios de porte vieram do uso
 > diário, não de medição. Declaração sem verificação envelhece como opinião: a instrumentação grava o
 > porte declarado ao lado do resultado real, e depois de ~10 planos existe a tabela que diz se
 > *pequeno* ficou pequeno, ou se a declaração deriva sistematicamente para baixo. O ajuste dos
@@ -377,7 +384,7 @@ Três saídas, e a escolhida:
 drift de graça — mas perde em três pontos que importam mais: funciona em toda sessão sem ressalva a
 lembrar; a cópia fica versionada no projeto, então um revisor vê **em qualquer commit qual texto
 estava ativo**, propriedade de auditoria que symlink não dá; e a drift fecha pela verificação de
-versão, que a unidade `12` constrói de qualquer maneira. A ressalva do Cowork sobre symlink existe,
+versão, que a unidade `13` constrói de qualquer maneira. A ressalva do Cowork sobre symlink existe,
 mas é sobre *user-scope* (`~/.claude/rules/`) e as guidelines vão para *project-scope* — ela estreita
 o risco, não decide a questão. A decisão é por mérito.
 
@@ -394,9 +401,9 @@ aviso de que a cópia está fora de sincronia.
 | Hook de `PreToolUse` roda em toda chamada de ferramenta: precisa ser barato, e falha fechada trava o trabalho | `.claude/settings.json` |
 | `InstructionsLoaded` é monitoramento puro — não bloqueia nem altera carregamento, e descarta stdout/stderr. O canal é `systemMessage` | Referência de hooks do Claude Code |
 | Rule com `paths:` ativa na **leitura** de arquivo que casa o glob, não na escrita nem em toda chamada de ferramenta | Doc de memória, *Path-specific rules* |
-| A unidade `12` alcança um **repositório público** — efeito externo e irreversível. Entrega diff e mecanismo; publicar é ato humano | Precedente da `AmFlow:0003-05` |
-| A suíte migrada roda 145 testes, **34 vermelhos** por fixture apontando para arquivo do AmFlow. Até a `01`, nenhuma unidade passa pelo gate de saída | Medido em 2026-08-22 |
-| Efeito sobre o **AmFlow** — instância de prova das unidades `03` e `05` — é efeito em repositório de terceiro. Entra por PR, nunca por escrita direta | `AmFlow/.claude/CLAUDE.md` |
+| A unidade `13` alcança um **repositório público** — efeito externo e irreversível. Entrega diff e mecanismo; publicar é ato humano | Precedente da `AmFlow:0003-05` |
+| A suíte migrada roda 145 testes, **26 vermelhos** por fixture apontando para arquivo do AmFlow. Até a `02`, nenhuma unidade passa pelo gate de saída | Medido em 2026-08-22, após a migração da norma |
+| Nenhuma unidade escreve no **AmFlow**. O incidente de lá escolhe a regra, o fixture a prova aqui, e instalar é consequência reportada — item do backlog daquele repositório | Decidido na revisão de 2026-08-22 |
 | Python 3.10 (versão do Cowork), stdlib pura | `AmFlow:.claude/CLAUDE.md` |
 | `state` e `verified_at` nunca se editam à mão — são projetados por script | Norma, *Os dois gates* |
 
@@ -409,7 +416,7 @@ A norma **não declara agente inútil.** Ela põe um gate com duas condições �
 onde há julgamento somado a pesquisa ampla, **e só depois de a skill existir**"* ([:724](../system/modelo-dev-units.md)) —
 e ela mesma escreve o desbloqueio: *"se for requisito, e não conveniência, **reabre a decisão sobre
 agents**"* (:843). A skill existe desde 2026-07-26, e a segunda condição foi declarada pelo humano em
-2026-08-22, a partir de uso diário. A unidade `13` registra que o gate abriu; não reverte julgamento
+2026-08-22, a partir de uso diário. A unidade `14` registra que o gate abriu; não reverte julgamento
 nenhum.
 
 **Benchmark medido em 2026-08-22**, sobre definições em disco:
@@ -524,8 +531,8 @@ Cada unidade declara o seu, e as dezesseis dividem-se em duas naturezas:
 
 | Natureza | Unidades | Oráculo |
 |---|---|---|
-| **Comportamento** | `01`, `03`, `04`, `06`, `07`, `09`, `10`, `12`, `16` | Teste real. O hook recusa o caso proibido e deixa passar o permitido; o registry liga e desliga; a skill opera com um alvo que não é `docs/plan/`; a reconciliação detecta divergência entre as duas cópias. Para a `07`: plano sem `plan_size` é recusado, plano com porte declarado passa. Para a `09`: pequeno não deriva, médio projeta tarefa, grande cria arquivo de unidade. Para a `10`: fechar um plano grava a linha com declarado e real. Para a `04`: payload de rule que casa o glob produz anúncio nomeando arquivo e `load_reason`; payload fora do escopo produz silêncio. Para a `16`: entrada com tipo fora do vocabulário é recusada, e **entrada marcada como fechada não permanece no arquivo** — a regra de despejo é o invariante, e é mecanicamente verificável |
-| **Estrutura** | `02`, `05`, `08`, `11`, `13`, `14`, `15` | Verificador dos invariantes do artefato — o frontmatter valida, o glob de `paths:` compila e casa o que promete, o manifesto resolve, e o `CLAUDE.md` perde exatamente o manifesto resolve. Para a `08`: os três templates de porte validam, e o pequeno **não** carrega `## Independência` nem região de backlog. Para a `11`: o `plugin.json` resolve, e nenhum componente empacotado referencia caminho do projeto que o produziu. Para `14` e `15`: o frontmatter usa **apenas campos nativos**, o `skills:` nomeia skill que existe, o `model:` é o que a norma manda por modo, e o `tools:` não concede escrita fora do escopo declarado — este último é o que impede o planejador de tocar código |
+| **Comportamento** | `01`, `02`, `04`, `05`, `07`, `08`, `10`, `11`, `13`, `17` | Teste real. O hook recusa o caso proibido e deixa passar o permitido; o registry liga e desliga; a skill opera com um alvo que não é `docs/plan/`; a reconciliação detecta divergência entre as duas cópias. Para a `08`: plano sem `plan_size` é recusado, plano com porte declarado passa. Para a `10`: pequeno não deriva, médio projeta tarefa, grande cria arquivo de unidade. Para a `11`: fechar um plano grava a linha com declarado e real. Para a `05`: payload de rule que casa o glob produz anúncio nomeando arquivo e `load_reason`; payload fora do escopo produz silêncio. Para a `17`: entrada com tipo fora do vocabulário é recusada, e **entrada marcada como fechada não permanece no arquivo** — a regra de despejo é o invariante, e é mecanicamente verificável |
+| **Estrutura** | `03`, `06`, `09`, `12`, `14`, `15`, `16` | Verificador dos invariantes do artefato — o frontmatter valida, o glob de `paths:` compila e casa o que promete, o manifesto resolve, e o `CLAUDE.md` perde exatamente o manifesto resolve. Para a `09`: os três templates de porte validam, e o pequeno **não** carrega `## Independência` nem região de backlog. Para a `12`: o `plugin.json` resolve, e nenhum componente empacotado referencia caminho do projeto que o produziu. Para `15` e `16`: o frontmatter usa **apenas campos nativos**, o `skills:` nomeia skill que existe, o `model:` é o que a norma manda por modo, e o `tools:` não concede escrita fora do escopo declarado — este último é o que impede o planejador de tocar código |
 
 **Isto é o `B-01` acontecendo dentro deste plano, e está registrado como a `L-01`.** Unidade cujo
 entregável é conteúdo normativo não tem contra o que declarar `test:` — foi assim que o plano
@@ -538,8 +545,8 @@ que prova, e não inventa uma fase para ter o que testar.
 | # | Decisão | Estado |
 |---|---|---|
 | D-01 | **Clean architecture ocupa o slot de guideline no plugin, e está ligada no AmFlow.** As duas coisas são compatíveis: *guideline* diz **escopo de validade**, não opcionalidade. No plugin ela é ligável, porque quem instala não deve herdar a decisão arquitetural do AmFlow; aqui é vinculante, porque está registrada em `docs/mvp/` e o invariante nº 4 a sustenta | **Confirmada em 2026-08-21.** A formulação anterior — *"princípio ou guideline"* — era a pergunta errada, e apoiava-se num argumento inválido: inferir que a arquitetura fora rejeitada a partir de o código não a seguir. O `grep` mostrou o contrário |
-| D-02 | **O primeiro guardrail em hook entra como unidade `03`, não como prova de conceito fora do plano.** Entra cedo justamente para valer como prova cedo, com o custo de uma unidade em vez do de um plano. **Só a Fase 1 vem antes**, e por necessidade mecânica: sem suíte verde nenhuma unidade passa pelo gate de saída | Adotada |
-| D-03 | **Os princípios derivam da economia do decode-and-code** — código é custo · subtração antes de adição · menor solução que resolve vence · evidência acima de opinião —, filtrados pelo teste da rejeitabilidade | **A lista final é conteúdo normativo e exige aprovação humana.** A unidade `02` entrega a estrutura e a proposta, não a decisão |
+| D-02 | **O primeiro guardrail em hook entra como unidade `04`, não como prova de conceito fora do plano.** Entra cedo justamente para valer como prova cedo, com o custo de uma unidade em vez do de um plano. **Só a Fase 1 vem antes**, e por necessidade mecânica: sem suíte verde nenhuma unidade passa pelo gate de saída | Adotada |
+| D-03 | **Três princípios, e a lista está fechada:** *código é custo* · *subtração antes de adição* · *evidência acima de opinião*. Nenhum é rejeitável por equipe competente, que é o teste | **Aprovada em 2026-08-22.** A formulação anterior tinha quatro e adiava a decisão para dentro da unidade — o que colidia com o gate de saída: unidade que termina esperando aprovação não tem contra o que declarar teste. *Menor solução que resolve vence* foi **cortada por redundância** com *subtração antes de adição*: duas fontes para o mesmo fato é o drift que este plano persegue, e cortar aqui é o próprio princípio aplicado a si mesmo |
 | D-04 | **A revisão de um plano escrito nesta mesma sessão roda de novo em sessão fria.** Quem escreveu e quem revisa foram o mesmo contexto — é o `B-07` do backlog, sem separação de funções | Adotada como prática, não como unidade. Não há solução estrutural num projeto de um dono; o que existe é barato e já foi provado aqui: as 15 unidades do `0002` rodaram em sessões sem contexto prévio, e funcionou |
 | D-05 | **O planejador cobre planejar, revisar e derivar — mas planejar do zero é `fork`, não subagente.** A doc lista *"the task needs frequent back-and-forth with you"* entre os casos em que subagente é a ferramenta errada, e escrever um plano do zero é exatamente isso. `fork` herda a conversa inteira e serve; subagente comum começa limpo e não serviria | Adotada. O escopo pedido — planejar, revisar, derivar — é entregue inteiro; muda o **mecanismo** de invocação de um dos três, não o alcance |
 | D-06 | **O agente de desenvolvimento não declara `memory:`.** Memória entre execuções faria o agente chegar com contexto acumulado — e aí a unidade deixa de precisar ser autossuficiente | O cold-start é o **critério de suficiência da unidade** (norma, :127). Um agente que lembra corrói o teste em silêncio: a unidade passa a funcionar por memória, não por estar completa, e a insuficiência só aparece quando outra pessoa a executa |
@@ -547,21 +554,20 @@ que prova, e não inventa uma fase para ter o que testar.
 | D-08 | **O `huddle.md` não é carregado automaticamente** — nem como rule, nem por `skills:`, nem por import. É aberto quando a conversa acontece | Carregá-lo faria dele mais uma coisa que o modelo lê e tenta seguir, com entradas **abertas** competindo com norma decidida. É o defeito que a Fase 1 existe para desfazer, reintroduzido pela porta dos fundos |
 | D-09 | **O nome é `huddle`** — o arquivo é a pauta, o huddle é a conversa | Descartados: `ledger` (registro autoritativo — diz o oposto do que é), `notebook`/`journal` (sugerem acúmulo sem fechamento), `inbox` (colide com `docs/plan/_inbox/`), `loop`/`sync` (colidem com skill nativa e com comando do worker), `bench` (colide com *benchmark*), `pauta` (preciso, mas pt-BR não viaja no plugin) |
 | D-10 | **O método é desenvolvido em repositório próprio, e o AmFlow vira campo de prova.** Os scripts e testes do `dev-units` migraram — 1300 e 2428 linhas, evidência de 15 de 15 unidades em cold-start; `SKILL.md`, norma, princípios e templates nascem aqui | **Decidida em 2026-08-22.** Reescrever do zero jogaria fora as correções dos planos `0005` e `0006` para reganhar bugs já resolvidos; forkar inteiro carregaria as premissas do AmFlow que depois teriam de sair uma a uma. A divisão é a mesma que a norma já traça — **o determinismo migra, a camada normativa nasce nova**. O `dev-units` do AmFlow congelou no mesmo dia: duas cópias editáveis é a condição exata que produziu a divergência de 2026-08-01 |
+| D-11 | **A configuração dos scripts vive em `config.json`, em caminho convencional dentro da skill, com defaults embutidos** | **Decidida na revisão de 2026-08-22**, porque a `01` a exigia e a norma manda que decisão de desenho esteja no plano, não seja descoberta em execução. Env var não é versionável e some entre máquinas; argumento de linha de comando espalha a mesma decisão por chamada. Arquivo declarativo e versionado é o padrão que o projeto já usa em `module.json` e `plugin.json` |
 
 ## Lacunas
 
 | # | Lacuna | Por que fica registrada |
 |---|---|---|
-| L-01 | **Unidade de conteúdo normativo não tem oráculo natural** | O gate de saída exige teste passando, e quatro das dezesseis unidades entregam markdown normativo (`02`, `05`, `08`, `13`). O oráculo estrutural adotado na seção *Oráculo* verifica invariantes do artefato, não adequação do conteúdo — que continua sendo julgamento humano. Era o `B-01` do backlog manifestando-se aqui; com a absorção do `B-01` na Fase 3, a resolução passou a pertencer a **este** plano — o oráculo estrutural deixa de ser saída ad hoc e vira formato declarado pela `07` |
-| L-02 | **Como a guideline chega ao projeto: cópia versionada ou symlink** | **✅ Resolvida na revisão de 2026-08-21 — cópia versionada.** A ressalva do Cowork sobre symlink é de *user-scope* e as guidelines vão para *project-scope*: medir só diria se o atalho funciona, não se é a escolha certa. A cópia vence no mérito — sem ressalva a lembrar, versionada no projeto (um revisor vê em qualquer commit **qual texto estava ativo**), e a drift fecha pela verificação de versão que a `12` constrói de qualquer jeito. Fechar decidindo, em vez de agendar medição, é *subtração primeiro* aplicado ao próprio plano |
+| L-01 | **Unidade de conteúdo normativo não tem oráculo natural** | O gate de saída exige teste passando, e quatro das dezesseis unidades entregam markdown normativo (`03`, `06`, `09`, `14`). O oráculo estrutural adotado na seção *Oráculo* verifica invariantes do artefato, não adequação do conteúdo — que continua sendo julgamento humano. Era o `B-01` do backlog manifestando-se aqui; com a absorção do `B-01` na Fase 3, a resolução passou a pertencer a **este** plano — o oráculo estrutural deixa de ser saída ad hoc e vira formato declarado pela `07` |
+| L-02 | **Como a guideline chega ao projeto: cópia versionada ou symlink** | **✅ Resolvida na revisão de 2026-08-21 — cópia versionada.** A ressalva do Cowork sobre symlink é de *user-scope* e as guidelines vão para *project-scope*: medir só diria se o atalho funciona, não se é a escolha certa. A cópia vence no mérito — sem ressalva a lembrar, versionada no projeto (um revisor vê em qualquer commit **qual texto estava ativo**), e a drift fecha pela verificação de versão que a `13` constrói de qualquer jeito. Fechar decidindo, em vez de agendar medição, é *subtração primeiro* aplicado ao próprio plano |
 | L-03 | **Escopo do rename `dev-units` → `decode-and-code`** | **Sem objeto desde 2026-08-22.** Ela mediu 164 ocorrências vivas em 32 arquivos do AmFlow, separadas de 414 de registro histórico e 452 de homônimo em `docs/mvp/`. Com o desenvolvimento em repositório próprio, **o nome nasce certo** e não há o que renomear. A medição fica registrada porque a limpeza do AmFlow ainda a usará — mas como item de backlog daquele repositório, não como lacuna deste |
 | L-04 | **O `CLAUDE.md` do AmFlow continua acima do limiar de aderência** | **Sem objeto neste plano desde 2026-08-22.** A extração das três seções saiu do escopo junto com a mudança de repositório: o `CLAUDE.md` daqui nasceu com 127 linhas, abaixo do alvo documentado de 200. As 458 linhas do AmFlow continuam sendo um fato — e um dos que originaram este projeto —, mas encolhê-las é curadoria daquele repositório. Fica nomeada para não passar por resolvida |
 | L-05 | **Nenhuma checagem de consistência entre normas** | A doc do Claude Code afirma que instruções contraditórias fazem o modelo escolher arbitrariamente. Com `CLAUDE.md` + norma + princípios + N guidelines ativas, a superfície de contradição cresce, e nada a mede. Não entra no escopo porque o problema só existe de verdade depois que houver guidelines suficientes para colidir |
-| L-06 | **A arquitetura declarada e a arquitetura real divergem, e a saída está escolhida mas não planejada** | Medido em 2026-08-21: 0 de 7 Use Cases, 0 de 5 Entities, regra de dependência violada em três módulos. **Direção decidida pelo humano na mesma data: descrever a arquitetura real e reconciliar as fontes** — não conformar o código à declaração. **Endereçada pelo plano [`describe-as-built`](describe-as-built.md)**, escrito em 2026-08-21, alvo `hub`/`architecture`, duas unidades. Não é trabalho deste plano nem depende dele: aquele constrói o *conteúdo*, este o *mecanismo de ativação*, e descrever a arquitetura real tem valor com zero mecanismo. Podem correr em qualquer ordem |
-| L-07 | **Duas fontes declaram a arquitetura e discordam entre si** | O `AmFlow:docs/mvp/10_architecture/index.md:97` lista 3 Use Cases grossos para o Hub — `Catalog`, `Licenses`, `Publish`, que **existem** como módulo; o `AmFlow:docs/mvp/40_reference/clean-architecture.md` lista 7 finos e 5 Entities, que **não existem**. Quem escreveu código consultando uma nunca viu a outra. É violação direta da regra anti-drift da norma — *uma fonte por fato*, declarada **inegociável** — e é a causa mecânica de a arquitetura ter sobrevivido só no nível dos nomes. Fecha junto com a `L-06`, pela mesma migração |
-| L-08 | **Os cinco gatilhos de escrita do huddle não são verificáveis por script** | A regra de despejo é — entrada fechada não permanece no arquivo, e isso é o oráculo da `16`. Os gatilhos não: *"decidiu algo que o humano não decidiu"* é observável por quem escreve, e por mais ninguém. Um arquivo vazio é indistinguível de uma sessão sem nada a registrar. **O que existe de mitigação é fraco e vale dizer:** o critério de entrada está escrito, e a revisão da conversa recorrente expõe o que faltou — tarde, mas expõe. É o `B-01` do backlog outra vez: conteúdo que depende de julgamento não ganha oráculo por se querer que ganhe |
+| L-08 | **Os cinco gatilhos de escrita do huddle não são verificáveis por script** | A regra de despejo é — entrada fechada não permanece no arquivo, e isso é o oráculo da `17`. Os gatilhos não: *"decidiu algo que o humano não decidiu"* é observável por quem escreve, e por mais ninguém. Um arquivo vazio é indistinguível de uma sessão sem nada a registrar. **O que existe de mitigação é fraco e vale dizer:** o critério de entrada está escrito, e a revisão da conversa recorrente expõe o que faltou — tarde, mas expõe. É o `B-01` do backlog outra vez: conteúdo que depende de julgamento não ganha oráculo por se querer que ganhe |
 | L-09 | **Guideline não sobrevive à compactação, e o anúncio expõe o problema sem resolvê-lo** | Medido em 2026-08-22: rule com `paths:` recarrega apenas quando um arquivo que casa o glob é lido de novo. Numa sessão longa que compacta e segue editando sem reler, a guideline **sai de contexto e não volta**. A `03` torna isso observável — o anúncio deixa de aparecer —, mas observar não é corrigir. As saídas candidatas (reler um arquivo-âncora após `PostCompact`, ou promover a guideline crítica a rule sem `paths:`) trocam correção por custo de contexto permanente, que é o problema que o escopo por glob existe para resolver. Fica nomeada porque só se mede depois de haver guidelines em uso real |
-| L-10 | **A suíte migrada está vermelha, e o número real de testes preservados é 111, não 145** | Medido em 2026-08-22, logo após a migração: `unittest discover` roda 145 testes e 34 falham — todos por usarem arquivos reais do AmFlow como fixture, do tipo `docs/plan/hub/0001-mcp/01-handler-auth.md`. Os scripts em si têm apenas **5** auto-referências ao nome antigo, então o acoplamento real não está no código, está nos **testes**. Isso corrige para menos a estimativa que sustentou a `D-10` — o que se preservou de graça foram 111 testes, e os outros 34 são trabalho da `01`. Não invalida a decisão: 111 verdes continua sendo incomparavelmente melhor que zero |
+| L-10 | **A suíte migrada está vermelha, e o número de testes preservados é 118, não 145** | `unittest discover` roda 145 testes: 118 passam, **26 falham** e 1 é pulado — as 26 por usarem arquivos reais do AmFlow como fixture, do tipo `docs/plan/hub/0001-mcp/01-handler-auth.md`. Os scripts em si têm apenas **5** auto-referências ao nome antigo, então o acoplamento real não está no código, está nos **testes**. **A primeira medição do dia deu 34 e estava errada** — foi feita antes de a norma migrar, e 8 testes que a leem passaram a resolver assim que `modelo-dev-units.md` existiu. Fica registrado porque medir cedo demais produziu número que virou afirmação em três lugares do plano. Isso corrige para menos a estimativa que sustentou a `D-10`, sem invalidá-la: 118 verdes continua incomparavelmente melhor que zero |
 
 ## Fonte
 
@@ -570,7 +576,7 @@ que prova, e não inventa uma fase para ter o que testar.
   `futureridetoday/AmFlowPlugins`
 - Norma do modelo: [`modelo-dev-units.md`](../system/modelo-dev-units.md), seções *Camada normativa*
   e *Avaliação de escopo*
-- Backlog: [`_backlog.md`](_backlog.md), itens `B-01` e `B-02`
+- Backlog: `AmFlow:docs/plan/_inbox/_backlog.md`, itens `B-01` e `B-02`
 - Documentação do Claude Code: memória e regras (`.claude/rules/`, frontmatter `paths:`, symlinks e
   a ressalva de Cowork), referência de plugins (componentes empacotáveis), e o material de orientação
   sobre quando usar `CLAUDE.md`, skill, hook ou subagent

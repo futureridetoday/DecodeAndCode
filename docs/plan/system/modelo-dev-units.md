@@ -165,7 +165,7 @@ Campos exigidos:
 
 ```
 System           → AmFlow
-  Core           → fronteira de ownership: Security, Worker, Hub, Builder
+  Core           → fronteira de ownership: declarada por projeto, em `config.json`
     Module       → capability de domínio: auth, catalog, mcp
       Block      → variação/extensão aditiva (opcional): login-google
         Unit     → fatia vertical mínima verificável: AU-02

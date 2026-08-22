@@ -75,16 +75,6 @@ trabalho, o lugar dele é antes das cinco unidades que sobram, não depois. O ar
 agente para derivar as unidades que criam o agente é circular. Único acoplamento real — a `09` e a `10`
 referenciariam a skill ainda chamada `dev-units` até a `06` renomear.
 
-### H-02 · `pergunta` · 2026-08-22 · Claude
-
-**Em 2026-08-22 o plano foi lido e considerado "ainda não pronto para desenvolvimento", e a razão não
-ficou registrada em lugar nenhum.**
-
-Ele passou pelo `dev-units review` — dois bloqueantes achados e corrigidos, `D-01` confirmada. Revisão
-aprovada não é o mesmo que pronto, e quem decide isso é o humano. Mas sem o motivo escrito, a próxima
-sessão vai propor `derive` de novo e receber a mesma recusa. **Uma hipótese levantada depois:** o plano
-não enumera os artefatos de saída — decide mecanismos, não decide formas. Nunca foi confirmada.
-
 ### H-03 · `padrão` · 2026-08-22 · Claude
 
 **Inferi decisão a partir de estado observado, e errei.**
@@ -142,7 +132,9 @@ trabalho se perde — e porque não sei se é rascunho em curso ou sobra de algo
 
 ## Fechadas
 
-_Nenhuma ainda. A primeira conversa é que vai produzir as primeiras._
+| # | Tipo | Fechada em | Destino |
+|---|---|---|---|
+| H-02 | `pergunta` | 2026-08-22 | **Confirmada, e a hipótese estava certa.** O plano decidia mecanismos e deixava três formas em aberto: a lista de princípios, o repositório onde vivia o entregável das unidades de prova, e onde vivia a configuração dos scripts. As três fecharam na revisão de 2026-08-22 — `D-03`, `D-11` e a reescrita das unidades `04` e `06`. A revisão achou cinco bloqueantes; três eram essa mesma coisa por ângulos diferentes |
 
 ---
 
