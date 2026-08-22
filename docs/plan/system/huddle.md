@@ -75,6 +75,23 @@ trabalho, o lugar dele é antes das cinco unidades que sobram, não depois. O ar
 agente para derivar as unidades que criam o agente é circular. Único acoplamento real — a `09` e a `10`
 referenciariam a skill ainda chamada `dev-units` até a `06` renomear.
 
+### H-08 · `padrão` · 2026-08-22 · Claude
+
+**Medi antes de o estado estabilizar, e o número virou afirmação em três seções do plano.**
+
+Rodei a suíte migrada logo depois de copiar os scripts e reportei *"34 testes falham"*. Estava errado:
+a norma ainda não tinha migrado, e 8 testes que a leem passaram a resolver assim que
+`modelo-dev-units.md` existiu. O real é 26. Entre a medição e a correção, o 34 foi escrito em três
+lugares do plano e numa lacuna, e só caiu porque rodei a suíte de novo por outro motivo.
+
+O padrão não é *"errei uma conta"*. É que **medi um estado que eu mesmo ainda estava mudando**, e
+tratei o resultado como fato em vez de leitura provisória. Junto com a `H-03` — inferir decisão a
+partir de estado observado — são duas ocorrências no mesmo dia da mesma coisa: **afirmar antes de o
+que está sendo observado parar de se mexer.**
+
+A mitigação barata: quando a medição acontece no meio de uma migração que eu estou conduzindo, ela
+nasce marcada como provisória, e se reconfere no fecho.
+
 ### H-03 · `padrão` · 2026-08-22 · Claude
 
 **Inferi decisão a partir de estado observado, e errei.**
