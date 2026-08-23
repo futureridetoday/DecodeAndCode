@@ -49,7 +49,7 @@ suficiente para as falhas aparecerem. Repo novo é greenfield e não tem inciden
 | **A arquitetura declarada tem 0% de implementação** | `AmFlow:docs/mvp/40_reference/clean-architecture.md` nomeia 7 Use Cases e 5 Entities: **0 de 7** e **0 de 5** existem no código. A regra de dependência que ela declara — *"Use Cases nunca dependem de implementações concretas de infraestrutura"* — é violada por `hub/lib/catalog.ts` (2 imports de supabase), `licenses.ts` (1) e `queries.ts` (1) | Decisão arquitetural registrada, com invariante nº 4 do `CLAUDE.md` a sustentá-la, **nunca chegou ao código** — e ninguém percebeu até se rodar `grep` em 2026-08-21 |
 | **Nenhum hook configurado** | `AmFlow:.claude/settings.json` declara `PreToolUse`, `PostToolUse`, `SessionStart`, `Stop` e `SubagentStop` — os cinco com array **vazio** | Não existe norma imposta no repositório. Toda regra é advisory por construção |
 | **Nenhuma regra com escopo** | `.claude/rules/` não existe | Toda norma que é carregada, é carregada sempre — e o que não cabe no orçamento, não é carregado nunca |
-| **`CLAUDE.md` acima do limiar de aderência** | 458 linhas. A doc do Claude Code fixa o alvo em **200**: *"longer files consume more context and reduce adherence"* | Aderência degradada no arquivo mais importante do projeto |
+| **`CLAUDE.md` acima do limiar de aderência** | 458 linhas em 2026-08-21; remedido em 2026-08-23 durante a revisão: **465**. A doc do Claude Code fixa o alvo em **200**: *"longer files consume more context and reduce adherence"* | Aderência degradada no arquivo mais importante do projeto, e a distância do alvo está crescendo, não encolhendo |
 | **A camada normativa nunca foi construída** | A norma especifica princípio/guideline/guardrail/referência em `<core>/system/` ([`modelo-dev-units.md:256`](../system/modelo-dev-units.md)) — componente 3 de 5. `find docs/plan -type d -name system` devolve **apenas** `docs/plan/system/` | O componente que resolveria a inconsistência foi desenhado e nunca instanciado |
 | **O invariante com incidente registrado não tem imposição** | O `CLAUDE.md` proíbe DDL direto em ambiente remoto **e registra a violação**: `notifications_hub_id_fkey`, 2026-08-12, divergência que só apareceu quando alguém tropeçou nela em produção | A proibição existe, já foi violada, e segue dependendo de o modelo lembrar dela na hora |
 | **A cópia no repositório público já divergiu** | A `AmFlow:0003-11` copiou a skill e a norma para `futureridetoday/AmFlowPlugins` à mão em 2026-08-01. Hoje: norma **21 linhas atrás** (falta `#### Precedência entre os blocos`), e 3 dos 9 scripts menores — `regioes.py` 6190/6750, `scaffold.py` 4669/5671, `verificacao.py` **5453/7092** | O repositório público roda um gate de verificação anterior aos planos `0005` e `0006`, ambos concluídos em 2026-08-12. Cópia manual não é distribuição |
@@ -156,6 +156,10 @@ acima do teto de 8 passos, e logo na unidade que destrava todas as outras.
 |---|---|---|
 | 17 | `huddle-log` | O `huddle.md`: formato de entrada com vocabulário fechado de **cinco** tipos, regra de despejo, os cinco gatilhos de escrita e a regra de momento — *no fecho do trabalho, e só o que continuou aberto*. Alcança o contrato de relatório dos três modos, não só o do `implement`, e **exige a linha de fecho mesmo quando não há entrada** — *"entradas novas no huddle: 0"* separa *conferi e não havia* de *nunca conferi*, que hoje são indistinguíveis (`L-08`). **Formaliza o que sobreviver ao uso do protótipo** escrito em 2026-08-22, em vez de desenhar às cegas |
 
+**A `17` reabre o empacotamento da `12`, e é esperado.** Empacotar é operação idempotente —
+reexecutá-la ao fechar a Fase 7 incorpora o `huddle.md` ao plugin sem reabrir nenhuma decisão da `12`.
+O plugin que a Fase 5 entrega e o que a Fase 7 fecha são a mesma operação, rodada duas vezes.
+
 **Fase própria, com uma unidade só, e por escolha.** O huddle não é camada de norma nem operador —
 dobrá-lo na Fase 2 ou na 6 seria rotulá-lo errado, e rótulo errado aqui é o defeito que o plano
 inteiro persegue. Plano separado custaria mais do que economiza: a norma diz que **dividir tem custo**,
@@ -211,10 +215,11 @@ teste de independência protege — dois trabalhos alterando decisões um do out
 **não se materializa aqui**, porque a Fase 4 não depende de nenhuma outra e nenhuma depende dela. A
 posição antes da Fase 5 é escolha de completude do pacote, não acoplamento.
 
-**Concorrência:** `_planos.md` não tem plano `em desenvolvimento` — os seis existentes estão
-`concluído`. O `AmFlow:module-install-update.md` está em `builder/`
-com `status: stable` e sem `plan_id`, fora da tabela; não é concorrência, mas é um plano do mesmo core
-não derivado, e vale saber que está lá.
+**Concorrência:** neste repositório, `_planos.md` está vazio — este é o primeiro plano a entrar em
+desenvolvimento aqui, e não há concorrência possível. No AmFlow, os seis planos existentes
+(`0001`–`0006`) estão `concluído` — também sem concorrência lá. O `AmFlow:module-install-update.md`
+está em `builder/` com `status: stable` e sem `plan_id`, fora da tabela; não é concorrência, mas é um
+plano do mesmo core não derivado, e vale saber que está lá.
 
 ## Direção de solução
 
