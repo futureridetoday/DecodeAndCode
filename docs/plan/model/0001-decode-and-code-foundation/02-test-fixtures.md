@@ -48,7 +48,12 @@ arquivo que só existe no AmFlow.
 | **Erro** | Construtor com argumento inválido levanta `ValueError` antes de escrever qualquer arquivo |
 
 **Inventário do acoplamento, medido em 2026-08-23 com `./scripts/test-python.sh`** — 158 testes, 25
-vermelhos (4 `FAIL` + 21 `ERROR`), 133 verdes:
+vermelhos (4 `FAIL` + 21 `ERROR`), 133 verdes.
+
+**O total muda antes de esta unidade rodar, e é esperado:** a `0001-01` remove `TestComandoTypescript`
+junto com a função que ela cobre, então a suíte chega aqui com **157** rodados. Os 25 vermelhos são os
+mesmos — nenhum deles está nessa classe. Confira o total antes de usá-lo; o número abaixo é de antes
+da `01`.
 
 | Fixture que falta | Testes | Onde |
 |---|---|---|

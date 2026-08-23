@@ -62,7 +62,7 @@ funcionar sem configurar nada.
 1. Escrever `config.json` com as quatro chaves acima e `lib.config()` — leitura com `json.loads`, sobreposição sobre os defaults embutidos, cache em módulo. Ausente cai no default; malformado levanta.
 2. `lib.py`: `plan_root()` e `_find_repo_root()` passam a ler `config()`. As docstrings perdem "AmFlow" e a citação de `estudo-runtime-e-dependencias.md`, que não existe neste repositório.
 3. `scaffold.py`: o caminho de `move-md.py` vem de `config()["move_script"]` em vez da constante da linha 38.
-4. `verificacao.py`: `_comando()` resolve a extensão pelo mapa `runners`. Extensão fora do mapa levanta `ValueError` como hoje. **O ramo `.ts`/`npx vitest`/`hub/` sai** — é instância do AmFlow, e o mecanismo que a substitui é o mapa.
+4. `verificacao.py`: `_comando()` resolve a extensão pelo mapa `runners`, e extensão fora do mapa levanta `ValueError` como hoje. **Sai `_comando_typescript`** (linhas 155-160) e com ela a classe `TestComandoTypescript` — é instância do AmFlow, e o mapa a substitui. **Fica `_VITEST_SKIPPED_RE`** (linha 117): é leitura de saída de runner, não instância, e um projeto que declare um runner `.ts` no `runners` continua precisando dela.
 5. `verificacao.py`: `SENTINELA_REENTRANCIA` passa a `"DECODE_AND_CODE_VERIFICACAO_EM_CURSO"`.
 6. Retirar de `backlog.py`, `lint_skill.py` e `lint_unidade.py` as citações de docstring a `docs/plan/hub/` e `docs/plan/builder/` — são links mortos neste repositório. O racional que elas carregam fica; some só o ponteiro.
 7. Retirar da norma as linhas que citam cores, caminhos e serviços do AmFlow, e a nota de migração que anuncia esta unidade. O `project:` do frontmatter passa a `DecodeAndCode`.
@@ -75,7 +75,8 @@ funcionar sem configurar nada.
 | `.claude/skills/decode-and-code/config.json` | **novo** — as quatro chaves |
 | `.claude/skills/decode-and-code/scripts/lib.py` | `config()`; `plan_root()` e `_find_repo_root()` leem dela |
 | `.claude/skills/decode-and-code/scripts/scaffold.py` | `move_script` vem do config (hoje linha 38) |
-| `.claude/skills/decode-and-code/scripts/verificacao.py` | mapa `runners`; sai o ramo `.ts` (hoje linhas 155-160); sentinela renomeada (linha 43) |
+| `.claude/skills/decode-and-code/scripts/verificacao.py` | mapa `runners`; sai `_comando_typescript` (linhas 155-160); **fica** `_VITEST_SKIPPED_RE` (linha 117); sentinela renomeada (linha 43) |
+| `.claude/skills/decode-and-code/scripts/tests/test_verificacao.py` | sai a classe `TestComandoTypescript` (linhas 330-351), que cobre a função removida e **passa hoje**. Os quatro `test_vitest_*` de `TestExecucaoIncompleta` (linhas 241-262) **ficam** — cobrem a regex, não o runner |
 | `.claude/skills/decode-and-code/scripts/backlog.py` | docstring linha 19 |
 | `.claude/skills/decode-and-code/scripts/lint_skill.py` | docstring linhas 10 e 140 |
 | `.claude/skills/decode-and-code/scripts/lint_unidade.py` | docstring linha 15 |
@@ -102,6 +103,11 @@ Com `config.json` ausente, os scripts resolvem exatamente os mesmos caminhos de 
 `config.json` declarando `plan_root` diferente, `lib.plan_root()` acompanha e `scaffold` grava no
 alvo novo. Nenhum `.py` da skill contém as strings `AmFlow`, `AMFLOW`, `docs/plan/hub` ou
 `docs/plan/builder`. A norma não contém `Supabase` nem os quatro cores do AmFlow.
+
+**Nenhum teste verde vira vermelho.** A única remoção permitida na suíte é `TestComandoTypescript`,
+porque a função que ela cobre deixou de existir — a suíte cai de 158 para 157 rodados, e os 25
+vermelhos herdados continuam sendo os mesmos 25. Os quatro `test_vitest_*` de `TestExecucaoIncompleta`
+continuam verdes: se caírem, a regex foi removida junto com o runner, e isso é erro.
 
 ## Verificação
 
