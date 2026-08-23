@@ -89,8 +89,14 @@ tratei o resultado como fato em vez de leitura provisória. Junto com a `H-03` �
 partir de estado observado — são duas ocorrências no mesmo dia da mesma coisa: **afirmar antes de o
 que está sendo observado parar de se mexer.**
 
-A mitigação barata: quando a medição acontece no meio de uma migração que eu estou conduzindo, ela
-nasce marcada como provisória, e se reconfere no fecho.
+**Teve terceira ocorrência no mesmo dia, e ela é mais específica.** Depois de corrigir 34 para 26, o
+número virou 25 — porque as duas primeiras medições usaram uma invocação minha de `unittest`, e só a
+terceira usou `./scripts/test-python.sh`, que é o oráculo que o gate de saída realmente roda. A conta
+não estava errada: **a ferramenta estava.**
+
+A regra que sai daqui é mais forte que "reconferir no fecho": **medir com o oráculo do projeto, nunca
+com um equivalente que eu monto na hora.** Se existe script que o gate usa, é ele que dá o número —
+qualquer outro produz um valor que parece certo, passa em revisão, e vira afirmação em três seções.
 
 ### H-03 · `padrão` · 2026-08-22 · Claude
 

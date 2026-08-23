@@ -17,7 +17,7 @@ block: ""
 author: Bortoli
 created: 2026-08-21
 status: draft
-version: 2.3.0
+version: 2.4.0
 updated: 2026-08-22
 
 # system
@@ -99,11 +99,11 @@ preservado inteiro.
 | # | Unidade | Responsabilidade |
 |---|---|---|
 | 01 | `config-and-paths` | Os 6 scripts acoplados deixam de assumir `docs/plan/`, os cores do AmFlow e a norma em caminho fixo: tudo resolve por `config.json` com defaults embutidos (`D-11`). As **36 linhas da norma** que citam cores e caminhos do AmFlow saem no mesmo movimento, porque são **sobre a mesma coisa** |
-| 02 | `test-fixtures` | Os **26 testes que usam arquivos reais do AmFlow como fixture** ganham fixtures próprios. Oráculo direto: `unittest discover` verde |
+| 02 | `test-fixtures` | Os **25 testes que usam arquivos reais do AmFlow como fixture** ganham fixtures próprios. Oráculo direto: `./scripts/test-python.sh` verde |
 
-**Vem primeiro por medição, não por gosto.** A suíte migrada roda 145 testes: **118 passam, 26 falham**
-e 1 é pulado — as 26 por apontarem para arquivos como `docs/plan/hub/0001-mcp/01-handler-auth.md`,
-que não existem aqui.
+**Vem primeiro por medição, não por gosto.** Sob `./scripts/test-python.sh`, o harness do próprio
+projeto, a suíte migrada roda **158 testes: 132 passam, 25 falham** e 1 é pulado — as 25 por apontarem
+para arquivos como `docs/plan/hub/0001-mcp/01-handler-auth.md`, que não existem aqui.
 Enquanto ela estiver vermelha, **nenhuma unidade posterior consegue passar pelo gate de saída**, que
 exige teste passando. É pré-requisito de tudo.
 
@@ -407,7 +407,7 @@ aviso de que a cópia está fora de sincronia.
 | `InstructionsLoaded` é monitoramento puro — não bloqueia nem altera carregamento, e descarta stdout/stderr. O canal é `systemMessage` | Referência de hooks do Claude Code |
 | Rule com `paths:` ativa na **leitura** de arquivo que casa o glob, não na escrita nem em toda chamada de ferramenta | Doc de memória, *Path-specific rules* |
 | A unidade `13` alcança um **repositório público** — efeito externo e irreversível. Entrega diff e mecanismo; publicar é ato humano | Precedente da `AmFlow:0003-05` |
-| A suíte migrada roda 145 testes, **26 vermelhos** por fixture apontando para arquivo do AmFlow. Até a `02`, nenhuma unidade passa pelo gate de saída | Medido em 2026-08-22, após a migração da norma |
+| A suíte migrada roda 158 testes, **25 vermelhos** por fixture apontando para arquivo do AmFlow. O gate roda **por arquivo declarado**, não pela suíte — então `01` e `02` fecham normalmente com o resto vermelho | Medido em 2026-08-22 com `./scripts/test-python.sh` |
 | Nenhuma unidade escreve no **AmFlow**. O incidente de lá escolhe a regra, o fixture a prova aqui, e instalar é consequência reportada — item do backlog daquele repositório | Decidido na revisão de 2026-08-22 |
 | Python 3.10 (versão do Cowork), stdlib pura | `AmFlow:.claude/CLAUDE.md` |
 | `state` e `verified_at` nunca se editam à mão — são projetados por script | Norma, *Os dois gates* |
@@ -572,7 +572,7 @@ que prova, e não inventa uma fase para ter o que testar.
 | L-05 | **Nenhuma checagem de consistência entre normas** | A doc do Claude Code afirma que instruções contraditórias fazem o modelo escolher arbitrariamente. Com `CLAUDE.md` + norma + princípios + N guidelines ativas, a superfície de contradição cresce, e nada a mede. **Fica fora do escopo, mas o gatilho deixou de ser impressão:** a colisão passa a existir quando **duas rules ativas casam o mesmo path**, que é condição observável — e a `05` já vê todo carregamento, então é o detector natural, sem construir nada. Item de backlog, a escrever quando a condição ocorrer, não numa data |
 | L-08 | **Os cinco gatilhos de escrita do huddle não são verificáveis por script** | A regra de despejo é — entrada fechada não permanece no arquivo, e isso é o oráculo da `17`. Os gatilhos não: *"decidiu algo que o humano não decidiu"* é observável por quem escreve, e por mais ninguém. **A mitigação que a `17` passou a carregar é fraca e vale dizer o quanto:** exigir a linha de fecho mesmo com zero entradas separa *conferi e não havia* de *nunca conferi*, que hoje são indistinguíveis — mas não diz nada sobre os gatilhos terem disparado certo. Um relatório honesto com zero e um relatório desatento com zero continuam idênticos. É o `B-01` outra vez: conteúdo que depende de julgamento não ganha oráculo por se querer que ganhe |
 | L-09 | **Guideline não sobrevive à compactação, e a correção continua cara demais** | Medido em 2026-08-22: rule com `paths:` recarrega apenas quando um arquivo que casa o glob é lido de novo. Numa sessão longa que compacta e segue editando sem reler, a guideline **sai de contexto e não volta**. As saídas candidatas — reler um arquivo-âncora após `PostCompact`, ou promover a guideline crítica a rule sem `paths:` — trocam correção por custo de contexto permanente, que é o problema que o escopo por glob existe para resolver. **O que a `05` passou a fazer é remover o silêncio, não a perda:** em `PostCompact` ela nomeia o que estava ativo e não voltou. Decidir a correção fica para quando houver guideline em uso real e dado sobre com que frequência isso morde |
-| L-10 | **A suíte migrada está vermelha: 118 passam, 26 falham, 1 é pulado** | **Fechada em 2026-08-22 — não era lacuna, era escopo.** As 26 falham por usarem arquivos reais do AmFlow como fixture, e é exatamente a razão de a unidade `02` existir. Os scripts em si têm apenas **5** auto-referências ao nome antigo: o acoplamento real não está no código, está nos testes. A **lição** que veio junto não é do plano e foi para o huddle como `padrão`: a primeira medição do dia deu 34 e estava errada, porque foi feita antes de a norma migrar — e o número virou afirmação em três seções antes de alguém conferir |
+| L-10 | **A suíte migrada está vermelha: 132 passam, 25 falham, 1 é pulado de 158** | **Fechada em 2026-08-22 — não era lacuna, era escopo.** As 25 falham por usarem arquivos reais do AmFlow como fixture, e é a razão de a unidade `02` existir. Os scripts em si têm apenas **5** auto-referências ao nome antigo: o acoplamento está nos testes, não no código. **O número mudou três vezes no mesmo dia, e a causa importa mais que ele:** 34 na primeira medição (feita antes de a norma migrar), 26 na segunda (feita com invocação própria de `unittest`), e 25 na terceira — a única feita com `./scripts/test-python.sh`, que é o oráculo que o gate de saída realmente usa. **Medir com equivalente ad hoc em vez da ferramenta do projeto produz número que parece certo e não é.** A lição foi para o huddle como `padrão`; o que fica aqui é o número canônico |
 
 ## Fonte
 
