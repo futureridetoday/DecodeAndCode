@@ -29,8 +29,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 <!-- planos:start -->
 | # | Plano | Core | Módulo | Origem | Situação | Aprovado |
 |---|---|---|---|---|---|---|
-
-_Nenhum plano aprovado ainda._
+| 0001 | [decode-and-code-foundation](model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md) | model | decode-and-code | — | em desenvolvimento | 2026-08-23 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

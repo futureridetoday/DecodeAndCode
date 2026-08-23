@@ -7,7 +7,7 @@ description: Toda norma é hoje persuasão — zero hooks configurados, nenhuma 
 tags: [dev-units, decode-and-code, principios, guardrails, guidelines, plugin, hooks]
 
 # alvo
-plan_id: ""
+plan_id: "0001"
 plan_size: grande
 core: model
 module: decode-and-code
@@ -16,7 +16,7 @@ block: ""
 # history
 author: Bortoli
 created: 2026-08-21
-status: draft
+status: approved
 version: 2.4.0
 updated: 2026-08-22
 
@@ -50,13 +50,13 @@ suficiente para as falhas aparecerem. Repo novo é greenfield e não tem inciden
 | **Nenhum hook configurado** | `AmFlow:.claude/settings.json` declara `PreToolUse`, `PostToolUse`, `SessionStart`, `Stop` e `SubagentStop` — os cinco com array **vazio** | Não existe norma imposta no repositório. Toda regra é advisory por construção |
 | **Nenhuma regra com escopo** | `.claude/rules/` não existe | Toda norma que é carregada, é carregada sempre — e o que não cabe no orçamento, não é carregado nunca |
 | **`CLAUDE.md` acima do limiar de aderência** | 458 linhas em 2026-08-21; remedido em 2026-08-23 durante a revisão: **465**. A doc do Claude Code fixa o alvo em **200**: *"longer files consume more context and reduce adherence"* | Aderência degradada no arquivo mais importante do projeto, e a distância do alvo está crescendo, não encolhendo |
-| **A camada normativa nunca foi construída** | A norma especifica princípio/guideline/guardrail/referência em `<core>/system/` ([`modelo-dev-units.md:256`](../system/modelo-dev-units.md)) — componente 3 de 5. `find docs/plan -type d -name system` devolve **apenas** `docs/plan/system/` | O componente que resolveria a inconsistência foi desenhado e nunca instanciado |
+| **A camada normativa nunca foi construída** | A norma especifica princípio/guideline/guardrail/referência em `<core>/system/` ([`modelo-dev-units.md:256`](../../system/modelo-dev-units.md)) — componente 3 de 5. `find docs/plan -type d -name system` devolve **apenas** `docs/plan/system/` | O componente que resolveria a inconsistência foi desenhado e nunca instanciado |
 | **O invariante com incidente registrado não tem imposição** | O `CLAUDE.md` proíbe DDL direto em ambiente remoto **e registra a violação**: `notifications_hub_id_fkey`, 2026-08-12, divergência que só apareceu quando alguém tropeçou nela em produção | A proibição existe, já foi violada, e segue dependendo de o modelo lembrar dela na hora |
 | **A cópia no repositório público já divergiu** | A `AmFlow:0003-11` copiou a skill e a norma para `futureridetoday/AmFlowPlugins` à mão em 2026-08-01. Hoje: norma **21 linhas atrás** (falta `#### Precedência entre os blocos`), e 3 dos 9 scripts menores — `regioes.py` 6190/6750, `scaffold.py` 4669/5671, `verificacao.py` **5453/7092** | O repositório público roda um gate de verificação anterior aos planos `0005` e `0006`, ambos concluídos em 2026-08-12. Cópia manual não é distribuição |
 
 > **O candidato óbvio de guardrail não existe mais.** A regra de dependência entre cores — *Worker→Hub,
 > Builder→Hub, Hub→nenhum* — era o exemplo que a norma dava em
-> [`modelo-dev-units.md:280`](../system/modelo-dev-units.md). A `AmFlow:0003-08`
+> [`modelo-dev-units.md:280`](../../system/modelo-dev-units.md). A `AmFlow:0003-08`
 > extraiu `plugins/` para outro repositório, e o par que o `grep` verificava deixou de existir aqui.
 > A própria norma já registra a aposentadoria, na linha 681. Por isso o primeiro guardrail é outro — e
 > escolhido por evidência de falha, não por elegância.
@@ -418,7 +418,7 @@ aviso de que a cópia está fora de sincronia.
 ### Agente: papel e processo, nunca a norma
 
 A norma **não declara agente inútil.** Ela põe um gate com duas condições — *"Agent só se justifica
-onde há julgamento somado a pesquisa ampla, **e só depois de a skill existir**"* ([:724](../system/modelo-dev-units.md)) —
+onde há julgamento somado a pesquisa ampla, **e só depois de a skill existir**"* ([:724](../../system/modelo-dev-units.md)) —
 e ela mesma escreve o desbloqueio: *"se for requisito, e não conveniência, **reabre a decisão sobre
 agents**"* (:843). A skill existe desde 2026-07-26, e a segunda condição foi declarada pelo humano em
 2026-08-22, a partir de uso diário. A unidade `14` registra que o gate abriu; não reverte julgamento
@@ -560,6 +560,9 @@ que prova, e não inventa uma fase para ter o que testar.
 | D-09 | **O nome é `huddle`** — o arquivo é a pauta, o huddle é a conversa | Descartados: `ledger` (registro autoritativo — diz o oposto do que é), `notebook`/`journal` (sugerem acúmulo sem fechamento), `inbox` (colide com `docs/plan/_inbox/`), `loop`/`sync` (colidem com skill nativa e com comando do worker), `bench` (colide com *benchmark*), `pauta` (preciso, mas pt-BR não viaja no plugin) |
 | D-10 | **O método é desenvolvido em repositório próprio, e o AmFlow vira campo de prova.** Os scripts e testes do `dev-units` migraram — 1300 e 2428 linhas, evidência de 15 de 15 unidades em cold-start; `SKILL.md`, norma, princípios e templates nascem aqui | **Decidida em 2026-08-22.** Reescrever do zero jogaria fora as correções dos planos `0005` e `0006` para reganhar bugs já resolvidos; forkar inteiro carregaria as premissas do AmFlow que depois teriam de sair uma a uma. A divisão é a mesma que a norma já traça — **o determinismo migra, a camada normativa nasce nova**. O `dev-units` do AmFlow congelou no mesmo dia: duas cópias editáveis é a condição exata que produziu a divergência de 2026-08-01 |
 | D-11 | **A configuração dos scripts vive em `config.json`, em caminho convencional dentro da skill, com defaults embutidos** | **Decidida na revisão de 2026-08-22**, porque a `01` a exigia e a norma manda que decisão de desenho esteja no plano, não seja descoberta em execução. Env var não é versionável e some entre máquinas; argumento de linha de comando espalha a mesma decisão por chamada. Arquivo declarativo e versionado é o padrão que o projeto já usa em `module.json` e `plugin.json` |
+| D-12 | **A derivação é incremental: a Fase 1 primeiro, o resto depois que ela fechar** | **Decidida na derivação de 2026-08-23.** A `01` reescreve a norma, e as unidades `03`–`17` a citam em *Normas aplicáveis* — derivar quinze contra um documento prestes a mudar é retrabalho garantido. `numeracao.proxima_unidade` lê o disco e continua de onde parou, então o derive incremental é suportado sem nada novo. **Custo aceito:** `backlog._montar_rodape` sempre imprime "N de N derivadas", então o backlog dirá "2 de 2" com quinze unidades faltando |
+| D-13 | **O ramo `.ts`/`npx vitest`/`hub/` sai de `verificacao.py`, substituído pelo mapa `runners` do `config.json`** | Decidida na derivação de 2026-08-23, ao fatiar a `01`. É instância do AmFlow dentro do mecanismo — invariante 2 do `CLAUDE.md`. Torná-lo configurável em vez de removê-lo seria configurabilidade para um caso que não existe aqui; o mapa `runners` preserva o mecanismo e deixa a instância para quem instalar |
+| D-14 | **`tests/test_deprecacao.py` é removido, não reapontado** | Decidida na derivação de 2026-08-23. Ele verifica que `plan-dev-units` e `digital-twin-product` deixaram de se citar — nenhum dos dois existiu neste repositório. Não é fixture errada, é uma unidade do AmFlow (`0002-15`) inteira sem objeto aqui. Reapontar exigiria inventar o que ele verifica |
 
 ## Lacunas
 
@@ -573,13 +576,27 @@ que prova, e não inventa uma fase para ter o que testar.
 | L-08 | **Os cinco gatilhos de escrita do huddle não são verificáveis por script** | A regra de despejo é — entrada fechada não permanece no arquivo, e isso é o oráculo da `17`. Os gatilhos não: *"decidiu algo que o humano não decidiu"* é observável por quem escreve, e por mais ninguém. **A mitigação que a `17` passou a carregar é fraca e vale dizer o quanto:** exigir a linha de fecho mesmo com zero entradas separa *conferi e não havia* de *nunca conferi*, que hoje são indistinguíveis — mas não diz nada sobre os gatilhos terem disparado certo. Um relatório honesto com zero e um relatório desatento com zero continuam idênticos. É o `B-01` outra vez: conteúdo que depende de julgamento não ganha oráculo por se querer que ganhe |
 | L-09 | **Guideline não sobrevive à compactação, e a correção continua cara demais** | Medido em 2026-08-22: rule com `paths:` recarrega apenas quando um arquivo que casa o glob é lido de novo. Numa sessão longa que compacta e segue editando sem reler, a guideline **sai de contexto e não volta**. As saídas candidatas — reler um arquivo-âncora após `PostCompact`, ou promover a guideline crítica a rule sem `paths:` — trocam correção por custo de contexto permanente, que é o problema que o escopo por glob existe para resolver. **O que a `05` passou a fazer é remover o silêncio, não a perda:** em `PostCompact` ela nomeia o que estava ativo e não voltou. Decidir a correção fica para quando houver guideline em uso real e dado sobre com que frequência isso morde |
 | L-10 | **A suíte migrada está vermelha: 132 passam, 25 falham, 1 é pulado de 158** | **Fechada em 2026-08-22 — não era lacuna, era escopo.** As 25 falham por usarem arquivos reais do AmFlow como fixture, e é a razão de a unidade `02` existir. Os scripts em si têm apenas **5** auto-referências ao nome antigo: o acoplamento está nos testes, não no código. **O número mudou três vezes no mesmo dia, e a causa importa mais que ele:** 34 na primeira medição (feita antes de a norma migrar), 26 na segunda (feita com invocação própria de `unittest`), e 25 na terceira — a única feita com `./scripts/test-python.sh`, que é o oráculo que o gate de saída realmente usa. **Medir com equivalente ad hoc em vez da ferramenta do projeto produz número que parece certo e não é.** A lição foi para o huddle como `padrão`; o que fica aqui é o número canônico |
+| L-11 | **O oráculo declarado da `02` não cabe no campo `test:`** | A `02` declara *"`./scripts/test-python.sh` verde"* — a suíte inteira. `verificacao.verificar` aceita **um arquivo** `.py` ou `.ts`: o caminho da suíte levanta `ValueError`, e um diretório devolve `spec` **em silêncio** (`verificacao.py:63`). **Decidido em 2026-08-23:** a `02` declara `tests/test_fixtures.py`, e "suíte verde" vira condição de fechamento da Fase 1, conferida pelo humano. Alargar o gate para a suíte foi recusado — reverteria a `0005-02`, que trocou granularidade de pacote por arquivo, e acoplaria o gate de cada unidade aos testes de todas as outras. **O que permanece em aberto:** o gate da `02` prova menos do que ela entrega, e é a `L-01` outra vez, num lugar novo |
+| L-12 | **A norma define o formato da unidade por um arquivo que não existe aqui** | `modelo-dev-units.md:344` diz *"o formato **não é duplicado aqui**: o exemplo é a fonte"* e aponta para `docs/plan/hub/0001-mcp/01-handler-auth.md`, que ficou no AmFlow. **Contornado em 2026-08-23, não resolvido:** as unidades `01` e `02` foram escritas a partir da tabela de blocos (`:361`), da precedência (`:375`), das regex do `lint_unidade` e do fixture `UNIDADE_VALIDA` — e passaram no gate de entrada com `[]`. Trazer o arquivo do AmFlow foi recusado: cria segunda cópia editável, que é a condição da divergência de 2026-08-01. **Fecha na `01`**, que reescreve a norma e reaponta a referência viva para uma unidade deste repositório |
+| L-13 | **O plano se contradiz sobre o que a suíte vermelha bloqueia** | `:107` e `:553` afirmam que *"nenhuma unidade posterior consegue passar pelo gate de saída"* enquanto a suíte estiver vermelha; `:410` afirma que *"o gate roda por arquivo declarado, não pela suíte"*. **Medido em 2026-08-23:** unidade sintética com teste próprio fechou em `verified` com os 25 vermelhos na suíte — a `:410` está certa e as outras duas erradas. Não muda o escopo: a Fase 1 continua vindo primeiro pela `D-12`, não pelo argumento mecânico. Fica registrada em vez de corrigida em silêncio, porque o texto é do humano |
+
+## Backlog
+
+<!-- backlog:start -->
+| Unidade | Título | Estado |
+|---|---|---|
+| [0001-01](01-config-and-paths.md) | config-and-paths | `spec` |
+| [0001-02](02-test-fixtures.md) | test-fixtures | `spec` |
+
+2 de 2 derivadas · 0 verificadas · atualizado em 2026-08-23
+<!-- backlog:end -->
 
 ## Fonte
 
 - Medições de 2026-08-21 sobre `dev` = `8395030`: `.claude/settings.json`, `wc -l .claude/CLAUDE.md`,
   `find docs/plan -type d -name system`, `grep -ro "dev-units"`, e `gh api` + `diff` contra
   `futureridetoday/AmFlowPlugins`
-- Norma do modelo: [`modelo-dev-units.md`](../system/modelo-dev-units.md), seções *Camada normativa*
+- Norma do modelo: [`modelo-dev-units.md`](../../system/modelo-dev-units.md), seções *Camada normativa*
   e *Avaliação de escopo*
 - Backlog: `AmFlow:docs/plan/_inbox/_backlog.md`, itens `B-01` e `B-02`
 - Documentação do Claude Code: memória e regras (`.claude/rules/`, frontmatter `paths:`, symlinks e

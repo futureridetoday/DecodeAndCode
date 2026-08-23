@@ -32,7 +32,7 @@ verificação e a skill que o executa.
 > conclusões.
 >
 > A retirada do que é específico do AmFlow é trabalho da unidade `01` do plano
-> [`decode-and-code-foundation`](../_inbox/decode-and-code-foundation.md), junto com o desacoplamento
+> [`decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md), junto com o desacoplamento
 > dos scripts. Até lá, ler as menções ao AmFlow como **exemplo**, não como norma.
 
 > **Este documento é norma, não plano.** Não tem `plan_id`, não entra em `_planos.md`, e não segue o

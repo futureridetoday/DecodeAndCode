@@ -25,7 +25,7 @@ dependencies: []
 resolve, **sai** — para a norma, para uma guideline, ou para o `## Decisões` de um plano — e deixa uma
 linha em *Fechadas* com a data e o destino.
 
-Formato, tipos e gatilhos: [`decode-and-code-foundation`](../_inbox/decode-and-code-foundation.md),
+Formato, tipos e gatilhos: [`decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md),
 seção *O `huddle` é fila, não fonte*. Aqui não se duplica a norma; aqui se usa.
 
 > **Protótipo.** Escrito em 2026-08-22 antes da unidade `11` existir, por decisão do humano: a forma de
