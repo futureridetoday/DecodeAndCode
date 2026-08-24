@@ -15,9 +15,9 @@ unit_id: 0001-01
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_config.py
-verified_at: ""
+verified_at: 2026-08-24
 
 # history
 author: Bortoli
@@ -60,12 +60,12 @@ funcionar sem configurar nada.
 ## Sequência
 
 1. Escrever `config.json` com as quatro chaves acima e `lib.config()` — leitura com `json.loads`, sobreposição sobre os defaults embutidos, cache em módulo. Ausente cai no default; malformado levanta.
-2. `lib.py`: `plan_root()` e `_find_repo_root()` passam a ler `config()`. As docstrings perdem "AmFlow" e a citação de `estudo-runtime-e-dependencias.md`, que não existe neste repositório.
+2. `lib.py`: `plan_root()` e `_find_repo_root()` passam a ler `config()`. As docstrings perdem "AmFlow" e a citação de `estudo-runtime-e-dependencias.md`, que não existe neste repositório. `ROOT_MARKERS` deriva de `_DEFAULTS` — um literal só, invariante 1.
 3. `scaffold.py`: o caminho de `move-md.py` vem de `config()["move_script"]` em vez da constante da linha 38.
 4. `verificacao.py`: `_comando()` resolve a extensão pelo mapa `runners`, e extensão fora do mapa levanta `ValueError` como hoje. **Sai `_comando_typescript`** (linhas 155-160) e com ela a classe `TestComandoTypescript` — é instância do AmFlow, e o mapa a substitui. **Fica `_VITEST_SKIPPED_RE`** (linha 117): é leitura de saída de runner, não instância, e um projeto que declare um runner `.ts` no `runners` continua precisando dela.
 5. `verificacao.py`: `SENTINELA_REENTRANCIA` passa a `"DECODE_AND_CODE_VERIFICACAO_EM_CURSO"`.
 6. Retirar de `backlog.py`, `lint_skill.py` e `lint_unidade.py` as citações de docstring a `docs/plan/hub/` e `docs/plan/builder/` — são links mortos neste repositório. O racional que elas carregam fica; some só o ponteiro.
-7. Retirar da norma as linhas que citam cores, caminhos e serviços do AmFlow, e a nota de migração que anuncia esta unidade. O `project:` do frontmatter passa a `DecodeAndCode`.
+7. Retirar da norma **a instância** do AmFlow — cores, caminhos, serviços, planos nomeados e o nome antigo da skill —, e a nota de migração que anuncia esta unidade. O `project:` do frontmatter passa a `DecodeAndCode`. **Generalizar, não deletar:** afirmação de mecanismo escrita sobre um exemplo do AmFlow perde o exemplo e mantém a afirmação — deletar a subseção inteira remove mecanismo, e é regressão (`L-14`). Alcança a subseção *Guardrail fundador*, a linha *"Há erros de arquitetura?"* que a referencia no *Modo `review`*, e os ponteiros a `.claude/skills/dev-units/`. Nome dentro de bloco de código como exemplo didático fica.
 8. Escrever `tests/test_config.py` cobrindo o critério de aceite.
 
 ## Arquivos
@@ -101,13 +101,20 @@ Nenhuma. É a primeira unidade do plano.
 
 Com `config.json` ausente, os scripts resolvem exatamente os mesmos caminhos de hoje. Com um
 `config.json` declarando `plan_root` diferente, `lib.plan_root()` acompanha e `scaffold` grava no
-alvo novo. Nenhum `.py` da skill contém as strings `AmFlow`, `AMFLOW`, `docs/plan/hub` ou
-`docs/plan/builder`. A norma não contém `Supabase` nem os quatro cores do AmFlow.
+alvo novo.
+
+**Escopo do desacoplamento: `scripts/*.py` e a norma — `tests/` é da `02`.** Nenhum `.py` **fora de
+`tests/`** cita o AmFlow, e a norma não carrega **instância** dele: nem serviço, nem core, nem
+caminho, nem plano nomeado. O critério é sobre instância, não sobre uma lista de strings — `0003-08`
+e `plugins/` não contêm nenhuma das strings e são instância do mesmo jeito (`L-14`). Os fixtures
+sintéticos em `tests/` que declaram `project: AmFlow` **ficam**: retirá-los é o critério de aceite da
+`02`, e antecipá-lo aqui derruba os 25 vermelhos que a `02` existe para fechar.
 
 **Nenhum teste verde vira vermelho.** A única remoção permitida na suíte é `TestComandoTypescript`,
-porque a função que ela cobre deixou de existir — a suíte cai de 158 para 157 rodados, e os 25
-vermelhos herdados continuam sendo os mesmos 25. Os quatro `test_vitest_*` de `TestExecucaoIncompleta`
-continuam verdes: se caírem, a regex foi removida junto com o runner, e isso é erro.
+porque a função que ela cobre deixou de existir — a suíte cai de 158 para 157 rodados **antes** dos
+testes novos, e os 25 vermelhos herdados continuam sendo os mesmos 25. Os quatro `test_vitest_*` de
+`TestExecucaoIncompleta` continuam verdes: se caírem, a regex foi removida junto com o runner, e isso
+é erro.
 
 ## Verificação
 

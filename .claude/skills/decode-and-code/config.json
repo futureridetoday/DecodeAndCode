@@ -1,0 +1,8 @@
+{
+  "plan_root": "docs/plan",
+  "root_markers": [".claude", "docs"],
+  "move_script": "scripts/move-md.py",
+  "runners": {
+    ".py": "scripts/test-python.sh"
+  }
+}

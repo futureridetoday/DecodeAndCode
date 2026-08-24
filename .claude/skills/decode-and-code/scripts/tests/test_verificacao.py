@@ -327,30 +327,6 @@ class TestGranularidadeDeArquivo(unittest.TestCase):
         self.assertEqual(comando_passa[-1], "pacote/tests/test_passa.py")
 
 
-class TestComandoTypescript(unittest.TestCase):
-    def test_roda_a_partir_de_hub_com_caminho_relativo(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            raiz = Path(tmp).resolve()
-            alvo_teste = raiz / "hub" / "test" / "api" / "mcp.test.ts"
-            alvo_teste.parent.mkdir(parents=True)
-            alvo_teste.write_text("// ts\n", encoding="utf-8")
-            unidade = raiz / "unidade.md"
-            _escreve_unidade(unidade, test="hub/test/api/mcp.test.ts")
-
-            with mock.patch.object(lib, "repo_root", return_value=raiz):
-                with mock.patch.object(
-                    verificacao.subprocess,
-                    "run",
-                    return_value=mock.Mock(returncode=0, stdout=b"", stderr=b""),
-                ) as executar:
-                    estado, _ = verificacao.verificar(unidade)
-
-            self.assertEqual(estado, "verified")
-            args, kwargs = executar.call_args
-            self.assertEqual(args[0], ["npx", "vitest", "run", "test/api/mcp.test.ts"])
-            self.assertEqual(kwargs["cwd"], raiz / "hub")
-
-
 class TestDryRun(unittest.TestCase):
     def test_nao_escreve_e_devolve_escreveu_false(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -35,7 +35,7 @@ import numeracao
 import regioes
 
 _spec = importlib.util.spec_from_file_location(
-    "move_md", lib.repo_root() / "scripts" / "move-md.py"
+    "move_md", lib.repo_root() / lib.config()["move_script"]
 )
 move_md = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(move_md)

@@ -6,13 +6,11 @@ extensão e escreve o estado derivado de volta — nunca o corpo (decisão 13).
 Teste declarado mas inexistente no disco não é erro: é o caso normal de
 unidade nova, e resulta em `spec` (decisão 15).
 
-A escolha do runner compõe o que já existe em vez de reimplementar:
-`scripts/test-python.sh` aceita o arquivo de teste como alvo, e o caminho
-declarado é passado por inteiro, sem reduzir ao diretório-pacote —
-granularidade de arquivo, não de pacote (unidade 0005-02; a redução a
-pacote era a imprecisão aceita pela norma, lacuna L-05 do plano 0002).
-`.ts` roda por `npx vitest run`, com cwd em `hub/` e caminho relativo a
-ele — a forma documentada em docs/plan/hub/0001-mcp/01-handler-auth.md.
+A escolha do runner vem do mapa `runners` do config — cada extensão de teste
+aponta para o script que a roda, caminho relativo à raiz do repositório. O
+caminho do teste declarado é passado por inteiro ao runner, sem reduzir ao
+diretório-pacote — granularidade de arquivo, não de pacote (unidade 0005-02; a
+redução a pacote era a imprecisão aceita pela norma, lacuna L-05 do plano 0002).
 
 Timeout conta como falha (`spec`), nunca como exceção: o objetivo do timeout
 é só impedir que um teste interativo trave a verificação, não distinguir
@@ -40,7 +38,7 @@ TIMEOUT_SEGUNDOS = 120
 # fim — aconteceu em 2026-07-25 e produziu 763 processos órfãos, porque
 # subprocess.kill() mata só o filho direto e o timeout não alcança a árvore.
 # O ambiente do subprocesso carrega a marca; reentrar levanta em vez de rodar.
-SENTINELA_REENTRANCIA = "AMFLOW_VERIFICACAO_EM_CURSO"
+SENTINELA_REENTRANCIA = "DECODE_AND_CODE_VERIFICACAO_EM_CURSO"
 
 
 def verificar(unidade: Path, dry_run: bool = False) -> tuple[str, bool]:
@@ -140,22 +138,14 @@ def _execucao_incompleta(saida: str) -> bool:
 
 
 def _comando(caminho_teste: Path, raiz: Path) -> tuple[list[str], Path]:
-    """Runner pela extensão do teste — `ValueError` se não for `.py` nem `.ts`."""
-    if caminho_teste.suffix == ".py":
-        return _comando_python(caminho_teste, raiz)
-    if caminho_teste.suffix == ".ts":
-        return _comando_typescript(caminho_teste, raiz)
-    raise ValueError(f"extensão de teste sem runner declarado — {caminho_teste}")
+    """Runner pela extensão do teste, resolvido pelo mapa `runners` do config.
 
-
-def _comando_python(caminho_teste: Path, raiz: Path) -> tuple[list[str], Path]:
-    """`scripts/test-python.sh <arquivo>` — granularidade de arquivo, não de pacote."""
-    comando = [str(raiz / "scripts" / "test-python.sh"), str(caminho_teste.relative_to(raiz))]
+    `ValueError` se a extensão não tiver runner declarado. O runner sempre
+    roda a partir da raiz do repositório, com o caminho do teste relativo a
+    ela — um único mecanismo para qualquer extensão que o config declarar.
+    """
+    runner = lib.config()["runners"].get(caminho_teste.suffix)
+    if runner is None:
+        raise ValueError(f"extensão de teste sem runner declarado — {caminho_teste}")
+    comando = [str(raiz / runner), str(caminho_teste.relative_to(raiz))]
     return comando, raiz
-
-
-def _comando_typescript(caminho_teste: Path, raiz: Path) -> tuple[list[str], Path]:
-    """`npx vitest run <caminho>` a partir de `hub/` — forma documentada na unidade 0001-01."""
-    hub_dir = raiz / "hub"
-    comando = ["npx", "vitest", "run", str(caminho_teste.relative_to(hub_dir))]
-    return comando, hub_dir

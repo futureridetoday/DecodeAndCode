@@ -2,7 +2,7 @@
 # about
 name: modelo-dev-units
 type: doc
-project: AmFlow
+project: DecodeAndCode
 description: Norma do modelo de Unidades de Desenvolvimento — hierarquia core/module/block/unit, unidade como arquivo autossuficiente para cold-start, estado derivado de verificação, norma de lote de 8 passos, avaliação de escopo e a skill dev-units. Documento normativo: define o formato que os planos obedecem
 tags: [dev-units, metodologia, spec-driven, clean-architecture, core, cold-start, processo, documentacao, fix, plan]
 
@@ -24,24 +24,10 @@ dependencies: []
 Define o método de **Unidades de Desenvolvimento**: hierarquia, formatos, nomenclatura, gates de
 verificação e a skill que o executa.
 
-> **Migrada do AmFlow em 2026-08-22, e ainda não desacoplada.** Das 869 linhas, 36 citam cores,
-> caminhos ou serviços do AmFlow — `Security`/`Worker`/`Hub`/`Builder`, `docs/plan/`, Supabase. O
-> resto é conhecimento medido e independente de projeto: o teto de 8 passos vem do p90 de 86 unidades
-> reais, o cold-start como critério de suficiência da unidade, os dois gates, e o caso registrado que
-> originou a regra de escopo. Reescrever isso do zero destruiria a medição para reganhar as mesmas
-> conclusões.
->
-> A retirada do que é específico do AmFlow é trabalho da unidade `01` do plano
-> [`decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md), junto com o desacoplamento
-> dos scripts. Até lá, ler as menções ao AmFlow como **exemplo**, não como norma.
-
 > **Este documento é norma, não plano.** Não tem `plan_id`, não entra em `_planos.md`, e não segue o
 > formato de plano — é o formato **que os planos obedecem**. A ordem importa: a norma existe
 > primeiro, planos vêm depois e a seguem. Um documento que definisse o formato de plano *sendo* um
 > plano nesse formato seria circular.
->
-> A implementação desta norma é o plano
-> [`0002-dev-units`](../builder/0002-dev-units/0002-dev-units.md) — o primeiro escrito sob ela.
 
 **Por que existe:** o padrão anterior especificava bem, mas não fechava o ciclo. Não definia
 "pronto", não ligava à verificação, não tinha estado, e não produzia unidades executáveis por um
@@ -73,8 +59,8 @@ Ancorado em evidência empírica, não em tendência de mercado.
 
 **O que deliberadamente não foi adotado.** Spec-Driven Development (GitHub Spec Kit, AWS Kiro, Tessl)
 é a corrente dominante, mas **nenhuma dessas ferramentas tem validação empírica**. A avaliação do
-Spec Kit identificou incompatibilidade estrutural com o AmFlow: é **spec-first** (spec descartada
-após uso) enquanto o AmFlow precisa de **spec-anchored**; tem baixo benefício relatado em sistemas
+Spec Kit identificou incompatibilidade estrutural com este modelo: é **spec-first** (spec descartada
+após uso) enquanto o modelo precisa de **spec-anchored**; tem baixo benefício relatado em sistemas
 multi-módulo e brownfield; e produz **volume documental**, que é o modo de falha já vivido aqui.
 
 Conclusão: adotar o **princípio** (spec-anchored, lote pequeno, verificação objetiva), não a
@@ -93,7 +79,7 @@ imediato.
 | Capacidade | Evidência |
 |---|---|
 | Fatia vertical como unidade | 86 unidades com contrato Entrada/Saída/Auth/Efeito/Erro |
-| Rastreabilidade doc ↔ código | **90 referências** via comentário-cabeçalho (`hub/proxy.ts:5` → `// AU-06`) |
+| Rastreabilidade doc ↔ código | **90 referências** via comentário-cabeçalho (`proxy.ts:5` → `// AU-06`) |
 | Registro de pendências | **11 lacunas** `L-XX` catalogadas |
 | Preservação do racional | Notas `>` com trade-offs (ex.: invalidação antecipada em `AU-02`) |
 
@@ -106,16 +92,6 @@ imediato.
 | **Não tem estado** | **18 de 18** em `status: draft`, com código em produção |
 | **Não norma o lote** | De **1 a 18** unidades por arquivo; **22 de 86 (26%)** sem sequência numerada |
 | **Não serve a cold-start** | Nenhuma declara arquivos a tocar nem normas aplicáveis |
-
-### Cobertura por core
-
-| Core | dev-units |
-|---|---|
-| Hub | 17 |
-| Worker | 1 |
-| **Builder** | **0** |
-
-O Builder é um core declarado, produz `plugins/builder`, e não tem nenhuma especificação.
 
 ---
 
@@ -153,7 +129,7 @@ Campos exigidos:
 | Sequência numerada (≤ 8 passos) | Falta em 26% |
 | Dependências | Existe |
 | **Arquivos a tocar** (caminhos concretos) | Não existe |
-| **Normas aplicáveis** (referência, nunca cópia) | Implícito em `hub-front` |
+| **Normas aplicáveis** (referência, nunca cópia) | Implícito em skills de padrões, nunca declarado como norma |
 | **Critério de aceite** | 0 de 18 |
 | **Teste que o comprova** | 0 de 18 |
 
@@ -164,7 +140,7 @@ Campos exigidos:
 ### 1. Hierarquia estrutural
 
 ```
-System           → AmFlow
+System           → o repositório
   Core           → fronteira de ownership: declarada por projeto, em `config.json`
     Module       → capability de domínio: auth, catalog, mcp
       Block      → variação/extensão aditiva (opcional): login-google
@@ -176,23 +152,16 @@ System           → AmFlow
 > unidade. Forçar o inglês no texto explicativo custa precisão sem ganho: *"as unidades de
 > desenvolvimento concluídas hoje"* não tem equivalente natural em inglês.
 
-> **`core` aqui não é o `core` de Clean Architecture.** No AmFlow é uma fronteira **vertical** (por
+> **`core` aqui não é o `core` de Clean Architecture.** Aqui é uma fronteira **vertical** (por
 > ownership) — conceitualmente um **Bounded Context** do DDD. Em Clean Architecture, "core" designa o
-> centro **concêntrico** de política, oposto às bordas. O Core Hub tem, ele próprio, um core
-> concêntrico (regras do marketplace) e bordas (Next.js, Supabase, Stripe). O princípio de Clean
-> Architecture que este modelo adota é a **regra de dependência** (componente 3), não a nomenclatura.
+> centro **concêntrico** de política, oposto às bordas: um core vertical pode ter, ele próprio, um
+> centro concêntrico de regras e bordas de infraestrutura. O princípio de Clean Architecture que este
+> modelo adota é a **regra de dependência** (componente 3), não a nomenclatura.
 
 **Ownership e localização são eixos independentes.** Um core pode possuir um módulo hospedado em
-outro core, por necessidade arquitetural:
-
-| | Security | Hub |
-|---|---|---|
-| Produz deployable | Não | Sim |
-| É dono de `auth` | **Sim** | Não |
-| Hospeda `auth` | Não | **Sim** |
-
-O módulo de autenticação fica em `hub/auth/` porque o Hub é o Identity Provider onde o Supabase Auth
-roda; o módulo declara `owner: security` no frontmatter.
+outro core, por necessidade arquitetural — por exemplo, o core hospedeiro é o único com a
+infraestrutura de identidade configurada. O módulo declara `owner: <core-dono>` no frontmatter,
+independente de onde estiver hospedado.
 
 **Estrutura no disco — `docs/plan/`:**
 
@@ -201,27 +170,20 @@ docs/plan/
   _inbox/                     planos aguardando revisão e aprovação
   _planos.md                  tabela dos planos aprovados — fonte da numeração
 
-  security/                   core transversal — sem deployable próprio
-    index.md
-    system/                   normativa de segurança, vale para todos os cores
-
-  hub/
+  <core>/
     index.md                  doc geral do core, na raiz
-    system/                   arquitetura, testes, ferramentas, infra do Hub
-    0001-mcp/                 módulo — a pasta recebe o número do plano que a criou
-      0001-mcp.md             plano — mesmo nome da pasta
+    system/                   arquitetura, testes, ferramentas, infra do core
+    <NNNN>-<módulo>/          módulo — a pasta recebe o número do plano que a criou
+      <NNNN>-<módulo>.md      plano — mesmo nome da pasta
       index.md                doc geral do módulo
-      01-handler-auth.md      unidade — numeração por plano
-      02-search-catalog.md
-      0005-oauth/             bloco — numerado pelo plano que o criou
-        0005-oauth.md
-        01-callback.md
+      01-<unidade>.md         unidade — numeração por plano
+      02-<unidade>.md
+      <NNNN>-<bloco>/         bloco — numerado pelo plano que o criou
+        <NNNN>-<bloco>.md
+        01-<unidade>.md
       fix/                    opcional
-    0002-auth/                owner: security · hospedado no hub
-    0003-catalog/
 
-  worker/    index.md · system/
-  builder/   index.md · system/
+  <outro-core>/                index.md · system/
 ```
 
 - **`system/`** guarda o que **não é feature** mas é fundamental ao core: definições de arquitetura,
@@ -273,33 +235,31 @@ Vive em **`<core>/system/`**.
 | **Princípio** | direção, o porquê — estável | mobile first |
 | **Guideline** | como técnico | breakpoints, biblioteca de UI |
 | **Guardrail** | limite verificável | nunca `process.env` direto |
-| **Referência** | fonte externa canônica | docs do Supabase SSR |
+| **Referência** | fonte externa canônica | docs oficiais de uma biblioteca-chave |
 
 **Regra anti-drift inegociável: uma fonte por fato.** A unidade *referencia* a norma, nunca a copia.
 
 O `CLAUDE.md` permanece como camada normativa de **processo**; `<core>/system/` cobre o **domínio**;
-`security/system/` cobre o que é **transversal** a todos os cores.
+um core transversal cobre o que vale para **todos** os outros cores.
 
 #### Guardrail fundador — regra de dependência entre cores
 
-É o que dá função arquitetural ao nível core, e a tradução real do princípio central de Clean
-Architecture (*Dependency Rule*):
+É o que dá **função arquitetural** ao nível core, e a tradução real do princípio central de Clean
+Architecture (*Dependency Rule*): o projeto declara um grafo acíclico entre os seus cores, e nenhuma
+referência corre contra a seta.
 
 ```
-Worker  ──► Hub
-Builder ──► Hub
-Hub     ──► (nenhum core)
+<core-periférico>  ──►  <core-central>
+<core-central>     ──►  (nenhum core)
 ```
 
-**Já é respeitado pelo código hoje** — verificado em 2026-07-19:
+**Declarar não é aspiração:** o grafo se escreve quando o código já o respeita, e a declaração
+formaliza um invariante que já vale. Por ser **verificável por grep** — referências de um core ao
+outro, contadas nas duas direções —, é o candidato natural a primeiro guardrail automatizado.
 
-| Direção | Medição |
-|---|---|
-| Hub → plugins | **0 referências** |
-| plugins → Hub | múltiplas (`worker/.mcp.json`, `plugin.json`, `commands/{get,hub-check,hub-update}.md`) |
-
-Declarar não é aspiração: formaliza um invariante que já vale. Por ser **verificável por grep**, é o
-candidato natural a primeiro guardrail automatizado.
+> **O grafo é do projeto que instala, nunca do plugin.** O mecanismo — declarar o grafo e verificá-lo
+> por contagem — viaja; a instância não. Projeto que não declara grafo não ganha o check: ele volta a
+> ser julgamento, e o *Modo `review`* registra isso.
 
 ### 4. Norma de lote e decomposição
 
@@ -342,8 +302,9 @@ com o número de decisões que o agente precisa tomar — a origem da variância
 ## Formato do arquivo de unidade
 
 Referência viva:
-[`docs/plan/hub/0001-mcp/01-handler-auth.md`](../hub/0001-mcp/01-handler-auth.md) — instância
-real, validada contra código em produção. O formato **não é duplicado aqui**: o exemplo é a fonte.
+[`docs/plan/model/0001-decode-and-code-foundation/01-config-and-paths.md`](../model/0001-decode-and-code-foundation/01-config-and-paths.md) —
+instância real, validada contra código em produção. O formato **não é duplicado aqui**: o exemplo é
+a fonte.
 
 ### Regiões — quem escreve o quê
 
@@ -387,8 +348,8 @@ Quem executa e encontra divergência: **entrega pelo contrato e registra a diver
 nunca escolhe em silêncio, e nunca reduz o escopo para caber na sequência. Corrigir a unidade é de
 quem orquestra, e a divergência vira lacuna `L-XX` no plano.
 
-> Origem: `L-17` e o gap de cobertura da `0001-13` em
-> [`0001-mcp.md`](../hub/0001-mcp/0001-mcp.md). Nos dois casos o executor resolveu certo, mas teve de
+> Origem: `L-17` e o gap de cobertura da `0001-13`, no plano que motivou esta regra. Nos dois casos
+> o executor resolveu certo, mas teve de
 > **derivar** a precedência, porque ela não estava escrita. Em um deles a derivação saiu ao contrário
 > — a tabela de arquivos prevaleceu sobre o critério — e a única regra nova da unidade ficou sem
 > oráculo.
@@ -452,8 +413,8 @@ começar uma unidade nova sem quebrar o ciclo.
 O plano declara onde suas unidades vão viver, com os mesmos campos da unidade:
 
 ```yaml
-core: hub
-module: mcp
+core: <core>
+module: <module>
 block: ""        # vazio quando o plano não cria bloco
 ```
 
@@ -508,17 +469,9 @@ próprio repositório.
 
 ### O caso que originou a regra
 
-O esforço de separar o plugin `amflow` em Worker e Builder foi executado junto com a troca do
-mecanismo de conexão com o Hub para MCP. Resultado: funcionalidades com erros e conflitos, e
-documentação que não se sustentou.
-
-A evidência está registrada em `docs/mvp/80_fix/`:
-
-| Sinal | Onde |
-|---|---|
-| O plano do MCP se declara subordinado a outro | `conexao-plugins-hub-mcp.md` — *"dentro da refatoração de separação dos plugins"* |
-| E altera decisões de um plano em andamento | mesma fonte — seção *"Impacto nas decisões do split"* |
-| Volume total do esforço | **1.826 linhas em cinco documentos** — `escopo` 201 · `separacao` 379 · `conexao` 350 · `conexao-impl` 219 · `runbook` 677 |
+Um esforço de separar um componente em dois foi executado junto com a troca do mecanismo de conexão
+entre eles. Resultado: funcionalidades com erros e conflitos, e documentação que não se sustentou —
+volume total registrado de 1.826 linhas em cinco documentos, entre plano, escopo e runbook.
 
 Não foi um plano grande demais: foram **dois planos acoplados**, um alterando decisões do outro
 enquanto ambos corriam.
@@ -594,15 +547,16 @@ Restrições: kebab-case, **inglês**, 2–5 tokens, ≤ 64 caracteres, sem cone
 **Na aprovação, recebe o número** — 4 dígitos, sequencial global, atribuído uma única vez:
 
 ```
-_inbox/evolve-tools.md   →   hub/0004-evolve-tools/0004-evolve-tools.md
+_inbox/evolve-tools.md   →   <core>/0004-evolve-tools/0004-evolve-tools.md
 ```
 
 A pasta criada tem **exatamente o mesmo nome** do arquivo. Quando o plano cria um módulo, seu nome
-costuma ser o próprio módulo: `_inbox/mcp.md` → `hub/0001-mcp/0001-mcp.md`.
+costuma ser o próprio módulo: `_inbox/mcp.md` → `<core>/0001-mcp/0001-mcp.md`.
 
-> **"Sem repetir o caminho"** é regra nova, e só faz sentido agora: em `80_fix/` tudo era plano, então
-> o nome precisava carregar o contexto inteiro. Em `docs/plan/<core>/<module>/`, o contexto está no
-> caminho — um plano em `hub/mcp/` não se chama `evolve-tools-hub-mcp`, e sim `evolve-tools`.
+> **"Sem repetir o caminho"** é regra nova, e só faz sentido quando o caminho já carrega contexto: num
+> diretório plano, onde tudo era plano solto, o nome precisava carregar o contexto inteiro. Em
+> `docs/plan/<core>/<module>/`, o contexto está no caminho — um plano em `<core>/mcp/` não se chama
+> `evolve-tools-mcp-do-core`, e sim `evolve-tools`.
 
 **O plano mantém o nome ao sair do `_inbox`** — nunca vira `plano.md`. Um módulo recebe vários planos
 ao longo do tempo, e nome fixo colidiria. Além disso, descartar o nome na aprovação tornaria a regra
@@ -639,7 +593,7 @@ Slug: mesmas restrições sintáticas do plano, sem repetir o módulo (já está
 <!-- planos:start -->
 | # | Plano | Core | Módulo | Situação | Aprovado |
 |---|---|---|---|---|---|
-| 0001 | [mcp](hub/0001-mcp/0001-mcp.md) | hub | mcp | em desenvolvimento | 2026-07-20 |
+| 0001 | [mcp](<core>/0001-mcp/0001-mcp.md) | `<core>` | mcp | em desenvolvimento | 2026-07-20 |
 <!-- planos:end -->
 ````
 
@@ -648,7 +602,7 @@ Slug: mesmas restrições sintáticas do plano, sem repetir o módulo (já está
 - **O número é atribuído aqui:** o script lê o maior em uso e toma o próximo.
 - **A situação é projetada, não digitada** — derivada do estado das unidades: `em desenvolvimento`
   enquanto houver unidade fora de `verified`, `concluído` quando todas estiverem.
-- Vive em `docs/plan/`, não em `.claude/skills/dev-units/`: é dado do projeto, versionado junto dos
+- Vive em `docs/plan/`, não em `.claude/skills/decode-and-code/`: é dado do projeto, versionado junto dos
   planos, e sobrevive a qualquer troca da skill.
 
 ### Divisão de responsabilidade
@@ -689,10 +643,10 @@ Nem todos têm a mesma natureza; separar evita pedir julgamento onde cabe script
 |---|---|---|
 | **O plano precisa ser dividido?** | **Misto** | Script checa concorrência em `_planos.md` e reporta tamanho; julgamento audita a declaração de independência (ver *Avaliação de escopo*) |
 | Usou a documentação oficial adequada ao escopo? | **Misto** | Script confere se as fontes citadas existem; julgamento avalia se são as certas |
-| Há erros de arquitetura? | Julgamento | O guardrail de dependência que ancorava este check em script foi aposentado — a 0003-08 extraiu `plugins/` para outro repositório, e ele perdeu o par que verificava |
+| Há erros de arquitetura? | **Misto**, quando há grafo | Script conta referências contra a seta do grafo de cores (ver *Guardrail fundador*); sem grafo declarado, o check é julgamento inteiro |
 | Há erros conceituais? | Julgamento | — |
 | Há lacunas em aberto? | Julgamento | Registrar como `L-XX` |
-| É compatível com os padrões do AmFlow? | **Misto** | Guardrails do `CLAUDE.md` são verificáveis; o resto é julgamento |
+| É compatível com os padrões do projeto? | **Misto** | Guardrails do `CLAUDE.md` são verificáveis; o resto é julgamento |
 
 Quatro dos seis têm parte automatizável. Sem extraí-la, a revisão vira leitura subjetiva — e leitura
 subjetiva é onde a variância volta.
@@ -709,7 +663,7 @@ São a razão de existir da skill:
 
 | Responsabilidade | Onde vive |
 |---|---|
-| Detectar modo, validar gates, medir lote, rodar teste, projetar estado, **validar nome e colisão** | **Script** — Python, em `.claude/skills/dev-units/scripts/` |
+| Detectar modo, validar gates, medir lote, rodar teste, projetar estado, **validar nome e colisão** | **Script** — Python, em `.claude/skills/decode-and-code/scripts/` |
 | Pesquisar, sintetizar, revisar com julgamento, decidir a fatia, escrever código, **sugerir nomes** | **Skill** |
 
 Os scripts seguem a [norma de linguagem](language-policy.md): Python 3.10 (versão do Cowork), stdlib
@@ -725,9 +679,8 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 `review` e o `derive` pedem julgamento denso — Opus.
 
 **A troca não é declarável na skill.** Verificado em 2026-07-19: das skills do projeto que declaram
-`model:` no frontmatter (`backlog`, `backlog-worker`, `workflow-runner`), **todas o deixam vazio**;
-apenas os agents o usam preenchido (`model: opus`). A skill roda no contexto de quem a invoca e
-herda o modelo da sessão.
+`model:` no frontmatter, **todas o deixam vazio**; apenas os agents o usam preenchido
+(`model: opus`). A skill roda no contexto de quem a invoca e herda o modelo da sessão.
 
 Consequência: a política é **operacional** — o modelo é escolhido antes de invocar. Se a troca
 automática por modo for requisito, e não conveniência, isso reabre a decisão sobre agents.
@@ -790,15 +743,15 @@ pesquisa ampla, e só depois de a skill existir.
 | 1 | Norma de lote | **8 passos** (p90 das 86 unidades); sem sequência = incompleta |
 | 2 | Grão de bloco e unidade | Bloco é **pasta**; unidade é **arquivo** (exigência do cold-start) |
 | 3 | Como o estado é computado | **Declaração na spec** (`spec → teste`), granularidade de arquivo |
-| 4 | Onde vive a normativa de domínio | **`<core>/system/`**; transversal em `security/system/` |
+| 4 | Onde vive a normativa de domínio | **`<core>/system/`**; transversal em `<core-transversal>/system/` |
 | 5 | Cobertura da normativa | Cada core ganha a sua, conforme for tocado |
-| 6 | Localização dos docs | **`docs/plan/`** para o novo; `docs/mvp/` somente leitura |
+| 6 | Localização dos docs | **`docs/plan/`** para o novo; acervo legado, se houver, somente leitura |
 | 7 | Migração do acervo | **Não migrar agora** — tarefa futura |
 | 8 | Modelo de desenvolvimento | **Sonnet** por padrão, com override do usuário |
-| 9 | Security | **Core transversal**, dono do módulo de autenticação, hospedado no Hub |
+| 9 | Core transversal | Dono de um módulo hospedado em outro core, sem produzir deployable próprio |
 | 10 | Índice | **Eliminado** — substituído pela estrutura + backlog + consulta sob demanda |
 | 11 | Vocabulário | Inglês em código, caminhos e frontmatter; **português na prosa** |
-| 12 | Formato da unidade | Definido; referência viva em `docs/plan/hub/0001-mcp/01-handler-auth.md` |
+| 12 | Formato da unidade | Definido; referência viva em `docs/plan/model/0001-decode-and-code-foundation/01-config-and-paths.md` |
 | 13 | Regiões de escrita | Script escreve só o bloco `# verificação` do frontmatter; nunca o corpo |
 | 14 | Identificador da unidade | `unit_id` = `[nº plano]-[nº unidade]`, ex. `0001-02` — **revisa** o prefixo por módulo (`MC-`, `AU-`) |
 | 15 | Teste inexistente | Gate de entrada exige teste **declarado**, não existente; `implement` escreve teste e código |
@@ -816,7 +769,7 @@ pesquisa ampla, e só depois de a skill existir.
 | 27 | Alvo do plano | Sempre `core`/`module`/`block` — não existe alvo `system` |
 | 28 | Tipo de unidade | `unit_type: dev \| plan`; a unidade `plan` produz um plano, com oráculo em `_planos.md` |
 | 29 | Relação entre planos | Coluna **Origem** em `_planos.md` — qual unidade de qual plano o gerou |
-| 30 | Natureza deste documento | **Norma**, não plano; a implementação é o plano `0002-dev-units` |
+| 30 | Natureza deste documento | **Norma**, não plano; a implementação é o plano que a instancia no projeto |
 
 ### Resolvida em 2026-07-24
 
@@ -839,8 +792,8 @@ pesquisa ampla, e só depois de a skill existir.
 > vira o `module` do frontmatter e a pasta no disco, as duas normas se contradiziam — e o conflito só
 > apareceu quando o terceiro plano precisou de um nome que não fosse termo técnico.
 >
-> **Custo de migração: zero.** Os planos `0001-mcp` e `0002-dev-units` já eram termos técnicos em
-> inglês; nenhum renomeio. O primeiro plano escrito sob esta decisão é `0003-public-catalog`.
+> **Custo de migração: zero.** Os planos que existiam quando a decisão foi tomada já eram termos
+> técnicos em inglês; nenhum renomeio.
 >
 > **O que não muda:** a prosa. Documentação, plano e unidade seguem inteiramente em pt-BR — o inglês
 > vale para o identificador, nunca para o conteúdo.
@@ -875,6 +828,5 @@ pesquisa ampla, e só depois de a skill existir.
 **Interno**
 - Norma de linguagem dos scripts: [`language-policy.md`](language-policy.md)
 - Evidência que a fundamenta: [`estudo-runtime-e-dependencias.md`](estudo-runtime-e-dependencias.md)
-- Padrão atual: `.claude/skills/dev-units/SKILL.md`
-- Exemplo mais maduro: [`hub/back/auth/dev-units.md`](../../mvp/20_delivery/hub/back/auth/dev-units.md)
+- Padrão atual: `.claude/skills/decode-and-code/SKILL.md`
 - Restrições de processo e frontmatter: `.claude/CLAUDE.md`

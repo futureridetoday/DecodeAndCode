@@ -7,7 +7,7 @@ campos de frontmatter que as 11 skills do repositório já compartilham
 (decisão D-02, não a tabela de recurso publicável do CLAUDE.md, que inclui
 author_id e price), presença de modo pedido no corpo, e existência/permissão
 dos caminhos citados. Não verifica se a skill funciona bem — distinção
-deliberada, ver docs/plan/builder/0002-dev-units/10-lint-skill.md.
+deliberada.
 
 O passo 6 ignora bloco de código e code span ao varrer link relativo — mesma
 lição do scripts/move-md.py: documentação normativa cita caminho como

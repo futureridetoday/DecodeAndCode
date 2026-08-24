@@ -11,8 +11,7 @@ ele aponta não; teto de **8 passos** na Sequência (decisão 1), acima disso a
 unidade divide; e `unit_type` restrito a `dev` ou `plan` (decisão 28).
 
 O gate verifica presença e forma, não coerência entre Contrato e Sequência —
-isso é julgamento, fora do alcance de regex. Ver a nota correspondente em
-docs/plan/builder/0002-dev-units/06-lint-unidade.md.
+isso é julgamento, fora do alcance de regex.
 """
 
 from __future__ import annotations

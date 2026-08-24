@@ -15,9 +15,9 @@ em `dry_run`, que nunca grava.
 Sobre "X de Y derivadas" (D-03). Esta implementação computa X e Y do mesmo conjunto — as unidades
 achadas em disco —, exatamente como a Sequência da unidade descreve: ela só manda listar `NN-*.md`,
 nunca ler o corpo do plano além do próprio backlog. Por isso "X de Y derivadas" sai sempre "N de N":
-todo arquivo achado já é, por definição, derivado. Uma leitura alternativa é sugerida pelo exemplo
-real em `docs/plan/hub/0001-mcp/0001-mcp.md` ("1 de 10 derivadas", contra as dez linhas da sua seção
-Escopo e a única unidade hoje em disco) e pela própria razão de D-03 ("carrega informação que a norma
+todo arquivo achado já é, por definição, derivado. Uma leitura alternativa é sugerida por um exemplo
+real onde "1 de 10 derivadas" reflete dez linhas na seção Escopo do plano contra uma única unidade
+hoje em disco, e pela própria razão de D-03 ("carrega informação que a norma
 omite") — ali "Y" seria o total *planejado*, não o já derivado. Não foi implementada: exigiria
 parsear uma tabela sob heading de nível 2 (possivelmente mais de uma, como no próprio 0002-dev-units,
 com Fase 1 e Fase 2 em tabelas separadas) — exatamente a fragilidade que este documento rejeita para
