@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Fixtures sintéticos para a suíte — unidade 0001-02.
 
-Os quatro construtores (`plano`, `unidade`, `skill`, `planos_md`) escrevem artefatos válidos
-num diretório dado — sempre um `tempfile.TemporaryDirectory()` de quem chama. Nenhum lê ou
+Os cinco construtores (`plano`, `unidade`, `skill`, `planos_md`, `rule`) escrevem artefatos
+válidos num diretório dado — sempre um `tempfile.TemporaryDirectory()` de quem chama. Nenhum lê ou
 grava caminho real do repositório, e nenhum argumento inválido escreve arquivo antes de
 levantar `ValueError`.
 
@@ -302,4 +302,60 @@ def planos_md(dir: Path, *, linhas: list[str] | None = None) -> Path:
     alvo = Path(dir) / "_planos.md"
     miolo = "\n" + _CABECALHO_PLANOS + "".join(linhas)
     alvo.write_text(f"<!-- planos:start -->\n{miolo}<!-- planos:end -->\n", encoding="utf-8")
+    return alvo
+
+
+_RULE_TEMPLATE = """\
+---
+name: {nome}
+description: {descricao}
+{paths_linha}---
+
+{corpo}
+"""
+
+
+def _texto_rule(
+    *,
+    nome: str = "regra-sintetica",
+    descricao: str = "Descrição de teste para o lint de rule.",
+    paths: list[str] | None = None,
+    corpo: str = "Corpo de teste para o lint de rule.",
+) -> str:
+    paths_linha = ""
+    if paths is not None:
+        entradas = ", ".join(f'"{p}"' for p in paths)
+        paths_linha = f"paths: [{entradas}]\n"
+    return _RULE_TEMPLATE.format(nome=nome, descricao=descricao, paths_linha=paths_linha, corpo=corpo)
+
+
+# Fixa — mesmos valores usados para mutação por `.replace()` nos testes de rule, no mesmo
+# padrão de UNIDADE_VALIDA.
+RULE_VALIDA = _texto_rule()
+
+# Variante com paths: presente e válido — para os testes específicos de guideline.
+RULE_COM_PATHS_VALIDA = _texto_rule(paths=["hub/app/**", "hub/lib/**"])
+
+
+def rule(
+    dir: Path,
+    *,
+    nome: str = "regra-sintetica",
+    descricao: str = "Descrição de teste para o lint de rule.",
+    paths: list[str] | None = None,
+    corpo: str = "Corpo de teste para o lint de rule.",
+) -> Path:
+    """Escreve `<dir>/<nome>.md` — uma rule que aprova em `rules.lint_rule()`. Devolve o caminho.
+
+    `paths=None` (o default) escreve sem a linha `paths:` — princípio. Uma lista escreve
+    `paths: [...]` — guideline. Levanta `ValueError` se `nome` for vazio ou contiver separador
+    de caminho, antes de escrever qualquer arquivo.
+    """
+    if not nome.strip() or "/" in nome or "\\" in nome:
+        raise ValueError(f"fixtures.rule: nome inválido — {nome!r}")
+
+    texto = _texto_rule(nome=nome, descricao=descricao, paths=paths, corpo=corpo)
+    alvo = Path(dir) / f"{nome}.md"
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+    alvo.write_text(texto, encoding="utf-8")
     return alvo
