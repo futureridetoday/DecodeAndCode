@@ -53,6 +53,19 @@ def _campo_vazio(valor: str | None) -> bool:
     return valor.strip(" \t\"'") == ""
 
 
+def _ja_aprovado(plano: Path) -> bool:
+    """True quando o plano já saiu do `_inbox` com número atribuído.
+
+    Derivação incremental (`D-12`) reinvoca `aprovar` sobre um plano já movido, e sem esta
+    guarda a chamada morre em `nomenclatura.validar_nome`: o stem já carrega o prefixo
+    numérico que a validação recusa por construção. Correção pontual de 2026-08-24 —
+    formalizada com teste declarado pela unidade `0001-03` (`L-17`).
+    """
+    if _campo_vazio(regioes.ler_campo(plano, "plan_id")):
+        return False
+    return lib.inbox().resolve() not in plano.resolve().parents
+
+
 def _mover(origem: Path, destino: Path) -> None:
     """Move o plano compondo move-md — nunca reimplementando a reescrita de links."""
     conteudo = origem.read_text(encoding="utf-8")
@@ -83,10 +96,16 @@ def _registrar_planos_md(
 def aprovar(plano: Path, dry_run: bool = False) -> Path:
     """Aprova um plano do `_inbox` — devolve o caminho final, movido ou só calculado em dry-run.
 
+    **Idempotente:** plano já aprovado devolve o próprio caminho sem escrever nada, para que a
+    derivação incremental reinvoque o modo `derive` sem tratar o caso no markdown (`L-17`).
+
     Levanta `ValueError` se o plano não declara `core`, ou se o nome do arquivo falha a validação
     sintática (`nomenclatura.validar_nome`). Levanta `FileExistsError` se o alvo já existe. Em
     qualquer um dos dois casos — inclusive em `dry_run` — nada é escrito.
     """
+    if _ja_aprovado(plano):
+        return plano.resolve()
+
     core = regioes.ler_campo(plano, "core")
     if _campo_vazio(core):
         raise ValueError(f"plano não declara 'core' — {plano}")
