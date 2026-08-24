@@ -114,8 +114,7 @@ evidências de..."* e pedir o input mínimo. Proibido inventar arquivo, função
 
 ## Linguagem
 
-Scripts em **Python 3.10** (versão do Cowork), **stdlib pura**. Dependência externa não é proibida,
-mas exige fallback declarado.
+Os scripts seguem a [norma de linguagem](../docs/plan/system/language-policy.md).
 
 Quando a lógica for previsível e repetível, ela vira **código**, não instrução em markdown —
 markdown depende de interpretação e pode ser ignorado; código executa de forma determinística e
