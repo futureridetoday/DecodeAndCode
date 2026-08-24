@@ -3,7 +3,7 @@
 
 Cobre exatamente o que a própria unidade declara como gate: o modo está descrito no corpo — não mais
 placeholder — e os scripts que ele compõe existem, via `lint_skill.lint`, que já resolve existência e
-permissão de qualquer caminho `.claude/skills/dev-units/scripts/*.py` citado. A prova real do `derive`
+permissão de qualquer caminho `.claude/skills/decode-and-code/scripts/*.py` citado. A prova real do `derive`
 é empírica e vem depois — se o executor do `implement` precisou perguntar algo, a unidade falhou, e a
 correção é da unidade, não do executor (unidade 0002-13, seção Verificação).
 """
@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import lib
 import lint_skill
 
-SKILL = lib.repo_root() / ".claude" / "skills" / "dev-units" / "SKILL.md"
+SKILL = lib.repo_root() / ".claude" / "skills" / "decode-and-code" / "SKILL.md"
 
 # Os quatro scripts da Fase 1 que o modo `derive` compõe (unidade 0002-13, tabela Arquivos).
 SCRIPTS_COMPOSTOS = ("scaffold.py", "numeracao.py", "lint_unidade.py", "backlog.py")

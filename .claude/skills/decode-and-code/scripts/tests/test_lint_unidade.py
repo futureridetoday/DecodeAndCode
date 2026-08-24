@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Testes do gate de entrada — unidade 0002-06.
 
-O que dá valor à unidade é o par do critério de aceite: as duas instâncias
-reais citadas em Arquivos aprovam sem ressalva, e uma unidade sintética sem
-critério de aceite e com 15 passos devolve exatamente os dois problemas.
-As demais dimensões (frontmatter, blocos, teto) são cobertas isoladamente
-contra uma unidade sintética mínima que, sozinha, já aprova.
+O que dá valor à unidade é o par do critério de aceite: duas construções de
+`fixtures.unidade()` — uma mínima, uma com campos customizados — aprovam sem
+ressalva, e uma unidade sintética sem critério de aceite e com 15 passos
+devolve exatamente os dois problemas. As demais dimensões (frontmatter,
+blocos, teto) são cobertas isoladamente contra uma unidade sintética mínima
+que, sozinha, já aprova.
 """
 
 from __future__ import annotations
@@ -15,95 +16,33 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import lib
+import fixtures
 import lint_unidade
-
-UNIDADE_VALIDA = """\
----
-name: exemplo
-type: unit
-project: AmFlow
-description: unidade sintética para teste do lint
-tags: []
-
-core: builder
-module: dev-units
-block: ""
-owner: builder
-unit_id: 0009-01
-unit_type: dev
-
-state: spec
-test: caminho/para/test_exemplo.py
-verified_at: ""
-
-author: Teste
-created: 2026-07-25
-status: draft
-version: 1.0.0
-updated: ""
-
-scope: project
-auto_load: false
-dependencies: []
----
-
-# 0009-01 — Unidade sintética
-
-**Responsabilidade:** existir só para o teste do lint.
-
-## Contrato
-
-| Campo | Detalhe |
-|---|---|
-| Entrada | Nenhuma |
-
-## Sequência
-
-1. Primeiro passo
-2. Segundo passo
-3. Terceiro passo
-
-## Arquivos
-
-| Arquivo | Papel |
-|---|---|
-| `caminho/para/arquivo.py` | Criar |
-
-## Dependências
-
-Nenhuma.
-
-## Normas aplicáveis
-
-| Norma | Onde |
-|---|---|
-| Exemplo | em algum lugar |
-
-## Critério de aceite
-
-> O teste passa.
-
-## Verificação
-
-| Item | Valor |
-|---|---|
-| Teste | caminho/para/test_exemplo.py |
-"""
+from fixtures import UNIDADE_VALIDA
 
 
 class TestUnidadesReais(unittest.TestCase):
-    """As duas instâncias reais citadas em Arquivos — devem aprovar sem ressalva."""
+    """Duas construções de fixtures.unidade() — devem aprovar sem ressalva."""
 
-    def test_handler_auth_aprova(self):
-        alvo = lib.plan_root() / "hub" / "0001-mcp" / "01-handler-auth.md"
-        self.assertEqual(lint_unidade.lint(alvo), [])
+    def test_unidade_minima_aprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = fixtures.unidade(Path(tmp))
+            self.assertEqual(lint_unidade.lint(alvo), [])
 
-    def test_lib_base_aprova(self):
-        alvo = lib.plan_root() / "builder" / "0002-dev-units" / "01-lib-base.md"
-        self.assertEqual(lint_unidade.lint(alvo), [])
+    def test_unidade_com_campos_customizados_aprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = fixtures.unidade(
+                Path(tmp),
+                unit_id="0042-07",
+                core="outro-core",
+                module="outro-modulo",
+                state="verified",
+                test="tests/test_outro.py",
+            )
+            self.assertEqual(lint_unidade.lint(alvo), [])
 
 
 class TestArquivoInexistente(unittest.TestCase):

@@ -593,9 +593,9 @@ que prova, e não inventa uma fase para ter o que testar.
 | Unidade | Título | Estado |
 |---|---|---|
 | [0001-01](01-config-and-paths.md) | config-and-paths | `verified` |
-| [0001-02](02-test-fixtures.md) | test-fixtures | `spec` |
+| [0001-02](02-test-fixtures.md) | test-fixtures | `verified` |
 
-2 de 2 derivadas · 1 verificada · atualizado em 2026-08-24
+2 de 2 derivadas · 2 verificadas · atualizado em 2026-08-24
 <!-- backlog:end -->
 
 ## Fonte

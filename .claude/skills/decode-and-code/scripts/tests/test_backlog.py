@@ -21,9 +21,11 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import backlog
+import fixtures
 import lib
 
 CABECALHO_PLANOS = "| # | Plano | Core | Módulo | Origem | Situação | Aprovado |\n|---|---|---|---|---|---|---|\n"
@@ -352,13 +354,25 @@ class TestCaminhoRelativo(unittest.TestCase):
     """
 
     def test_relativo_e_absoluto_produzem_o_mesmo(self):
-        raiz = lib.repo_root()
-        alvo = "docs/plan/builder/0002-dev-units"
-        anterior = Path.cwd()
-        os.chdir(raiz)
-        try:
-            por_relativo = backlog.projetar(Path(alvo), dry_run=True)
-            por_absoluto = backlog.projetar(raiz / alvo, dry_run=True)
-        finally:
-            os.chdir(anterior)
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp).resolve()
+            dir_plano = fixtures.plano(raiz, core="builder", nome="exemplo", numero="0009")
+            fixtures.unidade(dir_plano, unit_id="0009-01")
+            fixtures.planos_md(
+                raiz,
+                linhas=[
+                    "| 0009 | [exemplo](builder/0009-exemplo/0009-exemplo.md) | builder"
+                    " | exemplo | — | em desenvolvimento | 2026-08-24 |\n"
+                ],
+            )
+
+            with mock.patch.object(lib, "plan_root", return_value=raiz):
+                alvo = "builder/0009-exemplo"
+                anterior = Path.cwd()
+                os.chdir(raiz)
+                try:
+                    por_relativo = backlog.projetar(Path(alvo), dry_run=True)
+                    por_absoluto = backlog.projetar(raiz / alvo, dry_run=True)
+                finally:
+                    os.chdir(anterior)
         self.assertEqual(por_relativo, por_absoluto)

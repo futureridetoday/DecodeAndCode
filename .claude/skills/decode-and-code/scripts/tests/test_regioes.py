@@ -18,22 +18,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import fixtures
 import lib
 import regioes
 
 
 class TestCampoFrontmatter(unittest.TestCase):
-    """Contra uma cópia de docs/plan/hub/0001-mcp/01-handler-auth.md — instância real."""
+    """Contra uma unidade construída por fixtures.unidade() — nenhum caminho real do repositório."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
-        origem = lib.plan_root() / "hub" / "0001-mcp" / "01-handler-auth.md"
-        self.copia = Path(self._tmp.name) / "01-handler-auth.md"
-        shutil.copy(origem, self.copia)
-        self.original = origem.read_text(encoding="utf-8")
+        self.copia = fixtures.unidade(Path(self._tmp.name), state="verified")
+        self.original = self.copia.read_text(encoding="utf-8")
 
     def test_le_campo_existente(self):
         self.assertEqual(regioes.ler_campo(self.copia, "state"), "verified")
@@ -110,9 +110,13 @@ class TestRegiaoMarcadores(unittest.TestCase):
         self.original = origem.read_text(encoding="utf-8")
 
     def test_le_regiao_existente(self):
-        miolo = regioes.ler_regiao(self.copia, "planos")
-        self.assertIn("0001", miolo)
-        self.assertIn("mcp", miolo)
+        # Auto-contido com fixtures.planos_md() — não depende do self.copia da classe
+        # (cópia do _planos.md real), cujo conteúdo muda a cada plano aprovado neste repositório.
+        with tempfile.TemporaryDirectory() as tmp:
+            planos_md = fixtures.planos_md(Path(tmp))
+            miolo = regioes.ler_regiao(planos_md, "planos")
+        self.assertIn("0009", miolo)
+        self.assertIn("exemplo", miolo)
 
     def test_le_regiao_inexistente_devolve_none(self):
         self.assertIsNone(regioes.ler_regiao(self.copia, "nao-existe"))

@@ -29,7 +29,7 @@ class TestValidarNomeCasosValidos(unittest.TestCase):
         self.assertEqual(nomenclatura.validar_nome("evolucao-tools"), [])
 
     def test_dev_units_e_valido(self):
-        # Nome real do módulo deste plano — docs/plan/builder/0002-dev-units/.
+        # Nome antigo da skill, citado na norma como exemplo — sintaticamente válido.
         self.assertEqual(nomenclatura.validar_nome("dev-units"), [])
 
     def test_outros_exemplos_da_norma(self):

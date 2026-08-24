@@ -3,7 +3,7 @@
 
 Cobre exatamente o que a própria unidade declara como gate: o modo está descrito no corpo — não mais
 placeholder — e os scripts que ele compõe existem, via `lint_skill.lint`, que já resolve existência e
-permissão de qualquer caminho `.claude/skills/dev-units/scripts/*.py` citado. O comportamento do
+permissão de qualquer caminho `.claude/skills/decode-and-code/scripts/*.py` citado. O comportamento do
 julgamento (os checks conceituais, de arquitetura e de adequação de fontes) não é verificável por
 script — limitação assumida em D-02 e na unidade 0002-10.
 """
@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import lib
 import lint_skill
 
-SKILL = lib.repo_root() / ".claude" / "skills" / "dev-units" / "SKILL.md"
+SKILL = lib.repo_root() / ".claude" / "skills" / "decode-and-code" / "SKILL.md"
 
 # Os dois scripts que o modo `review` compõe (unidade 0002-12, tabela Arquivos) —
 # `guardrail.py` foi aposentado pela unidade 0003-08: plugins/ não coexiste mais

@@ -22,7 +22,7 @@ MODOS = ["review", "derive", "implement"]
 
 class TestSkillBase(unittest.TestCase):
     def test_skill_aprova_com_os_tres_modos(self):
-        skill = lib.repo_root() / ".claude" / "skills" / "dev-units" / "SKILL.md"
+        skill = lib.repo_root() / ".claude" / "skills" / "decode-and-code" / "SKILL.md"
         self.assertEqual(lint_skill.lint(skill, modos=MODOS), [])
 
 

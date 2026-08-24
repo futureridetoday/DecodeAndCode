@@ -10,7 +10,7 @@ sintética mínima.
 
 `subprocess.run` é sempre mockado — nunca chamado de verdade. Um teste real
 apontaria `scripts/test-python.sh` para este próprio pacote
-(`.claude/skills/dev-units/scripts`), que contém este arquivo: a chamada
+(`.claude/skills/decode-and-code/scripts`), que contém este arquivo: a chamada
 real reexecutaria a suíte inteira de dentro do próprio teste, que
 reexecutaria de novo, recursivamente. Medido nesta sessão: a primeira versão
 sem mock chegou a 763 processos órfãos antes de ser morta à mão — `.kill()`
@@ -28,8 +28,10 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import fixtures
 import lib
 import regioes
 import verificacao
@@ -379,13 +381,19 @@ class TestSentinelaReentrancia(unittest.TestCase):
         # A checagem fica em _executar, não em verificar: com o subprocesso
         # mockado não há recursão possível, e barrar aqui impediria esta
         # unidade de ser promovida quando a suíte roda dentro da verificação.
-        with mock.patch.dict(
-            os.environ, {verificacao.SENTINELA_REENTRANCIA: "1"}
-        ), mock.patch.object(verificacao, "_executar", return_value=(0, "")):
-            unidade = verificacao.lib.repo_root() / (
-                "docs/plan/builder/0002-dev-units/08-verificacao.md"
-            )
-            estado, _ = verificacao.verificar(unidade, dry_run=True)
+        # `lib.repo_root` mockado para um tempdir com fixtures.unidade(): o `test:`
+        # declarado precisa apontar para um arquivo que existe de verdade, e nenhum
+        # teste desta suíte deve depender de caminho real do repositório.
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp).resolve()
+            (raiz / "tests").mkdir()
+            (raiz / "tests" / "test_controlavel.py").write_text("# x\n", encoding="utf-8")
+            unidade = fixtures.unidade(raiz, test="tests/test_controlavel.py")
+
+            with mock.patch.object(lib, "repo_root", return_value=raiz), mock.patch.dict(
+                os.environ, {verificacao.SENTINELA_REENTRANCIA: "1"}
+            ), mock.patch.object(verificacao, "_executar", return_value=(0, "")):
+                estado, _ = verificacao.verificar(unidade, dry_run=True)
         self.assertEqual(estado, "verified")
 
     def test_subprocesso_recebe_a_marca(self):

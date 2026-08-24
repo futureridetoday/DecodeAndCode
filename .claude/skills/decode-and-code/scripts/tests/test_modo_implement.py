@@ -3,7 +3,7 @@
 
 Cobre exatamente o que a própria unidade declara como gate: o modo está descrito no corpo — não mais
 placeholder — e os scripts que ele compõe existem, via `lint_skill.lint`, que já resolve existência e
-permissão de qualquer caminho `.claude/skills/dev-units/scripts/*.py` citado. A prova real do
+permissão de qualquer caminho `.claude/skills/decode-and-code/scripts/*.py` citado. A prova real do
 `implement` é empírica e vem depois — a primeira unidade executada em sessão nova com Sonnet, prevista
 para logo após a Fase 1 (unidade 0002-14, seção Verificação).
 """
@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import lib
 import lint_skill
 
-SKILL = lib.repo_root() / ".claude" / "skills" / "dev-units" / "SKILL.md"
+SKILL = lib.repo_root() / ".claude" / "skills" / "decode-and-code" / "SKILL.md"
 
 # Os três scripts que o modo `implement` compõe (unidade 0002-14, tabela Arquivos).
 SCRIPTS_COMPOSTOS = ("lint_unidade.py", "verificacao.py", "backlog.py")

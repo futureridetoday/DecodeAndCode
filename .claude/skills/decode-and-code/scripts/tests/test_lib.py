@@ -70,9 +70,17 @@ class TestCaminhosDoPlano(unittest.TestCase):
 
 class TestCoreDir(unittest.TestCase):
     def test_core_existente(self):
-        # builder/ existe: é onde vive este plano.
-        self.assertTrue(lib.core_dir("builder").is_dir())
-        self.assertEqual(lib.core_dir("builder").parent, lib.plan_root())
+        # Deriva um core real do disco em vez de fixar um nome — "builder" é
+        # população do AmFlow, ausente aqui (suposição medida na unidade 0001-02).
+        candidatos = [
+            item.name
+            for item in lib.plan_root().iterdir()
+            if item.is_dir() and item.name not in ("_inbox", "system")
+        ]
+        self.assertTrue(candidatos, "nenhum core encontrado sob plan_root()")
+        core = candidatos[0]
+        self.assertTrue(lib.core_dir(core).is_dir())
+        self.assertEqual(lib.core_dir(core).parent, lib.plan_root())
 
     def test_nome_vazio_e_recusado(self):
         for nome in ("", "   "):

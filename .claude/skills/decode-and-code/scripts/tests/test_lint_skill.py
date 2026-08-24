@@ -14,9 +14,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import fixtures
 import lib
 import lint_skill
 
@@ -67,7 +70,7 @@ class TestSkillsReais(unittest.TestCase):
 
     def test_todas_as_skills_do_repositorio_aprovam(self):
         skills = sorted((lib.repo_root() / ".claude" / "skills").glob("*/SKILL.md"))
-        self.assertGreaterEqual(len(skills), 10, skills)
+        self.assertGreaterEqual(len(skills), 1, skills)
         for skill in skills:
             with self.subTest(skill=skill.parent.name):
                 self.assertEqual(lint_skill.lint(skill), [])
@@ -99,19 +102,34 @@ class TestScriptCitadoNaoExiste(unittest.TestCase):
 
 
 class TestScriptSemPermissaoNemInterprete(unittest.TestCase):
-    """Reaproveita `backlog/scripts/create.py` real (sem +x) — citação sem interpretador reprova."""
+    """Script real sem +x sob `.claude/skills/<nome>/scripts/`, com `lib.repo_root` mockado.
+
+    A versão anterior reaproveitava `backlog/scripts/create.py` do AmFlow — script real sem
+    bit de execução, útil como fixture, mas ausente neste repositório (suposição de população
+    medida na unidade 0001-02). `_checar_scripts` resolve sempre contra `lib.repo_root()`, então
+    o script sem +x precisa existir de verdade — daqui a construção sintética com mock.
+    """
 
     def test_reprova_sem_bit_de_execucao_e_sem_interpretador(self):
-        texto = SKILL_VALIDA.replace("name: skill-sintetica", "name: backlog").replace(
-            "Corpo de teste para o lint, citando o modo review.",
-            "Corpo citando `.claude/skills/backlog/scripts/create.py` direto, sem interpretador.",
-        )
         with tempfile.TemporaryDirectory() as tmp:
-            pasta = Path(tmp) / "backlog"
-            pasta.mkdir()
-            alvo = pasta / "SKILL.md"
-            alvo.write_text(texto, encoding="utf-8")
-            problemas = lint_skill.lint(alvo)
+            raiz = Path(tmp).resolve()
+            pasta_scripts = raiz / ".claude" / "skills" / "skill-sintetica" / "scripts"
+            pasta_scripts.mkdir(parents=True)
+            script = pasta_scripts / "create.py"
+            script.write_text("# sem bit de execução\n", encoding="utf-8")
+            script.chmod(0o644)
+
+            alvo = fixtures.skill(
+                raiz / ".claude" / "skills",
+                nome="skill-sintetica",
+                corpo=(
+                    "Corpo citando `.claude/skills/skill-sintetica/scripts/create.py`"
+                    " direto, sem interpretador."
+                ),
+            )
+
+            with mock.patch.object(lib, "repo_root", return_value=raiz):
+                problemas = lint_skill.lint(alvo)
         self.assertTrue(
             any("create.py" in p and "interpretador" in p for p in problemas), problemas
         )
