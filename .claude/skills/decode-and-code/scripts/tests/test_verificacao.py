@@ -54,7 +54,7 @@ UNIDADE = """\
 ---
 name: exemplo
 type: unit
-project: AmFlow
+project: DecodeAndCode
 description: unidade sintética para teste da verificação
 tags: []
 

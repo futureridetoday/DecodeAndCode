@@ -107,8 +107,9 @@ alvo novo.
 `tests/`** cita o AmFlow, e a norma não carrega **instância** dele: nem serviço, nem core, nem
 caminho, nem plano nomeado. O critério é sobre instância, não sobre uma lista de strings — `0003-08`
 e `plugins/` não contêm nenhuma das strings e são instância do mesmo jeito (`L-14`). Os fixtures
-sintéticos em `tests/` que declaram `project: AmFlow` **ficam**: retirá-los é o critério de aceite da
-`02`, e antecipá-lo aqui derruba os 25 vermelhos que a `02` existe para fechar.
+sintéticos em `tests/` **ficam nesta unidade**: mexer neles aqui derruba os 25 vermelhos que a `02`
+existe para fechar. **Eles não são critério de aceite de unidade nenhuma** — a `02` reivindica os
+quatro caminhos, não a string `AmFlow` —, e a limpeza deles foi feita à parte em 2026-08-24 (`L-14`).
 
 **Nenhum teste verde vira vermelho.** A única remoção permitida na suíte é `TestComandoTypescript`,
 porque a função que ela cobre deixou de existir — a suíte cai de 158 para 157 rodados **antes** dos

@@ -37,7 +37,7 @@ context: ""
 shell: bash
 
 type: skill
-project: AmFlow
+project: DecodeAndCode
 author: Teste
 created: 2026-07-25
 status: draft

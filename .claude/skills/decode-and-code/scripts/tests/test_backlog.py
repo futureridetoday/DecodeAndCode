@@ -34,7 +34,7 @@ PLANO = """\
 ---
 name: exemplo
 type: plan
-project: AmFlow
+project: DecodeAndCode
 plan_id: "0009"
 core: builder
 module: exemplo
@@ -59,7 +59,7 @@ UNIDADE = """\
 ---
 name: exemplo-{unit_id}
 type: unit
-project: AmFlow
+project: DecodeAndCode
 core: builder
 module: exemplo
 unit_id: {unit_id}
@@ -76,7 +76,7 @@ UNIDADE_SEM_TITULO = """\
 ---
 name: exemplo-{unit_id}
 type: unit
-project: AmFlow
+project: DecodeAndCode
 core: builder
 module: exemplo
 unit_id: {unit_id}
