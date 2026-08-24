@@ -2,5 +2,18 @@
   "permissions": {
     "allow": ["Read", "Edit", "Write", "Bash(git status)", "Bash(git log*)", "Bash(git diff*)", "Bash(git add*)", "Bash(find*)", "Bash(grep*)", "Bash(ls*)", "Bash(cat*)", "Bash(wc*)", "Bash(sed -n*)", "Bash(mkdir*)", "Bash(chmod*)", "Bash(pwd)", "Bash(python3*)", "Bash(./scripts/test-python.sh*)"],
     "deny": ["Bash(rm -rf*)", "Bash(git push*)", "Bash(git reset --hard*)", "Bash(git checkout -- *)"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py"
+          }
+        ]
+      }
+    ]
   }
 }

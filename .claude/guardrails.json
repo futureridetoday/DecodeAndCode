@@ -1,0 +1,10 @@
+{
+  "regras": [
+    {
+      "nome": "ddl-remoto",
+      "ferramenta": "(execute_sql|apply_migration)$",
+      "detector": "(?im)(?:\\A|;)\\s*(?:--[^\\n]*\\s*)*\\b(create|alter|drop|truncate)\\b",
+      "mensagem": "DDL em ambiente remoto é recusado — toda mudança de schema entra por migration."
+    }
+  ]
+}

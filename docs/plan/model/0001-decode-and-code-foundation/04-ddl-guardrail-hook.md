@@ -15,9 +15,9 @@ unit_id: 0001-04
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_guardrail.py
-verified_at: ""
+verified_at: 2026-08-24
 
 # history
 author: Bortoli
