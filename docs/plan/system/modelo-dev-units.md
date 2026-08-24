@@ -705,6 +705,10 @@ pesquisa ampla, e só depois de a skill existir.
 | 8 | Implementação | Sonnet (default) | Uma unidade por vez, em cold-start |
 | 9 | Fechamento | script | Estado projetado na unidade e no backlog |
 
+> **A etapa 4 é reentrante.** `scaffold.aprovar` sobre um plano já aprovado devolve o caminho sem
+> escrever nada — derivar em lotes reinvoca a etapa sobre o mesmo plano, e isso é o caminho previsto,
+> não uma exceção a tratar.
+
 ---
 
 ## Rastreamento de objetivos

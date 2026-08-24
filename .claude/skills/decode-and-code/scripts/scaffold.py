@@ -59,7 +59,7 @@ def _ja_aprovado(plano: Path) -> bool:
     Derivação incremental (`D-12`) reinvoca `aprovar` sobre um plano já movido, e sem esta
     guarda a chamada morre em `nomenclatura.validar_nome`: o stem já carrega o prefixo
     numérico que a validação recusa por construção. Correção pontual de 2026-08-24 —
-    formalizada com teste declarado pela unidade `0001-03` (`L-17`).
+    formalizada com teste declarado pela unidade `0001-06` (`L-17`).
     """
     if _campo_vazio(regioes.ler_campo(plano, "plan_id")):
         return False

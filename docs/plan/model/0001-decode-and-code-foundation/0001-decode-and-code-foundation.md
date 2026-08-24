@@ -620,11 +620,11 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-03](03-principles-rule.md) | principles-rule | `spec` |
 | [0001-04](04-ddl-guardrail-hook.md) | ddl-guardrail-hook | `spec` |
 | [0001-05](05-activation-notice.md) | activation-notice | `spec` |
-| [0001-06](06-incremental-derive.md) | incremental-derive | `spec` |
+| [0001-06](06-incremental-derive.md) | incremental-derive | `verified` |
 | [0001-07](07-plan-situation.md) | plan-situation | `verified` |
 | [0001-08](08-language-policy.md) | language-policy | `spec` |
 
-8 de 20 derivadas · 3 verificadas · atualizado em 2026-08-24
+8 de 20 derivadas · 4 verificadas · atualizado em 2026-08-24
 <!-- backlog:end -->
 
 ## Fonte
