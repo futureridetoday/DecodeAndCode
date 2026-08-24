@@ -58,7 +58,7 @@ o que separa *carregou e foi ignorada* de *nunca carregou*, hoje indistinguívei
 4. `PostCompact`: comparar as rules com `paths:` que estavam ativas antes da compactação com as que voltaram, e **nomear as que não voltaram**. A perda continua — o que sai é o silêncio (`L-09`).
 5. `SubagentStart` e a expansão de skill: anunciar pelo canal que cada um aceita — stderr no primeiro, `systemMessage` na segunda. Entram por requisito declarado, não por lacuna medida, e o custo é marginal.
 6. Registrar os eventos em `.claude/settings.json`, ao lado do `PreToolUse` que a `04` declarou.
-7. Escrever `tests/test_activation_notice.py` cobrindo o critério de aceite, com payload sintético por evento — nenhum teste depende de sessão real.
+7. Escrever `tests/test_activation_notice.py` cobrindo o critério de aceite, com payload sintético por evento — nenhum teste depende de sessão real. **Artefato de teste que já tenha construtor em `tests/fixtures.py` vem de lá; o que faltar entra lá, nunca inline** (`L-21`).
 8. Rodar o gate e relatar, incluindo **o que o spike do passo 1 mediu**.
 
 ## Arquivos

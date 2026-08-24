@@ -79,7 +79,7 @@ proibido, deixando passar o diagnóstico.
 3. Escrever o detector de DDL **ancorado no statement**, nunca em substring: casa o verbo no início de statement (após `;` ou início do texto, ignorando espaço e comentário), nunca a palavra solta no meio de uma string ou de um `SELECT`.
 4. Escrever `.claude/hooks/pre_tool_use.py` como o ponto de entrada que o `settings.json` invoca, delegando a `guardrail.py`. O ponto de entrada não decide nada — só liga stdin e stdout ao mecanismo.
 5. Registrar o hook em `.claude/settings.json`, no evento `PreToolUse`. **Barato por construção:** ele roda em toda chamada de ferramenta, então nada de I/O além da leitura do arquivo de regras, e nada de import pesado.
-6. Escrever `tests/test_guardrail.py` cobrindo o critério de aceite, com os quatro casos que separam mecanismo de acidente — os fixtures estão em *Fixtures* abaixo, e a procedência de cada um está dita ali.
+6. Escrever `tests/test_guardrail.py` cobrindo o critério de aceite, com os quatro casos que separam mecanismo de acidente — os fixtures estão em *Fixtures* abaixo, e a procedência de cada um está dita ali. **Artefato de teste que já tenha construtor em `tests/fixtures.py` vem de lá; o que faltar entra lá, nunca inline** (`L-21`).
 7. Rodar o gate e relatar. **Não instalar no AmFlow** — instalar lá é consequência reportada, item do backlog daquele repositório, nunca gate desta unidade.
 
 ## Fixtures
