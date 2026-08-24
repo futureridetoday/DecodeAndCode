@@ -123,12 +123,20 @@ class _BaseComPlano(unittest.TestCase):
             template.format(unit_id=unit_id, state=state, titulo=titulo), encoding="utf-8"
         )
 
+    def _definir_escopo(self, previstas):
+        """Insere `## Escopo` com `previstas` linhas numeradas antes de `## Backlog`."""
+        linhas = "\n".join(f"| {i:02d} | unidade-{i:02d} | sintética |" for i in range(1, previstas + 1))
+        bloco = f"## Escopo\n\n| # | Unidade | Responsabilidade |\n|---|---|---|\n{linhas}\n\n"
+        texto = self.arquivo_plano.read_text(encoding="utf-8")
+        self.arquivo_plano.write_text(texto.replace("## Backlog", bloco + "## Backlog"), encoding="utf-8")
+
 
 class TestProjetarCaminhoFeliz(_BaseComPlano):
     def setUp(self):
         super().setUp()
         self._escrever_unidade("01-a.md", "0009-01", "verified", "Primeira unidade")
         self._escrever_unidade("02-b.md", "0009-02", "spec", "Segunda unidade")
+        self._definir_escopo(2)
 
     def test_backlog_devolvido_tem_as_duas_linhas_ordenadas(self):
         backlog_texto, _ = backlog.projetar(self.dir_plano)
@@ -179,6 +187,7 @@ class TestSituacaoConcluida(_BaseComPlano):
         super().setUp()
         self._escrever_unidade("01-a.md", "0009-01", "verified", "Primeira unidade")
         self._escrever_unidade("02-b.md", "0009-02", "verified", "Segunda unidade")
+        self._definir_escopo(2)
 
     def test_situacao_concluido_com_todas_verified(self):
         _, situacao = backlog.projetar(self.dir_plano)
@@ -195,6 +204,10 @@ class TestSituacaoConcluida(_BaseComPlano):
 
 
 class TestNenhumaUnidadeDerivada(_BaseComPlano):
+    def setUp(self):
+        super().setUp()
+        self._definir_escopo(0)
+
     def test_situacao_nunca_concluido_com_lista_vazia(self):
         _, situacao = backlog.projetar(self.dir_plano)
         self.assertEqual(situacao, "em desenvolvimento")
@@ -309,13 +322,15 @@ class TestDryRun(_BaseComPlano):
     def setUp(self):
         super().setUp()
         self._escrever_unidade("01-a.md", "0009-01", "verified", "Primeira unidade")
+        self._definir_escopo(1)
+        self.plano_antes_do_dry_run = self.arquivo_plano.read_text(encoding="utf-8")
 
     def test_nao_escreve_em_nenhum_dos_dois_arquivos(self):
         backlog_texto, situacao = backlog.projetar(self.dir_plano, dry_run=True)
 
         self.assertIn("0009-01", backlog_texto)
         self.assertEqual(situacao, "concluído")
-        self.assertEqual(self.arquivo_plano.read_text(encoding="utf-8"), PLANO)
+        self.assertEqual(self.arquivo_plano.read_text(encoding="utf-8"), self.plano_antes_do_dry_run)
         self.assertEqual(self.planos_md.read_text(encoding="utf-8"), self.planos_original)
 
 

@@ -12,18 +12,11 @@ Tudo é validado antes de qualquer escrita: plano sem os marcadores do backlog, 
 correspondente em `_planos.md`, levanta `ValueError` sem tocar em nenhum dos dois arquivos — inclusive
 em `dry_run`, que nunca grava.
 
-Sobre "X de Y derivadas" (D-03). Esta implementação computa X e Y do mesmo conjunto — as unidades
-achadas em disco —, exatamente como a Sequência da unidade descreve: ela só manda listar `NN-*.md`,
-nunca ler o corpo do plano além do próprio backlog. Por isso "X de Y derivadas" sai sempre "N de N":
-todo arquivo achado já é, por definição, derivado. Uma leitura alternativa é sugerida por um exemplo
-real onde "1 de 10 derivadas" reflete dez linhas na seção Escopo do plano contra uma única unidade
-hoje em disco, e pela própria razão de D-03 ("carrega informação que a norma
-omite") — ali "Y" seria o total *planejado*, não o já derivado. Não foi implementada: exigiria
-parsear uma tabela sob heading de nível 2 (possivelmente mais de uma, como no próprio 0002-dev-units,
-com Fase 1 e Fase 2 em tabelas separadas) — exatamente a fragilidade que este documento rejeita para
-o próprio backlog ("parsear heading é frágil... Região delimitada não tem esse risco") — e a
-Sequência da unidade não declara esse passo. Fica registrado como leitura pendente de confirmação,
-não como lacuna silenciosa.
+Sobre "X de Y derivadas" (D-03, fechado pela L-18 / unidade 0001-07). Y vem da contagem de
+unidades **previstas** na seção `## Escopo` do plano — toda linha numerada de toda tabela da
+seção, incluindo as de correções fora de fase. Escopo ilegível ou ausente conta como
+desconhecido: o rodapé diz "desconhecido" em vez de arriscar um total errado, e a situação
+nunca projeta `concluído` por não saber contar (ver `_contar_previstas` e `_situacao`).
 """
 
 from __future__ import annotations
@@ -38,6 +31,9 @@ import numeracao
 import regioes
 
 _H1 = re.compile(r"^#\s+(.+?)\s*$")
+_ESCOPO_HEADING = re.compile(r"(?m)^##\s+Escopo\s*$")
+_PROXIMO_H2 = re.compile(r"(?m)^##\s")
+_LINHA_TABELA_NUMERADA = re.compile(r"(?m)^\|\s*\d+\s*\|")
 
 
 class _Unidade(NamedTuple):
@@ -71,9 +67,10 @@ def projetar(dir_plano: Path, dry_run: bool = False) -> tuple[str, str]:
     if f"]({href})" not in miolo_planos:
         raise ValueError(f"plano {href!r} não tem linha em {lib.planos_md()}")
 
+    previstas = _contar_previstas(arquivo_do_plano.read_text(encoding="utf-8"))
     unidades = sorted(_unidades(dir_plano), key=_chave_ordenacao)
-    backlog = _montar_backlog(unidades)
-    situacao = _situacao(unidades)
+    backlog = _montar_backlog(unidades, previstas)
+    situacao = _situacao(unidades, previstas)
 
     if dry_run:
         return backlog, situacao
@@ -82,6 +79,19 @@ def projetar(dir_plano: Path, dry_run: bool = False) -> tuple[str, str]:
     regioes.escrever_regiao(lib.planos_md(), "planos", _substituir_situacao(miolo_planos, href, situacao))
 
     return backlog, situacao
+
+
+def _contar_previstas(texto_plano: str) -> int | None:
+    """Conta as unidades previstas em `## Escopo` — soma de toda linha numerada, em toda tabela
+    da seção, até o próximo heading de nível 2. `None` se a seção não existir — escopo ilegível
+    nunca vira zero por engano."""
+    inicio = _ESCOPO_HEADING.search(texto_plano)
+    if inicio is None:
+        return None
+    resto = texto_plano[inicio.end() :]
+    fim = _PROXIMO_H2.search(resto)
+    bloco = resto[: fim.start()] if fim else resto
+    return len(_LINHA_TABELA_NUMERADA.findall(bloco))
 
 
 def _unidades(dir_plano: Path) -> list[_Unidade]:
@@ -155,28 +165,33 @@ def _plural(quantidade: int, singular: str, plural: str) -> str:
     return singular if quantidade == 1 else plural
 
 
-def _montar_rodape(unidades: list[_Unidade]) -> str:
+def _montar_rodape(unidades: list[_Unidade], previstas: int | None) -> str:
     total = len(unidades)
     verificadas = sum(1 for u in unidades if u.state == "verified")
     hoje = date.today().isoformat()
+    total_previsto = "desconhecido" if previstas is None else str(previstas)
     return (
-        f"{total} de {total} {_plural(total, 'derivada', 'derivadas')} · "
+        f"{total} de {total_previsto} {_plural(total, 'derivada', 'derivadas')} · "
         f"{verificadas} {_plural(verificadas, 'verificada', 'verificadas')} · "
         f"atualizado em {hoje}"
     )
 
 
-def _montar_backlog(unidades: list[_Unidade]) -> str:
+def _montar_backlog(unidades: list[_Unidade], previstas: int | None) -> str:
     """O miolo completo da região `backlog` — tabela, linha em branco e rodapé."""
     linhas = ["", "| Unidade | Título | Estado |", "|---|---|---|"]
     linhas += [_linha_unidade(u) for u in unidades]
-    linhas += ["", _montar_rodape(unidades)]
+    linhas += ["", _montar_rodape(unidades, previstas)]
     return "\n".join(linhas) + "\n"
 
 
-def _situacao(unidades: list[_Unidade]) -> str:
-    """`concluído` só com unidades e todas `verified`; lista vazia nunca conta como concluída."""
-    if unidades and all(u.state == "verified" for u in unidades):
+def _situacao(unidades: list[_Unidade], previstas: int | None) -> str:
+    """`concluído` só quando o total previsto é conhecido, coincide com o derivado e todas as
+    derivadas estão `verified`. Lista vazia ou escopo ilegível (`previstas is None`) nunca conta
+    como concluída — falhar fechado é a correção que a L-18 exige."""
+    if not unidades or previstas is None or len(unidades) != previstas:
+        return "em desenvolvimento"
+    if all(u.state == "verified" for u in unidades):
         return "concluído"
     return "em desenvolvimento"
 

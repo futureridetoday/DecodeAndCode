@@ -225,7 +225,7 @@ status: {status}
 ---
 
 # {numero} — Plano sintético
-
+{escopo}
 Texto antes do backlog — precisa sobreviver à projeção.
 
 ## Backlog
@@ -237,6 +237,14 @@ Texto depois do backlog — também precisa sobreviver.
 """
 
 
+def _bloco_escopo(previstas: int | None) -> str:
+    """`## Escopo` com `previstas` linhas numeradas — vazio quando `previstas` é `None`."""
+    if previstas is None:
+        return ""
+    linhas = "\n".join(f"| {i:02d} | unidade-{i:02d} | sintética |" for i in range(1, previstas + 1))
+    return f"\n## Escopo\n\n| # | Unidade | Responsabilidade |\n|---|---|---|\n{linhas}\n"
+
+
 def plano(
     dir: Path,
     *,
@@ -245,11 +253,14 @@ def plano(
     numero: str = "0009",
     module: str | None = None,
     status: str = "approved",
+    previstas: int | None = None,
 ) -> Path:
     """Escreve `<dir>/<core>/<numero>-<nome>/<numero>-<nome>.md` — devolve o diretório do plano.
 
-    A mesma forma que `backlog.projetar()` espera como argumento. Levanta `ValueError` se
-    `core` ou `nome` forem vazios, antes de escrever qualquer arquivo.
+    A mesma forma que `backlog.projetar()` espera como argumento. `previstas`, quando dado,
+    escreve uma seção `## Escopo` com esse tanto de linhas numeradas — o que `backlog._contar_previstas`
+    lê. `None` (o default) escreve o plano sem `## Escopo`, para os testes de escopo ilegível.
+    Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer arquivo.
     """
     if not core.strip():
         raise ValueError("fixtures.plano: 'core' vazio")
@@ -259,7 +270,9 @@ def plano(
     module = module or nome
     dir_plano = Path(dir) / core / f"{numero}-{nome}"
     dir_plano.mkdir(parents=True, exist_ok=True)
-    texto = _PLANO_TEMPLATE.format(nome=nome, numero=numero, core=core, module=module, status=status)
+    texto = _PLANO_TEMPLATE.format(
+        nome=nome, numero=numero, core=core, module=module, status=status, escopo=_bloco_escopo(previstas)
+    )
     (dir_plano / f"{numero}-{nome}.md").write_text(texto, encoding="utf-8")
     return dir_plano
 
