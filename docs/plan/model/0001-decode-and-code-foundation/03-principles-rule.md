@@ -64,23 +64,48 @@ nativo — `.claude/rules/` sem `paths:` —, e dar a ela um oráculo estrutural
 
 1. Escrever `rules.py` com `lint_rule(path)` — compõe `regioes.ler_campo` para o frontmatter e `fnmatch.translate` + `re.compile` para validar cada entrada de `paths:`. Sem classe, sem estado: uma função e as auxiliares privadas que ela precisar, no estilo de `lint_unidade.py`.
 2. Escrever `.claude/rules/principles.md` **sem `paths:`**, com os três princípios da `D-03` — *código é custo*, *subtração antes de adição*, *evidência acima de opinião* —, cada um em uma seção com o enunciado e o teste que o torna aplicável.
-3. Acrescentar ao mesmo arquivo o fluxo de decodificação em três estágios — `Clarificar → Evitar → Reduzir` — e os dois gates, conforme a tabela em *Fluxo de decodificação* abaixo. O texto está aqui porque a fonte original não está neste repositório (`L-19`); não inventar estágio nem gate além dos declarados.
-4. Escrever `tests/test_rules.py` cobrindo o critério de aceite: a rule real aprova, e cada invariante reprova isoladamente contra fixture sintética montada em `tempfile.TemporaryDirectory()`.
-5. Acrescentar a `fixtures.py` o construtor `rule()`, no padrão dos quatro que a `0001-02` entregou — escreve só sob o diretório dado e levanta `ValueError` antes de escrever quando o argumento é inválido.
-6. Rodar o gate e relatar. **Não** instalar nada no AmFlow: esta unidade entrega o artefato deste repositório.
+3. Acrescentar ao mesmo arquivo o fluxo de decodificação e os dois gates, **conforme as tabelas abaixo** — que são transcrição da fonte, não derivação. Não inventar estágio nem gate, e não trazer os Gates 1–5: os limites numéricos vêm de outro domínio e o plano os recusou.
+4. Acrescentar o protocolo de exceção — os cinco gatilhos e o registro mínimo, conforme *Protocolo de exceção* abaixo. **Sem a governança da fonte:** Architecture Council, SLA em horas, matriz de risco e pipeline de aprendizado são instância do CortexMachine, e o invariante 2 os mantém fora.
+5. Escrever `tests/test_rules.py` cobrindo o critério de aceite: a rule real aprova, e cada invariante reprova isoladamente contra fixture sintética montada em `tempfile.TemporaryDirectory()`.
+6. Acrescentar a `fixtures.py` o construtor `rule()`, no padrão dos quatro que a `0001-02` entregou — escreve só sob o diretório dado e levanta `ValueError` antes de escrever quando o argumento é inválido.
+7. Rodar o gate e relatar. **Não** instalar nada no AmFlow: esta unidade entrega o artefato deste repositório.
 
-**Fluxo de decodificação — o conteúdo normativo, para não ser derivado em cold-start:**
+**Os três princípios — as formulações da fonte, que são mais afiadas que a taquigrafia da `D-03`:**
 
-| Estágio | Pergunta que ele faz | Sai daqui quando |
+| Princípio | Formulação |
+|---|---|
+| **Código é custo** | Só existe se eliminar dor real e mensurável |
+| **Subtração primeiro** | `remover > reduzir > reaproveitar > criar` |
+| **Evidência acima de opinião** | Decisão baseada em dado simples, não em estética |
+
+> A fonte tem **quatro**; o quarto — *"solução mínima vence: se 50 linhas resolvem, 500 é erro"* —
+> foi cortado pela `D-03` por redundância com *subtração primeiro*. Conferido contra a fonte em
+> 2026-08-24: o corte procede, e a cadeia `remover > reduzir > reaproveitar > criar` já carrega o
+> que o quarto dizia.
+
+**Fluxo de decodificação — transcrito de `decode_code_foundation.md`:**
+
+| Passo | Perguntas obrigatórias | Saída esperada |
 |---|---|---|
-| **Clarificar** | O que exatamente foi pedido, e o que foi suposto? | A suposição está declarada ou eliminada |
-| **Evitar** | Isto precisa existir? Existe algo que já resolve? | A resposta é sim e nada existente resolve |
-| **Reduzir** | Qual é a menor forma que resolve o que sobrou? | Nada mais pode sair sem quebrar o pedido |
+| **Clarificar** | Problema + métrica + beneficiário em 1 frase | Frase clara e mensurável |
+| **Evitar** | Posso resolver sem código — config, processo, doc ou reuso? | Lista de alternativas |
+| **Reduzir** | Qual é a menor versão que resolve 80% agora? | Escopo mínimo viável |
 
-| Gate | Onde | Recusa quando |
-|---|---|---|
-| **A** | Antes de escrever a primeira linha | O estágio *Evitar* não foi respondido — código a caminho sem justificativa de existência |
-| **B** | Antes de entregar | O estágio *Reduzir* não foi respondido — há parte da entrega que sai sem quebrar o pedido |
+| Gate | Critério |
+|---|---|
+| **A — necessidade real** | Há impacto mensurável **agora**? |
+| **B — mínimo viável** | Há como reduzir linhas, arquivos ou dependências? |
+
+> **Gate é critério, não posição no tempo.** A e B são as duas perguntas que barram avanço; não são
+> "antes de escrever" e "antes de entregar". A formulação anterior desta unidade os descrevia como
+> posições, e estava errada — corrigida contra a fonte em 2026-08-24 (`L-19`).
+
+**Protocolo de exceção — os cinco gatilhos, sem a governança da fonte:**
+
+Pede-se exceção quando, e só quando: a regra é **inviável** no contexto; há **trade-off crítico** não
+coberto; é **edge case** com risco operacional ou de compliance; há **conflito** entre normas ativas;
+ou há **exigência explícita** do humano. O registro mínimo nomeia a regra, o que já foi tentado, o
+que se propõe no lugar, e quem aprovou.
 
 ## Arquivos
 
@@ -131,4 +156,5 @@ casos levanta exceção — o lint devolve lista, como os outros dois do reposit
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 2, `D-03` e a seção *Não inventar ativação*
 - Mecanismo nativo confirmado na medição de 2026-08-22 sobre a doc do Claude Code: `.claude/rules/` com frontmatter `paths:`, e sem `paths:` a rule carrega sempre
-- O fluxo de decodificação vem da guideline `decode_code` de `futureridetoday/CortexMachine`, **que não está em disco** — o texto acima é derivação a partir do que o plano descreve, e a `L-19` registra isso
+- **Fonte primária, lida em 2026-08-24** em `CortexMachine`, clonado localmente: `guidelines/decode_code/decode_code_foundation.md` (fundamentação, fluxo em `:204-212`, Gates A/B em `:222-224`), `guidelines/decode_code/decode_code_essentials.md` (os quatro princípios operacionais, `:26-38`) e `guidelines/guidelines_ml.md` (protocolo HITL, `:10-28`) — os cinco gatilhos de exceção saem daí
+- **Recusados por serem instância de outro domínio:** os Gates 1–5 com limites numéricos (≤120L, ≤3 componentes, ≤6-8 fases, ≤10 regras), o catálogo de padrões Python de ML/scheduler, e a governança do protocolo HITL — Architecture Council, SLA de 2h–72h, matriz de risco e pipeline de aprendizado
