@@ -67,8 +67,9 @@ Derivado do que funcionou na conversa de 2026-08-22, não do que soa bem. Cada l
 
 ### H-09 · `padrão` · 2026-08-24 · Claude
 
-**Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — quatro
-ocorrências em um dia, com custo crescente.**
+**Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — seis
+ocorrências em dois dias, com custo crescente, e a última dentro da unidade escrita contra o
+próprio padrão.**
 
 | Lacuna | O que enumerei | O que passou |
 |---|---|---|
@@ -76,6 +77,13 @@ ocorrências em um dia, com custo crescente.**
 | `L-20` | um par de fixtures — recusa e libera | o caso que separa **canal** de **conteúdo**, que faltava |
 | `L-23` | instância *"do AmFlow"*, nominalmente | instância do Brand Boost, no mesmo documento |
 | `L-24` | quatro canais na tabela da `04` | o canal sem fixture saiu **invertido** |
+| `L-26` | *"mover para `_off/` tira do diretório carregado"* | o subdiretório carregava; desligar era inerte |
+| `11` | três sinais do relatório, escritos para o destino **corrigido** | o instrumento dizia `ok` para o log real da falha que ele existe para ver |
+
+**A sexta é a que fecha o argumento.** A unidade `11` foi escrita justamente para impedir que a lição
+da `L-26` ficasse como prosa — e o sinal que eu enumerei nela cobria o destino **corrigido**, não a
+forma que tinha falhado. Rodei o relatório contra o log real da falha e ele respondeu `ok`. Enumerei
+sem conferir contra a instância conhecida, **dentro da unidade escrita contra esse exato hábito**.
 
 As três primeiras custaram retrabalho de documento. **A quarta custou um guardrail que bloqueava
 `truncate -s 0 arquivo.log` e liberava `psql -h host -c "alter table ..."`** — o oposto exato do que

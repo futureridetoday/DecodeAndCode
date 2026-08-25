@@ -283,6 +283,38 @@ front-end, mas só entra em contexto se alguém a invocar — como guideline com
 `paths: ["hub/app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
 lembrança.
 
+#### Validar a ativação
+
+Dois atos permanecem humanos, e nenhum script os substitui: **abrir uma sessão nova**, e **tocar um
+arquivo do escopo** de uma guideline. O que deixa de ser julgamento é o que se conclui depois de
+feito isso — vira gate onde é estrutural, e relatório onde só a sessão real prova algo.
+
+`rules.auditar_arvore()` roda sem argumento e devolve `[]` quando a árvore de `.claude/rules/` e
+`.claude/rules-off/` está sã — recusa isoladamente um `.md` em subdiretório de `rules/` (a `L-26`
+inteira: o matcher recursa, e o arquivo continua carregando), uma rule malformada em `rules/`, e
+uma guideline quebrada em `rules-off/`, porque ela volta a ser ligada um dia.
+
+`activation_notice.relatorio(caminho_log)` lê o log de uma sessão —
+`$TMPDIR/decode-and-code-activation-<session_id>.log`, escrito pelo hook `InstructionsLoaded` — e
+devolve uma linha por instrução carregada, com caminho, motivo e veredito:
+
+```
+python3 -c "
+import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scripts')
+import activation_notice
+for linha in activation_notice.relatorio('<caminho-do-log>'):
+    print(linha)
+"
+```
+
+**O controle de três estados que provou a `L-26`**, e que qualquer projeto que instalar o plugin
+repete para validar a própria camada: guideline **ligada** produz entrada no log; movida para
+**subdiretório** de `rules/` também produz entrada — é o defeito; movida para o diretório **irmão**
+`rules-off/` não produz entrada nenhuma.
+
+Os resultados de cada medição não são recopiados aqui — vivem em *Validação de ponta a ponta*, no
+plano que instanciou este mecanismo pela primeira vez.
+
 **Ligar e desligar uma guideline é operação, não edição de arquivo.** `desligar` move o arquivo para
 `.claude/rules-off/` — diretório **irmão**, fora do que o Claude Code carrega —, e `ligar` devolve, sempre por
 `Path.rename`, nunca reescrita; o `registry.json` que acompanha é projeção, nunca fonte, e reporta

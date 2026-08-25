@@ -15,9 +15,9 @@ unit_id: 0001-11
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_auditoria.py
-verified_at: ""
+verified_at: 2026-08-25
 
 # history
 author: Bortoli
@@ -61,6 +61,7 @@ encontrou — hoje ela existe como resultado, e o procedimento está só numa co
 |---|---|
 | Rule **com** `paths:` carregada por `session_start` | O escopo não está sendo respeitado — custo de contexto que `paths:` existe para evitar |
 | Caminho carregado que está sob `.claude/rules-off/` | Desligar não desligou — a `L-26` de volta |
+| Caminho carregado em **subdiretório** de `.claude/rules/` | A forma **histórica** da `L-26`. `auditar_arvore` a pega estruturalmente, mas só quando a suíte roda; em sessão quem vê é o relatório |
 | Duas rules com `paths:` casando o mesmo arquivo | A condição de colisão da `L-05`, que hoje ninguém detecta |
 
 > **A auditoria não abre sessão, e é por isso que ela não fecha o problema sozinha.** Abrir sessão e

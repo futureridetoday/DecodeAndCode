@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Fixtures sintéticos para a suíte — unidade 0001-02.
+"""Fixtures sintéticos para a suíte — unidades 0001-02 e 0001-11.
 
-Os cinco construtores (`plano`, `unidade`, `skill`, `planos_md`, `rule`) escrevem artefatos
-válidos num diretório dado — sempre um `tempfile.TemporaryDirectory()` de quem chama. Nenhum lê ou
-grava caminho real do repositório, e nenhum argumento inválido escreve arquivo antes de
-levantar `ValueError`.
+Os seis construtores (`plano`, `unidade`, `skill`, `planos_md`, `rule`, `log_ativacao`) escrevem
+artefatos válidos num diretório dado — sempre um `tempfile.TemporaryDirectory()` de quem chama.
+Nenhum lê ou grava caminho real do repositório, e nenhum argumento inválido escreve arquivo antes
+de levantar `ValueError`.
 
 `UNIDADE_VALIDA` continua exportada como constante — antes inline em `test_lint_unidade.py`
 — porque `TestGateDeEntrada` naquele arquivo muta o texto por `.replace()` direto, e precisa
@@ -358,4 +358,17 @@ def rule(
     alvo = Path(dir) / f"{nome}.md"
     alvo.parent.mkdir(parents=True, exist_ok=True)
     alvo.write_text(texto, encoding="utf-8")
+    return alvo
+
+
+def log_ativacao(dir: Path, *, entradas: list[tuple[str, str]], nome: str = "ativacao.log") -> Path:
+    """Escreve `<dir>/<nome>` — log de sessão no formato de
+    `activation_notice.anunciar_instructions_loaded`. Devolve o caminho do log.
+
+    Cada item de `entradas` é `(caminho, load_reason)`, uma linha por item, na ordem dada.
+    """
+    linhas = "".join(f"instrução carregada: {caminho} (load_reason={motivo})\n" for caminho, motivo in entradas)
+    alvo = Path(dir) / nome
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+    alvo.write_text(linhas, encoding="utf-8")
     return alvo

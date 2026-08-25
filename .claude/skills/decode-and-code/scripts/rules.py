@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lint de invariantes de rule e guideline — unidades 0001-03 e 0001-09.
+"""Lint de invariantes de rule e guideline — unidades 0001-03, 0001-09 e 0001-11.
 
 Dá oráculo estrutural a `.claude/rules/*.md`: afirma que o arquivo é uma rule bem formada e que
 `paths:`, quando declarado, compila como glob — nunca julga se o conteúdo normativo é o certo
@@ -16,6 +16,11 @@ interpreta YAML, e o formato inline já é o que o resto do frontmatter deste re
 guideline sem escopo, ou com escopo que não casa nada no disco, aprova a forma e nunca ativa — a
 falha silenciosa que a norma nomeia em *Ativação silenciosa é o modo de falha da própria camada*.
 Casamento contra o disco usa `Path.glob` a partir de `lib.repo_root()`, nunca fixture.
+
+`auditar_arvore` dá o mesmo tratamento à árvore inteira — `.claude/rules/` e `.claude/rules-off/`
+da raiz real —, e é o gate estrutural que fecha a `L-26`: um `.md` em subdiretório de `rules/`
+continua carregando porque o matcher do Claude Code recursa, e nada além deste check recusava
+isso antes de acontecer de novo.
 """
 
 from __future__ import annotations
@@ -153,3 +158,46 @@ def _checar_paths_guideline(path: Path) -> list[str]:
             continue  # glob que não compila — já reportado por lint_rule
 
     return [f"'paths:' não casa nenhum arquivo existente no repositório: {entradas!r}"]
+
+
+def auditar_arvore() -> list[str]:
+    """Varre `.claude/rules/` e `.claude/rules-off/` da raiz real — lista vazia quando a árvore
+    está sã.
+
+    Três recusas isoladas (norma, seção *Validar a ativação*): um `.md` em qualquer subdiretório
+    de `rules/` — a `L-26` inteira, porque o matcher recursa e o arquivo continua carregando; um
+    `.md` direto em `rules/` que reprova em `lint_rule`; um `.md` direto em `rules-off/` que
+    reprova em `lint_guideline`, porque volta a ser ligado um dia e o defeito espera lá dentro.
+    Só leitura — auditoria que corrige sozinha esconde o defeito que deveria mostrar.
+    """
+    dir_rules = lib.repo_root() / ".claude" / "rules"
+    dir_off = dir_rules.parent / "rules-off"
+
+    problemas: list[str] = []
+    problemas.extend(_checar_subdiretorio(dir_rules))
+    problemas.extend(_checar_lint_direto(dir_rules, lint_rule))
+    problemas.extend(_checar_lint_direto(dir_off, lint_guideline))
+    return problemas
+
+
+def _checar_subdiretorio(dir_rules: Path) -> list[str]:
+    """`.md` fora do nível direto de `dir_rules` — o matcher do Claude Code recursa (`L-26`)."""
+    if not dir_rules.is_dir():
+        return []
+    return [
+        f"'.md' em subdiretório de rules/, continua carregando (L-26): {p.relative_to(dir_rules)}"
+        for p in sorted(dir_rules.rglob("*.md"))
+        if p.parent != dir_rules
+    ]
+
+
+def _checar_lint_direto(diretorio: Path, lint) -> list[str]:
+    """Roda `lint` sobre cada `.md` direto em `diretorio` — reprovação vira problema nomeado."""
+    if not diretorio.is_dir():
+        return []
+    problemas = []
+    for arquivo in sorted(diretorio.glob("*.md")):
+        achados = lint(arquivo)
+        if achados:
+            problemas.append(f"{arquivo}: {'; '.join(achados)}")
+    return problemas

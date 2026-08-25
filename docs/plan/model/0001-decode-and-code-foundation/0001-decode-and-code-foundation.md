@@ -667,9 +667,9 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-08](08-language-policy.md) | language-policy | `verified` |
 | [0001-09](09-guideline-manifest.md) | guideline-manifest | `verified` |
 | [0001-10](10-guideline-registry.md) | guideline-registry | `verified` |
-| [0001-11](11-activation-audit.md) | activation-audit | `spec` |
+| [0001-11](11-activation-audit.md) | activation-audit | `verified` |
 
-11 de 21 derivadas · 10 verificadas · atualizado em 2026-08-25
+11 de 21 derivadas · 11 verificadas · atualizado em 2026-08-25
 <!-- backlog:end -->
 
 ## Fonte
