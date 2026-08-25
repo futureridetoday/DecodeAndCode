@@ -125,8 +125,8 @@ acima do teto de 8 passos, e logo na unidade que destrava todas as outras.
 
 | # | Unidade | Responsabilidade |
 |---|---|---|
-| 06 | `guideline-manifest` | O que é uma guideline: manifesto, escopo declarado por `paths:`, e a fronteira escrita contra skill. A instância de prova usa o conteúdo normativo da `AmFlow:hub-front` como **material** — o artefato vive aqui, e a instalação lá é consequência |
-| 07 | `guideline-registry` | Registry por projeto e a operação que liga e desliga uma guideline sem editar arquivo à mão |
+| 09 | `guideline-manifest` | O que é uma guideline: manifesto, escopo declarado por `paths:`, e a fronteira escrita contra skill. A instância de prova usa o conteúdo normativo da `AmFlow:hub-front` como **material** — o artefato vive aqui, e a instalação lá é consequência |
+| 10 | `guideline-registry` | Registry por projeto e a operação que liga e desliga uma guideline sem editar arquivo à mão |
 
 ### Fase 4 — O plano ganha porte, e o processo deixa de cobrar o mesmo de todos
 
@@ -611,6 +611,8 @@ que prova, e não inventa uma fase para ter o que testar.
 | D-14 | **`tests/test_deprecacao.py` é removido, não reapontado** | Decidida na derivação de 2026-08-23. Ele verifica que `plan-dev-units` e `digital-twin-product` deixaram de se citar — nenhum dos dois existiu neste repositório. Não é fixture errada, é uma unidade do AmFlow (`0002-15`) inteira sem objeto aqui. Reapontar exigiria inventar o que ele verifica |
 | D-15 | **A aprovação deste plano é de 2026-08-24, e o registro anterior era efeito colateral do `derive`** | **Ratificada pelo humano em 2026-08-24.** O commit `693f18e` (2026-08-23) carimbou `status: approved`, registrou a linha em `_planos.md` e derivou a Fase 1 sem que a etapa 3 tivesse ocorrido — não por decisão de ninguém, mas porque `scaffold.aprovar` grava o campo como parte do `derive` (`scaffold.py:111`), e nenhum script confere o gate. A ratificação alcança o material já produzido: as unidades `01` e `02`, as decisões `D-12`–`D-14`, as lacunas `L-11`–`L-13` e a implementação da `01`. A data na coluna *Aprovado* do `_planos.md` continua sendo **2026-08-23**, que é quando o script rodou; corrigi-la à mão editaria projeção. O defeito de mecanismo que permitiu isso está na `L-16` |
 
+| D-16 | **A instância de prova da `09` não é a `hub-front`, e o material dela vira o caso da fronteira** | **Decidida na derivação de 2026-08-24.** O escopo da `hub-front` é `hub/app/**`, que não existe neste repositório: como guideline viva aqui, ela validaria e **nunca ativaria** — o modo de falha que a própria `09` define um invariante para recusar, entregue pela unidade que o define. A `hub-front` fica onde é útil, como **caso medido** da fronteira skill × guideline, que é o papel para o qual este plano a nomeou. A guideline viva carrega a norma operativa de escrita de script, com `paths:` casando os `.py` daqui, e o corte segue o padrão da `03`: **a rule carrega o operativo, o documento de `docs/plan/system/` carrega evidência e racional**, citado — nunca as duas coisas nos dois lugares. Extrair a `hub-front` continua consequência reportada ao AmFlow, nunca gate |
+
 ## Lacunas
 
 | # | Lacuna | Por que fica registrada |
@@ -652,8 +654,10 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-06](06-incremental-derive.md) | incremental-derive | `verified` |
 | [0001-07](07-plan-situation.md) | plan-situation | `verified` |
 | [0001-08](08-language-policy.md) | language-policy | `verified` |
+| [0001-09](09-guideline-manifest.md) | guideline-manifest | `spec` |
+| [0001-10](10-guideline-registry.md) | guideline-registry | `spec` |
 
-8 de 20 derivadas · 8 verificadas · atualizado em 2026-08-24
+10 de 20 derivadas · 8 verificadas · atualizado em 2026-08-24
 <!-- backlog:end -->
 
 ## Fonte
