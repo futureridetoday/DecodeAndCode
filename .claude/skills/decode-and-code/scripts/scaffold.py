@@ -40,6 +40,8 @@ _spec = importlib.util.spec_from_file_location(
 move_md = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(move_md)
 
+PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
+
 
 def _campo_vazio(valor: str | None) -> bool:
     """True se o campo está ausente ou sem valor real.
@@ -75,21 +77,22 @@ def _mover(origem: Path, destino: Path) -> None:
     move_md.reescrever_referencias(origem, destino, dry_run=False)
 
 
-def _linha_planos_md(numero: str, nome: str, core: str, module: str | None, alvo: Path) -> str:
+def _linha_planos_md(
+    numero: str, nome: str, core: str, module: str | None, alvo: Path, approved_at: str
+) -> str:
     href = alvo.relative_to(lib.plan_root()).as_posix()
-    hoje = date.today().isoformat()
     return (
         f"| {numero} | [{nome}]({href}) | {core} | {module or ''} | — | "
-        f"em desenvolvimento | {hoje} |\n"
+        f"em desenvolvimento | {approved_at} |\n"
     )
 
 
 def _registrar_planos_md(
-    numero: str, nome: str, core: str, module: str | None, alvo: Path
+    numero: str, nome: str, core: str, module: str | None, alvo: Path, approved_at: str
 ) -> None:
     caminho = lib.planos_md()
     miolo = regioes.ler_regiao(caminho, "planos")
-    linha = _linha_planos_md(numero, nome, core, module, alvo)
+    linha = _linha_planos_md(numero, nome, core, module, alvo, approved_at)
     regioes.escrever_regiao(caminho, "planos", (miolo or "") + linha)
 
 
@@ -99,9 +102,11 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     **Idempotente:** plano já aprovado devolve o próprio caminho sem escrever nada, para que a
     derivação incremental reinvoque o modo `derive` sem tratar o caso no markdown (`L-17`).
 
-    Levanta `ValueError` se o plano não declara `core`, ou se o nome do arquivo falha a validação
-    sintática (`nomenclatura.validar_nome`). Levanta `FileExistsError` se o alvo já existe. Em
-    qualquer um dos dois casos — inclusive em `dry_run` — nada é escrito.
+    Levanta `ValueError` se o plano não declara `core`, `plan_size` (ou declara fora do
+    vocabulário `PLAN_SIZES_VALIDOS`), `approved_by`, `approved_at` (ou declara algo que não é
+    data ISO), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
+    Levanta `FileExistsError` se o alvo já existe. Em qualquer um dos casos — inclusive em
+    `dry_run` — nada é escrito.
     """
     if _ja_aprovado(plano):
         return plano.resolve()
@@ -109,6 +114,27 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     core = regioes.ler_campo(plano, "core")
     if _campo_vazio(core):
         raise ValueError(f"plano não declara 'core' — {plano}")
+
+    plan_size = regioes.ler_campo(plano, "plan_size")
+    if _campo_vazio(plan_size):
+        raise ValueError(f"plano não declara 'plan_size' — {plano}")
+    if plan_size.strip(" \t\"'") not in PLAN_SIZES_VALIDOS:
+        raise ValueError(
+            f"plan_size fora do vocabulário {PLAN_SIZES_VALIDOS} — {plan_size!r} em {plano}"
+        )
+
+    approved_by = regioes.ler_campo(plano, "approved_by")
+    if _campo_vazio(approved_by):
+        raise ValueError(f"plano não declara 'approved_by' — {plano}")
+
+    approved_at = regioes.ler_campo(plano, "approved_at")
+    if _campo_vazio(approved_at):
+        raise ValueError(f"plano não declara 'approved_at' — {plano}")
+    approved_at = approved_at.strip(" \t\"'")
+    try:
+        date.fromisoformat(approved_at)
+    except ValueError:
+        raise ValueError(f"approved_at não é data ISO — {approved_at!r} em {plano}")
 
     module = regioes.ler_campo(plano, "module")
 
@@ -128,7 +154,7 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     _mover(plano, alvo)
     _garantir_secao_backlog(alvo)
     regioes.escrever_campos(alvo, {"plan_id": f'"{numero}"', "status": "approved"})
-    _registrar_planos_md(numero, nome, core, module, alvo)
+    _registrar_planos_md(numero, nome, core, module, alvo, approved_at)
 
     return alvo
 

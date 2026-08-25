@@ -222,6 +222,9 @@ core: {core}
 module: {module}
 block: ""
 status: {status}
+plan_size: {plan_size}
+approved_by: {approved_by}
+approved_at: {approved_at}
 ---
 
 # {numero} — Plano sintético
@@ -254,13 +257,19 @@ def plano(
     module: str | None = None,
     status: str = "approved",
     previstas: int | None = None,
+    plan_size: str = "pequeno",
+    approved_by: str = "Teste",
+    approved_at: str = "2026-07-25",
 ) -> Path:
     """Escreve `<dir>/<core>/<numero>-<nome>/<numero>-<nome>.md` — devolve o diretório do plano.
 
     A mesma forma que `backlog.projetar()` espera como argumento. `previstas`, quando dado,
     escreve uma seção `## Escopo` com esse tanto de linhas numeradas — o que `backlog._contar_previstas`
     lê. `None` (o default) escreve o plano sem `## Escopo`, para os testes de escopo ilegível.
-    Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer arquivo.
+    `plan_size`/`approved_by`/`approved_at` vêm com default válido (`scaffold.PLAN_SIZES_VALIDOS`
+    e data ISO), para que quem chama sem se importar com aprovação continue construindo plano
+    válido. Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer
+    arquivo.
     """
     if not core.strip():
         raise ValueError("fixtures.plano: 'core' vazio")
@@ -271,7 +280,15 @@ def plano(
     dir_plano = Path(dir) / core / f"{numero}-{nome}"
     dir_plano.mkdir(parents=True, exist_ok=True)
     texto = _PLANO_TEMPLATE.format(
-        nome=nome, numero=numero, core=core, module=module, status=status, escopo=_bloco_escopo(previstas)
+        nome=nome,
+        numero=numero,
+        core=core,
+        module=module,
+        status=status,
+        escopo=_bloco_escopo(previstas),
+        plan_size=plan_size,
+        approved_by=approved_by,
+        approved_at=approved_at,
     )
     (dir_plano / f"{numero}-{nome}.md").write_text(texto, encoding="utf-8")
     return dir_plano

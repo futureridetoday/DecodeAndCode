@@ -15,9 +15,9 @@ unit_id: 0001-12
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_porte_e_aprovacao.py
-verified_at: ""
+verified_at: 2026-08-25
 
 # history
 author: Bortoli

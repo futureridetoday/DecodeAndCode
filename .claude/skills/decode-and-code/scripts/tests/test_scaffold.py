@@ -17,7 +17,6 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
-from datetime import date
 from pathlib import Path
 from unittest import mock
 
@@ -61,6 +60,9 @@ class TestAprovarCaminhoFeliz(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
+            "plan_size: pequeno\n"
+            "approved_by: Bortoli\n"
+            "approved_at: 2026-08-24\n"
             "---\n\n"
             "# evolucao-tools\n\n"
             "ver [norma](../system/norma.md)\n",
@@ -134,12 +136,13 @@ class TestAprovarCaminhoFeliz(unittest.TestCase):
         self.assertEqual(regioes.ler_campo(alvo, "status"), "approved")
 
     def test_planos_md_ganha_linha_do_plano(self):
+        # A coluna Aprovado recebe o `approved_at` declarado no plano (2026-08-24, no
+        # frontmatter de self.plano) — nunca a data em que o teste roda (unidade 0001-12, L-16).
         scaffold.aprovar(self.plano)
-        hoje = date.today().isoformat()
         conteudo = self.planos_md.read_text(encoding="utf-8")
         self.assertIn(
             "| 0002 | [evolucao-tools](builder/0002-evolucao-tools/0002-evolucao-tools.md)"
-            f" | builder | evolucao-tools | — | em desenvolvimento | {hoje} |",
+            " | builder | evolucao-tools | — | em desenvolvimento | 2026-08-24 |",
             conteudo,
         )
 
@@ -177,6 +180,9 @@ class TestAprovarDryRun(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
+            "plan_size: pequeno\n"
+            "approved_by: Bortoli\n"
+            "approved_at: 2026-08-24\n"
             "---\n\n"
             "# evolucao-tools\n\n"
             "ver [norma](../system/norma.md)\n",
@@ -230,6 +236,9 @@ class TestAprovarErros(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
+            "plan_size: pequeno\n"
+            "approved_by: Bortoli\n"
+            "approved_at: 2026-08-24\n"
             "---\n\n"
             "# evolucao-tools\n\n"
             "ver [norma](../system/norma.md)\n",

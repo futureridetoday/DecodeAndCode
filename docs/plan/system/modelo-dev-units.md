@@ -488,6 +488,25 @@ resolve a ambiguidade de para onde mover o arquivo na aprovação.
 > O alvo define onde o plano e suas unidades **vivem**, não a fronteira do que o código **toca**. Uma
 > unidade pode tocar arquivos de qualquer lugar — é o campo *Arquivos* que declara isso.
 
+### Aprovação — três campos declarados pelo humano
+
+A etapa de aprovação (*Fluxo completo*, etapa 3) deixa um artefato: o plano declara, no
+frontmatter, os três campos que só o humano pode preencher. `scaffold.aprovar` recusa a ausência de
+qualquer um — antes de mover o plano, antes de escrever qualquer coisa, inclusive em `dry_run`.
+
+| Campo | Valor | O que o gate faz |
+|---|---|---|
+| `plan_size` | `pequeno` \| `médio` \| `grande` | Recusa ausente **e** recusa valor fora do vocabulário |
+| `approved_by` | nome de quem aprovou | Recusa ausente |
+| `approved_at` | `YYYY-MM-DD` | Recusa ausente, e recusa o que não for data ISO |
+
+Recusar `plan_size` fora do vocabulário não é julgar o porte: o gate segue sem opinar se `grande`
+era a escolha certa para este plano — isso é julgamento humano. O que ele recusa é o valor que não é
+escolha nenhuma, no mesmo padrão de vocabulário fechado que `unit_type` já usa.
+
+A coluna *Aprovado* de `_planos.md` recebe o `approved_at` declarado — nunca a data em que o script
+rodou.
+
 ### Backlog — região delimitada por marcadores
 
 O script projeta o backlog entre marcadores de comentário, invisíveis no markdown renderizado:
@@ -756,7 +775,7 @@ pesquisa ampla, e só depois de a skill existir.
 |---|---|---|---|
 | 1 | Plano nasce | Opus | `docs/plan/_inbox/nome.md` |
 | 2 | Revisão | skill + script | Cinco checks |
-| 3 | **Aprovação** | **humano** | gate |
+| 3 | **Aprovação** | **humano** | `plan_size`/`approved_by`/`approved_at` declarados no plano |
 | 4 | Número atribuído | script | Próximo livre em `_planos.md` — 4 dígitos |
 | 5 | Estrutura criada | script | `docs/plan/<core>/<NNNN>-<nome>/` |
 | 5b | Plano movido e prefixado | script | `_inbox/<nome>.md` → `<NNNN>-<nome>/<NNNN>-<nome>.md` |

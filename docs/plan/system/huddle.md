@@ -67,9 +67,9 @@ Derivado do que funcionou na conversa de 2026-08-22, não do que soa bem. Cada l
 
 ### H-09 · `padrão` · 2026-08-24 · Claude
 
-**Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — seis
-ocorrências em dois dias, com custo crescente, e a última dentro da unidade escrita contra o
-próprio padrão.**
+**Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — sete
+ocorrências em dois dias, com custo crescente, uma delas dentro da unidade escrita contra o próprio
+padrão, e a última anunciada por mim antes de acontecer.**
 
 | Lacuna | O que enumerei | O que passou |
 |---|---|---|
@@ -79,6 +79,19 @@ próprio padrão.**
 | `L-24` | quatro canais na tabela da `04` | o canal sem fixture saiu **invertido** |
 | `L-26` | *"mover para `_off/` tira do diretório carregado"* | o subdiretório carregava; desligar era inerte |
 | `11` | três sinais do relatório, escritos para o destino **corrigido** | o instrumento dizia `ok` para o log real da falha que ele existe para ver |
+| `12` | quatro arquivos de teste que *"já chamam `aprovar`"*, listados a partir de um `grep` | um só tinha a palavra numa docstring, e os dois que quebravam não apareceram na busca |
+
+**A sétima muda a forma, e não a raiz.** As seis primeiras enumeraram sem caso verificável atrás.
+Esta enumerou **a partir de um sinal que não conferi contra as instâncias**: `grep -rln "aprovar"`
+casa a palavra, não a chamada. Um dos quatro arquivos listados só a tinha numa docstring, e os dois
+que de fato quebravam escrevem frontmatter inline em vez de usar `fixtures.plano()`, então nenhuma
+busca por `aprovar` os encontraria. A unidade exigia suíte verde no critério de aceite e **não
+declarava o que era preciso tocar para obtê-la** — quem executou teve que descobrir e reportar.
+
+**E esta veio anunciada.** Ao fechar a `11` eu disse, em voz alta, que a Fase 4 me faria escrever
+mais quatro critérios de aceite sob o mesmo padrão. Nomear o hábito na frase anterior não o
+interrompeu na seguinte — o que é evidência de que a correção **não é atenção**, e empurra a pergunta
+aberta lá embaixo para o lado procedimental.
 
 **A sexta é a que fecha o argumento.** A unidade `11` foi escrita justamente para impedir que a lição
 da `L-26` ficasse como prosa — e o sinal que eu enumerei nela cobria o destino **corrigido**, não a

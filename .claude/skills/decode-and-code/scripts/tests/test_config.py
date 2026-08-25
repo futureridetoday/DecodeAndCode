@@ -197,6 +197,9 @@ class TestScaffoldSegueOAlvoDoConfig(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
+            "plan_size: pequeno\n"
+            "approved_by: Bortoli\n"
+            "approved_at: 2026-08-24\n"
             "---\n\n"
             "# evolucao-tools\n",
             encoding="utf-8",
