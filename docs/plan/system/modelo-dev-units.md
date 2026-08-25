@@ -283,6 +283,12 @@ front-end, mas só entra em contexto se alguém a invocar — como guideline com
 `paths: ["hub/app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
 lembrança.
 
+**Ligar e desligar uma guideline é operação, não edição de arquivo.** `desligar` move o arquivo para
+`.claude/rules-off/` — diretório **irmão**, fora do que o Claude Code carrega —, e `ligar` devolve, sempre por
+`Path.rename`, nunca reescrita; o `registry.json` que acompanha é projeção, nunca fonte, e reporta
+divergência entre o que ele registra e o estado real do disco em vez de escolher um dos dois em
+silêncio.
+
 ### 4. Norma de lote e decomposição
 
 - **Teto:** **8 passos de sequência por unidade**. Acima disso, a unidade divide-se.

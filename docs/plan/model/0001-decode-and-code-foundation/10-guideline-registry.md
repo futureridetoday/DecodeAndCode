@@ -15,9 +15,9 @@ unit_id: 0001-10
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_registry.py
-verified_at: ""
+verified_at: 2026-08-25
 
 # history
 author: Bortoli
@@ -44,15 +44,25 @@ e deixar registrado qual estava ativa em cada momento, que é o que um revisor p
 | **Entrada** | `registry.ligar(nome)` e `registry.desligar(nome)`; `registry.listar()` sem argumento |
 | **Saída** | `listar()` devolve a lista de guidelines conhecidas com o estado de cada uma. `ligar`/`desligar` devolvem o caminho final |
 | **Auth** | — |
-| **Efeito** | Guideline ligada vive em `.claude/rules/`; desligada vive em `.claude/rules/_off/`. O `registry.json` acompanha, e é projetado — nunca editado à mão |
+| **Efeito** | Guideline ligada vive em `.claude/rules/`; desligada vive em `.claude/rules-off/`, **diretório irmão**. O `registry.json` acompanha, e é projetado — nunca editado à mão |
 | **Erro** | Nome desconhecido levanta `ValueError` nomeando o que existe. Ligar o que já está ligado é **no-op**, não erro |
 
 **Por que desligar é mover, e não um campo:**
 
-O Claude Code carrega **todo arquivo** de `.claude/rules/`; não existe campo de frontmatter que
-desative um. Um campo `enabled: false` seria norma que o modelo lê afirmando que não vale — o
-pior dos dois mundos, e custo de contexto por nada. Mover para `_off/` tira do diretório carregado
-e mantém o arquivo versionado, auditável e a um comando de voltar.
+O Claude Code carrega `.claude/rules/*.md`; não existe campo de frontmatter que desative um. Um
+campo `enabled: false` seria norma que o modelo lê afirmando que não vale — o pior dos dois mundos,
+e custo de contexto por nada. Mover para fora do diretório carregado desliga de verdade e mantém o
+arquivo versionado, auditável e a um comando de voltar.
+
+> **O destino é `.claude/rules-off/`, irmão, e não um subdiretório — isto foi medido, não deduzido.**
+> A primeira versão desta unidade mandava mover para `.claude/rules/_off/`, e o instrumento da `05`
+> mostrou o arquivo carregando de lá por `path_glob_match`: **o matcher recursa para dentro do
+> subdiretório**. Desligava no disco sem desligar em contexto — falha silenciosa e indistinguível de
+> sucesso, com `listar()` reportando `desligada` e a norma ainda ativa. Ver `L-26`.
+
+> **O `registry.json` fica em `.claude/rules/` e isso é seguro, também por medição:** ele existe lá
+> e **não** aparece no log de carregamento, o que prova que o diretório pega `.md` e não todo
+> arquivo.
 
 > **O `registry.json` é projeção, não fonte.** A verdade é o disco: onde o arquivo está. O registry
 > registra **quando** cada guideline foi ligada ou desligada — informação que o disco não carrega e
@@ -60,7 +70,7 @@ e mantém o arquivo versionado, auditável e a um comando de voltar.
 
 ## Sequência
 
-1. Escrever `registry.py` com `listar`, `ligar` e `desligar` — sem classe, sem estado em módulo, no estilo dos outros scripts. `listar` varre `.claude/rules/` e `.claude/rules/_off/` e devolve o estado derivado do disco.
+1. Escrever `registry.py` com `listar`, `ligar` e `desligar` — sem classe, sem estado em módulo, no estilo dos outros scripts. `listar` varre `.claude/rules/` e `.claude/rules-off/` e devolve o estado derivado do disco.
 2. `ligar`/`desligar` movem o arquivo entre os dois diretórios e reprojetam o `registry.json`. Validação antes de qualquer escrita: nome desconhecido levanta sem tocar em nada.
 3. `desligar` recusa guideline que **não** declara `paths:` — princípio não se desliga. A `D-01` fixa que o que é ligável é escolha técnica; princípio não é rejeitável, e por isso não tem chave.
 4. Projetar `registry.json` com uma entrada por guideline: nome, estado, e a data da última transição. Reprojetado inteiro a cada operação, no padrão de região das outras projeções deste repositório.
@@ -73,7 +83,7 @@ e mantém o arquivo versionado, auditável e a um comando de voltar.
 | Caminho | O que muda |
 |---|---|
 | `.claude/skills/decode-and-code/scripts/registry.py` | **novo** — `listar`, `ligar`, `desligar` |
-| `.claude/rules/registry.json` | **novo** — projeção do estado e das transições |
+| `.claude/rules/registry.json` | **novo** — projeção do estado e das transições; fica no diretório de rules porque `.json` não carrega, medido |
 | `docs/plan/system/modelo-dev-units.md` | duas frases sobre a operação, na seção *Camada normativa* |
 | `.claude/skills/decode-and-code/scripts/tests/test_registry.py` | **novo** — o teste declarado |
 
@@ -94,12 +104,17 @@ recusar desligar um princípio.
 
 ## Critério de aceite
 
-`desligar` move a guideline para `_off/` e ela **deixa de estar em `.claude/rules/`**; `ligar`
-devolve ao lugar. O conteúdo do arquivo é **byte-idêntico** antes e depois do par — desligar não
-reescreve norma.
+`desligar` move a guideline para `.claude/rules-off/` e ela **deixa de estar sob `.claude/rules/`,
+inclusive em qualquer subdiretório dele**; `ligar` devolve ao lugar. O conteúdo do arquivo é
+**byte-idêntico** antes e depois do par — desligar não reescreve norma.
+
+> **O que este critério prova, e o que não prova.** Teste de unidade alcança o **destino** — que o
+> arquivo saiu da árvore carregada. Que ele **deixou de entrar em contexto** é comportamento de
+> sessão, e nenhum teste daqui o mede. A prova real é a sessão registrada em *Validação de ponta a
+> ponta*, e foi ela que reprovou a primeira versão desta unidade.
 
 `listar` deriva o estado do **disco**, não do `registry.json`: com o arquivo movido à mão para
-`_off/`, `listar` reporta desligada mesmo que o registry diga o contrário. Divergência entre os dois
+`rules-off/`, `listar` reporta desligada mesmo que o registry diga o contrário. Divergência entre os dois
 é reportada, nunca silenciada.
 
 `desligar` sobre um **princípio** — rule sem `paths:` — recusa, e a mensagem diz por quê. Nome
@@ -123,4 +138,4 @@ sobre ela.
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 3
 - `D-01` e `L-02`, que fixam respectivamente o que é ligável e por que a cópia é versionada
-- Comportamento do carregamento medido em 2026-08-22: `.claude/rules/` carrega todo arquivo do diretório, e não há campo de desativação — daí desligar ser mover
+- Comportamento do carregamento medido em **2026-08-24**, com o instrumento da `0001-05`: `.claude/rules/*.md` carrega, `.json` no mesmo diretório **não**, e **subdiretório carrega** — o `_off/` original não desligava nada. Não há campo de desativação; daí desligar ser mover para fora da árvore
