@@ -65,6 +65,32 @@ Derivado do que funcionou na conversa de 2026-08-22, não do que soa bem. Cada l
 
 ## Abertas
 
+### H-09 · `padrão` · 2026-08-24 · Claude
+
+**Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — quatro
+ocorrências em um dia, com custo crescente.**
+
+| Lacuna | O que enumerei | O que passou |
+|---|---|---|
+| `L-14` | quatro strings proibidas nos `.py` | instância do AmFlow que não continha nenhuma delas |
+| `L-20` | um par de fixtures — recusa e libera | o caso que separa **canal** de **conteúdo**, que faltava |
+| `L-23` | instância *"do AmFlow"*, nominalmente | instância do Brand Boost, no mesmo documento |
+| `L-24` | quatro canais na tabela da `04` | o canal sem fixture saiu **invertido** |
+
+As três primeiras custaram retrabalho de documento. **A quarta custou um guardrail que bloqueava
+`truncate -s 0 arquivo.log` e liberava `psql -h host -c "alter table ..."`** — o oposto exato do que
+existia para fazer. Chegou a bloquear uma chamada da sessão que o revisava.
+
+**A segunda metade da lição é sobre como ele apareceu.** A suíte estava verde, com 227 testes. Ela
+provava o que os testes afirmavam, e os testes tinham sido escritos a partir da **mesma enumeração**
+que estava incompleta. Só apareceu porque sondei o comportamento real do hook em vez de aceitar o
+verde. Verde não é evidência quando o teste e o critério vêm da mesma cabeça no mesmo momento — é a
+`D-04` outra vez, num lugar novo.
+
+**O que eu ainda não sei:** se a correção é procedimental — *"todo item enumerado num critério precisa
+de um caso"* — ou se é mais funda, e a forma "lista" é que está errada para critério de aceite.
+Enumerar é o que torna o critério verificável; foi enumerar **de menos** que falhou, não enumerar.
+
 ### H-01 · `pergunta` · 2026-08-22 · Claude
 
 **A Fase 4 do `decode-and-code-foundation` ficou no fim, então os dois agentes não executam nenhuma
