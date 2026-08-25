@@ -165,4 +165,4 @@ Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`)
 
 > **Cópia provisória, migrada do AmFlow em 2026-08-22.** Os scripts vieram medidos e verdes; este
 > arquivo veio junto para o repositório se operar sozinho. A reescrita — e a retirada do que ainda
-> assume o AmFlow — é trabalho das unidades `01` e `12` do plano em curso.
+> assume o AmFlow — é trabalho das unidades `01` e `16` do plano em curso.
