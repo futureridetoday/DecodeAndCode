@@ -838,6 +838,16 @@ pesquisa ampla, e só depois de a skill existir.
 > escrever nada — derivar em lotes reinvoca a etapa sobre o mesmo plano, e isso é o caminho previsto,
 > não uma exceção a tratar.
 
+> **As etapas 5 a 9 ramificam por porte** (`0001-14`). No **pequeno**, `derive` **não roda**:
+> `aprovar` move direto para `<core>/<NNNN>-<nome>.md`, sem subpasta (sem etapa 5) e sem unidade
+> nenhuma para decidir, numerar ou derivar (sem etapa 6). A etapa 7 ainda roda, mas não escreve
+> região de backlog — não existe o que projetar; a situação vem de `status`, e a etapa 9 fecha
+> quando o **humano** grava `status: done`, nunca um script. No **médio**, `aprovar` também move
+> sem subpasta, mas a etapa 7 projeta as caixas de `## Tarefas` em vez de unidades — a etapa 6
+> continua sem rodar, porque médio não deriva unidade. No **grande**, as nove etapas seguem
+> exatamente como na tabela. O formato completo de cada porte está em *O que cada porte carrega*,
+> acima — não duplicado aqui.
+
 ---
 
 ## Rastreamento de objetivos

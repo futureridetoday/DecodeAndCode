@@ -17,6 +17,25 @@ nunca que a saída é a mesma. `plano()` ganhou `tarefas`/`independencia`/`com_b
 mesmo motivo: default idêntico ao comportamento anterior (backlog sempre presente, os outros dois
 blocos sempre ausentes), e as três portas só divergem do texto de hoje quando o teste de
 `lint_plano` pede explicitamente um plano de porte `médio` ou `grande` bem formado.
+
+`plano()` ganhou `com_diretorio` (0001-14), default `True` — mesmo raciocínio: todo chamador
+existente pede a forma de diretório (é o que `test_backlog.py`, `test_situacao.py` e
+`test_lint_plano.py` já esperavam antes desta unidade, com `_arquivo(dir_plano)` compondo
+`dir_plano / f"{dir_plano.name}.md"`), e nenhum precisa mudar. `com_diretorio=False` é o que
+produz a forma **real** de pequeno e médio — `<dir>/<core>/<numero>-<nome>.md`, sem subpasta —,
+usada só pelos testes que exercitam essa forma diretamente (`test_derive_por_porte.py`); a
+função devolve o **arquivo**, não um diretório, porque não há diretório nenhum para devolver.
+
+O default de `plan_size` é `grande` desde a revisão de 2026-08-25 — antes era `pequeno`, herdado de
+quando o campo não tinha efeito. Com `com_diretorio=True` e região de backlog, `pequeno` produzia um
+artefato que o próprio `lint_plano` recusa (*"pequeno não pode ter região de backlog"*): a `L-21`
+dentro do arquivo escrito para impedi-la. Foi o que forçou `backlog.projetar` a ramificar pela forma
+em vez do campo, e é o que a correção desfez.
+
+**O default continua incompleto de propósito, e isso é diferente de contraditório.** `## Escopo` e
+`## Independência` só aparecem quando pedidos, porque `test_backlog.py` e `test_situacao.py`
+exercitam justamente o caminho do escopo ilegível. Falta de bloco é o caso sob teste; porte que
+contradiz a própria forma era defeito.
 """
 
 from __future__ import annotations
@@ -311,21 +330,26 @@ def plano(
     module: str | None = None,
     status: str = "approved",
     previstas: int | None = None,
-    plan_size: str = "pequeno",
+    plan_size: str = "grande",
     approved_by: str = "Teste",
     approved_at: str = "2026-07-25",
     tarefas: bool = False,
     independencia: bool = False,
     com_backlog: bool = True,
+    com_diretorio: bool = True,
 ) -> Path:
-    """Escreve `<dir>/<core>/<numero>-<nome>/<numero>-<nome>.md` — devolve o diretório do plano.
+    """Escreve o plano sintético — devolve o diretório do plano, ou o arquivo `.md` direto.
 
-    A mesma forma que `backlog.projetar()` espera como argumento. `previstas`, quando dado,
-    escreve uma seção `## Escopo` com esse tanto de linhas numeradas — o que `backlog._contar_previstas`
-    lê. `None` (o default) escreve o plano sem `## Escopo`, para os testes de escopo ilegível.
-    `plan_size`/`approved_by`/`approved_at` vêm com default válido (`lib.PLAN_SIZES_VALIDOS`
-    e data ISO), para que quem chama sem se importar com aprovação continue construindo plano
-    válido.
+    `com_diretorio=True` (o default) escreve `<dir>/<core>/<numero>-<nome>/<numero>-<nome>.md` e
+    devolve o **diretório** — a mesma forma que todo chamador anterior à 0001-14 já espera de
+    `backlog.projetar()`. `com_diretorio=False` escreve `<dir>/<core>/<numero>-<nome>.md`, sem
+    subpasta, e devolve o **arquivo** — a forma real de pequeno e médio (unidade 0001-14).
+
+    `previstas`, quando dado, escreve uma seção `## Escopo` com esse tanto de linhas numeradas —
+    o que `backlog._contar_previstas` lê. `None` (o default) escreve o plano sem `## Escopo`, para
+    os testes de escopo ilegível. `plan_size`/`approved_by`/`approved_at` vêm com default válido
+    (`lib.PLAN_SIZES_VALIDOS` e data ISO), para que quem chama sem se importar com aprovação
+    continue construindo plano válido.
 
     `tarefas`/`independencia`/`com_backlog` (0001-13) controlam, respectivamente, `## Tarefas`,
     `## Independência` e a região de backlog — os três blocos que `lint_plano.lint` varia por
@@ -342,8 +366,6 @@ def plano(
         raise ValueError("fixtures.plano: 'nome' vazio")
 
     module = module or nome
-    dir_plano = Path(dir) / core / f"{numero}-{nome}"
-    dir_plano.mkdir(parents=True, exist_ok=True)
     texto = _PLANO_TEMPLATE.format(
         nome=nome,
         numero=numero,
@@ -358,8 +380,18 @@ def plano(
         independencia=_bloco_independencia(independencia),
         backlog=_bloco_backlog(com_backlog),
     )
-    (dir_plano / f"{numero}-{nome}.md").write_text(texto, encoding="utf-8")
-    return dir_plano
+
+    if com_diretorio:
+        dir_plano = Path(dir) / core / f"{numero}-{nome}"
+        dir_plano.mkdir(parents=True, exist_ok=True)
+        (dir_plano / f"{numero}-{nome}.md").write_text(texto, encoding="utf-8")
+        return dir_plano
+
+    core_dir = Path(dir) / core
+    core_dir.mkdir(parents=True, exist_ok=True)
+    arquivo = core_dir / f"{numero}-{nome}.md"
+    arquivo.write_text(texto, encoding="utf-8")
+    return arquivo
 
 
 _CABECALHO_PLANOS = (

@@ -679,10 +679,10 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-11](11-activation-audit.md) | activation-audit | `verified` |
 | [0001-12](12-plan-size-field.md) | plan-size-field | `verified` |
 | [0001-13](13-plan-formats.md) | plan-formats | `verified` |
-| [0001-14](14-derive-by-size.md) | derive-by-size | `spec` |
+| [0001-14](14-derive-by-size.md) | derive-by-size | `verified` |
 | [0001-15](15-size-instrumentation.md) | size-instrumentation | `spec` |
 
-15 de 21 derivadas · 13 verificadas · atualizado em 2026-08-25
+15 de 21 derivadas · 14 verificadas · atualizado em 2026-08-25
 <!-- backlog:end -->
 
 ## Fonte

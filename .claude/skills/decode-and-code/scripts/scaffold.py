@@ -21,6 +21,13 @@ módulo, mas nada garante que sejam o mesmo valor.
 `block` não é lido: a fórmula do alvo desta unidade usa só `core` e `<nome>`. A norma prevê bloco
 como pasta numerada dentro do módulo (`hub/0001-mcp/0005-oauth/`), forma que exigiria outro alvo —
 plano que cria bloco fica fora do que esta unidade cobre (lacuna L-08 do plano).
+
+O alvo ramifica por `plan_size` (unidade 0001-14): pequeno e médio vão direto para
+`<core>/<NNNN>-<nome>.md`, sem subpasta — pasta para um arquivo só é custo puro, e no pequeno
+ela nunca ganharia companhia, porque o porte não decompõe nada. Só o grande recebe a subpasta
+`<core>/<NNNN>-<nome>/<NNNN>-<nome>.md`, como sempre foi. `move_md.mover` já garante o diretório
+pai com `mkdir(parents=True, exist_ok=True)` — nenhum `mkdir` extra é necessário para o caso
+sem subpasta.
 """
 
 from __future__ import annotations
@@ -98,6 +105,11 @@ def _registrar_planos_md(
 def aprovar(plano: Path, dry_run: bool = False) -> Path:
     """Aprova um plano do `_inbox` — devolve o caminho final, movido ou só calculado em dry-run.
 
+    O alvo depende do `plan_size` declarado (unidade 0001-14): pequeno e médio recebem
+    `<core>/<NNNN>-<nome>.md`, sem subpasta; grande recebe `<core>/<NNNN>-<nome>/<NNNN>-<nome>.md`,
+    como sempre. `_garantir_secao_backlog` só roda em médio e grande — o pequeno não tem região de
+    backlog para garantir, porque não há projeção nenhuma nesse porte.
+
     **Idempotente:** plano já aprovado devolve o próprio caminho sem escrever nada, para que a
     derivação incremental reinvoque o modo `derive` sem tratar o caso no markdown (`L-17`).
 
@@ -117,7 +129,8 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     plan_size = regioes.ler_campo(plano, "plan_size")
     if _campo_vazio(plan_size):
         raise ValueError(f"plano não declara 'plan_size' — {plano}")
-    if plan_size.strip(" \t\"'") not in lib.PLAN_SIZES_VALIDOS:
+    plan_size = plan_size.strip(" \t\"'")
+    if plan_size not in lib.PLAN_SIZES_VALIDOS:
         raise ValueError(
             f"plan_size fora do vocabulário {lib.PLAN_SIZES_VALIDOS} — {plan_size!r} em {plano}"
         )
@@ -143,7 +156,10 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if motivos:
         raise ValueError(f"nome de plano inválido {nome!r} — {'; '.join(motivos)}")
 
-    alvo = lib.core_dir(core) / f"{numero}-{nome}" / f"{numero}-{nome}.md"
+    if plan_size == "grande":
+        alvo = lib.core_dir(core) / f"{numero}-{nome}" / f"{numero}-{nome}.md"
+    else:
+        alvo = lib.core_dir(core) / f"{numero}-{nome}.md"
     if alvo.exists():
         raise FileExistsError(f"alvo já existe — {alvo}")
 
@@ -151,7 +167,8 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
         return alvo
 
     _mover(plano, alvo)
-    _garantir_secao_backlog(alvo)
+    if plan_size in ("médio", "grande"):
+        _garantir_secao_backlog(alvo)
     regioes.escrever_campos(alvo, {"plan_id": f'"{numero}"', "status": "approved"})
     _registrar_planos_md(numero, nome, core, module, alvo, approved_at)
 

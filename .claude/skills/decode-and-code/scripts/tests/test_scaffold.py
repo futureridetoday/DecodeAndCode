@@ -10,6 +10,11 @@ já faz sozinho, com `REPO_ROOT`.
 O plano de teste linka para `../system/norma.md`, e um arquivo externo linka de volta para o plano.
 É o caso que falhou na execução manual do plano 0002 real: a direção de dentro foi lembrada, a de
 fora não.
+
+`plan_size: grande` nos três planos sintéticos (0001-14) — antes desta unidade o campo era só um
+rótulo sem efeito, e valia `pequeno` por não importar; passou a decidir o alvo de `aprovar`, e o
+que esta suíte verifica é justamente o alvo com subpasta (`self.alvo` com `<numero>-<nome>/` no
+meio), que só o `grande` produz. `test_porte_e_aprovacao.py` é quem cobre `pequeno` de verdade.
 """
 
 from __future__ import annotations
@@ -60,7 +65,7 @@ class TestAprovarCaminhoFeliz(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
-            "plan_size: pequeno\n"
+            "plan_size: grande\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
@@ -180,7 +185,7 @@ class TestAprovarDryRun(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
-            "plan_size: pequeno\n"
+            "plan_size: grande\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
@@ -236,7 +241,7 @@ class TestAprovarErros(unittest.TestCase):
             "module: evolucao-tools\n"
             'block: ""\n'
             "status: draft\n"
-            "plan_size: pequeno\n"
+            "plan_size: grande\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
