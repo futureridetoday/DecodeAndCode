@@ -2,7 +2,7 @@
 # about
 name: huddle
 type: doc
-project: AmFlow
+project: DecodeAndCode
 description: Fila do que ainda não foi decidido — pauta da conversa recorrente entre o humano e o modelo. Nada aqui é norma; entrada resolvida sai daqui e vai para o lugar de coisa resolvida
 tags: [huddle, decode-and-code, pre-norma, pauta]
 
