@@ -137,8 +137,6 @@ como caso.
 ./scripts/test-python.sh .claude/skills/decode-and-code/scripts/tests/test_guideline.py
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 3, e as seções *Não inventar ativação* e *Skill e guideline separam-se por outro teste*

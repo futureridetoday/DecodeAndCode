@@ -150,8 +150,6 @@ casos levanta exceção — o lint devolve lista, como os outros dois do reposit
 ./scripts/test-python.sh .claude/skills/decode-and-code/scripts/tests/test_rules.py
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 2, `D-03` e a seção *Não inventar ativação*

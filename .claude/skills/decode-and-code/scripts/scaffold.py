@@ -40,7 +40,6 @@ _spec = importlib.util.spec_from_file_location(
 move_md = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(move_md)
 
-PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
 
 def _campo_vazio(valor: str | None) -> bool:
@@ -103,7 +102,7 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     derivação incremental reinvoque o modo `derive` sem tratar o caso no markdown (`L-17`).
 
     Levanta `ValueError` se o plano não declara `core`, `plan_size` (ou declara fora do
-    vocabulário `PLAN_SIZES_VALIDOS`), `approved_by`, `approved_at` (ou declara algo que não é
+    vocabulário `lib.PLAN_SIZES_VALIDOS`), `approved_by`, `approved_at` (ou declara algo que não é
     data ISO), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
     Levanta `FileExistsError` se o alvo já existe. Em qualquer um dos casos — inclusive em
     `dry_run` — nada é escrito.
@@ -118,9 +117,9 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     plan_size = regioes.ler_campo(plano, "plan_size")
     if _campo_vazio(plan_size):
         raise ValueError(f"plano não declara 'plan_size' — {plano}")
-    if plan_size.strip(" \t\"'") not in PLAN_SIZES_VALIDOS:
+    if plan_size.strip(" \t\"'") not in lib.PLAN_SIZES_VALIDOS:
         raise ValueError(
-            f"plan_size fora do vocabulário {PLAN_SIZES_VALIDOS} — {plan_size!r} em {plano}"
+            f"plan_size fora do vocabulário {lib.PLAN_SIZES_VALIDOS} — {plan_size!r} em {plano}"
         )
 
     approved_by = regioes.ler_campo(plano, "approved_by")

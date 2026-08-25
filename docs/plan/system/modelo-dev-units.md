@@ -390,8 +390,15 @@ próximo item a definir.
 | Dependências | O que precisa existir antes |
 | Normas aplicáveis | Tabela de **referências**, nunca cópia |
 | Critério de aceite | Uma frase verificável |
-| Verificação | Teste, comando para rodá-lo, último resultado |
+| Verificação | O comando que roda o teste declarado no frontmatter — e mais nada |
 | Fonte | De onde veio a spec |
+
+> **`Verificação` carregava também *"último resultado"*, e saiu (`L-22`, unidade 0001-13).** Era
+> linha órfã: nenhum script a projetava, a norma não a mencionava em seção nenhuma, e ela sempre
+> mentia — as unidades em `verified` diziam *"não executado"* no corpo enquanto o frontmatter dizia
+> o contrário. O dado já vive em `verified_at`; reescrevê-lo no corpo também violaria a regra de que
+> script só escreve o bloco `# verificação` do frontmatter (decisão 13). `lint_unidade` recusa a
+> linha para que não volte pela mesma porta.
 
 #### Precedência entre os blocos
 
@@ -430,13 +437,14 @@ plano, dois para a unidade.
 Nem toda unidade entrega código. O campo `unit_type` define o que ela produz e qual é seu oráculo:
 
 ```yaml
-unit_type: dev     # dev | plan
+unit_type: dev     # dev | plan | norma
 ```
 
-| Tipo | Entrega | Oráculo de conclusão |
-|---|---|---|
-| `dev` | Código | O teste declarado passa |
-| `plan` | Um plano | O plano existe e consta em `_planos.md` |
+| Tipo | Entrega | Oráculo de conclusão | `test:` |
+|---|---|---|---|
+| `dev` | Código | O teste declarado passa | obrigatório |
+| `plan` | Um plano | O plano existe e consta em `_planos.md` | obrigatório |
+| `norma` | Markdown normativo | `lint_unidade` limpo somado a `approved_by`/`approved_at` preenchidos | **vazio** |
 
 Isso mantém **um único mecanismo**: todo plano gera unidades. Um plano de core, por exemplo, gera
 unidades `plan` — cada uma produzindo o plano de um módulo. O oráculo continua verificável por
@@ -444,6 +452,27 @@ script, porque a linha aparece na tabela.
 
 Sem isso, planos de nível alto exigiriam uma segunda mecânica de plano; com isso, a diferença fica
 contida num campo.
+
+#### `norma` — quando a unidade entrega prosa, não código
+
+Todo plano que muda norma produz unidades cujo entregável é markdown normativo, e o gate de saída
+original só sabia fechar por teste passando. Markdown não tem teste que prove que a prosa presta —
+forçar um seria fingir um oráculo que não existe.
+
+`norma` inverte a exigência de `test:` — passa a ser obrigatório **vazio**, no mesmo padrão de
+vocabulário fechado que já vale para o próprio `unit_type` — e ganha dois campos novos no
+frontmatter, ao lado de `unit_type`: `approved_by` e `approved_at`. Mesmo par, mesmo papel dos
+campos homônimos do plano (*Aprovação — três campos declarados pelo humano*, mais abaixo): o humano
+declara, o script só confere que a declaração existe.
+
+`verificacao.verificar` fecha uma unidade `norma` quando `lint_unidade` está limpo — o que já exige
+`approved_by`/`approved_at` preenchidos — **sem rodar nenhum `subprocess`**, e grava `verified_at`
+igual a `approved_at`, nunca a data em que o script rodou: o fato verificado é a aprovação do
+humano, e reexecutar o gate amanhã não pode mover a data de um fato que não mudou.
+
+**O que continua em aberto.** O script segue sem julgar se a prosa presta — só confere que a
+aprovação existe e está registrada em campo. Adequação de conteúdo continua sendo julgamento
+humano, e nenhum campo transforma isso em oráculo.
 
 É o `unit_id` que o comentário-cabeçalho cita no código, **não o nome do arquivo**. Isso preserva a
 razão original da decisão 21: renomear o slug de uma unidade não quebra referência alguma, porque
@@ -538,6 +567,27 @@ separável que entregue valor sozinha.
 
 A declaração é feita **no momento da escrita**, não descoberta na revisão: é quando ainda é barato
 mudar de ideia. A revisão apenas audita se ela se sustenta (ver *Avaliação de escopo*).
+
+### O que cada porte carrega
+
+`plan_size` (ver *Aprovação*, acima) não é só rótulo — o formato exigido varia por porte, para que
+correção de oito linhas não pague a estrutura de um plano de vinte unidades (`B-01`):
+
+| Porte | Decomposição | `## Independência` | Região de backlog |
+|---|---|---|---|
+| `pequeno` | nenhuma | **recusada** | **recusada** |
+| `médio` | `## Tarefas` — lista de caixas | dispensada | exigida |
+| `grande` | `## Escopo` — tabela numerada | exigida | exigida |
+
+**No `pequeno` os dois blocos marcados são recusados, não apenas dispensados.** Região de backlog
+é promessa de projeção: se nenhum script escreve ali, ela mente para sempre. E `## Independência`
+num plano sem decomposição responde a uma pergunta que ninguém fez.
+
+`lint_plano.lint` verifica exatamente esta tabela — leitura, nunca escrita. `plan_size` ausente,
+vazio ou fora do vocabulário entra na lista de problemas devolvida, e `lint_plano` **nunca
+levanta**: quem recusa a aprovação por causa de `plan_size` é `scaffold.aprovar` (*Aprovação*,
+acima), que é o gate. `lint_plano` também roda sobre plano ainda no `_inbox`, antes de existir
+aprovação nenhuma para recusar.
 
 ---
 

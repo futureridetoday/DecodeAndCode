@@ -106,8 +106,6 @@ docstring.
 ./scripts/test-python.sh .claude/skills/decode-and-code/scripts/tests/test_scaffold_idempotente.py
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → *Correções descobertas na execução*, e `L-17`

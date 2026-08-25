@@ -123,8 +123,6 @@ testes novos, e os 25 vermelhos herdados continuam sendo os mesmos 25. Os quatro
 ./scripts/test-python.sh .claude/skills/decode-and-code/scripts/tests/test_config.py
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 1, e `D-11`

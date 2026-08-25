@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixtures sintéticos para a suíte — unidades 0001-02 e 0001-11.
+"""Fixtures sintéticos para a suíte — unidades 0001-02, 0001-11 e 0001-13.
 
 Os seis construtores (`plano`, `unidade`, `skill`, `planos_md`, `rule`, `log_ativacao`) escrevem
 artefatos válidos num diretório dado — sempre um `tempfile.TemporaryDirectory()` de quem chama.
@@ -9,6 +9,14 @@ de levantar `ValueError`.
 `UNIDADE_VALIDA` continua exportada como constante — antes inline em `test_lint_unidade.py`
 — porque `TestGateDeEntrada` naquele arquivo muta o texto por `.replace()` direto, e precisa
 de uma string fixa, não de uma chamada de função.
+
+`unidade()` ganhou `unit_type`/`approved_by`/`approved_at` (0001-13). O par de aprovação só é
+**emitido quando tem valor** — com os defaults, a saída é byte a byte a de antes da 0001-13, o que
+foi conferido comparando os dois textos, e não pela suíte verde: verde diz que nenhum teste quebrou,
+nunca que a saída é a mesma. `plano()` ganhou `tarefas`/`independencia`/`com_backlog` pelo
+mesmo motivo: default idêntico ao comportamento anterior (backlog sempre presente, os outros dois
+blocos sempre ausentes), e as três portas só divergem do texto de hoje quando o teste de
+`lint_plano` pede explicitamente um plano de porte `médio` ou `grande` bem formado.
 """
 
 from __future__ import annotations
@@ -17,6 +25,23 @@ import re
 from pathlib import Path
 
 _UNIT_ID_RE = re.compile(r"^\d{4}-\d{2}$")
+
+
+def _bloco_aprovacao(approved_by: str, approved_at: str) -> str:
+    """As duas linhas de aprovação, ou nada quando nenhuma das duas tem valor.
+
+    Condicional, e não fixo: `dev` não usa os campos, e emiti-los vazios faria o fixture default
+    modelar uma unidade que **nenhuma das reais tem** — a `L-21` nascendo dentro do arquivo que
+    existe para consolidar formato. Corrigido na revisão de 2026-08-25, depois de a saída ser
+    comparada com a de antes da `0001-13`; a suíte estava verde nos dois casos.
+
+    Basta **uma** delas ter valor para as duas saírem: é assim que o lint consegue apontar a que
+    falta, e é o que os testes de `norma` sem `approved_by` exercitam.
+    """
+    if not (approved_by.strip(" \t\"'") or approved_at.strip(" \t\"'")):
+        return ""
+    return f"\napproved_by: {approved_by}\napproved_at: {approved_at}"
+
 
 _UNIDADE_TEMPLATE = """\
 ---
@@ -31,7 +56,7 @@ module: {module}
 block: ""
 owner: {core}
 unit_id: {unit_id}
-unit_type: dev
+unit_type: {unit_type}{aprovacao}
 
 state: {state}
 test: {test}
@@ -97,6 +122,9 @@ def _texto_unidade(
     unit_id: str = "0009-01",
     core: str = "builder",
     module: str = "dev-units",
+    unit_type: str = "dev",
+    approved_by: str = '""',
+    approved_at: str = '""',
     state: str = "spec",
     test: str = "caminho/para/test_exemplo.py",
     verified_at: str = '""',
@@ -109,6 +137,8 @@ def _texto_unidade(
         unit_id=unit_id,
         core=core,
         module=module,
+        unit_type=unit_type,
+        aprovacao=_bloco_aprovacao(approved_by, approved_at),
         state=state,
         test=test,
         verified_at=verified_at,
@@ -129,6 +159,9 @@ def unidade(
     unit_id: str = "0009-01",
     core: str = "builder",
     module: str = "dev-units",
+    unit_type: str = "dev",
+    approved_by: str = '""',
+    approved_at: str = '""',
     state: str = "spec",
     test: str = "caminho/para/test_exemplo.py",
     verified_at: str = '""',
@@ -137,6 +170,8 @@ def unidade(
 ) -> Path:
     """Escreve `<dir>/<nome>` — uma unidade que aprova em `lint_unidade.lint()`. Devolve o caminho.
 
+    `unit_type="norma"` (0001-13) pede `test=""` e `approved_by`/`approved_at` preenchidos — quem
+    chama compõe isso explicitamente; o default aqui continua sendo uma unidade `dev` comum.
     Levanta `ValueError` se `unit_id` não está no formato `NNNN-NN`, antes de escrever
     qualquer arquivo.
     """
@@ -144,6 +179,9 @@ def unidade(
         unit_id=unit_id,
         core=core,
         module=module,
+        unit_type=unit_type,
+        approved_by=approved_by,
+        approved_at=approved_at,
         state=state,
         test=test,
         verified_at=verified_at,
@@ -228,14 +266,9 @@ approved_at: {approved_at}
 ---
 
 # {numero} — Plano sintético
-{escopo}
+{escopo}{tarefas}{independencia}
 Texto antes do backlog — precisa sobreviver à projeção.
-
-## Backlog
-
-<!-- backlog:start -->
-<!-- backlog:end -->
-
+{backlog}
 Texto depois do backlog — também precisa sobreviver.
 """
 
@@ -246,6 +279,27 @@ def _bloco_escopo(previstas: int | None) -> str:
         return ""
     linhas = "\n".join(f"| {i:02d} | unidade-{i:02d} | sintética |" for i in range(1, previstas + 1))
     return f"\n## Escopo\n\n| # | Unidade | Responsabilidade |\n|---|---|---|\n{linhas}\n"
+
+
+def _bloco_tarefas(tarefas: bool) -> str:
+    """`## Tarefas` — decomposição do porte `médio` (`lint_plano`, unidade 0001-13)."""
+    if not tarefas:
+        return ""
+    return "\n## Tarefas\n\n- [ ] Tarefa sintética\n"
+
+
+def _bloco_independencia(independencia: bool) -> str:
+    """`## Independência` — exigida no porte `grande`, recusada no `pequeno` (`lint_plano`)."""
+    if not independencia:
+        return ""
+    return "\n## Independência\n\nTexto de independência sintético.\n"
+
+
+def _bloco_backlog(com_backlog: bool) -> str:
+    """Região de backlog — exigida em `médio`/`grande`, recusada em `pequeno` (`lint_plano`)."""
+    if not com_backlog:
+        return ""
+    return "\n## Backlog\n\n<!-- backlog:start -->\n<!-- backlog:end -->\n"
 
 
 def plano(
@@ -260,16 +314,27 @@ def plano(
     plan_size: str = "pequeno",
     approved_by: str = "Teste",
     approved_at: str = "2026-07-25",
+    tarefas: bool = False,
+    independencia: bool = False,
+    com_backlog: bool = True,
 ) -> Path:
     """Escreve `<dir>/<core>/<numero>-<nome>/<numero>-<nome>.md` — devolve o diretório do plano.
 
     A mesma forma que `backlog.projetar()` espera como argumento. `previstas`, quando dado,
     escreve uma seção `## Escopo` com esse tanto de linhas numeradas — o que `backlog._contar_previstas`
     lê. `None` (o default) escreve o plano sem `## Escopo`, para os testes de escopo ilegível.
-    `plan_size`/`approved_by`/`approved_at` vêm com default válido (`scaffold.PLAN_SIZES_VALIDOS`
+    `plan_size`/`approved_by`/`approved_at` vêm com default válido (`lib.PLAN_SIZES_VALIDOS`
     e data ISO), para que quem chama sem se importar com aprovação continue construindo plano
-    válido. Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer
-    arquivo.
+    válido.
+
+    `tarefas`/`independencia`/`com_backlog` (0001-13) controlam, respectivamente, `## Tarefas`,
+    `## Independência` e a região de backlog — os três blocos que `lint_plano.lint` varia por
+    porte. Default (`False`, `False`, `True`) reproduz o texto de antes desses três parâmetros
+    existirem; para montar um plano bem formado num porte específico, quem chama passa a
+    combinação que a tabela de portes da norma pede — ex. `plan_size="grande"`, `previstas=1`,
+    `independencia=True`.
+
+    Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer arquivo.
     """
     if not core.strip():
         raise ValueError("fixtures.plano: 'core' vazio")
@@ -289,6 +354,9 @@ def plano(
         plan_size=plan_size,
         approved_by=approved_by,
         approved_at=approved_at,
+        tarefas=_bloco_tarefas(tarefas),
+        independencia=_bloco_independencia(independencia),
+        backlog=_bloco_backlog(com_backlog),
     )
     (dir_plano / f"{numero}-{nome}.md").write_text(texto, encoding="utf-8")
     return dir_plano

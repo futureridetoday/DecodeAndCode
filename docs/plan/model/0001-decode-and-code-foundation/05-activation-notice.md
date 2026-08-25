@@ -107,8 +107,6 @@ Payload malformado e evento desconhecido encerram **em silêncio, sem exceção 
 ./scripts/test-python.sh .claude/skills/decode-and-code/scripts/tests/test_activation_notice.py
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 2, e as seções *Ativação silenciosa* e *Restrições conhecidas*

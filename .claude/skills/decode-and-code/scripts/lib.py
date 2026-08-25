@@ -36,6 +36,13 @@ _DEFAULTS = {
 # que pode sobrepô-los; esta constante é o valor embutido, não o efetivo.
 ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 
+# Vocabulário fechado de `plan_size` (unidade 0001-12). Mora aqui, e não em quem o usa, porque
+# tem dois leitores com papéis opostos — `scaffold.aprovar`, que é o gate e recusa, e
+# `lint_plano.lint`, que só reporta. Duas cópias divergiriam em silêncio, e o sintoma seria o
+# lint aprovando o que o gate recusa. Não é config: config se sobrepõe por projeto, e este
+# vocabulário é da norma.
+PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
+
 _config_cache: dict | None = None
 
 

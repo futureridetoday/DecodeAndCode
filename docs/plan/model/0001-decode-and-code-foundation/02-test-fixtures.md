@@ -132,8 +132,6 @@ Fechamento da Fase 1, conferido pelo humano:
 ./scripts/test-python.sh
 ```
 
-Último resultado: não executado.
-
 ## Fonte
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → Fase 1, e `L-10`
