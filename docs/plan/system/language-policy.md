@@ -86,29 +86,22 @@ Dois fatos derivados que custam caro se ignorados:
 
 **3.10 é o alvo porque é o que o Cowork tem.** Desenvolver acima disso permite usar sintaxe que a VM
 não aceita, e o erro só aparece em produção; desenvolver em 3.10 torna essa classe de defeito
-impossível de escrever sem perceber.
+impossível de escrever sem perceber. Paridade de patch não é buscada — o que importa é o piso de
+sintaxe.
 
-| Onde | Como |
-|---|---|
-| Artefato distribuído | Shebang `#!/usr/bin/env python3` — na VM do Cowork, `python3` **é** 3.10. O artefato permanece agnóstico |
-| Verificação local e CI | Roda em **3.10 explícito** — é o harness que fixa a versão, não o artefato |
-| macOS local | `/usr/bin/python3` é 3.9.6 e não se atualiza (system Python da Apple, sob SIP). Instalar ao lado: `brew install python@3.10`. **Não** trocar o `python3` global — afeta outros projetos |
-
-Paridade de patch não é buscada: o Cowork tem 3.10.12, o homebrew oferece 3.10.20. O que importa é o
-piso de sintaxe.
-
-O harness (`scripts/test-python.sh`) **exige** 3.10 e falha com instrução se não o encontrar. Passar
-os testes em 3.10 é o que comprova compatibilidade com o Cowork.
+O que vale ao escrever um `.py` — shebang, harness, instalação local — é norma operativa e vive em
+[`scripts.md`](../../../.claude/rules/scripts.md), a guideline que ativa sempre que um `.py` é
+tocado. Este documento não a repete.
 
 ---
 
 ## 5. Dependências externas
 
-Stdlib não precisa de nada. `pip` e `npm` precisam de rede, e o egress pode ser restrito.
+Stdlib não precisa de nada. `pip` e `npm` precisam de rede, e o egress pode ser restrito — não é
+proibição, é custo.
 
-Não é proibição — é custo. Quem usa dependência externa **declara o fallback** para o caso de a
-instalação falhar. Sem fallback declarado, o artefato tem um modo de falha não tratado, o que é
-defeito comum, não violação de política.
+A regra — declarar o fallback antes de depender de instalação — é operativa e vive na mesma
+guideline, [`scripts.md`](../../../.claude/rules/scripts.md).
 
 ---
 
@@ -126,6 +119,7 @@ Deliberado — a ausência é a política:
 
 ## Referências
 
+- Norma operativa de script: [`scripts.md`](../../../.claude/rules/scripts.md)
 - Evidência: [`estudo-runtime-e-dependencias.md`](estudo-runtime-e-dependencias.md)
 - Critério código ↔ markdown: [`.claude/CLAUDE.md`](../../../.claude/CLAUDE.md)
 - Sondas reprodutíveis: `github.com/rafaelbortoli/cowork-runtime-test`

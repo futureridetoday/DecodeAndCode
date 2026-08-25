@@ -654,10 +654,10 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-06](06-incremental-derive.md) | incremental-derive | `verified` |
 | [0001-07](07-plan-situation.md) | plan-situation | `verified` |
 | [0001-08](08-language-policy.md) | language-policy | `verified` |
-| [0001-09](09-guideline-manifest.md) | guideline-manifest | `spec` |
+| [0001-09](09-guideline-manifest.md) | guideline-manifest | `verified` |
 | [0001-10](10-guideline-registry.md) | guideline-registry | `spec` |
 
-10 de 20 derivadas · 8 verificadas · atualizado em 2026-08-24
+10 de 20 derivadas · 9 verificadas · atualizado em 2026-08-24
 <!-- backlog:end -->
 
 ## Fonte

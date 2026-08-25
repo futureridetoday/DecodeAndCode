@@ -261,6 +261,28 @@ outro, contadas nas duas direções —, é o candidato natural a primeiro guard
 > por contagem — viaja; a instância não. Projeto que não declara grafo não ganha o check: ele volta a
 > ser julgamento, e o *Modo `review`* registra isso.
 
+#### Guideline
+
+Manifesto — campos exigidos e o que cada um decide:
+
+| Campo | Exige | Por quê |
+|---|---|---|
+| `name` | não vazio | identifica a rule |
+| `description` | não vazio, diz **quando** vale — não o que ensina | é o texto que decide relevância; descrição de conteúdo não ajuda a decidir escopo |
+| `paths:` | presente, não vazio, cada entrada compila como glob **e** casa ao menos um arquivo que existe no repositório | ausente é princípio, não guideline; presente e inerte é falha silenciosa — a mesma classe que *Ativação silenciosa é o modo de falha da própria camada* descreve |
+
+**Guideline é instância e nunca viaja no plugin** (`.claude/CLAUDE.md`, invariante 2). O mecanismo —
+`lint_guideline` e o carregamento nativo por `paths:` — é o que o plugin empacota; `paths:`,
+`description` e o corpo normativo são do projeto que instala.
+
+**Skill e guideline separam-se por outro teste: skill é invocada; guideline é ativada.** Skill
+responde *como fazer X* — é procedimento, e alguém precisa pedir. Guideline responde *o que vale
+quando eu toco Y* — é norma, e entra sozinha pelo caminho do arquivo. O caso medido:
+`AmFlow:hub-front` (547 linhas, §1–7 e §9 normativas, §8 procedimento) descreve-se como checklist de
+front-end, mas só entra em contexto se alguém a invocar — como guideline com
+`paths: ["hub/app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
+lembrança.
+
 ### 4. Norma de lote e decomposição
 
 - **Teto:** **8 passos de sequência por unidade**. Acima disso, a unidade divide-se.
