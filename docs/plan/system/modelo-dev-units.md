@@ -591,6 +591,27 @@ aprovação nenhuma para recusar.
 
 ---
 
+## Porte medido — dado, não impressão
+
+`plan_size` (acima) é o que o humano **declara** na aprovação. `docs/plan/system/porte-medido.md`
+guarda o que o plano **foi** — uma linha por plano fechado, acrescentada por `porte.registrar` na
+transição da situação para `concluído` (unidade 0001-15), nunca reescrita.
+
+| Coluna | O que significa |
+|---|---|
+| Plano | Link para o arquivo do plano |
+| Porte declarado | `plan_size` no momento do fechamento |
+| Unidades ou tarefas | Quantas unidades (grande) ou tarefas (médio) o plano fechou com — `—` no pequeno, que não decompõe |
+| Arquivos declarados | Caminhos distintos das tabelas `## Arquivos` das unidades — `não declarado` fora do grande, onde não existem unidades |
+| Linhas alteradas | `git diff --numstat` do commit que criou o plano até o fechamento, restrito aos arquivos declarados — `não medido` com o motivo quando git não responde, `—` fora do grande |
+| Fechado em | Data da transição para `concluído` |
+
+**Para que serve:** é o dado que falta para saber se o que hoje se chama `médio` custa, na
+prática, o que se chamava `grande` — sem essa tabela a calibração do vocabulário de porte
+continuaria por impressão, não por evidência (princípio, *Evidência acima de opinião*).
+
+---
+
 ## Avaliação de escopo — quando dividir um plano
 
 O check mais importante do modo `review`, e o único com evidência concreta de necessidade dentro do

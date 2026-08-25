@@ -15,9 +15,9 @@ unit_id: 0001-15
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_porte_medido.py
-verified_at: ""
+verified_at: 2026-08-25
 
 # history
 author: Bortoli
@@ -55,7 +55,7 @@ descobre que o que se chama de médio aqui vem custando o que se chamava de gran
 | Porte declarado | `plan_size` do frontmatter | nunca — a `0001-12` o torna obrigatório |
 | Unidades ou tarefas | `state` das unidades no grande; as caixas de `## Tarefas` no médio | `—` no pequeno, que não decompõe |
 | Arquivos declarados | caminhos distintos das tabelas `## Arquivos` das unidades | `não declarado` fora do grande, onde não existem unidades |
-| Linhas alteradas | `git diff --numstat` do commit que criou o plano até `HEAD`, **restrito aos arquivos declarados** | `não medido`, com o motivo, quando git falha ou o plano não tem commit |
+| Linhas alteradas | `git diff --numstat` do commit que criou o plano até `HEAD`, **restrito aos arquivos declarados** | `não medido`, com o motivo, quando git falha, quando o plano não tem commit, ou quando um grande não declara caminho nenhum |
 | Fechado em | a data em que a situação virou `concluído` | nunca |
 
 > **A restrição aos arquivos declarados é o que faz o número significar alguma coisa.** O churn do
@@ -79,7 +79,7 @@ unidade fechada, e sem a guarda a tabela ganharia uma linha por execução.
 3. Chamar `registrar` em `backlog.projetar` **na transição** para `concluído`, comparando a situação lida com a projetada antes de escrever.
 4. Criar `docs/plan/system/porte-medido.md` com frontmatter, cabeçalho da tabela e a nota de que a tabela é acrescentada, nunca reescrita — e que não há marcadores de projeção ali de propósito.
 5. Escrever na norma a seção curta que diz onde o dado vive, o que cada coluna significa e para que ele serve: recalibrar o vocabulário de porte com dado, não com impressão.
-6. Acrescentar a `fixtures.py` o que falta para montar um plano fechado, e escrever `tests/test_porte_medido.py` cobrindo o critério de aceite, com `subprocess.run` mockado.
+6. Acrescentar a `fixtures.py` o que falta para montar um plano fechado, e escrever `tests/test_porte_medido.py` cobrindo o critério de aceite, com `subprocess.run` mockado — **exceto** a classe que exercita o comando montado contra git real (`L-28`).
 7. Rodar o gate e relatar.
 
 ## Arquivos
@@ -124,7 +124,17 @@ vezes e afirma que o arquivo não mudou na segunda.
 para `concluído` grava a linha; uma segunda projeção com a situação já `concluído` não grava nada; e
 projeção que devolve `em desenvolvimento` nunca grava.
 
-**A suíte inteira continua verde**, e nenhum teste executa `git` de verdade.
+**A suíte inteira continua verde.** Nenhum teste **desta unidade** executa `git` de verdade, com
+uma exceção nomeada e deliberada: `TestComandoContraGitReal` constrói um repositório num tempdir,
+move um arquivo do `_inbox` como o `derive` faz, e roda o comando montado de verdade — nos dois
+casos que importam, o arquivo movido e o arquivo recriado. Mock valida o **parsing da saída**,
+nunca o **comando montado**, e sem esse caso `--follow` somado a `--reverse` volta pela mesma
+porta (`L-28`).
+
+> A redação anterior — *"nenhum teste executa `git` de verdade"* — era sobre a suíte inteira, e já
+> era falsa antes desta unidade existir: `scripts/move-md.py` chama `git ls-files` em 16 testes.
+> Escopo global sem caso que o verificasse é o `H-09`; o critério passou a declarar só o que esta
+> unidade controla.
 
 ## Verificação
 

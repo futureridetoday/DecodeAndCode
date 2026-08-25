@@ -28,6 +28,11 @@ Projeção errada que parece certa é a classe da `L-18`.
 Porte ausente ou desconhecido cai no ramo do **grande**, e é deliberado: grande levanta quando falta
 o marcador, então o caso não reconhecido falha alto. Cair no pequeno faria o oposto — projetar em
 silêncio a partir de `status`, que é justamente o defeito acima.
+
+`projetar` também chama `porte.registrar` — mas só **na transição** para `concluído` (unidade
+0001-15): compara a situação já registrada em `_planos.md` com a recém-projetada antes de
+sobrescrever a linha, e só dispara quando a antiga não era `concluído` e a nova é. Sem essa guarda,
+toda reprojeção de um plano já fechado tentaria acrescentar outra linha à mesma medição.
 """
 
 from __future__ import annotations
@@ -39,6 +44,7 @@ from typing import NamedTuple
 
 import lib
 import numeracao
+import porte
 import regioes
 
 _H1 = re.compile(r"^#\s+(.+?)\s*$")
@@ -96,9 +102,14 @@ def projetar(alvo: Path, dry_run: bool = False) -> tuple[str, str]:
     if dry_run:
         return backlog, situacao
 
+    situacao_anterior = _situacao_atual(miolo_planos, href)
+
     if escreve_backlog:
         regioes.escrever_regiao(arquivo_do_plano, "backlog", backlog)
     regioes.escrever_regiao(lib.planos_md(), "planos", _substituir_situacao(miolo_planos, href, situacao))
+
+    if situacao_anterior != "concluído" and situacao == "concluído":
+        porte.registrar(alvo)
 
     return backlog, situacao
 
@@ -306,6 +317,19 @@ def _situacao_tarefas(tarefas: list[tuple[bool, str]] | None) -> str:
     if all(feita for feita, _ in tarefas):
         return "concluído"
     return "em desenvolvimento"
+
+
+def _situacao_atual(miolo: str, href: str) -> str:
+    """Situação hoje registrada na linha que linka para `href` — chamada só depois de `projetar`
+    já ter confirmado que a linha existe, então nunca precisa tratar o caso "não encontrada"."""
+    alvo = f"]({href})"
+    for linha in miolo.split("\n"):
+        if alvo in linha:
+            partes = linha.split("|")
+            if len(partes) != 9:
+                raise ValueError(f"linha de _planos.md não tem 7 colunas — {linha!r}")
+            return partes[6].strip()
+    raise ValueError(f"nenhuma linha contém {alvo!r}")
 
 
 def _substituir_situacao(miolo: str, href: str, nova_situacao: str) -> str:
