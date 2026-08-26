@@ -50,6 +50,14 @@ class _BaseComRaizTemporaria(unittest.TestCase):
         patcher_repo_root.start()
         self.addCleanup(patcher_repo_root.stop)
 
+        # `B-04` — sem isto, `move_md.mover` pergunta ao git de verdade se o plano em `tempfile`
+        # está versionado. A resposta real já é `False`; o mock a devolve sem `subprocess`.
+        patcher_versionado = mock.patch.object(
+            scaffold.move_md, "esta_versionado", return_value=False
+        )
+        patcher_versionado.start()
+        self.addCleanup(patcher_versionado.stop)
+
     def _escrever_plano(self, nome: str = "plano-exemplo", **overrides) -> Path:
         """Plano no `_inbox` com os três campos válidos por default.
 

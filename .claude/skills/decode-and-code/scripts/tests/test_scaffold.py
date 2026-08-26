@@ -88,6 +88,14 @@ class TestAprovarCaminhoFeliz(unittest.TestCase):
         patcher_repo_root.start()
         self.addCleanup(patcher_repo_root.stop)
 
+        # `B-04` — sem isto, `move_md.mover` pergunta ao git de verdade se o plano em `tempfile`
+        # está versionado. A resposta real já é `False`; o mock a devolve sem `subprocess`.
+        patcher_versionado = mock.patch.object(
+            scaffold.move_md, "esta_versionado", return_value=False
+        )
+        patcher_versionado.start()
+        self.addCleanup(patcher_versionado.stop)
+
         self.alvo = self.raiz / "builder" / "0002-evolucao-tools" / "0002-evolucao-tools.md"
 
     def test_move_o_plano_para_o_alvo(self):
@@ -202,6 +210,14 @@ class TestAprovarDryRun(unittest.TestCase):
         patcher_repo_root.start()
         self.addCleanup(patcher_repo_root.stop)
 
+        # `B-04` — sem isto, `move_md.mover` pergunta ao git de verdade se o plano em `tempfile`
+        # está versionado. A resposta real já é `False`; o mock a devolve sem `subprocess`.
+        patcher_versionado = mock.patch.object(
+            scaffold.move_md, "esta_versionado", return_value=False
+        )
+        patcher_versionado.start()
+        self.addCleanup(patcher_versionado.stop)
+
         self.alvo = self.raiz / "builder" / "0002-evolucao-tools" / "0002-evolucao-tools.md"
 
     def test_dry_run_nao_escreve_nada(self):
@@ -257,6 +273,14 @@ class TestAprovarErros(unittest.TestCase):
         patcher_repo_root = mock.patch.object(scaffold.move_md, "REPO_ROOT", self.raiz)
         patcher_repo_root.start()
         self.addCleanup(patcher_repo_root.stop)
+
+        # `B-04` — sem isto, `move_md.mover` pergunta ao git de verdade se o plano em `tempfile`
+        # está versionado. A resposta real já é `False`; o mock a devolve sem `subprocess`.
+        patcher_versionado = mock.patch.object(
+            scaffold.move_md, "esta_versionado", return_value=False
+        )
+        patcher_versionado.start()
+        self.addCleanup(patcher_versionado.stop)
 
     def test_core_ausente_levanta_value_error_sem_escrever(self):
         plano = self.raiz / "_inbox" / "sem-core.md"

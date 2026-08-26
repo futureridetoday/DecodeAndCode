@@ -27,6 +27,25 @@ Stdlib não precisa de nada. Quem usa dependência externa (`pip`, `npm`) **decl
 o caso de a instalação falhar — o egress pode ser restrito. Sem fallback declarado, o artefato tem
 um modo de falha não tratado: defeito comum, não violação de política.
 
+## Comando externo: mock prova a saída, nunca o comando montado
+
+Mockar `subprocess.run` prova o que o script faz **com a saída** — o parsing, o ramo de erro, o
+valor devolvido. Não prova nada sobre os **argumentos montados**: o comando errado recebe do mock
+exatamente o que o mock mandar, e o teste fica verde.
+
+| O que o critério afirma | O que o teste precisa ter |
+|---|---|
+| Comportamento da **saída** — parsing, ramo de falha, valor devolvido | Mock de `subprocess.run` basta |
+| Comportamento do **comando** — flag, ordem, intervalo, o que a ferramenta responde àquela combinação | Ao menos um caso que **execute a ferramenta de verdade**, contra um diretório descartável em `tempfile` |
+
+**Caracterizar antes de corrigir.** Teste escrito a partir da mesma leitura que produziu o defeito
+passa contra o defeito. O comportamento real primeiro — num repositório descartável, reproduzindo o
+ciclo real —, o teste depois.
+
+O caso que originou a regra, com a medição e o custo:
+[`L-28`](../../docs/plan/model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md),
+seção *Lacunas*.
+
 ## Fonte
 
 [`language-policy.md`](../../docs/plan/system/language-policy.md) — medição de ambientes e o porquê

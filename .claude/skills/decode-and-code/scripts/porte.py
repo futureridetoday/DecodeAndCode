@@ -177,6 +177,12 @@ def _linhas_alteradas(arquivo_do_plano: Path, caminhos: list[str]) -> tuple[int 
 
     Só é chamada quando `caminhos` não é vazio — fora do grande a coluna é `—`, não `não medido`
     (D-19: "fora do porte grande não há unidade e portanto não há caminho declarado").
+
+    **O fim do intervalo é `HEAD` no instante da chamada**, não o commit da última unidade: o que
+    for commitado entre fechar a última unidade e projetar a situação entra na conta. Medido no
+    plano `0001` — os mesmos 56 caminhos davam 6634 ao fim da `0001-15` e 7413 dois commits
+    depois. É consequência aceita, não defeito: a linha vale pelo instante em que foi gravada, e a
+    tabela é append-only justamente porque recalcular daria outro número sobre o mesmo fato.
     """
     raiz = lib.repo_root()
     try:

@@ -220,6 +220,14 @@ class TestScaffoldSegueOAlvoDoConfig(unittest.TestCase):
         patcher_move_md_root.start()
         self.addCleanup(patcher_move_md_root.stop)
 
+        # `B-04` — sem isto, `move_md.mover` pergunta ao git de verdade se o plano em `tempfile`
+        # está versionado. A resposta real já é `False`; o mock a devolve sem `subprocess`.
+        patcher_versionado = mock.patch.object(
+            scaffold.move_md, "esta_versionado", return_value=False
+        )
+        patcher_versionado.start()
+        self.addCleanup(patcher_versionado.stop)
+
     def test_aprovar_grava_sob_o_plan_root_declarado(self):
         alvo = scaffold.aprovar(self.plano)
         self.assertTrue(alvo.is_relative_to(self.plan_root_novo))

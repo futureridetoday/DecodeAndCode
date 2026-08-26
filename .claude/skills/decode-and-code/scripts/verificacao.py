@@ -119,6 +119,11 @@ def _executar(caminho_teste: Path, raiz: Path) -> tuple[int, str]:
 
     O texto devolvido é o que `verificar()` casa contra os sinais de skip e
     zero-teste — hoje descartado depois do exit code (plano 0005, L-05 do 0004).
+
+    O mock que a mensagem de reentrância pede prova o **parsing da saída**, nunca o **comando
+    montado** por `_comando`. Critério que afirmar comportamento de comando externo precisa de um
+    caso que o execute de verdade — `.claude/rules/scripts.md`, seção *Comando externo*, e a `L-28`
+    que a originou.
     """
     if os.environ.get(SENTINELA_REENTRANCIA):
         raise RuntimeError(

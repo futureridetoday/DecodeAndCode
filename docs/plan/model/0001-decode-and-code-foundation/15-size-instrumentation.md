@@ -53,7 +53,7 @@ descobre que o que se chama de médio aqui vem custando o que se chamava de gran
 | Coluna | De onde sai | Quando não sai |
 |---|---|---|
 | Porte declarado | `plan_size` do frontmatter | nunca — a `0001-12` o torna obrigatório |
-| Unidades ou tarefas | `state` das unidades no grande; as caixas de `## Tarefas` no médio | `—` no pequeno, que não decompõe |
+| Unidades ou tarefas | os arquivos de unidade do diretório do plano no grande; as caixas de `## Tarefas` no médio | `—` no pequeno, que não decompõe |
 | Arquivos declarados | caminhos distintos das tabelas `## Arquivos` das unidades | `não declarado` fora do grande, onde não existem unidades |
 | Linhas alteradas | `git diff --numstat` do commit que criou o plano até `HEAD`, **restrito aos arquivos declarados** | `não medido`, com o motivo, quando git falha, quando o plano não tem commit, ou quando um grande não declara caminho nenhum |
 | Fechado em | a data em que a situação virou `concluído` | nunca |
@@ -90,7 +90,7 @@ unidade fechada, e sem a guarda a tabela ganharia uma linha por execução.
 | `.claude/skills/decode-and-code/scripts/backlog.py` | `projetar` chama `registrar` na transição para `concluído` |
 | `docs/plan/system/porte-medido.md` | **novo** — a tabela append-only |
 | `docs/plan/system/modelo-dev-units.md` | a seção que diz onde o dado vive e para que serve |
-| `.claude/skills/decode-and-code/scripts/tests/fixtures.py` | plano fechado nos portes que a medição cobre |
+| `.claude/skills/decode-and-code/scripts/tests/fixtures.py` | previsto e **não tocado** — `fixtures.plano` e `fixtures.unidade` já montavam o plano fechado nos três portes. Divergência registrada na `L-29` |
 | `.claude/skills/decode-and-code/scripts/tests/test_porte_medido.py` | **novo** — o teste declarado |
 
 ## Dependências
@@ -105,7 +105,8 @@ A `0001-12`, pelo `plan_size` que a medição compara. A `0001-14`, pela ramific
 | *Backlog — região delimitada por marcadores*, e por que esta tabela **não** é uma região | [`modelo-dev-units.md`](../../system/modelo-dev-units.md), seção *Formato do plano* |
 | A ramificação da situação por porte | [`14-derive-by-size.md`](14-derive-by-size.md) |
 | Evidência acima de opinião | [`principles.md`](../../../../.claude/rules/principles.md) |
-| Mockar `subprocess.run` em teste, em vez de executar de verdade | `.claude/skills/decode-and-code/scripts/verificacao.py:92` |
+| *Comando externo: mock prova a saída, nunca o comando montado* | [`scripts.md`](../../../../.claude/rules/scripts.md) |
+| Por que a suíte mocka `subprocess.run` — e o que isso não prova | `.claude/skills/decode-and-code/scripts/verificacao.py:111` |
 
 ## Critério de aceite
 

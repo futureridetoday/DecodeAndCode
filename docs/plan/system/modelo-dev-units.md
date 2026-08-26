@@ -606,6 +606,13 @@ transição da situação para `concluído` (unidade 0001-15), nunca reescrita.
 | Linhas alteradas | `git diff --numstat` do commit que criou o plano até o fechamento, restrito aos arquivos declarados — `não medido` com o motivo quando git não responde, `—` fora do grande |
 | Fechado em | Data da transição para `concluído` |
 
+> **"Até o fechamento" é `HEAD` no instante em que `registrar` roda**, não o commit da última
+> unidade. O intervalo inclui o que for commitado entre fechar a última unidade e projetar a
+> situação — inclusive a revisão do próprio fechamento. Medido no plano `0001`: os mesmos 56
+> caminhos davam **6634** linhas ao fim da unidade `0001-15` e **7413** dois commits depois, sem
+> que um único caminho entrasse ou saísse. O número não é errado; ele **é** do instante em que foi
+> tirado, e é por isso que a tabela é append-only e nunca recalcula uma linha já gravada.
+
 **Para que serve:** é o dado que falta para saber se o que hoje se chama `médio` custa, na
 prática, o que se chamava `grande` — sem essa tabela a calibração do vocabulário de porte
 continuaria por impressão, não por evidência (princípio, *Evidência acima de opinião*).
