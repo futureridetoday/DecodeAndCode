@@ -26,6 +26,12 @@ import regioes
 # o Claude Code lê.
 CAMPOS_NATIVOS = ("name", "description", "tools", "model", "skills", "color")
 
+# Nunca pode aparecer, mesmo que `CAMPOS_NATIVOS` cresça um dia — a recusa não pode depender de
+# omissão incidental na outra lista, ou volta pela mesma porta (mesma classe da L-22, em
+# `lint_unidade`). `memory`: D-06 — memória entre execuções corrói o cold-start como critério de
+# suficiência da unidade.
+CAMPOS_RECUSADOS = ("memory",)
+
 # Medido em 2026-08-26 nos agentes instalados nesta máquina — únicos valores reais em uso.
 MODELOS_VALIDOS = ("sonnet", "opus", "haiku", "inherit")
 
@@ -33,7 +39,11 @@ _CAMPO_RE = re.compile(r"(?m)^([A-Za-z_][A-Za-z0-9_-]*):")
 
 
 def lint(caminho: Path) -> list[str]:
-    """Verifica os quatro invariantes de uma definição de agente — lista vazia quando sã.
+    """Verifica os invariantes de uma definição de agente — lista vazia quando sã.
+
+    Quatro medidos em 2026-08-26 nos 34 agentes desta máquina (unidade 0001-19), mais a recusa
+    dedicada de `CAMPOS_RECUSADOS` (D-06, unidade 0001-20) — essa não vem de medição, nenhum dos
+    34 agentes declara `memory`.
 
     Levanta `FileNotFoundError` se o arquivo não existe — propagado por `Path.read_text`.
     Frontmatter ausente ou malformado entra na lista devolvida, nunca como exceção.
@@ -42,6 +52,7 @@ def lint(caminho: Path) -> list[str]:
 
     problemas: list[str] = []
     problemas.extend(_checar_campos_nativos(texto))
+    problemas.extend(_checar_campos_recusados(texto))
     problemas.extend(_checar_model(caminho))
     problemas.extend(_checar_skills(caminho))
     problemas.extend(_checar_tools(caminho))
@@ -73,6 +84,23 @@ def _checar_campos_nativos(texto: str) -> list[str]:
         f"campo não-nativo declarado no frontmatter: {chave}"
         for chave in _CAMPO_RE.findall(miolo)
         if chave not in CAMPOS_NATIVOS
+    ]
+
+
+def _checar_campos_recusados(texto: str) -> list[str]:
+    """Nenhuma chave de `CAMPOS_RECUSADOS` pode aparecer — checagem dedicada, não incidental.
+
+    Roda mesmo já coberta por `_checar_campos_nativos` hoje: o que garante que a recusa sobrevive
+    é não depender de `memory` continuar fora de `CAMPOS_NATIVOS` só por omissão.
+    """
+    miolo = _frontmatter(texto)
+    if miolo is None:
+        return []
+
+    return [
+        f"campo recusado no frontmatter de qualquer agente: {chave} (D-06)"
+        for chave in _CAMPO_RE.findall(miolo)
+        if chave in CAMPOS_RECUSADOS
     ]
 
 

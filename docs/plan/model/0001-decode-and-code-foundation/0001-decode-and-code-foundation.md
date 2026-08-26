@@ -698,9 +698,9 @@ que prova, e não inventa uma fase para ter o que testar.
 | [0001-17](17-reconcile-consumers.md) | reconcile-consumers | `verified` |
 | [0001-18](18-reopen-agent-decision.md) | reopen-agent-decision | `verified` |
 | [0001-19](19-planner-agent.md) | planner-agent | `verified` |
-| [0001-20](20-developer-agent.md) | developer-agent | `spec` |
+| [0001-20](20-developer-agent.md) | developer-agent | `verified` |
 
-20 de 21 derivadas · 19 verificadas · atualizado em 2026-08-26
+20 de 21 derivadas · 20 verificadas · atualizado em 2026-08-26
 <!-- backlog:end -->
 
 ## Fonte

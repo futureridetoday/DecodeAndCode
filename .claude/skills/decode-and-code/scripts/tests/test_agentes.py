@@ -55,6 +55,34 @@ class TestPlannerReal(unittest.TestCase):
         self.assertIn("docs/plan/**", self.texto)
 
 
+class TestDeveloperReal(unittest.TestCase):
+    """O caso contra o artefato real — sem ele, o lint prova só o mecanismo (L-31)."""
+
+    def setUp(self):
+        self.alvo = lib.repo_root() / ".claude" / "agents" / "developer.md"
+        self.texto = self.alvo.read_text(encoding="utf-8")
+
+    def test_developer_aprova_no_lint(self):
+        self.assertEqual(lint_agente.lint(self.alvo), [])
+
+    def test_developer_declara_model_sonnet(self):
+        self.assertRegex(self.texto, r"(?m)^model:\s*sonnet\s*$")
+
+    def test_developer_declara_skill_existente_em_disco(self):
+        self.assertRegex(self.texto, r"(?m)^skills:.*decode-and-code")
+        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "decode-and-code").is_dir())
+
+    def test_developer_nao_declara_memory(self):
+        """A ausência é o invariante (D-06) — sozinha não prova a recusa (ver TestGateEstrutural)."""
+        self.assertNotRegex(self.texto, r"(?m)^memory:")
+
+    def test_developer_declara_contrato_nao_commita(self):
+        self.assertIn("não commita", self.texto)
+
+    def test_developer_declara_contrato_unidade_insuficiente_volta_a_quem_deriva(self):
+        self.assertIn("volta para quem deriva", self.texto)
+
+
 class TestArquivoInexistente(unittest.TestCase):
     def test_levanta_file_not_found_error(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -115,6 +143,14 @@ class TestGateEstrutural(unittest.TestCase):
         alvo = self._escreve(texto)
         problemas = lint_agente.lint(alvo)
         self.assertTrue(any("tools" in p and "ausente" in p for p in problemas), problemas)
+
+    def test_memory_declarado_reprova(self):
+        """O caso contrário do `TestDeveloperReal`: sem este, a recusa podia nunca ter sido
+        implementada e a ausência em `developer.md` passaria do mesmo jeito (D-06)."""
+        texto = AGENTE_VALIDO.replace("color: blue\n", "color: blue\nmemory: sessao-anterior\n")
+        alvo = self._escreve(texto)
+        problemas = lint_agente.lint(alvo)
+        self.assertTrue(any("memory" in p and "D-06" in p for p in problemas), problemas)
 
 
 if __name__ == "__main__":
