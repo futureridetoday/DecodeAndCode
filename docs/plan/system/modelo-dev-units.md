@@ -907,6 +907,26 @@ prevista para a norma chegar sem ser reescrita dentro do próprio prompt; quem d
 > de sessão, e ninguém o observou. Afirmar o contrário seria a `H-06` invertida, onde quatro skills
 > declaradas num campo ignorado nunca carregaram e ninguém percebeu.
 
+### Agente — o que o lint exige
+
+`lint_agente.lint(caminho)` dá a esta camada o mesmo oráculo estrutural que `lint_unidade`,
+`lint_plano` e `lint_skill` já dão às suas: verifica o artefato, nunca a qualidade do julgamento
+que ele carrega. Quatro invariantes, todos sobre o frontmatter — unidade `0001-19`:
+
+| Invariante | Exige |
+|---|---|
+| Campos nativos | Só `name`, `description`, `tools`, `model`, `skills`, `color` — nenhum bookkeeping de projeto (`type`, `project`, `author`...) entra no frontmatter de agente |
+| `model` | Presente, e dentro de `sonnet`, `opus`, `haiku`, `inherit`. **Três foram medidos em uso** nos 34 agentes instalados em 2026-08-26 — `inherit` em 14, `sonnet` em 8, `opus` em 4; `haiku` está na lista por completar a família de modelos, **não por medição**: nenhum agente do acervo o declara |
+| `skills` | Cada nome citado existe como diretório em `.claude/skills/` — não que ele carregue (parágrafo acima) |
+| `tools` | Presente e não vazio — ausente concede o conjunto inteiro por default, o oposto de escopo declarado |
+
+**`tools:` não tem granularidade de caminho**, e o lint não finge o contrário: é lista de nomes de
+ferramenta, sem qualquer expressão de path. Escopo de escrita (`docs/plan/**`, no planejador) é
+declaração no corpo do agente — verificada por teste, nunca imposta pelo frontmatter. Impor de
+verdade é guardrail do projeto que instala, não deste mecanismo (`D-07`).
+
+Referência viva: `.claude/agents/planner.md` — a instância que este lint aprova.
+
 ---
 
 ## Fluxo completo
