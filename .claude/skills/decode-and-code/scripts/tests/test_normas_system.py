@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Testes da camada normativa em docs/plan/system/ — unidade 0001-08.
+"""Testes da camada normativa em docs/plan/system/ — unidades 0001-08 e 0001-18.
 
 O que precisa ficar provado é o critério de aceite: os dois documentos de linguagem
 migraram do AmFlow desacoplados — todo link relativo dos documentos de `docs/plan/system/`
 resolve em disco, e nenhum dos dois carrega instância do repositório de origem (core,
 serviço, caminho de `docs/mvp/` ou o invariante `D10` do Worker).
+
+A 0001-18 acrescenta os três pontos onde o gate de agent, fechado em `modelo-dev-units.md`,
+reabriu: a seção *Modelos*, a decisão 18 e a pendência que citava a troca automática de
+modelo por modo. Cada caso verifica por **conteúdo**, nunca por número de linha — a norma
+muda a cada edição, e comparar linha transformaria o teste em falso alarme.
 """
 
 from __future__ import annotations
@@ -110,6 +115,64 @@ class TestDocumentosDeLinguagemSemInstanciaDoAmFlow(unittest.TestCase):
         corpo = _corpo_normativo(arquivo.read_text(encoding="utf-8"))
         for marca in _MARCAS_AMFLOW:
             self.assertNotIn(marca, corpo, f"{arquivo.name}: instância do AmFlow — {marca!r}")
+
+
+_NORMA = _SYSTEM_DIR / "modelo-dev-units.md"
+
+
+def _secao(texto: str, cabecalho: str) -> str:
+    """Conteúdo entre `cabecalho` e o próximo heading ou separador `---` — ausente levanta."""
+    padrao = re.compile(rf"(?ms)^{re.escape(cabecalho)}\s*$\n(.*?)(?=^#|^---\s*$|\Z)")
+    m = padrao.search(texto)
+    if not m:
+        raise AssertionError(f"cabeçalho não encontrado em {_NORMA.name}: {cabecalho!r}")
+    return m.group(1)
+
+
+def _linha_da_decisao(texto: str, numero: int) -> str:
+    """Linha da tabela de Decisões cujo primeiro campo é `numero` — ex. '| 18 | ... |'."""
+    padrao = re.compile(rf"(?m)^\|\s*{numero}\s*\|.*\|\s*$")
+    m = padrao.search(texto)
+    if not m:
+        raise AssertionError(f"linha da decisão {numero} não encontrada em {_NORMA.name}")
+    return m.group(0)
+
+
+class TestGateDeAgentReabriu(unittest.TestCase):
+    """Unidade 0001-18 — as duas condições que a norma exigia para agent existir foram
+    cumpridas, e a seção *Modelos*, a decisão 18 e a lista de pendentes registram isso.
+    Cada caso verifica por conteúdo, nunca por número de linha (unidade 0001-18,
+    *Critério de aceite*).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.texto = _NORMA.read_text(encoding="utf-8")
+
+    def test_frase_que_poe_agent_fora_de_escopo_nao_existe_mais(self):
+        self.assertNotIn("Fora do escopo desta fase", self.texto)
+
+    def test_modelos_registra_as_duas_condicoes_cumpridas_com_data(self):
+        secao = _secao(self.texto, "### Modelos")
+        self.assertIn("2026-07-26", secao, "data em que a skill passou a existir")
+        self.assertIn("2026-08-22", secao, "data em que o humano declarou o requisito")
+        self.assertIn("papel e processo, nunca a norma", secao)
+
+    def test_decisao_18_preserva_o_que_afirmou_e_ganha_linha_de_revisao(self):
+        linha = _linha_da_decisao(self.texto, 18)
+        self.assertIn("automatizar exigiria agent", linha)
+        self.assertIn("revisado em 2026-08-26", linha)
+
+    def test_pendencia_de_troca_por_modo_sai_da_lista_com_destino_nomeado(self):
+        secao = _secao(self.texto, "### Pendentes")
+        itens = re.findall(r"(?m)^\d+\.\s.*$", secao)
+        self.assertEqual(
+            len(itens), 1, f"esperado 1 item pendente, achou {len(itens)}: {itens}"
+        )
+        self.assertNotIn("Troca automática", "".join(itens))
+        self.assertIn("model:", secao)
+        self.assertIn("`19`", secao)
+        self.assertIn("`20`", secao)
 
 
 if __name__ == "__main__":

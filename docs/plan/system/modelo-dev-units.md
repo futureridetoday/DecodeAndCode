@@ -894,8 +894,18 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 Consequência: a política é **operacional** — o modelo é escolhido antes de invocar. Se a troca
 automática por modo for requisito, e não conveniência, isso reabre a decisão sobre agents.
 
-**Fora do escopo desta fase:** qualquer agent. Agent só se justifica onde há julgamento somado a
-pesquisa ampla, e só depois de a skill existir.
+**O gate abriu — as duas condições foram cumpridas.** A skill existe desde **2026-07-26**, e o
+requisito de troca automática por modo — não mais conveniência — foi declarado pelo humano em
+**2026-08-22**, a partir de uso diário. Agent deixa de estar fora de escopo. O que ele é aqui:
+**papel e processo, nunca a norma** — o agente **declara** a skill em `skills:`, que é a ponte
+prevista para a norma chegar sem ser reescrita dentro do próprio prompt; quem decide `model:` e
+`tools:` é quem o instancia, na `19` e na `20`.
+
+> **A ponte é declarada, e o carregamento nunca foi medido.** Medido em 2026-08-26 nos 34 agentes
+> instalados nesta máquina: **nenhum** declara `skills:` — o campo só aparece num template. O que um
+> lint alcança é que a skill nomeada **existe em disco**; que ela entre em contexto é comportamento
+> de sessão, e ninguém o observou. Afirmar o contrário seria a `H-06` invertida, onde quatro skills
+> declaradas num campo ignorado nunca carregaram e ninguém percebeu.
 
 ---
 
@@ -980,7 +990,7 @@ pesquisa ampla, e só depois de a skill existir.
 | 15 | Teste inexistente | Gate de entrada exige teste **declarado**, não existente; `implement` escreve teste e código |
 | 16 | Alvo do plano | Frontmatter com `core`/`module`/`block`; **um plano, um alvo** |
 | 17 | Backlog | Marcadores `<!-- backlog:start -->` / `<!-- backlog:end -->`; script substitui só o miolo |
-| 18 | Modelo por modo | **Não declarável em skill** — política operacional; automatizar exigiria agent |
+| 18 | Modelo por modo | **Não declarável em skill** — política operacional; automatizar exigiria agent. Continua verdadeiro para a skill — **revisado em 2026-08-26**: agent deixou de estar fora de escopo (ver *Modelos*) |
 | 19 | Nome do plano | Mantém o nome ao sair do `_inbox` e **recebe prefixo numérico**; nunca vira `plano.md` |
 | 20 | Regra de nome | `<intenção>-<alvo>[-<qualificador>]`, kebab-case, sem repetir o caminho — idioma **revisado** pela decisão 32 |
 | 21 | Arquivo da unidade | `[nn]-[nome].md` — **revisa** "só o ID"; a estabilidade vem do `unit_id`, não do filename |
@@ -1026,12 +1036,14 @@ pesquisa ampla, e só depois de a skill existir.
 1. **Alinhamento do `CLAUDE.md`.** A regra de precedência foi **antecipada em 2026-07-19**. Restam as
    doze referências a `docs/mvp` e a desambiguação entre o **Core Engine** (visão futura, telemetria)
    e a pasta **`system/`** — ambas acompanham a migração.
-2. **Troca automática de modelo por modo.** Só é possível com agent (ver *Modelos*). Se for
-   requisito, e não conveniência, reabre a decisão sobre agents — hoje fora de escopo.
 > **Resolvidas nesta rodada:** as regiões no `index.md`, pelo mecanismo de marcadores (ver *Formato
 > do plano*) — o mesmo padrão serve a qualquer arquivo com conteúdo humano e projeção de script no
 > mesmo corpo; e a migração da unidade-referência, executada em 2026-07-20 junto com a criação do
 > plano `0001` e da tabela `_planos.md`.
+>
+> **Resolvida em 2026-08-26:** a troca automática de modelo por modo, que só seria possível com
+> agent. O gate abriu (ver *Modelos*), e o destino é `model:` declarado por agente — entregue pela
+> `19` (planejador) e pela `20` (desenvolvedor).
 
 ---
 
