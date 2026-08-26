@@ -15,9 +15,9 @@ unit_id: 0001-16
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_empacotamento.py
-verified_at: ""
+verified_at: 2026-08-26
 
 # history
 author: Bortoli
@@ -85,12 +85,12 @@ exatamente a divergência de 2026-08-01 que o plano registra. Publicar é ato hu
 ## Sequência
 
 1. Escrever `.claude-plugin/plugin.json` na raiz do repositório — `name`, `description`, `version`, `author` —, que é a fonte única do nome e da versão do pacote.
-2. Escrever `empacotar.construir(destino)`: apaga `destino` se existir, copia o manifesto, a skill sem `scripts/tests/` nem `__pycache__`, e os quatro hooks.
+2. Escrever `empacotar.construir(destino)`: apaga `destino` se existir, copia o manifesto, a skill sem `scripts/tests/` nem `__pycache__`, e os quatro hooks — reescrevendo o `project:` do `SKILL.md` copiado para o nome do plugin, que é a mesma classe da troca de âncora do passo seguinte.
 3. Gerar `hooks/hooks.json` a partir do bloco `hooks` de `.claude/settings.json`, trocando a âncora `${CLAUDE_PROJECT_DIR}/.claude/hooks` por `${CLAUDE_PLUGIN_ROOT}/hooks`.
-4. Escrever `empacotar.verificar(destino)`: percorre todo arquivo do pacote e devolve um problema por ocorrência de instância deste projeto — `CLAUDE_PROJECT_DIR`, `docs/plan`, `guardrails.json` e o nome do repositório.
+4. Escrever `empacotar.verificar(destino)` com **duas** checagens: o nome do repositório de origem em qualquer arquivo, e `CLAUDE_PROJECT_DIR` **dentro de `hooks/`**. Nome de arquivo que o mecanismo lê e caminho default que ele resolve são mecanismo, não instância, e não entram na lista.
 5. Escrever `empacotar.materializar(origem, projeto)`: copia um arquivo de guideline para `<projeto>/.claude/rules/`, levantando `FileExistsError` se o destino já existir.
 6. Acrescentar `dist/` ao `.gitignore`.
-7. Escrever `tests/test_empacotamento.py` cobrindo o critério de aceite, com a árvore construída em `tempfile`.
+7. Escrever `tests/test_empacotamento.py` com as duas naturezas — fixture sintética para o mecanismo, e **um caso que constrói deste repositório** —, corrigindo na fonte o que o caso real acusar.
 8. Rodar o gate e relatar.
 
 ## Arquivos
@@ -99,6 +99,8 @@ exatamente a divergência de 2026-08-01 que o plano registra. Publicar é ato hu
 |---|---|
 | `.claude-plugin/plugin.json` | **novo** — o manifesto, fonte única de nome e versão |
 | `.claude/skills/decode-and-code/scripts/empacotar.py` | **novo** — `construir`, `verificar` e `materializar` |
+| `.claude/skills/decode-and-code/SKILL.md` | a norma passa a ser citada por `<plan_root>`, sai o ponteiro para um plano que já não está no `_inbox`, e a nota de migração provisória dá lugar à dependência que o pacote não resolve |
+| `.claude/skills/decode-and-code/scripts/porte.py` | `_CONTEUDO_INICIAL` deixa de gravar o nome deste repositório no arquivo do projeto que instalar |
 | `.gitignore` | passa a ignorar `dist/` |
 | `.claude/skills/decode-and-code/scripts/tests/test_empacotamento.py` | **novo** — o teste declarado |
 | `docs/plan/system/modelo-dev-units.md` | a seção curta que diz o que o pacote leva, o que não leva, e por quê |
@@ -130,8 +132,18 @@ ocorrência de `CLAUDE_PROJECT_DIR`: os quatro comandos ancoram em `${CLAUDE_PLU
 compara o conjunto de eventos dos dois arquivos, em vez de reescrever a lista.
 
 `empacotar.verificar` devolve `[]` sobre a árvore recém-construída, **e devolve problema** sobre uma
-árvore em que um arquivo com `${CLAUDE_PROJECT_DIR}` foi plantado de propósito. Os dois casos andam
-juntos: sem o segundo, `verificar` poderia devolver `[]` sempre e o teste não veria.
+árvore em que o nome do projeto de origem foi plantado de propósito. Os dois casos andam juntos: sem
+o segundo, `verificar` poderia devolver `[]` sempre e o teste não veria.
+
+A âncora `CLAUDE_PROJECT_DIR` conta **dentro de `hooks/`** e não conta fora: o teste planta a string
+nos dois lugares e afirma que só a de dentro vira problema. Fora dela é dado — a constante que
+orienta a própria troca —; dentro é hook que vai procurar o próprio código na árvore de quem
+instalou.
+
+**Um caso constrói deste repositório e exige `verificar() == []`.** Fixture prova o mecanismo,
+nunca a instância: sem esse caso, `verificar` responde `[]` sobre uma árvore montada para não ter
+marcador nenhum, enquanto o pacote real sai com o nome do projeto dentro. Foi o que aconteceu na
+primeira entrega, e foi esse caso que o expôs.
 
 `empacotar.materializar` escreve a guideline em `<projeto>/.claude/rules/` com conteúdo idêntico ao
 da origem, e levanta `FileExistsError` sem tocar no arquivo quando o destino já existe — o teste

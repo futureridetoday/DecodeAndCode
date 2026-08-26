@@ -321,6 +321,38 @@ plano que instanciou este mecanismo pela primeira vez.
 divergência entre o que ele registra e o estado real do disco em vez de escolher um dos dois em
 silêncio.
 
+#### Empacotamento — o que o plugin leva, e o que fica
+
+`empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
+(`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
+si mesmo. Viaja o manifesto (`.claude-plugin/plugin.json`, fonte única de nome e versão), a skill
+sem `scripts/tests/` nem `__pycache__`, e os hooks com `hooks/hooks.json` gerado a partir do bloco
+`hooks` do `settings.json` — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para `${CLAUDE_PLUGIN_ROOT}`,
+porque é essa variável que separa pacote de cópia.
+
+**Não viaja:** `.claude/rules/*` (guideline é instância — parágrafo acima), `.claude/guardrails.json`
+(idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
+deste repositório, não componente do método) e `docs/` (plano e norma são registro daqui; a norma é
+citada, nunca copiada para dentro da skill). `empacotar.verificar(destino)` audita a árvore já
+construída por **busca de conteúdo** — o **nome do repositório de origem** em qualquer arquivo, e a
+âncora `CLAUDE_PROJECT_DIR` **dentro de `hooks/`** —, como par de `construir`, que decide por
+**exclusão de caminho**: o mesmo invariante fechado nos dois sentidos.
+
+> **A lista de marcadores é curta por medição, não por descuido** (`L-31`). Nome de arquivo que o
+> mecanismo lê (`guardrails.json`) e caminho default que ele resolve (`docs/plan`) **são
+> mecanismo**: proibi-los reprovava `guardrail.py`, o hook, `lib.py` e o `config.json` — e a âncora
+> buscada no texto inteiro reprovava a própria constante que faz a troca. Instância é **nome de
+> projeto**; e a auditoria só vale se rodar contra o pacote real, nunca só contra fixture.
+
+`empacotar.materializar(origem, projeto)` é a única operação que **recebe** uma origem: copia uma
+guideline específica para `<projeto>/.claude/rules/`, e levanta `FileExistsError` sem tocar o
+destino se ele já existir — nunca sobrescreve norma em silêncio. O plugin não embarca catálogo de
+guideline nenhum; quem instala escolhe o que materializar.
+
+**O pacote não é versionado** — `destino` default é `dist/decode-and-code/`, e `dist/` entra no
+`.gitignore`. Árvore construída e commitada envelhece em silêncio a cada mudança da fonte. Publicar
+é ato humano.
+
 ### 4. Norma de lote e decomposição
 
 - **Teto:** **8 passos de sequência por unidade**. Acima disso, a unidade divide-se.

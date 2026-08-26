@@ -56,7 +56,7 @@ source: local
 
 # decode-and-code
 
-Executa a norma `docs/plan/system/modelo-dev-units.md` e opera os três modos que ela define. Todo determinismo (gates, contagem, projeção de estado) fica nos scripts em `scripts/`; a skill cuida do que exige julgamento.
+Executa a norma `<plan_root>/system/modelo-dev-units.md` — `plan_root` resolvido pelo `config.json` — e opera os três modos que ela define. Todo determinismo (gates, contagem, projeção de estado) fica nos scripts em `scripts/`; a skill cuida do que exige julgamento.
 
 ## O que faz
 
@@ -162,9 +162,10 @@ Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`)
 
 ## Referências
 
-- Norma: `docs/plan/system/modelo-dev-units.md`
-- Plano em curso: `docs/plan/_inbox/decode-and-code-foundation.md`
+- Norma: `<plan_root>/system/modelo-dev-units.md` — `plan_root` é o do `config.json`, e
+  `docs/plan` é só o default. Vive no projeto que usa a skill, e é lá que a skill a lê.
 
-> **Cópia provisória, migrada do AmFlow em 2026-08-22.** Os scripts vieram medidos e verdes; este
-> arquivo veio junto para o repositório se operar sozinho. A reescrita — e a retirada do que ainda
-> assume o AmFlow — é trabalho das unidades `01` e `16` do plano em curso.
+> **A norma não viaja dentro do pacote, e a skill depende dela.** Instalado num projeto que ainda
+> não tem `modelo-dev-units.md`, o método opera sem a fonte que os três modos citam. A decisão de
+> se a norma passa a ser componente do plugin está registrada como lacuna no plano
+> `0001-decode-and-code-foundation` — muda o que o pacote é, e não se resolve em correção.

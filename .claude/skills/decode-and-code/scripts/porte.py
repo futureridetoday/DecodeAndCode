@@ -41,12 +41,15 @@ _PROXIMO_H2 = re.compile(r"(?m)^##\s")
 _CAMINHO_RE = re.compile(r"`([^`]*/[^`]*)`")
 _ITEM_TAREFA = re.compile(r"(?m)^-\s+\[( |x|X)\]\s+(.+?)\s*$")
 
+# `{projeto}` é preenchido em `registrar` com `lib.repo_root().name`. Estava fixo no nome deste
+# repositório e ia parar no arquivo de quem instalasse o mecanismo — o vazamento que a `L-31`
+# registra. Único par de chaves do template, então `.format` é seguro aqui.
 _CONTEUDO_INICIAL = """\
 ---
 # about
 name: porte-medido
 type: doc
-project: DecodeAndCode
+project: {projeto}
 description: Tabela append-only do porte declarado contra o porte real de cada plano fechado — recalibra o vocabulário de pequeno/médio/grande com dado, não com impressão
 tags: [decode-and-code, porte, medicao, instrumentacao]
 
@@ -300,7 +303,9 @@ def registrar(alvo: Path) -> str | None:
     caminho = lib.plan_root() / "system" / "porte-medido.md"
     if not caminho.is_file():
         caminho.parent.mkdir(parents=True, exist_ok=True)
-        caminho.write_text(_CONTEUDO_INICIAL, encoding="utf-8")
+        caminho.write_text(
+            _CONTEUDO_INICIAL.format(projeto=lib.repo_root().name), encoding="utf-8"
+        )
 
     texto = caminho.read_text(encoding="utf-8")
     if f"]({href})" in texto:
