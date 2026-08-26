@@ -140,6 +140,14 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertFalse((self.destino / "guardrails.json").exists())
         self.assertFalse((self.destino / "docs").exists())
 
+    def test_ds_store_da_maquina_nao_entra_no_pacote(self):
+        """`L-32` — a reconciliação da `0001-17` achou um dentro da skill, e o pacote o levava."""
+        lixo = self.raiz / ".claude" / "skills" / "decode-and-code" / ".DS_Store"
+        lixo.write_bytes(b"\x00\x01lixo do Finder")
+
+        empacotar.construir(self.destino)
+        self.assertEqual([], [str(p) for p in self.destino.rglob(".DS_Store")])
+
     def test_quatro_hooks_copiados(self):
         empacotar.construir(self.destino)
         copiados = {p.name for p in (self.destino / "hooks").glob("*.py")}

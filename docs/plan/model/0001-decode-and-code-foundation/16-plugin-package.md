@@ -124,8 +124,11 @@ entrega o arquivo em `.claude/rules/`, e é o registry que o liga e desliga depo
 
 `empacotar.construir` produz, em `tempfile`, uma árvore com `.claude-plugin/plugin.json`,
 `skills/decode-and-code/SKILL.md`, os scripts da skill e os quatro hooks — e **sem**
-`scripts/tests/`, sem `__pycache__`, sem `guardrails.json` e sem `docs/`. Cada ausência é um caso do
-teste, não uma afirmação da prosa.
+`scripts/tests/`, sem `__pycache__`, sem `guardrails.json`, sem `docs/` e sem `.DS_Store`. Cada
+ausência é um caso do teste, não uma afirmação da prosa.
+
+O caso do `.DS_Store` planta o arquivo na fonte antes de construir: sem plantá-lo, o teste passaria
+numa árvore que nunca o teve, que é como o defeito sobreviveu à primeira entrega (`L-32`).
 
 O `hooks/hooks.json` gerado declara os mesmos quatro eventos do `settings.json` e **nenhuma**
 ocorrência de `CLAUDE_PROJECT_DIR`: os quatro comandos ancoram em `${CLAUDE_PLUGIN_ROOT}`. O teste

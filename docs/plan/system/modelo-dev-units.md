@@ -353,6 +353,26 @@ guideline nenhum; quem instala escolhe o que materializar.
 `.gitignore`. Árvore construída e commitada envelhece em silêncio a cada mudança da fonte. Publicar
 é ato humano.
 
+#### Reconciliação — divergência por conteúdo, nunca por versão
+
+`reconciliar.comparar(origem, copia)` audita duas cópias do método por **SHA-256**, arquivo a
+arquivo, nunca por número de versão declarado. Cada componente recebe um de quatro veredictos:
+`idêntico` (mesmo hash), `divergente` (os dois existem, hash diferente), `só na origem` (a cópia
+nunca recebeu) e `só na cópia` (a cópia ganhou coisa própria — sinal de fork). `_componentes` varre
+a árvore inteira de cada lado, ignorando só `__pycache__` — inclui `scripts/tests/`, ao contrário
+do que `empacotar` exclui para o pacote: aqui o objetivo é medir divergência real, e o fork dos
+próprios testes de quem instalou é sinal, não ruído.
+
+> **Versão declarada não é evidência.** Medido em 2026-08-26: este repositório e
+> `AmFlow:.claude/skills/dev-units` declaram `version: 1.0.0` os dois, e ainda assim seis dos nove
+> scripts compartilhados divergem. Uma reconciliação que confiasse na versão diria "em dia" e
+> estaria errada em seis de nove. `reconciliar.relatorio` imprime a versão como **contexto**, nunca
+> como veredito — o veredito de cada componente vem sempre do hash.
+
+`reconciliar` só lê — nem a origem nem a cópia são escritas em caminho nenhum. Atualizar consumidor
+é decisão de quem mantém a cópia; o AmFlow em particular está congelado desde 2026-08-22, e nenhuma
+unidade escreve nele.
+
 ### 4. Norma de lote e decomposição
 
 - **Teto:** **8 passos de sequência por unidade**. Acima disso, a unidade divide-se.

@@ -15,9 +15,9 @@ unit_id: 0001-17
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_reconciliacao.py
-verified_at: ""
+verified_at: 2026-08-26
 
 # history
 author: Bortoli
@@ -127,7 +127,14 @@ depois de rodar `comparar` e `relatorio`, e afirma que não mudou.
 
 - [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation.md), *Escopo* → *Fase 5*
 - `D-23` — por que o veredito é por conteúdo e a versão é só contexto
-- Medição de 2026-08-26 contra `~/Code/AmFlow/.claude/skills/dev-units`: 9 componentes
-  compartilhados, **3 idênticos** (`nomenclatura.py`, `numeracao.py`, `regioes.py`), **6
-  divergentes** (`backlog.py`, `lib.py`, `lint_skill.py`, `lint_unidade.py`, `scaffold.py`,
-  `verificacao.py`), **6 só aqui** e nenhum só lá — com `version: 1.0.0` declarada nos dois
+- Medição de 2026-08-26 contra `~/Code/AmFlow/.claude/skills/dev-units`, pela própria ferramenta,
+  sobre a árvore inteira — **54 componentes: 19 divergentes, 28 só na origem, 5 idênticos e 2 só na
+  cópia** —, com `version: 1.0.0` declarada nos dois lados. O recorte dos **9 `scripts/*.py`**
+  compartilhados é o que sustenta o argumento da versão na forma mais afiada: **3 idênticos**
+  (`nomenclatura.py`, `numeracao.py`, `regioes.py`) contra **6 divergentes** (`backlog.py`,
+  `lib.py`, `lint_skill.py`, `lint_unidade.py`, `scaffold.py`, `verificacao.py`).
+- **Os dois `só na cópia` são o achado, e a derivação dizia que não havia nenhum** (`L-32`):
+  `scripts/tests/test_deprecacao.py` — o arquivo que a `D-14` decidiu **remover deste
+  repositório** — e `skill-description.md`. O veredito que a `D-23` acrescentou para distinguir
+  cópia atrasada de fork encontrou, na primeira execução contra dado real, exatamente o caso que
+  existe para nomear

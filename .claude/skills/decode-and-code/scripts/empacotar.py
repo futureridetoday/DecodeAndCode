@@ -81,9 +81,18 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
 
 
 def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
-    """Copia a skill inteira, exceto `scripts/tests/` e qualquer `__pycache__`."""
+    """Copia a skill inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
+
+    `.DS_Store` entrou por medição, não por antecipação (`L-32`): a reconciliação da `0001-17`
+    acusou um dentro da pasta da skill, e o pacote o levava — lixo do Finder da máquina que
+    construiu. `verificar` não o pegava, porque não há nome de projeto dentro de um `.DS_Store`.
+    A exclusão vive **só aqui**: ensinar `verificar` a recusar lixo criaria duas listas do mesmo
+    fato (invariante 1). Lixo novo entra nesta lista quando for observado, nunca antes.
+    """
     alvo = destino / "skills" / "decode-and-code"
-    shutil.copytree(origem, alvo, ignore=shutil.ignore_patterns("__pycache__", "tests"))
+    shutil.copytree(
+        origem, alvo, ignore=shutil.ignore_patterns("__pycache__", "tests", ".DS_Store")
+    )
     _declarar_o_plugin(alvo / "SKILL.md", nome_plugin)
     return [p for p in sorted(alvo.rglob("*")) if p.is_file()]
 
