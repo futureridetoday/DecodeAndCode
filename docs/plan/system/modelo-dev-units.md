@@ -347,6 +347,18 @@ construída por **busca de conteúdo** — o **nome do repositório de origem** 
 > buscada no texto inteiro reprovava a própria constante que faz a troca. Instância é **nome de
 > projeto**; e a auditoria só vale se rodar contra o pacote real, nunca só contra fixture.
 
+**`empacotar.validar(destino)` é o par estrutural, e vem de fora.** Ele roda
+`claude plugin validate` sobre a árvore construída: `verificar` recusa instância do projeto de
+origem, e este confere o **formato** contra a ferramenta oficial, que conhece o manifesto e os
+componentes. Ter só o nosso era conhecer só metade — o pacote passava no que nós sabíamos checar.
+Binário ausente devolve problema em vez de levantar: gate que estoura por falta de dependência é
+gate que se desliga.
+
+> **Marketplace é distribuição, não instalação.** Medido na doc oficial em 2026-08-27: um plugin
+> se instala direto, e `claude --plugin-dir <dir>` o carrega para desenvolvimento e teste — o
+> `.claude-plugin/marketplace.json` só entra quando se quer **catalogar** plugins para outros. O
+> pacote deste repositório passa em `claude plugin validate` sem marketplace nenhum.
+
 `empacotar.materializar(origem, projeto)` é a única operação que **recebe** uma origem: copia uma
 guideline específica para `<projeto>/.claude/rules/`, e levanta `FileExistsError` sem tocar o
 destino se ele já existir — nunca sobrescreve norma em silêncio. O plugin não embarca catálogo de

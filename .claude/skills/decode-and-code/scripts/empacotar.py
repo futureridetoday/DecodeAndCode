@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import lib
@@ -203,6 +204,35 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
                 problemas.append(f"{arquivo.relative_to(destino)}: ocorrência de {marcador!r}")
     problemas.extend(_ancora_de_projeto(destino))
     return problemas
+
+
+def validar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
+    """`claude plugin validate` sobre o pacote — lista de problemas, vazia quando aprova.
+
+    **Par de `verificar`, e mede outra coisa.** `verificar` recusa instância do projeto de origem;
+    este confere a **estrutura** contra a ferramenta oficial, que conhece o formato do manifesto e
+    dos componentes. Ter só o nosso era conhecer só metade.
+
+    Caracterizado contra o binário real em 2026-08-27, antes de escrito (`scripts.md`, *Comando
+    externo*): o sinal é o **returncode** — `0` aprova, `1` reprova —, a mensagem sai inteira em
+    `stdout`, e `stderr` fica vazio nos três casos medidos (pacote válido, diretório sem manifesto,
+    caminho inexistente).
+
+    Binário ausente **não levanta**: devolve o problema dizendo isso. Quem instala o método pode
+    não ter o `claude` no `PATH`, e um gate que estoura nessa condição vira gate que se desliga.
+    """
+    destino = _resolver_destino(destino)
+    try:
+        resultado = subprocess.run(
+            ["claude", "plugin", "validate", str(destino)], capture_output=True
+        )
+    except FileNotFoundError:
+        return ["claude não encontrado no PATH — validação oficial não executada"]
+
+    if resultado.returncode == 0:
+        return []
+    saida = resultado.stdout.decode("utf-8", errors="replace").strip()
+    return [f"claude plugin validate reprovou: {saida}"]
 
 
 def materializar(origem: Path, projeto: Path) -> Path:

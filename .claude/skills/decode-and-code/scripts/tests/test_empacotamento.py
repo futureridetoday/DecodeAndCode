@@ -18,6 +18,7 @@ instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 import tempfile
 import unittest
@@ -255,6 +256,58 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
 
             self.assertTrue((destino / "agents" / "planner.md").is_file())
             self.assertTrue((destino / "agents" / "developer.md").is_file())
+
+
+class TestValidarPelaFerramentaOficial(unittest.TestCase):
+    """O par de `verificar`: um recusa instância, o outro confere estrutura contra o validador
+    oficial. Caracterizado contra o binário real antes de escrito — o sinal é o returncode, a
+    mensagem sai em stdout, e stderr fica vazio."""
+
+    def test_pacote_real_passa_e_pacote_quebrado_reprova(self):
+        """O caso contra a instância, com o braço contrário junto.
+
+        Sem os dois o gate seria vácuo: a primeira tentativa de quebrar o pacote foi apagar o
+        manifesto, e ele **continuou válido** — a doc diz que plugin precisa de manifesto **ou** de
+        componentes, e o nosso tem `skills/`, `agents/` e `hooks/`. `name` ausente reprova de
+        verdade, medido em 2026-08-27.
+
+        Sem `claude` no `PATH`, afirma a degradação declarada. As duas pontas são comportamento
+        real; nenhuma é skip.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            if shutil.which("claude") is None:
+                self.assertEqual(
+                    empacotar.validar(destino),
+                    ["claude não encontrado no PATH — validação oficial não executada"],
+                )
+                return
+
+            self.assertEqual(empacotar.validar(destino), [])
+
+            (destino / ".claude-plugin" / "plugin.json").write_text(
+                json.dumps({"description": "sem name"}), encoding="utf-8"
+            )
+            self.assertTrue(empacotar.validar(destino), "manifesto sem 'name' devia reprovar")
+
+    def test_returncode_um_vira_problema_com_a_saida(self):
+        saida = b"Validating...\n\xe2\x9c\x98 Found 1 error:\n  no manifest"
+        with mock.patch.object(empacotar.subprocess, "run") as run:
+            run.return_value.returncode = 1
+            run.return_value.stdout = saida
+
+            problemas = empacotar.validar("/qualquer")
+
+        self.assertEqual(len(problemas), 1)
+        self.assertIn("Found 1 error", problemas[0])
+
+    def test_binario_ausente_devolve_problema_em_vez_de_levantar(self):
+        with mock.patch.object(empacotar.subprocess, "run", side_effect=FileNotFoundError):
+            problemas = empacotar.validar("/qualquer")
+
+        self.assertEqual(problemas, ["claude não encontrado no PATH — validação oficial não executada"])
 
 
 class TestMaterializar(unittest.TestCase):
