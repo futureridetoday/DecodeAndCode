@@ -359,6 +359,18 @@ gate que se desliga.
 > `.claude-plugin/marketplace.json` só entra quando se quer **catalogar** plugins para outros. O
 > pacote deste repositório passa em `claude plugin validate` sem marketplace nenhum.
 
+**Os hooks do pacote carregam, e isso deixou de ser suposição em 2026-08-27.** O pacote foi
+carregado por `--plugin-dir` a partir de `/tmp`, **fora do repositório de origem**, onde não existe
+hook de projeto: o log de ativação registrou o carregamento, e a única linha foi o `CLAUDE.md`
+global, que é exatamente o que aquele diretório tem. Qualquer linha ali só pode ter vindo do
+plugin — é o controle que separa o hook empacotado do hook do projeto, e a troca de âncora para
+`${CLAUDE_PLUGIN_ROOT}` é o que a torna possível.
+
+> **Dentro do repositório de origem esse controle não existe.** O hook do projeto e o do pacote são
+> o mesmo script, escrevendo o mesmo formato no mesmo caminho, e o log **não registra procedência**.
+> A primeira tentativa de medir rodou lá dentro e foi inconclusiva por isso. Medir ativação de
+> pacote exige diretório que não seja o que o produziu.
+
 `empacotar.materializar(origem, projeto)` é a única operação que **recebe** uma origem: copia uma
 guideline específica para `<projeto>/.claude/rules/`, e levanta `FileExistsError` sem tocar o
 destino se ele já existir — nunca sobrescreve norma em silêncio. O plugin não embarca catálogo de
