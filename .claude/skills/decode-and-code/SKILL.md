@@ -131,13 +131,18 @@ A Sequência é a da norma (*Fluxo completo*, etapas 4 a 7) — esta seção des
 4. **Numerar e escrever** — `numeracao.proxima_unidade(dir_plano)` dá o próximo `nn`; cada arquivo carrega todos os blocos do corpo (norma, *Formato do arquivo de unidade*) e declara `test:` mesmo antes de o arquivo existir (decisão 15).
 5. **Lint antes de seguir** — `lint_unidade.lint(arquivo)` em cada unidade recém-escrita; qualquer problema apontado é corrigido ali, antes de passar para a próxima.
 6. **Projetar o backlog** — `backlog.projetar(dir_plano)`, que atualiza também a situação da linha em `_planos.md`.
-7. **Registrar e relatar** — decisões tomadas durante a derivação vão para uma seção própria do plano, nunca para a norma; lacunas novas entram como `L-XX`, sem tentar resolvê-las; o que ficou pendente é reportado ao humano.
+7. **Gravar o handoff** — `handoff.gerar(dir_plano, fila=…, pendencias=…, sugestao=…)` escreve `_handoff.md` no diretório do plano. **Só no grande.** O script mede o que não pede opinião — commit, derivadas, verificadas, próximo número livre — e os três argumentos são **julgamento seu**: a ordem das unidades com suas dependências, o que ficou pendente do humano, e por onde você começaria.
+8. **Registrar e relatar** — decisões tomadas durante a derivação vão para uma seção própria do plano, nunca para a norma; lacunas novas entram como `L-XX`, sem tentar resolvê-las; o que ficou pendente é reportado ao humano. **E dizer o que fazer com o handoff:** ele é para uma **sessão nova**, colado inteiro, e quem o receber orquestra a execução — não implementa unidade.
+
+> **O handoff é projeção, não documento.** Cada `derive` incremental o regera com os números
+> daquele instante, e edição à mão se perde na próxima execução. O prefixo `_` o mantém fora do
+> padrão `NN-*.md` que conta unidades.
 
 > **O lint roda antes de entregar** (passo 5). Sem isso, o `derive` produz unidades que o gate de entrada do `implement` recusa depois, e o retrabalho só aparece na próxima sessão.
 
 > **Os passos 2 a 6 valem só para o grande** (norma, *Fluxo completo* e *O que cada porte carrega*, unidade 0001-14). **No pequeno, esta sequência não roda** — o passo 1 (`aprovar`) move o plano direto para `<core>/<NNNN>-<nome>.md`, sem subpasta, e para aí: sem `## Escopo`, sem unidade para decidir, numerar ou lintar. `backlog.projetar` ainda roda sobre esse arquivo, mas não escreve região nenhuma — só projeta a situação a partir de `status`, escrito pelo humano (fecha quando ele grava `status: done`). **No médio**, `aprovar` também move sem subpasta e os passos 2 a 5 seguem sem rodar — médio não deriva unidade —, mas o passo 6 projeta as caixas de `## Tarefas` em vez do backlog de unidades.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/scaffold.py`, `.claude/skills/decode-and-code/scripts/numeracao.py`, `.claude/skills/decode-and-code/scripts/lint_unidade.py` e `.claude/skills/decode-and-code/scripts/backlog.py`.
+Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/scaffold.py`, `.claude/skills/decode-and-code/scripts/numeracao.py`, `.claude/skills/decode-and-code/scripts/lint_unidade.py`, `.claude/skills/decode-and-code/scripts/backlog.py` e `.claude/skills/decode-and-code/scripts/handoff.py`.
 
 ### `implement <unidade>`
 

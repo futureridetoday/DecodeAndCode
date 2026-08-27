@@ -622,6 +622,28 @@ Parsear headings seria frágil: qualquer texto adicionado na seção se perderia
 estrutura de pastas já dá. O backlog agrega **por plano** — recorte temporal que a estrutura não
 expressa, já que unidades de vários planos convivem na mesma pasta do módulo.
 
+### `_handoff.md` — o prompt que conduz a execução
+
+O `derive` grava, no diretório do plano, o prompt que orquestra a execução do que ele acabou de
+derivar — a ser colado numa **sessão nova**, cujo papel é conduzir, nunca implementar unidade
+(plano `0003`). **Só no grande:** médio e pequeno executam na mesma sessão em que foram aprovados,
+e não há ponte entre sessões a construir.
+
+| Quem escreve | O quê |
+|---|---|
+| Script (`handoff.gerar`) | O esqueleto, e o que se mede sem opinar — commit, derivadas, verificadas, próximo número livre |
+| Opus, na derivação | A fila com as dependências, as pendências do humano, e por onde começar |
+
+**É projeção, e é regerada a cada `derive` incremental** — edição à mão se perde na próxima
+execução, como no backlog. O prefixo `_` a mantém fora de `PADRAO_ARQUIVO_UNIDADE`, que é o que
+conta unidades.
+
+> **A suíte não entra contada, e é deliberado.** O prompt carrega o **comando** e a regra de somar
+> as duas linhas `Ran`; quem lê mede. Número declarado envelhece no primeiro commit, e o prompt
+> inteiro existe para dizer que declaração é alegação — congelar o próprio número seria contradizê-lo
+> na primeira linha. A disciplina completa está em *Como revisar uma entrega*, **citada** pelo
+> prompt e nunca copiada nele.
+
 ### Bloco obrigatório — Independência
 
 Todo plano declara, no corpo, por que é **um** plano e não dois. Uma seção `## Independência` responde
@@ -879,6 +901,32 @@ São a razão de existir da skill:
   cold-start → recusa e devolve ao `derive`. Impede começar sem oráculo.
 - **Saída:** teste não passa → a unidade não transiciona para `verified`. Impede a doc de mentir.
 
+### Como revisar uma entrega
+
+Os dois gates provam a **unidade**. Não provam que a entrega está certa: gate verde é condição
+necessária, e a revisão é onde se descobre o que ele não alcança.
+
+**A base desta seção é estreita, e vale dizer:** ela sai de uma sessão só, em 2026-08-27, na
+execução das Fases 5 a 7 do plano `0001`. Sete unidades entregues, **sete revisões com achado** —
+e o que os produziu não foi zelo, foi medir em vez de reler.
+
+| Regra | Por quê |
+|---|---|
+| **Rode a suíte inteira você mesmo, e some as duas linhas `Ran`** | O relatório dá a contagem do diretório da skill como se fosse o total. Escorregou em **treze de treze** entregas |
+| **Rode os lints contra os artefatos reais**, nunca só contra fixture | `lint_unidade` em cada unidade, `lint_plano` no plano, `lint_agente` em cada agente, o lint do artefato que a unidade entregou |
+| **Pegue uma afirmação do relatório e meça-a por outro caminho** | *"Nenhum chamador muda de saída"* caiu comparando saídas contra o commit anterior; *"nenhum teste executa git"* caiu com um shim no `PATH`; *"os quatro casos falham no texto antigo"* confirmou-se aplicando as asserções ao texto de `HEAD` |
+| **Verde não é evidência** quando o teste e o critério saíram da mesma cabeça no mesmo momento | Se um teste existe para gatear uma decisão, **desligue o código e rode o teste**: ele tem de falhar. Duas vezes o caso continuava verde sem o que devia provar |
+| **Mock prova o parsing da saída, nunca o comando montado** | Ver *Comando externo* em `.claude/rules/scripts.md`, e a `L-28` que a originou |
+| **Caracterize o comportamento externo antes de escrever a correção** | Teste escrito a partir da mesma leitura que produziu o defeito passa contra o defeito |
+| **Separe o sintoma da raiz** | Em duas ocasiões a raiz estava num fixture, não no código sob revisão — e corrigir a raiz desfez a acomodação construída em volta |
+
+> **Todo número que o relatório afirma é alegação até você medir**, e a medição vale com o oráculo
+> do projeto, nunca com um equivalente montado na hora — é o que a `H-08` custou três vezes no
+> mesmo dia. Se existe script que o gate usa, é ele que dá o número.
+
+**Quem revisa não conserta o executor.** Entrega fiel a uma unidade defeituosa é defeito **da
+unidade**: a correção volta para quem deriva, e vira lacuna `L-XX` no plano.
+
 ### Fronteira skill / script
 
 | Responsabilidade | Onde vive |
@@ -1031,6 +1079,7 @@ caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em 
 | 5b | Plano movido e prefixado | script | `_inbox/<nome>.md` → `<NNNN>-<nome>/<NNNN>-<nome>.md` |
 | 6 | Unidades derivadas | Opus | Um arquivo por unidade, densas para cold-start |
 | 7 | Backlog projetado | script | No arquivo do plano |
+| 7b | Handoff gravado | script + Opus | `_handoff.md` no diretório do plano — **só no grande** |
 | 8 | Implementação | Sonnet (default) | Uma unidade por vez, em cold-start |
 | 9 | Fechamento | script | Estado projetado na unidade e no backlog |
 
