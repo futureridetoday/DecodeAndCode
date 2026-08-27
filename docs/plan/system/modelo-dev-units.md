@@ -434,6 +434,14 @@ O script **nunca edita o corpo**. Escreve apenas três campos do frontmatter —
 parseável e sem prosa. O mesmo princípio se aplica ao backlog no arquivo do plano, cujo formato é o
 próximo item a definir.
 
+> **No arquivo do plano, o campo projetado é `status`** (plano `0002`). A tabela acima descreve a
+> **unidade**; o plano é outro artefato, e nele `backlog.projetar` grava `status: done` na transição
+> para `concluído` — mesmo instante e mesma guarda de `porte.registrar`. Sem isso o arquivo dizia
+> `status: approved` para sempre, e saber se o trabalho fechou exigia abrir `_planos.md`: campo que
+> ninguém projeta envelhece mentindo, que é a lição da `L-22`. **Só em médio e grande**, onde a
+> situação é derivada; no pequeno o `status` é a **fonte** da situação, escrito pelo humano, e
+> projetá-lo seria circular.
+
 ### Blocos do corpo
 
 | Bloco | Função |
@@ -1087,7 +1095,7 @@ caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em 
 | 10 | Índice | **Eliminado** — substituído pela estrutura + backlog + consulta sob demanda |
 | 11 | Vocabulário | Inglês em código, caminhos e frontmatter; **português na prosa** |
 | 12 | Formato da unidade | Definido; referência viva em `docs/plan/model/0001-decode-and-code-foundation/01-config-and-paths.md` |
-| 13 | Regiões de escrita | Script escreve só o bloco `# verificação` do frontmatter; nunca o corpo |
+| 13 | Regiões de escrita | Script escreve só o bloco `# verificação` do frontmatter; nunca o corpo — **estendido em 2026-08-27** (plano `0002`): no arquivo do **plano**, escreve também `status`, na transição para `concluído` e apenas em médio e grande (ver *Regiões*) |
 | 14 | Identificador da unidade | `unit_id` = `[nº plano]-[nº unidade]`, ex. `0001-02` — **revisa** o prefixo por módulo (`MC-`, `AU-`) |
 | 15 | Teste inexistente | Gate de entrada exige teste **declarado**, não existente; `implement` escreve teste e código |
 | 16 | Alvo do plano | Frontmatter com `core`/`module`/`block`; **um plano, um alvo** |

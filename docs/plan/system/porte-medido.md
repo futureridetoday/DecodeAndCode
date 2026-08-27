@@ -30,3 +30,4 @@ dependencies: []
 | Plano | Porte declarado | Unidades ou tarefas | Arquivos declarados | Linhas alteradas | Fechado em |
 |---|---|---|---|---|---|
 | [0001-decode-and-code-foundation](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md) | grande | 21 | 69 | 8740 | 2026-08-27 |
+| [0002-record-plan-closure](../model/0002-record-plan-closure.md) | pequeno | — | não declarado | — | 2026-08-27 |

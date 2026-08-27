@@ -33,6 +33,21 @@ silêncio a partir de `status`, que é justamente o defeito acima.
 0001-15): compara a situação já registrada em `_planos.md` com a recém-projetada antes de
 sobrescrever a linha, e só dispara quando a antiga não era `concluído` e a nova é. Sem essa guarda,
 toda reprojeção de um plano já fechado tentaria acrescentar outra linha à mesma medição.
+
+**`status: done` no arquivo do plano é projeção convergente, não gatilho de transição** (plano
+0002). Sem isso o arquivo dizia `status: approved` para sempre, e quem quisesse saber se o trabalho
+fechou precisava abrir `_planos.md` — campo que ninguém projeta é campo que envelhece mentindo, que
+é a `L-22` do plano 0001. Só em **médio e grande**, onde a situação é derivada das unidades ou das
+tarefas: no pequeno o `status` é a **fonte** da situação, escrita pelo humano, e projetá-lo seria
+circular. É a mesma condição que decide se há região de backlog para escrever, por isso reusa
+`escreve_backlog`.
+
+**Por que aqui a guarda de transição seria errada, e no `porte.registrar` é obrigatória.** A tabela
+de porte é append-only: reprojetar acrescentaria outra linha. `status` é projeção idempotente —
+gravar duas vezes escreve o mesmo valor, e `regioes.escrever_campos` sequer toca o arquivo quando
+nada muda. Condicionar à transição deixaria **para sempre** sem `status: done` todo plano que
+fechou antes deste mecanismo existir, que é exatamente o caso do `0001` — medido em 2026-08-27,
+quando a primeira versão desta escrita não o alcançou.
 """
 
 from __future__ import annotations
@@ -110,6 +125,9 @@ def projetar(alvo: Path, dry_run: bool = False) -> tuple[str, str]:
 
     if situacao_anterior != "concluído" and situacao == "concluído":
         porte.registrar(alvo)
+
+    if situacao == "concluído" and escreve_backlog:
+        regioes.escrever_campos(arquivo_do_plano, {"status": "done"})
 
     return backlog, situacao
 

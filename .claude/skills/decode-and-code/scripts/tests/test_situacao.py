@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import backlog
 import fixtures
 import lib
+import regioes
 
 
 class _BaseComPlano(unittest.TestCase):
@@ -141,6 +142,51 @@ class TestContaTodasAsTabelasDaSecao(_BaseComPlano):
         _, situacao = backlog.projetar(dir_plano)
 
         self.assertEqual(situacao, "concluído")
+
+
+class TestStatusDoPlanoNaTransicao(_BaseComPlano):
+    """Plano 0002 — o arquivo do plano passa a registrar o próprio fechamento.
+
+    Um caso por ramo da guarda, no mesmo padrão do `porte.registrar`: a transição grava, a
+    reprojeção de um plano já fechado não reescreve, e projeção que devolve `em desenvolvimento`
+    nunca toca o campo.
+    """
+
+    def _status(self, dir_plano):
+        return regioes.ler_campo(dir_plano / f"{dir_plano.name}.md", "status")
+
+    def test_transicao_para_concluido_grava_status_done(self):
+        dir_plano = self._montar_plano(previstas=1)
+        fixtures.unidade(dir_plano, nome="01-a.md", unit_id="0009-01", state="verified")
+
+        _, situacao = backlog.projetar(dir_plano)
+
+        self.assertEqual(situacao, "concluído")
+        self.assertEqual(self._status(dir_plano), "done")
+
+    def test_plano_fechado_antes_do_mecanismo_converge_para_done(self):
+        """Medido no `0001` em 2026-08-27: guarda de transição o deixaria `approved` para sempre,
+        porque a transição dele aconteceu antes desta escrita existir."""
+        dir_plano = self._montar_plano(previstas=1)
+        fixtures.unidade(dir_plano, nome="01-a.md", unit_id="0009-01", state="verified")
+        backlog.projetar(dir_plano)
+
+        arquivo = dir_plano / f"{dir_plano.name}.md"
+        regioes.escrever_campos(arquivo, {"status": "approved"})
+        backlog.projetar(dir_plano)
+
+        self.assertEqual(self._status(dir_plano), "done")
+
+    def test_em_desenvolvimento_nunca_toca_o_campo(self):
+        dir_plano = self._montar_plano(previstas=2)
+        fixtures.unidade(dir_plano, nome="01-a.md", unit_id="0009-01", state="verified")
+        fixtures.unidade(dir_plano, nome="02-b.md", unit_id="0009-02", state="spec")
+
+        antes = self._status(dir_plano)
+        _, situacao = backlog.projetar(dir_plano)
+
+        self.assertEqual(situacao, "em desenvolvimento")
+        self.assertEqual(self._status(dir_plano), antes)
 
 
 if __name__ == "__main__":

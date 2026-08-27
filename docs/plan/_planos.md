@@ -30,6 +30,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | # | Plano | Core | Módulo | Origem | Situação | Aprovado |
 |---|---|---|---|---|---|---|
 | 0001 | [decode-and-code-foundation](model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md) | model | decode-and-code | — | concluído | 2026-08-23 |
+| 0002 | [record-plan-closure](model/0002-record-plan-closure.md) | model | record-plan-closure | — | concluído | 2026-08-27 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

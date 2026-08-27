@@ -16,7 +16,7 @@ block: ""
 # history
 author: Bortoli
 created: 2026-08-21
-status: approved
+status: done
 version: 2.4.0
 updated: 2026-08-22
 
