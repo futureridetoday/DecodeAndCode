@@ -60,6 +60,11 @@ def _montar_fonte(raiz: Path) -> None:
     for nome in nomes_hooks:
         (hooks / nome).write_text(f"# {nome}\n", encoding="utf-8")
 
+    agents = raiz / ".claude" / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    (agents / "planner.md").write_text("# planner sintético\n", encoding="utf-8")
+    (agents / "developer.md").write_text("# developer sintético\n", encoding="utf-8")
+
     settings = raiz / ".claude" / "settings.json"
     settings.write_text(
         json.dumps(
@@ -156,6 +161,11 @@ class TestConstruir(_BaseComFonteSintetica):
             {"pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py"},
         )
 
+    def test_dois_agentes_copiados(self):
+        empacotar.construir(self.destino)
+        copiados = {p.name for p in (self.destino / "agents").glob("*.md")}
+        self.assertEqual(copiados, {"planner.md", "developer.md"})
+
     def test_hooks_json_mesmos_eventos_do_settings_e_ancora_trocada(self):
         empacotar.construir(self.destino)
 
@@ -236,6 +246,15 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             texto = (destino / "skills" / "decode-and-code" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("project: decode-and-code", texto)
             self.assertNotIn(f"project: {lib.repo_root().name}", texto)
+
+    def test_dois_agentes_presentes_no_pacote_real(self):
+        """`D-27` — os dois agentes viajam, e o `planner` deixou de citar caminho deste projeto."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            self.assertTrue((destino / "agents" / "planner.md").is_file())
+            self.assertTrue((destino / "agents" / "developer.md").is_file())
 
 
 class TestMaterializar(unittest.TestCase):

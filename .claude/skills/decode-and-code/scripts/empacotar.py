@@ -45,6 +45,7 @@ def _fontes() -> dict[str, Path]:
         "skill": raiz / ".claude" / "skills" / "decode-and-code",
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
+        "agents": raiz / ".claude" / "agents",
     }
 
 
@@ -70,6 +71,7 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     escritos.extend(_copiar_skill(fontes["skill"], destino, nome_plugin))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino))
     escritos.append(_escrever_hooks_json(fontes["settings"], destino))
+    escritos.extend(_copiar_agentes(fontes["agents"], destino))
     return escritos
 
 
@@ -116,6 +118,18 @@ def _copiar_hooks(origem: Path, destino: Path) -> list[Path]:
     for hook in sorted(origem.glob("*.py")):
         copia = alvo / hook.name
         shutil.copy2(hook, copia)
+        escritos.append(copia)
+    return escritos
+
+
+def _copiar_agentes(origem: Path, destino: Path) -> list[Path]:
+    """Copia `.claude/agents/*.md` para `agents/` do pacote — mesmo formato de `_copiar_hooks` (`D-27`)."""
+    alvo = destino / "agents"
+    alvo.mkdir(parents=True, exist_ok=True)
+    escritos = []
+    for agente in sorted(origem.glob("*.md")):
+        copia = alvo / agente.name
+        shutil.copy2(agente, copia)
         escritos.append(copia)
     return escritos
 

@@ -326,14 +326,17 @@ silêncio.
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
 si mesmo. Viaja o manifesto (`.claude-plugin/plugin.json`, fonte única de nome e versão), a skill
-sem `scripts/tests/` nem `__pycache__`, e os hooks com `hooks/hooks.json` gerado a partir do bloco
-`hooks` do `settings.json` — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para `${CLAUDE_PLUGIN_ROOT}`,
-porque é essa variável que separa pacote de cópia.
+sem `scripts/tests/` nem `__pycache__` (o que inclui `huddle.py` — o mecanismo do huddle viaja como
+qualquer outro script; a instância de cada projeto, não), os hooks com `hooks/hooks.json` gerado a
+partir do bloco `hooks` do `settings.json` — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para
+`${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —, e os dois agentes
+(`agents/planner.md`, `agents/developer.md`), copiados no mesmo formato dos hooks (`D-27`).
 
 **Não viaja:** `.claude/rules/*` (guideline é instância — parágrafo acima), `.claude/guardrails.json`
 (idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
-deste repositório, não componente do método) e `docs/` (plano e norma são registro daqui; a norma é
-citada, nunca copiada para dentro da skill). `empacotar.verificar(destino)` audita a árvore já
+deste repositório, não componente do método) e `docs/` (plano e norma são registro daqui — inclusive
+`docs/plan/system/huddle.md`, que carrega a conversa deste projeto e é instância pura, `D-28` —; a
+norma é citada, nunca copiada para dentro da skill). `empacotar.verificar(destino)` audita a árvore já
 construída por **busca de conteúdo** — o **nome do repositório de origem** em qualquer arquivo, e a
 âncora `CLAUDE_PROJECT_DIR` **dentro de `hooks/`** —, como par de `construir`, que decide por
 **exclusão de caminho**: o mesmo invariante fechado nos dois sentidos.
@@ -926,6 +929,85 @@ declaração no corpo do agente — verificada por teste, nunca imposta pelo fro
 verdade é guardrail do projeto que instala, não deste mecanismo (`D-07`).
 
 Referência viva: `.claude/agents/planner.md` — a instância que este lint aprova.
+
+---
+
+## Huddle — fila do que ainda não foi decidido
+
+Fila do que ainda **não** foi decidido — o que as três camadas normativas não guardam, porque
+resolvem só o que já foi decidido. Um arquivo por projeto, em `<plan_root>/system/huddle.md`, e
+nunca carregado automaticamente: nem como rule, nem por `skills:`, nem por import (`D-08`) — entra
+em contexto quando a conversa acontece, do contrário compete com norma já decidida.
+
+**A propriedade que faz funcionar: nada ali é autoritativo enquanto está ali.** Uma entrada nasce
+aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, ou
+para o `## Decisões` de um plano — deixando uma linha em `## Fechadas` com data e destino. Não
+resolvida, é descartada com o motivo escrito. Um arquivo onde nada fecha só cresce; o tamanho certo
+é o do que está genuinamente em aberto.
+
+### Formato e vocabulário fechado
+
+Duas seções, `## Abertas` e `## Fechadas`. Entrada aberta abre com um cabeçalho de linha única:
+
+```
+### H-XX · `tipo` · AAAA-MM-DD · autor
+```
+
+`tipo` vem de vocabulário fechado de cinco — mesmo padrão de `unit_type` e `plan_size`: recusa-se o
+valor que não é escolha nenhuma, nunca a escolha.
+
+| Tipo | O que é |
+|---|---|
+| `pergunta` | Decidi X assumindo Y — Y está certo? |
+| `divergência` | Duas fontes do projeto se contradizem, e a execução contornou |
+| `padrão` | Regularidade que uma sessão sozinha não revela |
+| `revisitar` | Alternativa rejeitada cuja premissa pode ter mudado |
+| `observação` | Algo notado que ainda não virou afirmação |
+
+Entrada fechada vira uma linha em `## Fechadas`, colunas `# | Tipo | Fechada em | Destino`.
+
+### Despejo — o invariante verificável
+
+**O mesmo `H-XX` não pode estar em `## Abertas` e na tabela de `## Fechadas` ao mesmo tempo** — é a
+promessa central do arquivo, e sem verificação um huddle onde nada fecha só cresce sem que ninguém
+note. `huddle.lint_arquivo(caminho)` prova isso, lista vazia quando sã: cabeçalho de entrada bem
+formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, e nenhum `H-XX`
+presente nas duas seções.
+
+**Os cinco gatilhos de escrita não têm o mesmo oráculo** (`L-08`): *o executor decidiu algo que o
+humano não decidiu*, *duas fontes discordam*, *algo foi contornado em vez de corrigido*, *uma
+alternativa foi rejeitada por premissa que pode mudar*, *o humano corrigiu o modelo* — nenhum é
+observável por script, só por quem escreve. O lint alcança a estrutura de quem já escreveu; nunca
+se deveria ter escrito.
+
+### Momento — no fecho, e a linha de fecho é obrigatória mesmo em zero
+
+Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
+escrita na hora seria natimorta. No fecho do relatório de **qualquer um dos três modos** —
+`review`, `derive` e `implement`, não só o último —, uma linha declara quantas entradas novas
+houve:
+
+```
+entradas novas no huddle: N
+```
+
+**Inclusive com `N` igual a zero.** `huddle.lint_relatorio(texto)` recusa a ausência da linha —
+lista vazia quando presente, com qualquer `N` —, porque é o que separa *conferi e não havia* de
+*nunca conferi*, hoje indistinguíveis. **A mitigação é fraca, e vale dizer o quanto:** um relatório
+honesto com zero e um desatento com zero continuam idênticos ao lint; o que ele alcança é a
+ausência da declaração, nunca a atenção de quem a escreveu.
+
+### Sem arquivo de template, e o que não viaja
+
+**O esqueleto vive em `huddle.iniciar(destino)`, nunca num `.md` para copiar** (`D-20`) — mesmo
+padrão de `porte._CONTEUDO_INICIAL`: formato com uma fonte só, que é o script, com esta seção
+descrevendo-o em prosa. Escreve `destino` com o frontmatter e as duas seções vazias e devolve o
+caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em nada.
+
+> **O `huddle.md` de cada projeto é instância pura, e não viaja no plugin — o mecanismo que cria um
+> vazio, sim** (`D-28`). Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
+> empacotá-la entregaria a quem instala o registro de decisões de outro repositório — o invariante 2
+> quebrado no artefato mais pessoal do método. Quem instala roda `iniciar` e recebe o seu, vazio.
 
 ---
 

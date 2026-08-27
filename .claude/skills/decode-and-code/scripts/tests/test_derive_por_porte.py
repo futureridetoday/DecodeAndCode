@@ -362,11 +362,16 @@ class TestBacklogGrande(unittest.TestCase):
         self.assertIn("[0001-01]", por_arquivo[0])
 
     def test_plano_real_0001_projeta_sem_levantar_e_sem_regredir(self):
+        # A situação do plano real é estado mutável, não invariante: era "em desenvolvimento",
+        # virou "concluído" na 0001-21, e voltaria se uma unidade de correção entrasse. Afirmar
+        # o valor exato acopla este caso ao momento (L-36); o que ele existe para provar é que a
+        # projeção do plano real não levanta e produz o backlog. A lógica da situação está
+        # coberta contra planos sintéticos em test_situacao.py.
         backlog_texto, situacao = backlog.projetar(DIR_UNIDADES_REAIS, dry_run=True)
 
         self.assertIn("| Unidade | Título | Estado |", backlog_texto)
         self.assertIn("[0001-01]", backlog_texto)
-        self.assertEqual(situacao, "em desenvolvimento")
+        self.assertIn(situacao, ("em desenvolvimento", "concluído"))
 
     def test_plano_real_0001_dry_run_e_deterministico(self):
         primeira = backlog.projetar(DIR_UNIDADES_REAIS, dry_run=True)

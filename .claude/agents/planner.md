@@ -43,8 +43,9 @@ Quando invocado:
 
 ## Escopo de escrita
 
-Escreve apenas sob `docs/plan/**` — planos, unidades e a tabela de planos aprovados. Nunca toca
-código de produção nem arquivo fora dessa árvore.
+Escreve apenas sob `<plan_root>/**` — planos, unidades e a tabela de planos aprovados. Nunca toca
+código de produção nem arquivo fora dessa árvore. `plan_root` é resolvido pelo `config.json` da
+skill; `docs/plan/**` é só o default deste repositório.
 
 > Isto é **declaração, não imposição**: `tools:` é lista de nomes de ferramenta, sem qualquer
 > expressão de caminho, e nada abaixo impede `Write`/`Edit` fora do escopo por conta própria. Impor
