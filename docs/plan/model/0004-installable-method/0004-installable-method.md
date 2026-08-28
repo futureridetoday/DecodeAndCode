@@ -177,10 +177,10 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 | Unidade | Título | Estado |
 |---|---|---|
 | [0004-01](01-project-anchor.md) | project-anchor | `verified` |
-| [0004-02](02-project-bootstrap.md) | project-bootstrap | `spec` |
+| [0004-02](02-project-bootstrap.md) | project-bootstrap | `verified` |
 | [0004-03](03-norm-split.md) | norm-split | `spec` |
 | [0004-04](04-package-carries-norm.md) | package-carries-norm | `spec` |
 | [0004-05](05-installed-cycle-proof.md) | installed-cycle-proof | `spec` |
 
-5 de 5 derivadas · 1 verificada · atualizado em 2026-08-28
+5 de 5 derivadas · 2 verificadas · atualizado em 2026-08-28
 <!-- backlog:end -->

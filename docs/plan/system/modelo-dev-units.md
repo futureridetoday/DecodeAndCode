@@ -1091,6 +1091,55 @@ caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em 
 
 ---
 
+## Bootstrap — o chão que o ciclo pressupõe
+
+Todo o *Fluxo completo* abaixo assume uma estrutura já existente. Num projeto que acabou de instalar
+o método ela não existe, e a primeira etapa morre: medido em **2026-08-27**, `scaffold.aprovar`
+sobre o primeiro plano de um projeto zerado levanta `FileNotFoundError` em `_planos.md`. O bootstrap
+é a etapa **zero** — `bootstrap.iniciar(projeto)`, que cria esse chão uma vez.
+
+> **Passou despercebido porque ninguém tinha rodado o ciclo do zero.** Nas validações anteriores o
+> `_planos.md` era montado à mão no repositório de teste, e isso foi tratado como preparação. Era o
+> defeito, contornado sem ser visto.
+
+### O que cria
+
+| Caminho | Por quê |
+|---|---|
+| `<plan_root>/_planos.md` | Fonte da numeração — com frontmatter, os marcadores `planos` e o cabeçalho da tabela |
+| `<plan_root>/_inbox/` | Onde todo plano nasce |
+| `<plan_root>/system/` | Onde vive a camada normativa do core |
+| `<projeto>/.claude/` | `root_markers` exige `.claude/` **e** `docs/` — sem os dois a âncora não resolveria o projeto **depois** do bootstrap (`D-04` do plano `0004`) |
+
+**Idempotente e nunca destrutiva**, no mesmo contrato de `huddle.iniciar` e do bootstrap de
+`porte.registrar`: cada caminho só é criado se ainda não existir, e o pulo é **por item, nunca
+tudo-ou-nada**. Um projeto que já tem `_planos.md` com linhas mantém as linhas, mesmo que `_inbox/`
+ainda falte. `iniciar` devolve a lista do que criou — segunda chamada devolve lista vazia.
+
+`project:` no frontmatter de `_planos.md` vem do **nome do diretório do projeto**, nunca fixo.
+Embutir o nome do repositório de origem foi a `L-31` do plano `0001`, e vazaria para quem instala.
+Sem arquivo de template (`D-20`): o esqueleto vive em `_CONTEUDO_INICIAL`, como `porte.py` e
+`huddle.py` já fazem.
+
+### O que não cria
+
+Runner de teste e `_inbox/_backlog.md` ficam de fora (`D-05`). São **instância do projeto que
+instala**, não estrutura do método — o projeto declara o seu runner em `runners`, no `config.json`.
+Criar um na casa de quem instala seria feature além do pedido, e é o invariante 2 aplicado à
+operação que mais tenta violá-lo: a que escreve num projeto alheio.
+
+### Por que o projeto chega por parâmetro
+
+`iniciar` recebe `projeto`; não o resolve. **Resolver a raiz aqui seria circular** — antes do
+bootstrap o projeto não tem as marcas que `lib.repo_root()` procura, e são exatamente as marcas que
+esta operação vai criar. Toda outra operação do método pode se ancorar porque roda depois; esta é a
+que roda antes.
+
+O `plan_root` continua vindo do `config()`, componível com a entrada — `projeto /
+lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem precisar da âncora.
+
+---
+
 ## Fluxo completo
 
 | # | Etapa | Executor | Resultado |
