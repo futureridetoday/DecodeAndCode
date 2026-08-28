@@ -10,11 +10,16 @@ Mover um .md quebra links em duas direções, e é fácil lembrar só da primeir
 Este script trata as duas. Ver docs/plan/system/language-policy.md.
 
 Uso:
-  ./scripts/move-md.py <origem> <destino> [--dry-run]
+  ./.claude/skills/decode-and-code/scripts/move-md.py <origem> <destino> [--dry-run]
 
 O destino pode ser um arquivo ou um diretório. Diretórios intermediários são
 criados. Se a origem estiver versionada, usa `git mv` para preservar o
 histórico.
+
+`move-md.py` mora dentro da skill (unidade `0004-04`) — mecanismo puro, sem instância nenhuma,
+que por isso viaja de graça no empacotamento (`D-06` do plano `0004-installable-method`). `REPO_ROOT`
+continua sendo a raiz do **projeto** onde ele varre e reescreve links, nunca a raiz da skill onde
+o próprio arquivo mora — as duas só coincidem no checkout que produz o pacote.
 """
 
 from __future__ import annotations
@@ -24,6 +29,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+import lib
 
 # Diretórios que nunca são varridos: read-only por norma, gerados, ou cópias.
 IGNORADOS = {
@@ -43,7 +50,24 @@ LINK = re.compile(r"(?<=\]\()([^)\s]+)(?=\))")
 # Abertura/fechamento de bloco de código: ``` ou ~~~, com qualquer nº de marcas.
 FENCE = re.compile(r"^\s*(```|~~~)")
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+
+def _repo_root_padrao() -> Path:
+    """A raiz do **projeto**, resolvida do mesmo jeito que os outros 19 módulos da skill.
+
+    `Path(__file__).resolve().parent.parent` bastava enquanto este arquivo morava em
+    `scripts/` da raiz do repositório — dois níveis acima **era** a raiz do projeto. Movido para
+    dentro da skill, dois níveis acima é a raiz da **skill**, não a do projeto que a instalou.
+    `lib.repo_root()` já resolve as duas formas (checkout e pacote instalado, unidade `0004-01`);
+    o `try` existe só para nunca levantar na importação deste módulo — fazer isso reproduziria,
+    de dentro do próprio mecanismo que a `0004-04` corrige, o `scaffold` morrendo no import.
+    """
+    try:
+        return lib.repo_root()
+    except RuntimeError:
+        return Path(__file__).resolve().parent.parent
+
+
+REPO_ROOT = _repo_root_padrao()
 
 
 def e_relativo(destino: str) -> bool:

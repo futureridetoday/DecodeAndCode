@@ -47,6 +47,7 @@ def _fontes() -> dict[str, Path]:
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
         "agents": raiz / ".claude" / "agents",
+        "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
     }
 
 
@@ -70,6 +71,7 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
 
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
     escritos.extend(_copiar_skill(fontes["skill"], destino, nome_plugin))
+    escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino))
     escritos.append(_escrever_hooks_json(fontes["settings"], destino))
     escritos.extend(_copiar_agentes(fontes["agents"], destino))
@@ -110,6 +112,27 @@ def _declarar_o_plugin(skill_md: Path, nome_plugin: str) -> None:
     """
     texto = skill_md.read_text(encoding="utf-8")
     skill_md.write_text(_PROJECT_RE.sub(f"project: {nome_plugin}", texto, count=1), encoding="utf-8")
+
+
+def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
+    """Leva a norma-mecanismo para `reference/`, ao lado da skill — unidade `0004-04`.
+
+    `bootstrap.iniciar` materializa de lá quando o método roda de um pacote instalado (a skill já
+    cita `<plan_root>/system/modelo-dev-units.md`, e sem isto o projeto que instala não tem a fonte
+    que os três modos citam — `L-31` do plano `0001`). Fica fora de `docs/`, que `construir` nunca
+    copia (invariante 2): é **um** arquivo nomeado, o operativo que a `0004-03` já separou do
+    registro deste projeto, não a árvore inteira de `docs/plan`.
+
+    `project:` do frontmatter passa pela mesma reescrita que `SKILL.md` já recebe
+    (`_declarar_o_plugin`) — sem ela, a cópia distribuída declara no próprio frontmatter o nome do
+    repositório que a produziu, e `verificar` acusa: a mesma classe de vazamento da `L-31`, medida
+    nesta unidade num arquivo que ainda não existia quando aquela lacuna foi escrita.
+    """
+    alvo = destino / "skills" / "decode-and-code" / "reference" / origem.name
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(origem, alvo)
+    _declarar_o_plugin(alvo, nome_plugin)
+    return alvo
 
 
 def _copiar_hooks(origem: Path, destino: Path) -> list[Path]:

@@ -64,7 +64,7 @@ class TestHarness(unittest.TestCase):
         # exige `.claude/rules/scripts.md` (*Comando externo*); mock provaria o
         # parsing e não a aritmética que o script agora faz.
         alvos = [
-            "scripts/tests/test_move_md.py",
+            ".claude/skills/decode-and-code/scripts/tests/test_move_md.py",
             ".claude/skills/decode-and-code/scripts/tests/test_nomenclatura.py",
         ]
         resultado = subprocess.run(

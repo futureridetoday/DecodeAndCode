@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes de `empacotar.construir/verificar/materializar` — unidade 0001-16.
+"""Testes de `empacotar.construir/verificar/materializar` — unidades 0001-16 e 0004-04.
 
 Duas naturezas, e as duas são necessárias (`L-31`).
 
@@ -13,12 +13,21 @@ exige `verificar() == []`. A primeira entrega tinha só a sintética, e ela resp
 árvore montada para não conter marcador nenhum — enquanto o pacote real saía com o nome do projeto
 no `SKILL.md` e dentro do `_CONTEUDO_INICIAL` de `porte.py`. Fixture prova o mecanismo, nunca a
 instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza a regra.
+
+A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
+de graça — mora dentro da skill desde a `0004-04`, e `_copiar_skill` já copia a árvore inteira —,
+então o caso que prova isso é contra o **repositório real** (`TestPacoteRealEstaLimpo`), não
+fixture: é exatamente o arquivo que faltava quando `scaffold` morria no import. A norma tem fonte e
+destino próprios (`docs/plan/system/modelo-dev-units.md` → `reference/`, dentro da skill do
+pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacotar._fontes` agora
+declara.
 """
 
 from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -46,6 +55,7 @@ def _montar_fonte(raiz: Path) -> None:
     scripts = skill / "scripts"
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "lib.py").write_text("# mecanismo\n", encoding="utf-8")
+    (scripts / "move-md.py").write_text("# mecanismo — reescreve link markdown\n", encoding="utf-8")
 
     pycache = scripts / "__pycache__"
     pycache.mkdir(parents=True, exist_ok=True)
@@ -102,9 +112,9 @@ def _montar_fonte(raiz: Path) -> None:
     guardrails = raiz / ".claude" / "guardrails.json"
     guardrails.write_text(json.dumps({"rules": []}), encoding="utf-8")
 
-    docs = raiz / "docs" / "plan"
+    docs = raiz / "docs" / "plan" / "system"
     docs.mkdir(parents=True, exist_ok=True)
-    (docs / "modelo-dev-units.md").write_text("# norma — registro deste projeto\n", encoding="utf-8")
+    (docs / "modelo-dev-units.md").write_text("# norma — mecanismo sintético\n", encoding="utf-8")
 
 
 class _BaseComFonteSintetica(unittest.TestCase):
@@ -197,6 +207,26 @@ class TestConstruir(_BaseComFonteSintetica):
             empacotar.construir(self.destino)
         self.assertFalse(self.destino.exists())
 
+    def test_norma_entra_em_reference_dentro_da_skill(self):
+        """`0004-04` — `construir` leva a norma-mecanismo para `reference/`, ao lado da skill."""
+        empacotar.construir(self.destino)
+        alvo = self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
+        self.assertTrue(alvo.is_file())
+        self.assertEqual(alvo.read_text(encoding="utf-8"), "# norma — mecanismo sintético\n")
+
+    def test_move_md_viaja_dentro_do_scripts_da_skill(self):
+        """`0004-04` — o `move-md` mora na skill e `_copiar_skill` já o leva, sem função própria."""
+        empacotar.construir(self.destino)
+        alvo = self.destino / "skills" / "decode-and-code" / "scripts" / "move-md.py"
+        self.assertTrue(alvo.is_file())
+
+    def test_fonte_norma_ausente_levanta_antes_de_escrever(self):
+        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").unlink()
+
+        with self.assertRaises(FileNotFoundError):
+            empacotar.construir(self.destino)
+        self.assertFalse(self.destino.exists())
+
 
 class TestVerificar(_BaseComFonteSintetica):
     def test_arvore_recem_construida_esta_limpa(self):
@@ -256,6 +286,60 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
 
             self.assertTrue((destino / "agents" / "planner.md").is_file())
             self.assertTrue((destino / "agents" / "developer.md").is_file())
+
+    def test_norma_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
+        """Critério de aceite da `0004-04` — contra o repositório real, não fixture (`L-31`)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            norma = destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
+            move_md = destino / "skills" / "decode-and-code" / "scripts" / "move-md.py"
+            self.assertTrue(norma.is_file())
+            self.assertTrue(move_md.is_file())
+            self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
+            self.assertEqual(empacotar.verificar(destino), [])
+
+
+class TestScaffoldImportaDoPacote(unittest.TestCase):
+    """Critério de aceite da `0004-04`: `scaffold` é o único dos 20 módulos que não importava a
+    partir de um pacote instalado — o `move-md` ausente era a causa (`config.json`, `move_script`,
+    resolvido contra a raiz do **projeto**, que um pacote solto não tem).
+
+    O caso precisa rodar **fora deste processo**: `scaffold` já está importado no `sys.modules` de
+    quem roda a suíte, e um `import scaffold` aqui devolveria o módulo já carregado, não provaria
+    nada sobre o pacote. Um subprocesso novo, com `cwd` num diretório sem `.claude/` nem `docs/` ao
+    redor, é o que reproduz "scripts fora de qualquer projeto" — a condição medida em 2026-08-27 com
+    `claude --plugin-dir` a partir de `/tmp`.
+    """
+
+    def test_scaffold_importa_com_scripts_fora_de_qualquer_projeto(self):
+        with tempfile.TemporaryDirectory() as tmp_pacote, tempfile.TemporaryDirectory() as tmp_cwd:
+            destino = Path(tmp_pacote) / "pkg"
+            empacotar.construir(destino)
+            scripts_dir = destino / "skills" / "decode-and-code" / "scripts"
+
+            cwd_sem_projeto = Path(tmp_cwd).resolve()
+            self.assertFalse((cwd_sem_projeto / ".claude").exists())
+            self.assertFalse((cwd_sem_projeto / "docs").exists())
+
+            codigo = (
+                "import sys\n"
+                "sys.path.insert(0, sys.argv[1])\n"
+                "import scaffold\n"
+                "print('importou')\n"
+            )
+            resultado = subprocess.run(
+                [sys.executable, "-c", codigo, str(scripts_dir)],
+                cwd=cwd_sem_projeto,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(
+                resultado.returncode, 0, resultado.stdout + resultado.stderr
+            )
+            self.assertIn("importou", resultado.stdout)
 
 
 class TestValidarPelaFerramentaOficial(unittest.TestCase):

@@ -170,7 +170,20 @@ Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`)
 - Norma: `<plan_root>/system/modelo-dev-units.md` — `plan_root` é o do `config.json`, e
   `docs/plan` é só o default. Vive no projeto que usa a skill, e é lá que a skill a lê.
 
-> **A norma não viaja dentro do pacote, e a skill depende dela.** Instalado num projeto que ainda
-> não tem `modelo-dev-units.md`, o método opera sem a fonte que os três modos citam. A decisão de
-> se a norma passa a ser componente do plugin está registrada como lacuna no plano
-> `0001-decode-and-code-foundation` — muda o que o pacote é, e não se resolve em correção.
+## Começando um projeto do zero
+
+Um projeto que acabou de instalar o plugin não tem estrutura nenhuma sob `plan_root` — nem
+`_planos.md`, nem `_inbox/`, nem a norma que os três modos acima citam. `bootstrap.iniciar(projeto)`
+cria o que falta, item a item e sem sobrescrever o que já existir:
+
+| Cria | Onde |
+|---|---|
+| `_planos.md`, com os marcadores e o cabeçalho da tabela | `<plan_root>/` |
+| `_inbox/` | `<plan_root>/` |
+| A norma-mecanismo, materializada de `reference/` (ao lado da própria skill) ou do checkout | `<plan_root>/system/modelo-dev-units.md` |
+| `.claude/` | raiz do projeto |
+
+**Idempotente:** rodar de novo sobre um projeto que já tem parte disso não toca no que já está lá —
+inclusive a norma, se o projeto já a tiver editado.
+
+Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/bootstrap.py`.
