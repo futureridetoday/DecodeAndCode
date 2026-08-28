@@ -66,13 +66,19 @@ def proximo_plano() -> str:
     return str(proximo).zfill(LARGURA_PLANO)
 
 
-def proxima_unidade(dir_plano: Path) -> str:
+def proxima_unidade(dir_plano: Path | str) -> str:
     """Próximo número de unidade dentro de um plano — dois dígitos, recomeça em `"01"` a cada plano.
 
     Lista `NN-*.md` no diretório do plano, ignorando o arquivo do próprio
     plano. Levanta `RuntimeError` em vez de truncar em silêncio se o
     próximo número não couber em dois dígitos.
+
+    Aceita `str` porque a skill compõe estes scripts por `python3 -c` escrito à
+    mão a cada invocação (`SKILL.md`, *Composição via `python3`*) — e ali o
+    caminho chega como string. Sem a coerção, `AttributeError: 'str' object has
+    no attribute 'name'`, que não diz ao chamador o que fazer.
     """
+    dir_plano = Path(dir_plano)
     arquivo_do_plano = f"{dir_plano.name}.md"
 
     numeros = []
