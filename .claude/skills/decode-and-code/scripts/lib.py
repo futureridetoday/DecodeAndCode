@@ -6,8 +6,14 @@ canônicos sob `docs/plan/` — sem depender de variável de ambiente nem do
 diretório de trabalho de quem invoca. É módulo importado, não script executável.
 
 `CLAUDE_PLUGIN_ROOT` não serve: medido vazio nos dois ambientes, e no browser
-isso causou falha até o script ser localizado com `find`. Auto-localização por
-`__file__` é o padrão adotado.
+isso causou falha até o script ser localizado com `find`. `CLAUDE_PROJECT_DIR`
+também não serve: é substituição literal feita no `hooks.json`, nunca variável
+exportada no ambiente de uma sessão — inexistente para um script invocado por
+Bash. Restam dois candidatos reais: `__file__` e `cwd`. `repo_root()` tenta
+`__file__` primeiro e `cwd` só se o primeiro não resolver — ordem estritamente
+aditiva: tudo que resolvia antes continua resolvendo do mesmo jeito, e o `cwd`
+só entra em jogo onde hoje se levanta exceção (plugin instalado, cujo
+`__file__` mora no diretório do pacote, não no do projeto).
 
 Todo caminho devolvido é resolvido. `relpath` entre um caminho resolvido e outro
 não-resolvido produz lixo quando há symlink no meio, e no macOS `/tmp` e `/var`
@@ -90,8 +96,31 @@ def _find_repo_root(start: Path) -> Path:
 
 
 def repo_root() -> Path:
-    """Raiz do repositório, achada a partir deste arquivo — nunca do cwd."""
-    return _find_repo_root(Path(__file__).resolve().parent)
+    """Raiz do projeto onde o método opera.
+
+    Tenta `__file__` primeiro — é o que resolve o checkout deste repositório e o
+    que a suíte assume ao trocar de `cwd` num teste. Só se isso não resolver —
+    plugin instalado, cujo `__file__` mora no diretório do pacote — tenta o
+    `cwd`, que dentro do projeto que instalou o método contém as marcas.
+    """
+    origem_arquivo = Path(__file__).resolve().parent
+    try:
+        return _find_repo_root(origem_arquivo)
+    except RuntimeError:
+        pass
+
+    origem_cwd = Path.cwd().resolve()
+    try:
+        return _find_repo_root(origem_cwd)
+    except RuntimeError:
+        pass
+
+    marcas = " e ".join(f"{marker}/" for marker in config()["root_markers"])
+    raise RuntimeError(
+        f"raiz do repositório não localizada — nem a partir do código "
+        f"({origem_arquivo}), nem do diretório de trabalho ({origem_cwd}) "
+        f"há um diretório acima que contenha {marcas}."
+    )
 
 
 def plan_root() -> Path:
