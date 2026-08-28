@@ -24,6 +24,11 @@ anterior não resolver.
 
 **Teste:** `remover > reduzir > reaproveitar > criar`.
 
+**Na prática:** sem features além do pedido, sem abstração para uso único, sem configurabilidade
+não solicitada. Ao editar código existente, tocar só o necessário e seguir o estilo que já está
+lá — não refatorar o que não está quebrado. Código morto não relacionado ao trabalho em curso se
+menciona, não se deleta.
+
 ## Evidência acima de opinião
 
 **Enunciado:** decisão de projeto se sustenta em dado, não em preferência estética ou tendência de
