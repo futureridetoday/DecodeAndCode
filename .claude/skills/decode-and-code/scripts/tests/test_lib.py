@@ -9,6 +9,7 @@ outra coisa sem reclamar.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 import tempfile
@@ -18,6 +19,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import lib
+
+
+def _carregar_copia_de_lib(destino: Path):
+    """Copia `lib.py` para `destino` e carrega essa cópia como módulo à parte.
+
+    É o que reproduz o plugin instalado: o `__file__` do módulo carregado fica
+    fora de qualquer projeto, então a primeira tentativa de `repo_root()`
+    (a partir do código) não resolve — só a segunda (a partir do `cwd`) pode.
+    """
+    copia = destino / "lib.py"
+    copia.write_text(Path(lib.__file__).read_text(encoding="utf-8"), encoding="utf-8")
+    spec = importlib.util.spec_from_file_location(f"lib_copia_{destino.name}", copia)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
 
 
 class TestRepoRoot(unittest.TestCase):
@@ -49,6 +65,56 @@ class TestRepoRoot(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(RuntimeError):
                 lib._find_repo_root(Path(tmp).resolve())
+
+    def test_resolve_projeto_sintetico_pelo_cwd_quando_o_file_nao_resolve(self):
+        # O caso que falha hoje (unidade 0004-01): plugin instalado, `__file__`
+        # fora de qualquer projeto, e o projeto de verdade só alcançável pelo `cwd`.
+        with tempfile.TemporaryDirectory() as fora, tempfile.TemporaryDirectory() as raiz_projeto:
+            fora = Path(fora).resolve()
+            projeto = Path(raiz_projeto).resolve()
+            (projeto / ".claude").mkdir()
+            (projeto / "docs").mkdir()
+
+            lib_fora = _carregar_copia_de_lib(fora)
+
+            anterior = Path.cwd()
+            os.chdir(projeto)
+            try:
+                self.assertEqual(lib_fora.repo_root(), projeto)
+            finally:
+                os.chdir(anterior)
+
+    def test_cwd_sem_marcas_continua_resolvendo_este_repositorio_pelo_file(self):
+        # Regressão: com o `__file__` de verdade (dentro deste repositório), um
+        # `cwd` num `tempfile` sem marcas não pode mudar o resultado — o `__file__`
+        # resolve primeiro e a suíte inteira depende disso continuar assim.
+        esperado = lib.repo_root()
+        with tempfile.TemporaryDirectory() as tmp:
+            anterior = Path.cwd()
+            os.chdir(tmp)
+            try:
+                self.assertEqual(lib.repo_root(), esperado)
+            finally:
+                os.chdir(anterior)
+
+    def test_erro_quando_nenhum_dos_dois_resolve_nomeia_os_dois(self):
+        with tempfile.TemporaryDirectory() as fora, tempfile.TemporaryDirectory() as sem_marcas:
+            fora = Path(fora).resolve()
+            sem_marcas = Path(sem_marcas).resolve()
+
+            lib_fora = _carregar_copia_de_lib(fora)
+
+            anterior = Path.cwd()
+            os.chdir(sem_marcas)
+            try:
+                with self.assertRaises(RuntimeError) as ctx:
+                    lib_fora.repo_root()
+            finally:
+                os.chdir(anterior)
+
+            mensagem = str(ctx.exception)
+            self.assertIn(str(fora), mensagem)
+            self.assertIn(str(sem_marcas), mensagem)
 
 
 class TestCaminhosDoPlano(unittest.TestCase):
