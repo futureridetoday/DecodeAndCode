@@ -159,6 +159,7 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 | L-02 | **A divisão da norma não tem oráculo para "a metade certa foi para o lugar certo"** | O teste alcança ausência de instância no que viaja e presença de citação no que fica. Que a fronteira entre mecanismo e registro esteja no lugar certo é julgamento — é a `L-01` do plano `0001` num artefato novo, e o maior deste plano |
 | L-03 | **Nenhuma ordem de âncora é segura em todo ambiente, e o teste não alcança a diferença** | Com `__file__` na frente, uma máquina que tenha `~/docs` resolveria a **home** como raiz, em silêncio — nesta não tem, e foi conferido. Com `cwd` na frente, invocação de fora de qualquer projeto resolve errado. As duas falhas dependem do sistema de arquivos de quem roda, e a suíte roda só neste. Fica registrada porque a `01` **escolhe** uma ordem e o risco da outra não desaparece |
 | L-04 | **Quem instala não tem como configurar nada** | `lib._config_path()` é `config.json` na raiz da **skill** — viaja com o plugin, não com o projeto. Então `plan_root` e `runners`, que a unidade `0001-01` tornou configuráveis, são inalteráveis a partir de um projeto instalado: ele tem de aceitar `docs/plan` e pôr o runner em `scripts/test-python.sh`. Medido em 2026-08-27. Fica registrada e **não entra no escopo**: o padrão funciona, e a `05` prova o ciclo honrando-o. Resolver exige decidir onde mora o config de projeto, que é decisão de desenho, não correção |
+| L-05 | **A unidade `03` se contradiz sobre se o mecanismo pode nomear o registro** | O Contrato proíbe — *"o mecanismo não cita o registro"*, porque citação nas duas direções faria o mecanismo depender de um arquivo que não viaja. A Sequência, passo 3, manda abrir o mecanismo com a nota *"o registro deste projeto está no vizinho"*, que é exatamente a citação proibida. A execução seguiu o Contrato, pela regra de precedência entre blocos, e registrou a divergência no huddle (`H-10`). Achada na execução de 2026-08-28. É defeito **da unidade**, não da entrega: derivação futura precisa escrever Contrato e Sequência que concordem, e o lint de unidade não alcança contradição entre blocos |
 
 ## Fonte
 
@@ -178,9 +179,9 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 |---|---|---|
 | [0004-01](01-project-anchor.md) | project-anchor | `verified` |
 | [0004-02](02-project-bootstrap.md) | project-bootstrap | `verified` |
-| [0004-03](03-norm-split.md) | norm-split | `spec` |
+| [0004-03](03-norm-split.md) | norm-split | `verified` |
 | [0004-04](04-package-carries-norm.md) | package-carries-norm | `spec` |
 | [0004-05](05-installed-cycle-proof.md) | installed-cycle-proof | `spec` |
 
-5 de 5 derivadas · 2 verificadas · atualizado em 2026-08-28
+5 de 5 derivadas · 3 verificadas · atualizado em 2026-08-28
 <!-- backlog:end -->

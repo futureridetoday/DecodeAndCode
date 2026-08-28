@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes da camada normativa em docs/plan/system/ — unidades 0001-08 e 0001-18.
+"""Testes da camada normativa em docs/plan/system/ — unidades 0001-08, 0001-18 e 0004-03.
 
 O que precisa ficar provado é o critério de aceite: os dois documentos de linguagem
 migraram do AmFlow desacoplados — todo link relativo dos documentos de `docs/plan/system/`
@@ -10,6 +10,11 @@ A 0001-18 acrescenta os três pontos onde o gate de agent, fechado em `modelo-de
 reabriu: a seção *Modelos*, a decisão 18 e a pendência que citava a troca automática de
 modelo por modo. Cada caso verifica por **conteúdo**, nunca por número de linha — a norma
 muda a cada edição, e comparar linha transformaria o teste em falso alarme.
+
+A 0004-03 divide `modelo-dev-units.md` em mecanismo (viaja no pacote) e
+`registro-dev-units.md` (evidência, decisões e história deste projeto, não viaja). Os três
+invariantes: o mecanismo não carrega marca de instância deste projeto, o registro existe e
+cita o mecanismo, e o mecanismo nunca cita o registro de volta.
 """
 
 from __future__ import annotations
@@ -118,6 +123,12 @@ class TestDocumentosDeLinguagemSemInstanciaDoAmFlow(unittest.TestCase):
 
 
 _NORMA = _SYSTEM_DIR / "modelo-dev-units.md"
+_REGISTRO = _SYSTEM_DIR / "registro-dev-units.md"
+
+# Marcas de instância deste projeto que o mecanismo não pode carregar — unidade 0004-03,
+# *Critério de aceite*. Só as que a unidade nomeia: sem elas o documento que viaja no pacote
+# não depende de nada que seja específico do `DecodeAndCode`.
+_MARCAS_INSTANCIA_MECANISMO = ("0001-", "docs/mvp", "AmFlow", "METR", "DORA")
 
 
 def _secao(texto: str, cabecalho: str) -> str:
@@ -125,7 +136,7 @@ def _secao(texto: str, cabecalho: str) -> str:
     padrao = re.compile(rf"(?ms)^{re.escape(cabecalho)}\s*$\n(.*?)(?=^#|^---\s*$|\Z)")
     m = padrao.search(texto)
     if not m:
-        raise AssertionError(f"cabeçalho não encontrado em {_NORMA.name}: {cabecalho!r}")
+        raise AssertionError(f"cabeçalho não encontrado: {cabecalho!r}")
     return m.group(1)
 
 
@@ -134,7 +145,7 @@ def _linha_da_decisao(texto: str, numero: int) -> str:
     padrao = re.compile(rf"(?m)^\|\s*{numero}\s*\|.*\|\s*$")
     m = padrao.search(texto)
     if not m:
-        raise AssertionError(f"linha da decisão {numero} não encontrada em {_NORMA.name}")
+        raise AssertionError(f"linha da decisão {numero} não encontrada")
     return m.group(0)
 
 
@@ -143,14 +154,20 @@ class TestGateDeAgentReabriu(unittest.TestCase):
     cumpridas, e a seção *Modelos*, a decisão 18 e a lista de pendentes registram isso.
     Cada caso verifica por conteúdo, nunca por número de linha (unidade 0001-18,
     *Critério de aceite*).
+
+    A 0004-03 moveu `## Decisões` para o registro — a decisão 18 e `### Pendentes` são lidas
+    de lá; `### Modelos` fica em `## Camada de execução`, que é mecanismo, e continua lida do
+    `_NORMA`.
     """
 
     @classmethod
     def setUpClass(cls):
         cls.texto = _NORMA.read_text(encoding="utf-8")
+        cls.texto_registro = _REGISTRO.read_text(encoding="utf-8")
 
     def test_frase_que_poe_agent_fora_de_escopo_nao_existe_mais(self):
         self.assertNotIn("Fora do escopo desta fase", self.texto)
+        self.assertNotIn("Fora do escopo desta fase", self.texto_registro)
 
     def test_modelos_registra_as_duas_condicoes_cumpridas_com_data(self):
         secao = _secao(self.texto, "### Modelos")
@@ -159,12 +176,12 @@ class TestGateDeAgentReabriu(unittest.TestCase):
         self.assertIn("papel e processo, nunca a norma", secao)
 
     def test_decisao_18_preserva_o_que_afirmou_e_ganha_linha_de_revisao(self):
-        linha = _linha_da_decisao(self.texto, 18)
+        linha = _linha_da_decisao(self.texto_registro, 18)
         self.assertIn("automatizar exigiria agent", linha)
         self.assertIn("revisado em 2026-08-26", linha)
 
     def test_pendencia_de_troca_por_modo_sai_da_lista_com_destino_nomeado(self):
-        secao = _secao(self.texto, "### Pendentes")
+        secao = _secao(self.texto_registro, "### Pendentes")
         itens = re.findall(r"(?m)^\d+\.\s.*$", secao)
         self.assertEqual(
             len(itens), 1, f"esperado 1 item pendente, achou {len(itens)}: {itens}"
@@ -173,6 +190,36 @@ class TestGateDeAgentReabriu(unittest.TestCase):
         self.assertIn("model:", secao)
         self.assertIn("`19`", secao)
         self.assertIn("`20`", secao)
+
+
+class TestNormaDividaEmMecanismoERegistro(unittest.TestCase):
+    """Unidade 0004-03 — o operativo sai para `modelo-dev-units.md`; evidência, decisões e
+    história deste projeto saem para `registro-dev-units.md`, citando o mecanismo. O
+    mecanismo nunca cita o registro de volta — é o que permite ao primeiro viajar no pacote
+    sem o segundo (*Critério de aceite* da unidade).
+    """
+
+    def test_mecanismo_sem_marca_de_instancia_deste_projeto(self):
+        self.assertTrue(_NORMA.is_file(), f"mecanismo não existe: {_NORMA}")
+        corpo = _corpo_normativo(_NORMA.read_text(encoding="utf-8"))
+        for marca in _MARCAS_INSTANCIA_MECANISMO:
+            self.assertNotIn(marca, corpo, f"{_NORMA.name}: instância deste projeto — {marca!r}")
+
+    def test_registro_existe_com_frontmatter_e_cita_o_mecanismo(self):
+        self.assertTrue(_REGISTRO.is_file(), f"registro não existe: {_REGISTRO}")
+        texto = _REGISTRO.read_text(encoding="utf-8")
+        linhas = texto.splitlines()
+        self.assertTrue(linhas and linhas[0].strip() == "---", "registro sem frontmatter")
+        self.assertIn(
+            "modelo-dev-units.md", texto, "registro não cita o mecanismo"
+        )
+
+    def test_mecanismo_nunca_cita_o_registro(self):
+        texto = _NORMA.read_text(encoding="utf-8")
+        self.assertNotIn(
+            "registro-dev-units", texto,
+            "mecanismo cita o registro — dependeria de um arquivo que não viaja no pacote",
+        )
 
 
 if __name__ == "__main__":

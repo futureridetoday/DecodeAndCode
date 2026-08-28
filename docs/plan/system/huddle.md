@@ -65,6 +65,34 @@ Derivado do que funcionou na conversa de 2026-08-22, não do que soa bem. Cada l
 
 ## Abertas
 
+### H-10 · `divergência` · 2026-08-28 · Claude
+
+**A unidade `0004-03` (norm-split) contradiz a si mesma sobre se o mecanismo pode nomear o
+registro, e a execução seguiu o Contrato sobre a Sequência.**
+
+O Contrato diz, em negrito: *"O registro cita o mecanismo; o mecanismo não cita o registro. Citação
+nas duas direções faria o mecanismo depender de um arquivo que não viaja."* A Sequência (passo 3)
+manda abrir `modelo-dev-units.md` com a nota *"este é o mecanismo, o registro deste projeto está no
+vizinho"* — que nomeia o arquivo do registro dentro do próprio mecanismo, exatamente o que o
+Contrato acima proíbe. Segui *Precedência entre os blocos* (Contrato manda sobre Sequência) e
+escrevi a nota do mecanismo sem citar `registro-dev-units.md` nem por nome: só que evidência,
+decisões e história "ficam fora daqui" — verdadeiro em qualquer projeto que instalar o método, ao
+contrário de "está no vizinho", que só vale nesta cópia.
+
+**Duas outras decisões de julgamento na mesma execução, sem oráculo na unidade (`L-02` do plano
+`0004` já registra que a fronteira é julgamento):**
+
+- Tratei bare `` `L-XX` `` (sem número de plano, ex. `` `L-22` ``) como vocabulário do próprio
+  mecanismo — a seção *Preservação do que funciona* já prescreve `L-XX` para qualquer projeto — e
+  não como instância a remover; só `0001-13`, `plano 0001` etc. (com número de plano) saíram.
+- A seção `## Bootstrap`, escrita pela `0004-02` **depois** de `0004-03` ter sido derivada, citava
+  `D-04`/`L-31` do plano `0004`/`0001` — marcas que a lista de *Critério de aceite* da `03` não
+  previa, porque não existiam quando a unidade foi escrita. Escrevi como se previssem, pelo mesmo
+  princípio do Contrato (mecanismo não carrega instância), não porque a lista as nomeava.
+
+Nenhuma das três está errada por evidência contrária — são leituras razoáveis de um contrato que
+não cobre o caso, e outra pessoa poderia ter lido diferente.
+
 ### H-09 · `padrão` · 2026-08-24 · Claude
 
 **Escrevo critério que enumera, sem exigir caso verificável atrás de cada item enumerado — sete

@@ -15,9 +15,9 @@ unit_id: 0004-03
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_normas_system.py
-verified_at: ""
+verified_at: 2026-08-28
 
 # history
 author: Bortoli

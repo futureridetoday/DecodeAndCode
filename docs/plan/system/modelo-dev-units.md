@@ -45,53 +45,10 @@ participou do planejamento.
 
 O modelo transforma esse pedido manual em **output obrigatório** da derivação de unidades.
 
----
-
-## Fundamentação — por que este modelo, e não outro
-
-Ancorado em evidência empírica, não em tendência de mercado.
-
-| Fonte | Dado | Implicação |
-|---|---|---|
-| **METR 2025** (RCT, 16 devs experientes, 246 tarefas) | Devs foram **19% mais lentos** com IA, mas estimaram ter sido **20% mais rápidos** | Percepção de progresso não é confiável. É preciso um **oráculo objetivo** |
-| **DORA 2024** (~39 mil profissionais) | Adoção de IA acompanhada de **−1,5% throughput** e **−7,2% estabilidade**; causa apontada: o campo **esqueceu o small batch** | O gargalo é o **tamanho do lote**, não a ferramenta |
-| **DORA 2025** (~5 mil profissionais) | "IA **amplifica** o que já existe"; **small batch amplifica os efeitos positivos** | Estrutura decide se a IA é ativo ou passivo |
-
-**O que deliberadamente não foi adotado.** Spec-Driven Development (GitHub Spec Kit, AWS Kiro, Tessl)
-é a corrente dominante, mas **nenhuma dessas ferramentas tem validação empírica**. A avaliação do
-Spec Kit identificou incompatibilidade estrutural com este modelo: é **spec-first** (spec descartada
-após uso) enquanto o modelo precisa de **spec-anchored**; tem baixo benefício relatado em sistemas
-multi-módulo e brownfield; e produz **volume documental**, que é o modo de falha já vivido aqui.
-
-Conclusão: adotar o **princípio** (spec-anchored, lote pequeno, verificação objetiva), não a
-ferramenta.
-
----
-
-## Diagnóstico medido — o padrão atual
-
-Auditoria dos 18 arquivos `dev-units*.md` em `docs/mvp/20_delivery/`. **Este acervo não será migrado
-agora** (ver *Estratégia de adoção*) — o diagnóstico justifica o desenho, não dimensiona retrabalho
-imediato.
-
-### O que funciona (preservar)
-
-| Capacidade | Evidência |
-|---|---|
-| Fatia vertical como unidade | 86 unidades com contrato Entrada/Saída/Auth/Efeito/Erro |
-| Rastreabilidade doc ↔ código | **90 referências** via comentário-cabeçalho (`proxy.ts:5` → `// AU-06`) |
-| Registro de pendências | **11 lacunas** `L-XX` catalogadas |
-| Preservação do racional | Notas `>` com trade-offs (ex.: invalidação antecipada em `AU-02`) |
-
-### O que falta
-
-| Lacuna | Medição |
-|---|---|
-| **Não define "pronto"** | **0 de 18** contêm critério de aceite |
-| **Não liga à verificação** | **0 de 18** declaram teste — apesar de existirem **18 arquivos de teste** |
-| **Não tem estado** | **18 de 18** em `status: draft`, com código em produção |
-| **Não norma o lote** | De **1 a 18** unidades por arquivo; **22 de 86 (26%)** sem sequência numerada |
-| **Não serve a cold-start** | Nenhuma declara arquivos a tocar nem normas aplicáveis |
+> **Este documento é o mecanismo.** Hierarquia, formatos, gates de verificação e a skill que os
+> executa — o que qualquer projeto que instala o método usa, e o que viaja no pacote. Evidência,
+> decisões e história são registro de quem mantém este método, e ficam fora daqui: por definição,
+> não viajam com o mecanismo para o projeto que instala.
 
 ---
 
@@ -277,10 +234,10 @@ Manifesto — campos exigidos e o que cada um decide:
 
 **Skill e guideline separam-se por outro teste: skill é invocada; guideline é ativada.** Skill
 responde *como fazer X* — é procedimento, e alguém precisa pedir. Guideline responde *o que vale
-quando eu toco Y* — é norma, e entra sozinha pelo caminho do arquivo. O caso medido:
-`AmFlow:hub-front` (547 linhas, §1–7 e §9 normativas, §8 procedimento) descreve-se como checklist de
-front-end, mas só entra em contexto se alguém a invocar — como guideline com
-`paths: ["hub/app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
+quando eu toco Y* — é norma, e entra sozinha pelo caminho do arquivo. Um caso medido: um documento
+de 547 linhas, majoritariamente normativo com uma seção de procedimento, descrevia-se como
+checklist de front-end, mas só entrava em contexto se alguém o invocasse — como guideline com
+`paths: ["app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
 lembrança.
 
 #### Validar a ativação
@@ -290,8 +247,7 @@ arquivo do escopo** de uma guideline. O que deixa de ser julgamento é o que se 
 feito isso — vira gate onde é estrutural, e relatório onde só a sessão real prova algo.
 
 `rules.auditar_arvore()` roda sem argumento e devolve `[]` quando a árvore de `.claude/rules/` e
-`.claude/rules-off/` está sã — recusa isoladamente um `.md` em subdiretório de `rules/` (a `L-26`
-inteira: o matcher recursa, e o arquivo continua carregando), uma rule malformada em `rules/`, e
+`.claude/rules-off/` está sã — recusa isoladamente um `.md` em subdiretório de `rules/` (o matcher recursa, e o arquivo continua carregando), uma rule malformada em `rules/`, e
 uma guideline quebrada em `rules-off/`, porque ela volta a ser ligada um dia.
 
 `activation_notice.relatorio(caminho_log)` lê o log de uma sessão —
@@ -307,7 +263,7 @@ for linha in activation_notice.relatorio('<caminho-do-log>'):
 "
 ```
 
-**O controle de três estados que provou a `L-26`**, e que qualquer projeto que instalar o plugin
+**O controle de três estados**, e que qualquer projeto que instalar o plugin
 repete para validar a própria camada: guideline **ligada** produz entrada no log; movida para
 **subdiretório** de `rules/` também produz entrada — é o defeito; movida para o diretório **irmão**
 `rules-off/` não produz entrada nenhuma.
@@ -330,18 +286,18 @@ sem `scripts/tests/` nem `__pycache__` (o que inclui `huddle.py` — o mecanismo
 qualquer outro script; a instância de cada projeto, não), os hooks com `hooks/hooks.json` gerado a
 partir do bloco `hooks` do `settings.json` — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para
 `${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —, e os dois agentes
-(`agents/planner.md`, `agents/developer.md`), copiados no mesmo formato dos hooks (`D-27`).
+(`agents/planner.md`, `agents/developer.md`), copiados no mesmo formato dos hooks.
 
 **Não viaja:** `.claude/rules/*` (guideline é instância — parágrafo acima), `.claude/guardrails.json`
 (idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
 deste repositório, não componente do método) e `docs/` (plano e norma são registro daqui — inclusive
-`docs/plan/system/huddle.md`, que carrega a conversa deste projeto e é instância pura, `D-28` —; a
+`docs/plan/system/huddle.md`, que carrega a conversa deste projeto e é instância pura —; a
 norma é citada, nunca copiada para dentro da skill). `empacotar.verificar(destino)` audita a árvore já
 construída por **busca de conteúdo** — o **nome do repositório de origem** em qualquer arquivo, e a
 âncora `CLAUDE_PROJECT_DIR` **dentro de `hooks/`** —, como par de `construir`, que decide por
 **exclusão de caminho**: o mesmo invariante fechado nos dois sentidos.
 
-> **A lista de marcadores é curta por medição, não por descuido** (`L-31`). Nome de arquivo que o
+> **A lista de marcadores é curta por medição, não por descuido**. Nome de arquivo que o
 > mecanismo lê (`guardrails.json`) e caminho default que ele resolve (`docs/plan`) **são
 > mecanismo**: proibi-los reprovava `guardrail.py`, o hook, `lib.py` e o `config.json` — e a âncora
 > buscada no texto inteiro reprovava a própria constante que faz a troca. Instância é **nome de
@@ -390,15 +346,15 @@ a árvore inteira de cada lado, ignorando só `__pycache__` — inclui `scripts/
 do que `empacotar` exclui para o pacote: aqui o objetivo é medir divergência real, e o fork dos
 próprios testes de quem instalou é sinal, não ruído.
 
-> **Versão declarada não é evidência.** Medido em 2026-08-26: este repositório e
-> `AmFlow:.claude/skills/dev-units` declaram `version: 1.0.0` os dois, e ainda assim seis dos nove
-> scripts compartilhados divergem. Uma reconciliação que confiasse na versão diria "em dia" e
-> estaria errada em seis de nove. `reconciliar.relatorio` imprime a versão como **contexto**, nunca
-> como veredito — o veredito de cada componente vem sempre do hash.
+> **Versão declarada não é evidência.** Medido entre duas cópias reais do método: as duas
+> declaravam a mesma versão, e ainda assim a maioria dos scripts compartilhados divergia. Uma
+> reconciliação que confiasse na versão diria "em dia" e estaria errada. `reconciliar.relatorio`
+> imprime a versão como **contexto**, nunca como veredito — o veredito de cada componente vem
+> sempre do hash.
 
 `reconciliar` só lê — nem a origem nem a cópia são escritas em caminho nenhum. Atualizar consumidor
-é decisão de quem mantém a cópia; o AmFlow em particular está congelado desde 2026-08-22, e nenhuma
-unidade escreve nele.
+é decisão de quem mantém a cópia — uma cópia pode ficar congelada por período indefinido, sem que
+nenhuma unidade escreva nela.
 
 ### 4. Norma de lote e decomposição
 
@@ -440,11 +396,6 @@ com o número de decisões que o agente precisa tomar — a origem da variância
 
 ## Formato do arquivo de unidade
 
-Referência viva:
-[`docs/plan/model/0001-decode-and-code-foundation/01-config-and-paths.md`](../model/0001-decode-and-code-foundation/01-config-and-paths.md) —
-instância real, validada contra código em produção. O formato **não é duplicado aqui**: o exemplo é
-a fonte.
-
 ### Regiões — quem escreve o quê
 
 Esta é a regra que torna o estado projetável sem risco de perda:
@@ -458,11 +409,11 @@ O script **nunca edita o corpo**. Escreve apenas três campos do frontmatter —
 parseável e sem prosa. O mesmo princípio se aplica ao backlog no arquivo do plano, cujo formato é o
 próximo item a definir.
 
-> **No arquivo do plano, o campo projetado é `status`** (plano `0002`). A tabela acima descreve a
+> **No arquivo do plano, o campo projetado é `status`.** A tabela acima descreve a
 > **unidade**; o plano é outro artefato, e nele `backlog.projetar` grava `status: done` na transição
 > para `concluído` — mesmo instante e mesma guarda de `porte.registrar`. Sem isso o arquivo dizia
 > `status: approved` para sempre, e saber se o trabalho fechou exigia abrir `_planos.md`: campo que
-> ninguém projeta envelhece mentindo, que é a lição da `L-22`. **Só em médio e grande**, onde a
+> ninguém projeta envelhece mentindo. **Só em médio e grande**, onde a
 > situação é derivada; no pequeno o `status` é a **fonte** da situação, escrito pelo humano, e
 > projetá-lo seria circular.
 
@@ -480,11 +431,11 @@ próximo item a definir.
 | Verificação | O comando que roda o teste declarado no frontmatter — e mais nada |
 | Fonte | De onde veio a spec |
 
-> **`Verificação` carregava também *"último resultado"*, e saiu (`L-22`, unidade 0001-13).** Era
+> **`Verificação` carregava também *"último resultado"*, e saiu.** Era
 > linha órfã: nenhum script a projetava, a norma não a mencionava em seção nenhuma, e ela sempre
 > mentia — as unidades em `verified` diziam *"não executado"* no corpo enquanto o frontmatter dizia
 > o contrário. O dado já vive em `verified_at`; reescrevê-lo no corpo também violaria a regra de que
-> script só escreve o bloco `# verificação` do frontmatter (decisão 13). `lint_unidade` recusa a
+> script só escreve o bloco `# verificação` do frontmatter. `lint_unidade` recusa a
 > linha para que não volte pela mesma porta.
 
 #### Precedência entre os blocos
@@ -502,7 +453,7 @@ Quem executa e encontra divergência: **entrega pelo contrato e registra a diver
 nunca escolhe em silêncio, e nunca reduz o escopo para caber na sequência. Corrigir a unidade é de
 quem orquestra, e a divergência vira lacuna `L-XX` no plano.
 
-> Origem: `L-17` e o gap de cobertura da `0001-13`, no plano que motivou esta regra. Nos dois casos
+> Origem: uma lacuna registrada e um gap de cobertura equivalente, no plano que motivou esta regra. Nos dois casos
 > o executor resolveu certo, mas teve de
 > **derivar** a precedência, porque ela não estava escrita. Em um deles a derivação saiu ao contrário
 > — a tabela de arquivos prevaleceu sobre o critério — e a única regra nova da unidade ficou sem
@@ -513,7 +464,7 @@ quem orquestra, e a divergência vira lacuna `L-XX` no plano.
 O `unit_id` combina o número do plano com o número da unidade dentro dele:
 
 ```yaml
-unit_id: 0001-02        # plano 0001, segunda unidade
+unit_id: 0007-02        # plano 7, segunda unidade
 ```
 
 A numeração das unidades é **por plano** — recomeça em `01` a cada plano novo. Quatro dígitos para o
@@ -561,12 +512,8 @@ humano, e reexecutar o gate amanhã não pode mover a data de um fato que não m
 aprovação existe e está registrada em campo. Adequação de conteúdo continua sendo julgamento
 humano, e nenhum campo transforma isso em oráculo.
 
-É o `unit_id` que o comentário-cabeçalho cita no código, **não o nome do arquivo**. Isso preserva a
-razão original da decisão 21: renomear o slug de uma unidade não quebra referência alguma, porque
-nenhuma referência aponta para o filename.
-
-Substitui o esquema de prefixo por módulo (`AU-`, `CA-`) do acervo em `docs/mvp/`, que permanece como
-está — sem migração.
+É o `unit_id` que o comentário-cabeçalho cita no código, **não o nome do arquivo**: renomear o slug
+de uma unidade não quebra referência alguma, porque nenhuma referência aponta para o filename.
 
 ### Ciclo quando o teste ainda não existe
 
@@ -631,8 +578,8 @@ O script projeta o backlog entre marcadores de comentário, invisíveis no markd
 <!-- backlog:start -->
 | Unidade | Título | Estado |
 |---|---|---|
-| [0001-01](01-handler-auth.md) | Handler MCP com autenticação obrigatória | `verified` |
-| [0001-02](02-search-catalog.md) | Tool search_catalog | `spec` |
+| [0007-01](01-handler-auth.md) | Handler MCP com autenticação obrigatória | `verified` |
+| [0007-02](02-search-catalog.md) | Tool search_catalog | `spec` |
 
 1 de 9 verificadas · atualizado em 2026-07-19
 <!-- backlog:end -->
@@ -649,8 +596,8 @@ expressa, já que unidades de vários planos convivem na mesma pasta do módulo.
 ### `_handoff.md` — o prompt que conduz a execução
 
 O `derive` grava, no diretório do plano, o prompt que orquestra a execução do que ele acabou de
-derivar — a ser colado numa **sessão nova**, cujo papel é conduzir, nunca implementar unidade
-(plano `0003`). **Só no grande:** médio e pequeno executam na mesma sessão em que foram aprovados,
+derivar — a ser colado numa **sessão nova**, cujo papel é conduzir, nunca implementar unidade.
+**Só no grande:** médio e pequeno executam na mesma sessão em que foram aprovados,
 e não há ponte entre sessões a construir.
 
 | Quem escreve | O quê |
@@ -704,7 +651,7 @@ aprovação nenhuma para recusar.
 
 `plan_size` (acima) é o que o humano **declara** na aprovação. `docs/plan/system/porte-medido.md`
 guarda o que o plano **foi** — uma linha por plano fechado, acrescentada por `porte.registrar` na
-transição da situação para `concluído` (unidade 0001-15), nunca reescrita.
+transição da situação para `concluído`, nunca reescrita.
 
 | Coluna | O que significa |
 |---|---|
@@ -717,10 +664,9 @@ transição da situação para `concluído` (unidade 0001-15), nunca reescrita.
 
 > **"Até o fechamento" é `HEAD` no instante em que `registrar` roda**, não o commit da última
 > unidade. O intervalo inclui o que for commitado entre fechar a última unidade e projetar a
-> situação — inclusive a revisão do próprio fechamento. Medido no plano `0001`: os mesmos 56
-> caminhos davam **6634** linhas ao fim da unidade `0001-15` e **7413** dois commits depois, sem
-> que um único caminho entrasse ou saísse. O número não é errado; ele **é** do instante em que foi
-> tirado, e é por isso que a tabela é append-only e nunca recalcula uma linha já gravada.
+> situação — inclusive a revisão do próprio fechamento. O número não é errado; ele **é** do
+> instante em que foi tirado, e é por isso que a tabela é append-only e nunca recalcula uma linha
+> já gravada.
 
 **Para que serve:** é o dado que falta para saber se o que hoje se chama `médio` custa, na
 prática, o que se chamava `grande` — sem essa tabela a calibração do vocabulário de porte
@@ -807,17 +753,17 @@ Restrições: kebab-case, **inglês**, 2–5 tokens, ≤ 64 caracteres, sem cone
 
 > **Por que inglês, se a documentação é pt-BR.** O nome do plano vira o `module` do frontmatter e o
 > nome da pasta no disco — e o `.claude/CLAUDE.md` § *Idioma e Nomenclatura* classifica módulo como
-> **identificador**, exigindo inglês. As duas normas se contradiziam até 2026-07-28 (ver decisão 32).
+> **identificador**, exigindo inglês. As duas normas se contradiziam até essa regra ser revisada.
 > A prosa do plano continua inteiramente em pt-BR: o inglês vale para o **nome**, não para o conteúdo.
 
 **Na aprovação, recebe o número** — 4 dígitos, sequencial global, atribuído uma única vez:
 
 ```
-_inbox/evolve-tools.md   →   <core>/0004-evolve-tools/0004-evolve-tools.md
+_inbox/evolve-tools.md   →   <core>/0007-evolve-tools/0007-evolve-tools.md
 ```
 
 A pasta criada tem **exatamente o mesmo nome** do arquivo. Quando o plano cria um módulo, seu nome
-costuma ser o próprio módulo: `_inbox/mcp.md` → `<core>/0001-mcp/0001-mcp.md`.
+costuma ser o próprio módulo: `_inbox/mcp.md` → `<core>/0007-mcp/0007-mcp.md`.
 
 > **"Sem repetir o caminho"** é regra nova, e só faz sentido quando o caminho já carrega contexto: num
 > diretório plano, onde tudo era plano solto, o nome precisava carregar o contexto inteiro. Em
@@ -841,7 +787,7 @@ Três identificadores, com papéis distintos:
 
 | | Forma | Onde aparece | Muda? |
 |---|---|---|---|
-| **`unit_id`** | `0001-02` | frontmatter, comentário-cabeçalho no código, testes, backlog | **Nunca** |
+| **`unit_id`** | `0007-02` | frontmatter, comentário-cabeçalho no código, testes, backlog | **Nunca** |
 | **Arquivo** | `02-search-catalog.md` | disco | Ao renomear o slug |
 | **Slug** | `search-catalog` | `name:` e no nome do arquivo | Pode |
 
@@ -859,7 +805,7 @@ Slug: mesmas restrições sintáticas do plano, sem repetir o módulo (já está
 <!-- planos:start -->
 | # | Plano | Core | Módulo | Situação | Aprovado |
 |---|---|---|---|---|---|
-| 0001 | [mcp](<core>/0001-mcp/0001-mcp.md) | `<core>` | mcp | em desenvolvimento | 2026-07-20 |
+| 0007 | [mcp](<core>/0007-mcp/0007-mcp.md) | `<core>` | mcp | em desenvolvimento | 2026-07-20 |
 <!-- planos:end -->
 ````
 
@@ -930,9 +876,9 @@ São a razão de existir da skill:
 Os dois gates provam a **unidade**. Não provam que a entrega está certa: gate verde é condição
 necessária, e a revisão é onde se descobre o que ele não alcança.
 
-**A base desta seção é estreita, e vale dizer:** ela sai de uma sessão só, em 2026-08-27, na
-execução das Fases 5 a 7 do plano `0001`. Sete unidades entregues, **sete revisões com achado** —
-e o que os produziu não foi zelo, foi medir em vez de reler.
+**A base desta seção é estreita, e vale dizer:** ela sai de uma sessão só, em 2026-08-27, sobre
+sete unidades entregues em sequência — **sete revisões com achado** —, e o que os produziu não
+foi zelo, foi medir em vez de reler.
 
 | Regra | Por quê |
 |---|---|
@@ -940,12 +886,12 @@ e o que os produziu não foi zelo, foi medir em vez de reler.
 | **Rode os lints contra os artefatos reais**, nunca só contra fixture | `lint_unidade` em cada unidade, `lint_plano` no plano, `lint_agente` em cada agente, o lint do artefato que a unidade entregou |
 | **Pegue uma afirmação do relatório e meça-a por outro caminho** | *"Nenhum chamador muda de saída"* caiu comparando saídas contra o commit anterior; *"nenhum teste executa git"* caiu com um shim no `PATH`; *"os quatro casos falham no texto antigo"* confirmou-se aplicando as asserções ao texto de `HEAD` |
 | **Verde não é evidência** quando o teste e o critério saíram da mesma cabeça no mesmo momento | Se um teste existe para gatear uma decisão, **desligue o código e rode o teste**: ele tem de falhar. Duas vezes o caso continuava verde sem o que devia provar |
-| **Mock prova o parsing da saída, nunca o comando montado** | Ver *Comando externo* em `.claude/rules/scripts.md`, e a `L-28` que a originou |
+| **Mock prova o parsing da saída, nunca o comando montado** | Ver *Comando externo* em `.claude/rules/scripts.md`, e o caso que a originou |
 | **Caracterize o comportamento externo antes de escrever a correção** | Teste escrito a partir da mesma leitura que produziu o defeito passa contra o defeito |
 | **Separe o sintoma da raiz** | Em duas ocasiões a raiz estava num fixture, não no código sob revisão — e corrigir a raiz desfez a acomodação construída em volta |
 
 > **Todo número que o relatório afirma é alegação até você medir**, e a medição vale com o oráculo
-> do projeto, nunca com um equivalente montado na hora — é o que a `H-08` custou três vezes no
+> do projeto, nunca com um equivalente montado na hora — é o que custou três vezes no
 > mesmo dia. Se existe script que o gate usa, é ele que dá o número.
 
 **Quem revisa não conserta o executor.** Entrega fiel a uma unidade defeituosa é defeito **da
@@ -987,14 +933,14 @@ prevista para a norma chegar sem ser reescrita dentro do próprio prompt; quem d
 > **A ponte é declarada, e o carregamento nunca foi medido.** Medido em 2026-08-26 nos 34 agentes
 > instalados nesta máquina: **nenhum** declara `skills:` — o campo só aparece num template. O que um
 > lint alcança é que a skill nomeada **existe em disco**; que ela entre em contexto é comportamento
-> de sessão, e ninguém o observou. Afirmar o contrário seria a `H-06` invertida, onde quatro skills
+> de sessão, e ninguém o observou. Afirmar o contrário repetiria o caso invertido, em que quatro skills
 > declaradas num campo ignorado nunca carregaram e ninguém percebeu.
 
 ### Agente — o que o lint exige
 
 `lint_agente.lint(caminho)` dá a esta camada o mesmo oráculo estrutural que `lint_unidade`,
 `lint_plano` e `lint_skill` já dão às suas: verifica o artefato, nunca a qualidade do julgamento
-que ele carrega. Quatro invariantes, todos sobre o frontmatter — unidade `0001-19`:
+que ele carrega. Quatro invariantes, todos sobre o frontmatter:
 
 | Invariante | Exige |
 |---|---|
@@ -1006,7 +952,7 @@ que ele carrega. Quatro invariantes, todos sobre o frontmatter — unidade `0001
 **`tools:` não tem granularidade de caminho**, e o lint não finge o contrário: é lista de nomes de
 ferramenta, sem qualquer expressão de path. Escopo de escrita (`docs/plan/**`, no planejador) é
 declaração no corpo do agente — verificada por teste, nunca imposta pelo frontmatter. Impor de
-verdade é guardrail do projeto que instala, não deste mecanismo (`D-07`).
+verdade é guardrail do projeto que instala, não deste mecanismo.
 
 Referência viva: `.claude/agents/planner.md` — a instância que este lint aprova.
 
@@ -1016,7 +962,7 @@ Referência viva: `.claude/agents/planner.md` — a instância que este lint apr
 
 Fila do que ainda **não** foi decidido — o que as três camadas normativas não guardam, porque
 resolvem só o que já foi decidido. Um arquivo por projeto, em `<plan_root>/system/huddle.md`, e
-nunca carregado automaticamente: nem como rule, nem por `skills:`, nem por import (`D-08`) — entra
+nunca carregado automaticamente: nem como rule, nem por `skills:`, nem por import — entra
 em contexto quando a conversa acontece, do contrário compete com norma já decidida.
 
 **A propriedade que faz funcionar: nada ali é autoritativo enquanto está ali.** Uma entrada nasce
@@ -1054,7 +1000,7 @@ note. `huddle.lint_arquivo(caminho)` prova isso, lista vazia quando sã: cabeça
 formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, e nenhum `H-XX`
 presente nas duas seções.
 
-**Os cinco gatilhos de escrita não têm o mesmo oráculo** (`L-08`): *o executor decidiu algo que o
+**Os cinco gatilhos de escrita não têm o mesmo oráculo**: *o executor decidiu algo que o
 humano não decidiu*, *duas fontes discordam*, *algo foi contornado em vez de corrigido*, *uma
 alternativa foi rejeitada por premissa que pode mudar*, *o humano corrigiu o modelo* — nenhum é
 observável por script, só por quem escreve. O lint alcança a estrutura de quem já escreveu; nunca
@@ -1079,13 +1025,13 @@ ausência da declaração, nunca a atenção de quem a escreveu.
 
 ### Sem arquivo de template, e o que não viaja
 
-**O esqueleto vive em `huddle.iniciar(destino)`, nunca num `.md` para copiar** (`D-20`) — mesmo
+**O esqueleto vive em `huddle.iniciar(destino)`, nunca num `.md` para copiar** — mesmo
 padrão de `porte._CONTEUDO_INICIAL`: formato com uma fonte só, que é o script, com esta seção
 descrevendo-o em prosa. Escreve `destino` com o frontmatter e as duas seções vazias e devolve o
 caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em nada.
 
 > **O `huddle.md` de cada projeto é instância pura, e não viaja no plugin — o mecanismo que cria um
-> vazio, sim** (`D-28`). Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
+> vazio, sim**. Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
 > empacotá-la entregaria a quem instala o registro de decisões de outro repositório — o invariante 2
 > quebrado no artefato mais pessoal do método. Quem instala roda `iniciar` e recebe o seu, vazio.
 
@@ -1109,7 +1055,7 @@ sobre o primeiro plano de um projeto zerado levanta `FileNotFoundError` em `_pla
 | `<plan_root>/_planos.md` | Fonte da numeração — com frontmatter, os marcadores `planos` e o cabeçalho da tabela |
 | `<plan_root>/_inbox/` | Onde todo plano nasce |
 | `<plan_root>/system/` | Onde vive a camada normativa do core |
-| `<projeto>/.claude/` | `root_markers` exige `.claude/` **e** `docs/` — sem os dois a âncora não resolveria o projeto **depois** do bootstrap (`D-04` do plano `0004`) |
+| `<projeto>/.claude/` | `root_markers` exige `.claude/` **e** `docs/` — sem os dois a âncora não resolveria o projeto **depois** do bootstrap |
 
 **Idempotente e nunca destrutiva**, no mesmo contrato de `huddle.iniciar` e do bootstrap de
 `porte.registrar`: cada caminho só é criado se ainda não existir, e o pulo é **por item, nunca
@@ -1117,13 +1063,13 @@ tudo-ou-nada**. Um projeto que já tem `_planos.md` com linhas mantém as linhas
 ainda falte. `iniciar` devolve a lista do que criou — segunda chamada devolve lista vazia.
 
 `project:` no frontmatter de `_planos.md` vem do **nome do diretório do projeto**, nunca fixo.
-Embutir o nome do repositório de origem foi a `L-31` do plano `0001`, e vazaria para quem instala.
-Sem arquivo de template (`D-20`): o esqueleto vive em `_CONTEUDO_INICIAL`, como `porte.py` e
+Embutir o nome do repositório de origem vazaria para quem instala.
+Sem arquivo de template: o esqueleto vive em `_CONTEUDO_INICIAL`, como `porte.py` e
 `huddle.py` já fazem.
 
 ### O que não cria
 
-Runner de teste e `_inbox/_backlog.md` ficam de fora (`D-05`). São **instância do projeto que
+Runner de teste e `_inbox/_backlog.md` ficam de fora. São **instância do projeto que
 instala**, não estrutura do método — o projeto declara o seu runner em `runners`, no `config.json`.
 Criar um na casa de quem instala seria feature além do pedido, e é o invariante 2 aplicado à
 operação que mais tenta violá-lo: a que escreve num projeto alheio.
@@ -1160,7 +1106,7 @@ lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem pr
 > escrever nada — derivar em lotes reinvoca a etapa sobre o mesmo plano, e isso é o caminho previsto,
 > não uma exceção a tratar.
 
-> **As etapas 5 a 9 ramificam por porte** (`0001-14`). No **pequeno**, `derive` **não roda**:
+> **As etapas 5 a 9 ramificam por porte.** No **pequeno**, `derive` **não roda**:
 > `aprovar` move direto para `<core>/<NNNN>-<nome>.md`, sem subpasta (sem etapa 5) e sem unidade
 > nenhuma para decidir, numerar ou derivar (sem etapa 6). A etapa 7 ainda roda, mas não escreve
 > região de backlog — não existe o que projetar; a situação vem de `status`, e a etapa 9 fecha
@@ -1172,128 +1118,3 @@ lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem pr
 
 ---
 
-## Rastreamento de objetivos
-
-| Origem | Objetivo | Componente |
-|---|---|---|
-| Inicial | Módulo como organizador; pasta por módulo | 1 |
-| Inicial | Adição como bloco aditivo | 1 |
-| Inicial | Doc deixa de ser PRD e vira o módulo | 2 |
-| Inicial | Índice do sistema com link para o módulo | 1 — a hierarquia de pastas é auto-descritiva |
-| Novo | Nível core para evoluir sob Clean Architecture | 1, 3 |
-| Novo | Modular com blocos (Google/email como bloco) | 1 |
-| Novo | Documentação é código em produção | 2 |
-| Novo | Código documentado com inteligência | 5 |
-| Novo | Índice para orientar agente e desenvolvedor | 1 — idem |
-| Novo | Princípios, guidelines, guardrails, referências | 3 |
-| Novo | Revisão de plano sugerindo blocos | 4, modo `review` |
-| Novo | Quebrar plano em fases e fases em unidades | 4 |
-| Novo | **Cold-start com Sonnet sem pedido manual** | Conceitos, modo `derive` |
-| Novo | **Backlog do plano com as unidades** | 2 — projeção |
-| Novo | **Registro de conclusão na unidade e no plano** | 2 — duas projeções, uma fonte |
-| Auditoria | 0/18 com critério de aceite | 2 |
-| Auditoria | 0/18 ligados a teste | 2 |
-| Auditoria | 18/18 `draft`; sem estado | 2 |
-| Auditoria | Lote sem norma | 4 |
-| Auditoria | 90 refs código↔doc; lacunas; racional | 5 |
-
----
-
-## Decisões
-
-### Resolvidas em 2026-07-19
-
-| # | Decisão | Resolução |
-|---|---|---|
-| 1 | Norma de lote | **8 passos** (p90 das 86 unidades); sem sequência = incompleta |
-| 2 | Grão de bloco e unidade | Bloco é **pasta**; unidade é **arquivo** (exigência do cold-start) |
-| 3 | Como o estado é computado | **Declaração na spec** (`spec → teste`), granularidade de arquivo |
-| 4 | Onde vive a normativa de domínio | **`<core>/system/`**; transversal em `<core-transversal>/system/` |
-| 5 | Cobertura da normativa | Cada core ganha a sua, conforme for tocado |
-| 6 | Localização dos docs | **`docs/plan/`** para o novo; acervo legado, se houver, somente leitura |
-| 7 | Migração do acervo | **Não migrar agora** — tarefa futura |
-| 8 | Modelo de desenvolvimento | **Sonnet** por padrão, com override do usuário |
-| 9 | Core transversal | Dono de um módulo hospedado em outro core, sem produzir deployable próprio |
-| 10 | Índice | **Eliminado** — substituído pela estrutura + backlog + consulta sob demanda |
-| 11 | Vocabulário | Inglês em código, caminhos e frontmatter; **português na prosa** |
-| 12 | Formato da unidade | Definido; referência viva em `docs/plan/model/0001-decode-and-code-foundation/01-config-and-paths.md` |
-| 13 | Regiões de escrita | Script escreve só o bloco `# verificação` do frontmatter; nunca o corpo — **estendido em 2026-08-27** (plano `0002`): no arquivo do **plano**, escreve também `status`, na transição para `concluído` e apenas em médio e grande (ver *Regiões*) |
-| 14 | Identificador da unidade | `unit_id` = `[nº plano]-[nº unidade]`, ex. `0001-02` — **revisa** o prefixo por módulo (`MC-`, `AU-`) |
-| 15 | Teste inexistente | Gate de entrada exige teste **declarado**, não existente; `implement` escreve teste e código |
-| 16 | Alvo do plano | Frontmatter com `core`/`module`/`block`; **um plano, um alvo** |
-| 17 | Backlog | Marcadores `<!-- backlog:start -->` / `<!-- backlog:end -->`; script substitui só o miolo |
-| 18 | Modelo por modo | **Não declarável em skill** — política operacional; automatizar exigiria agent. Continua verdadeiro para a skill — **revisado em 2026-08-26**: agent deixou de estar fora de escopo (ver *Modelos*) |
-| 19 | Nome do plano | Mantém o nome ao sair do `_inbox` e **recebe prefixo numérico**; nunca vira `plano.md` |
-| 20 | Regra de nome | `<intenção>-<alvo>[-<qualificador>]`, kebab-case, sem repetir o caminho — idioma **revisado** pela decisão 32 |
-| 21 | Arquivo da unidade | `[nn]-[nome].md` — **revisa** "só o ID"; a estabilidade vem do `unit_id`, não do filename |
-| 22 | Numeração do plano | **4 dígitos**, sequencial global, atribuída na aprovação; **pasta = nome do arquivo** |
-| 23 | Numeração da unidade | **2 dígitos, por plano** — recomeça em `01` a cada plano novo |
-| 24 | Tabela de planos | `docs/plan/_planos.md` — só aprovados; fonte da numeração; situação projetada |
-| 25 | Avaliação de escopo | Teste de **independência** declarado na escrita do plano, auditado na revisão; concorrência checada em `_planos.md` |
-| 26 | Divisão não bloqueia | Sinaliza e exige registro do porquê quando não se divide; **sem teto de unidades** |
-| 27 | Alvo do plano | Sempre `core`/`module`/`block` — não existe alvo `system` |
-| 28 | Tipo de unidade | `unit_type: dev \| plan`; a unidade `plan` produz um plano, com oráculo em `_planos.md` |
-| 29 | Relação entre planos | Coluna **Origem** em `_planos.md` — qual unidade de qual plano o gerou |
-| 30 | Natureza deste documento | **Norma**, não plano; a implementação é o plano que a instancia no projeto |
-
-### Resolvida em 2026-07-24
-
-| # | Decisão | Resolução |
-|---|---|---|
-| 31 | Linguagem e verificação dos scripts | **Python 3.10** (versão do Cowork), stdlib pura, `unittest` via `scripts/test-python.sh` — ver [`language-policy.md`](language-policy.md) |
-
-> A pendência de infra de teste que travava este modelo não era técnica: vinha do bloqueio "sem
-> Python", revogado pela [norma de linguagem](language-policy.md) com base em medição. O oráculo
-> determinístico previsto no componente 5 deixa de depender de uma decisão em aberto.
-
-### Resolvida em 2026-07-28
-
-| # | Decisão | Resolução |
-|---|---|---|
-| 32 | Idioma do nome de plano, módulo e unidade | **Inglês** — **revisa** a decisão 20, que dizia pt-BR |
-
-> **O conflito que a originou.** A decisão 20 exigia pt-BR no nome; o `.claude/CLAUDE.md` § *Idioma e
-> Nomenclatura* exige inglês em identificadores e nomeia **módulo** entre eles. Como o nome do plano
-> vira o `module` do frontmatter e a pasta no disco, as duas normas se contradiziam — e o conflito só
-> apareceu quando o terceiro plano precisou de um nome que não fosse termo técnico.
->
-> **Custo de migração: zero.** Os planos que existiam quando a decisão foi tomada já eram termos
-> técnicos em inglês; nenhum renomeio.
->
-> **O que não muda:** a prosa. Documentação, plano e unidade seguem inteiramente em pt-BR — o inglês
-> vale para o identificador, nunca para o conteúdo.
-
-### Pendentes
-
-1. **Alinhamento do `CLAUDE.md`.** A regra de precedência foi **antecipada em 2026-07-19**. Restam as
-   doze referências a `docs/mvp` e a desambiguação entre o **Core Engine** (visão futura, telemetria)
-   e a pasta **`system/`** — ambas acompanham a migração.
-> **Resolvidas nesta rodada:** as regiões no `index.md`, pelo mecanismo de marcadores (ver *Formato
-> do plano*) — o mesmo padrão serve a qualquer arquivo com conteúdo humano e projeção de script no
-> mesmo corpo; e a migração da unidade-referência, executada em 2026-07-20 junto com a criação do
-> plano `0001` e da tabela `_planos.md`.
->
-> **Resolvida em 2026-08-26:** a troca automática de modelo por modo, que só seria possível com
-> agent. O gate abriu (ver *Modelos*), e o destino é `model:` declarado por agente — entregue pela
-> `19` (planejador) e pela `20` (desenvolvedor).
-
----
-
-## Referências
-
-**Evidência empírica**
-- METR (2025), *Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer
-  Productivity* — https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/
-- DORA (2024), *Accelerate State of DevOps Report* — https://dora.dev/research/2024/dora-report/
-- DORA (2025), *State of AI-assisted Software Development* — https://dora.dev/dora-report-2025/
-
-**Análise de métodos**
-- Böckeler, B., *Understanding Spec-Driven Development: Kiro, spec-kit e Tessl* —
-  https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html
-- GitHub Spec Kit — https://github.com/github/spec-kit
-
-**Interno**
-- Norma de linguagem dos scripts: [`language-policy.md`](language-policy.md)
-- Evidência que a fundamenta: [`estudo-runtime-e-dependencias.md`](estudo-runtime-e-dependencias.md)
-- Padrão atual: `.claude/skills/decode-and-code/SKILL.md`
-- Restrições de processo e frontmatter: `.claude/CLAUDE.md`
