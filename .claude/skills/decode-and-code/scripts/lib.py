@@ -81,17 +81,33 @@ def config() -> dict:
     return resolvido
 
 
+def _home() -> Path:
+    """Home do usuário — em função própria para que o teste possa trocá-la."""
+    return Path.home().resolve()
+
+
 def _find_repo_root(start: Path) -> Path:
-    """Sobe a partir de `start` até o diretório que contém todas as marcas do config."""
+    """Sobe a partir de `start` até o diretório que contém todas as marcas do config.
+
+    A home **nunca** é candidata. Plugin instalado mora sob `~/.claude/`, e o
+    passeio a partir do `__file__` passa por `~` — que já tem `.claude/` em toda
+    máquina com Claude Code, e basta um `~/docs` para casar. Sem esta guarda,
+    `repo_root()` devolveria a home em silêncio em vez de cair para o `cwd` e
+    achar o projeto de verdade. Medido em 2026-08-28; é a `L-03` do plano `0004`.
+    """
     marcadores = config()["root_markers"]
+    lar = _home()
     for candidate in (start, *start.parents):
+        if candidate == lar:
+            continue
         if all((candidate / marker).is_dir() for marker in marcadores):
             return candidate
 
     marcas = " e ".join(f"{marker}/" for marker in marcadores)
     raise RuntimeError(
         f"raiz do repositório não localizada a partir de {start} — "
-        f"nenhum diretório acima contém {marcas}."
+        f"nenhum diretório acima contém {marcas} "
+        f"(a home, {lar}, é excluída por construção)."
     )
 
 
@@ -119,7 +135,8 @@ def repo_root() -> Path:
     raise RuntimeError(
         f"raiz do repositório não localizada — nem a partir do código "
         f"({origem_arquivo}), nem do diretório de trabalho ({origem_cwd}) "
-        f"há um diretório acima que contenha {marcas}."
+        f"há um diretório acima que contenha {marcas} "
+        f"(a home, {_home()}, é excluída por construção)."
     )
 
 
