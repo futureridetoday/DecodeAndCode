@@ -142,6 +142,14 @@ class TestProximaUnidade(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             numeracao.proxima_unidade(self.dir_plano)
 
+    def test_aceita_str_porque_a_skill_compoe_por_python_c(self):
+        # `SKILL.md` manda compor estes scripts por `python3 -c` escrito à mão a
+        # cada invocação, e ali o caminho chega como string. Sem coerção o erro
+        # era `AttributeError: 'str' object has no attribute 'name'`, que não
+        # diz ao chamador o que fazer. Medido em 2026-08-28.
+        self._tocar("0002-dev-units.md", "01-lib-base.md")
+        self.assertEqual(numeracao.proxima_unidade(str(self.dir_plano)), "02")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -56,6 +56,7 @@ fi
 
 failed=0
 ran=0
+total=0
 
 for dir in "${TEST_DIRS[@]}"; do
   target="$REPO_ROOT/$dir"
@@ -109,6 +110,12 @@ for dir in "${TEST_DIRS[@]}"; do
     continue
   fi
 
+  # O total sai daqui, nunca da soma manual de quem lê a saída. Cada diretório
+  # imprime seu próprio `Ran N tests` e o rodapé só contava diretórios — deixar
+  # a soma para o leitor produziu subcontagem em catorze entregas seguidas.
+  testes="$(printf '%s\n' "$saida" | grep -oE '^Ran [0-9]+ test' | awk '{print $2}')"
+  total=$((total + ${testes:-0}))
+
   if [ "$status" -eq 0 ]; then
     ran=$((ran + 1))
   else
@@ -122,4 +129,4 @@ if [ "$failed" -ne 0 ]; then
   exit 1
 fi
 
-echo "OK — $ran diretório(s) verificado(s)"
+echo "OK — $total teste(s) em $ran diretório(s)"
