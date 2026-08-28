@@ -1,17 +1,22 @@
 ---
 # about
 name: DecodeAndCode
-type: doc
+type: instruction
 project: DecodeAndCode
 description: Plugin Claude Code que carrega o método decode-and-code — norma em camadas, porte de plano e o ciclo plano → unidade → cold-start
 tags: [decode-and-code, plugin, claude-code, norma, dev-units]
+
+# identity
+project_type: "AI Builder"
+segment: ""
+category: ""
 
 # history
 author: Bortoli
 created: 2026-08-22
 status: draft
 version: 1.0.0
-updated: 2026-08-22
+updated: 2026-08-28
 
 # system
 scope: project
@@ -21,7 +26,15 @@ dependencies: []
 
 # DecodeAndCode — Instruções do Projeto
 
-## O que é
+## Identidade
+
+| Campo | Valor |
+|---|---|
+| Tipo de projeto | AI Builder |
+| Segmento de mercado | — |
+| Categoria de mercado | — |
+
+## Visão Geral
 
 Plugin Claude Code que empacota o método **decode-and-code**: a norma em camadas (princípio,
 guideline, guardrail), o porte de plano, e o ciclo `plano → unidade → cold-start` que o antecede.
@@ -29,6 +42,41 @@ guideline, guardrail), o porte de plano, e o ciclo `plano → unidade → cold-s
 Origem: a skill `dev-units` do AmFlow, medida funcionando — 15 de 15 unidades executadas por Sonnet
 em sessões novas, sem uma pergunta sobre conteúdo de unidade. Os **scripts e testes migraram**; a
 camada normativa nasce aqui, sem as premissas do AmFlow.
+
+## Arquitetura
+
+- `.claude/skills/decode-and-code/` — a skill e seus scripts, todo determinismo
+- `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
+  [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
+  subtração antes de adição, evidência acima de opinião, fluxo de decodificação e protocolo de
+  exceção
+- `docs/plan/` — planos e unidades, destino de todo trabalho novo
+- `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
+
+## Recursos Instalados
+
+| Recurso | Tipo | Descrição |
+|---|---|---|
+| `decode-and-code` | skill | Executa a norma de Unidades de Desenvolvimento em três modos — revisa um plano, deriva estrutura e unidades, ou implementa uma unidade em cold-start. Delega todo determinismo aos scripts em `scripts/` |
+
+## Restrições
+
+**Invariantes**
+- Uma fonte por fato — norma citada em dois lugares é drift esperando acontecer
+- Nada específico de projeto viaja no plugin — guardrail e guideline são do projeto que instala, o
+  plugin carrega o mecanismo, nunca a instância
+- `state` e `verified_at` nunca se editam à mão — são projetados por script a partir do teste
+- Nunca editar o miolo entre marcadores (`<!-- backlog:start -->`, `<!-- planos:start -->`) — é
+  projeção, e será sobrescrita
+- Português brasileiro na documentação; identificadores em inglês
+
+**Git**
+- PRs para `main` exigem revisão manual
+- Nunca fazer force push em `main`
+
+**Autonomia**
+- Decisões arquiteturais exigem aprovação prévia
+- Ações que afetam mais de 5 arquivos exigem apresentação de plano antes de executar
 
 ## Relação com o AmFlow
 
@@ -47,45 +95,7 @@ conclusão, entra lá como cherry-pick registrado como tal.
 > falha, não por elegância. Repo novo é greenfield e não tem incidente nenhum — as unidades entregam
 > o **mecanismo** aqui e a **instância de prova** contra o AmFlow.
 
-## Mapa do repositório
-
-| Caminho | O que vive aqui |
-|---|---|
-| `.claude/skills/decode-and-code/` | A skill e seus scripts — todo determinismo |
-| `.claude/rules/` | A camada normativa: princípio (sem `paths:`) e guideline (com `paths:`) |
-| `docs/plan/` | Planos e unidades — destino de todo trabalho novo |
-| `docs/plan/system/` | Fundação: norma, política de linguagem, `huddle.md` |
-
-## Invariantes não negociáveis
-
-1. **Uma fonte por fato.** Norma citada em dois lugares é drift esperando acontecer
-2. **Nada específico de projeto viaja no plugin.** Guardrail e guideline são do projeto que instala;
-   o plugin carrega o mecanismo, nunca a instância
-3. **`state` e `verified_at` nunca se editam à mão** — são projetados por script a partir do teste
-4. **Nunca editar o miolo entre marcadores** (`<!-- backlog:start -->`, `<!-- planos:start -->`) — é
-   projeção, e será sobrescrita
-5. **Português brasileiro** na documentação; identificadores em inglês
-
-## Este arquivo fica pequeno, e é de propósito
-
-O alvo documentado do Claude Code é **200 linhas** — acima disso a aderência degrada. O `CLAUDE.md`
-do AmFlow chegou a 458, e esse é um dos fatos que originaram este projeto.
-
-Princípio vai para `.claude/rules/` sem `paths:`. Norma com escopo de arquivo vai para
-`.claude/rules/` com `paths:`. Procedimento vai para skill. **Aqui fica só o que precisa estar em
-toda sessão e não cabe em nenhum dos três.**
-
-## Protocolo de execução
-
-- **Aprovação antes de executar.** Apresentar o plano, aguardar confirmação, só então agir
-- **Escopo exato.** Só o que foi pedido; qualquer adição exige aprovação prévia
-- **Leitura nunca precisa de confirmação** — `Read`, `git status`, `git log`, `ls`, `find`, `grep`
-- **Comando explícito é a aprovação.** "crie o arquivo X" executa na ordem e no escopo exatos
-- **Apresentar antes de executar** quando a ação é irreversível (deletar, push, deploy) ou afeta mais
-  de 5 arquivos
-- **Ambiguidade:** declarar o entendimento em uma frase e aguardar. Nunca assumir e executar
-
-### Trabalho novo passa pelo modelo
+## Trabalho novo passa pelo modelo
 
 | # | Etapa | Quem |
 |---|---|---|
@@ -98,30 +108,6 @@ toda sessão e não cabe em nenhum dos três.**
 Quem executa uma unidade **entrega arquivos e relatório, não commita**. Se a execução revelar que a
 unidade estava insuficiente, a correção é **da unidade**, registrada como lacuna `L-XX` no plano.
 
-## Simplicidade primeiro
-
-Código mínimo que resolve o problema. Sem features além do pedido, sem abstração para uso único, sem
-configurabilidade não solicitada. Se 200 linhas podem ser 50, reescrever.
-
-Ao editar código existente: tocar só o necessário, seguir o estilo que está lá, não refatorar o que
-não está quebrado. Código morto não relacionado se **menciona**, não se deleta.
-
-## Anti-alucinação
-
-Verificar antes de afirmar — nenhuma informação declarada sem evidência da sessão atual. Citar
-`arquivo:linha`. Quando faltam dados: listar as fontes consultadas, declarar *"não encontrei
-evidências de..."* e pedir o input mínimo. Proibido inventar arquivo, função ou flag.
-
 ## Linguagem
 
 Os scripts seguem a [norma de linguagem](../docs/plan/system/language-policy.md).
-
-Quando a lógica for previsível e repetível, ela vira **código**, não instrução em markdown —
-markdown depende de interpretação e pode ser ignorado; código executa de forma determinística e
-testável. Markdown fica com o que exige julgamento, tom ou raciocínio contextual.
-
-## Uso de ferramentas
-
-- Leitura com `Read`, edição com `Edit`, criação com `Write`. Nunca `echo >` nem `cat <<EOF`
-- Bash só para o que é exclusivo de shell. Sempre paths absolutos, nunca flags interativas
-- Chamadas independentes em paralelo; dependentes em sequência, nunca com placeholder
