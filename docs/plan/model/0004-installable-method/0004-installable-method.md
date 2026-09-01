@@ -16,7 +16,7 @@ block: ""
 # history
 author: Bortoli
 created: 2026-08-27
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: Bortoli
@@ -185,8 +185,8 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 | [0004-02](02-project-bootstrap.md) | project-bootstrap | `verified` |
 | [0004-03](03-norm-split.md) | norm-split | `verified` |
 | [0004-04](04-package-carries-norm.md) | package-carries-norm | `verified` |
-| [0004-05](05-installed-cycle-proof.md) | installed-cycle-proof | `spec` |
+| [0004-05](05-installed-cycle-proof.md) | installed-cycle-proof | `verified` |
 | [0004-06](06-commands-travel.md) | commands-travel | `verified` |
 
-6 de 6 derivadas · 5 verificadas · atualizado em 2026-09-01
+6 de 6 derivadas · 6 verificadas · atualizado em 2026-09-01
 <!-- backlog:end -->

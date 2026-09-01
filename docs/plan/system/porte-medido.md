@@ -32,3 +32,4 @@ dependencies: []
 | [0001-decode-and-code-foundation](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md) | grande | 21 | 69 | 8740 | 2026-08-27 |
 | [0002-record-plan-closure](../model/0002-record-plan-closure.md) | pequeno | — | não declarado | — | 2026-08-27 |
 | [0003-derive-handoff-prompt](../model/0003-derive-handoff-prompt.md) | médio | 6 | não declarado | — | 2026-08-27 |
+| [0004-installable-method](../model/0004-installable-method/0004-installable-method.md) | grande | 6 | 21 | 1426 | 2026-09-01 |

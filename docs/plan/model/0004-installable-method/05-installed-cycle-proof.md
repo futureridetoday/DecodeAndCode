@@ -15,9 +15,9 @@ unit_id: 0004-05
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_ciclo_instalado.py
-verified_at: ""
+verified_at: 2026-09-01
 
 # history
 author: Bortoli

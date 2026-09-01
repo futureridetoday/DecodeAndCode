@@ -1125,3 +1125,41 @@ lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem pr
 
 ---
 
+## Ciclo instalado — a prova de que o pacote funciona, não só o código
+
+Todo o resto deste documento descreve o mecanismo; nada nele garante que o mecanismo **funciona
+depois de empacotado**. Um teste próprio fecha essa lacuna: constrói o pacote de verdade — fora do
+checkout, pelo mesmo `construir` que qualquer instalação usa —, carrega os módulos **dessa árvore**,
+por caminho explícito, e percorre bootstrap → aprovação → gate de entrada → gate de saída →
+fechamento contra um projeto que nunca existiu antes daquele instante.
+
+### O que prova
+
+| Passo | O que fica provado |
+|---|---|
+| Módulos carregados do pacote | O `__file__` de cada um resolve dentro da árvore construída, nunca do checkout — importar do checkout provaria o código, nunca o pacote |
+| Bootstrap num diretório vazio | A estrutura e a norma-mecanismo chegam ao projeto que instala |
+| Aprovação | Numeração, movimentação e a linha em `_planos.md` funcionam a partir do pacote |
+| Gate de entrada | `lint_unidade` aceita o que o ciclo real produz, não só uma fixture isolada |
+| Gate de saída | `verificacao` roda o runner que o **projeto** declara — não um mock de `subprocess` — e projeta `state`/`verified_at` a partir do resultado real |
+| Fechamento | `backlog.projetar` fecha a situação e registra o porte, sem nenhuma chamada real a `git` |
+| Caso negativo | Sem o bootstrap, a aprovação falha — o defeito que motivou este mecanismo, preso num teste em vez de redescoberto por alguém |
+
+### O que fica fora
+
+**Derivação não entra.** Decidir a fatia de uma unidade é julgamento da skill, não passo de script —
+não há oráculo determinístico para isso, e forçar um criaria o mesmo teste tautológico que a seção
+*Como revisar uma entrega* adverte contra.
+
+**A instalação real continua sendo ato humano.** A sessão que carrega um plugin instalado é
+interativa por natureza — nenhum script a substitui —, então o ciclo instalado prova o **mecanismo**
+de ponta a ponta; que uma sessão de verdade carrega o pacote continua sendo medição reportada, não
+gate automático. Pela mesma razão, o ciclo não prova que o agente que invoca a skill traz o método
+junto — só que o método, uma vez carregado, opera corretamente.
+
+**Se a fronteira entre o que viaja e o que fica está no lugar certo é julgamento sobre conteúdo, não
+estrutura.** O ciclo instalado confere que o mecanismo funciona; não confere que a metade certa dele
+foi para o lado certo da divisão entre o que é mecanismo e o que é registro de um projeto.
+
+---
+
