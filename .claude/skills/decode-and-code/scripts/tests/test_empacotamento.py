@@ -76,6 +76,15 @@ def _montar_fonte(raiz: Path) -> None:
     (agents / "planner.md").write_text("# planner sintético\n", encoding="utf-8")
     (agents / "developer.md").write_text("# developer sintético\n", encoding="utf-8")
 
+    commands = raiz / ".claude" / "commands"
+    commands.mkdir(parents=True, exist_ok=True)
+    (commands / "implement.md").write_text(
+        "---\nproject: exemplo\n---\n# implement sintético\n", encoding="utf-8"
+    )
+    (commands / "delegate.md").write_text(
+        "---\nproject: exemplo\n---\n# delegate sintético\n", encoding="utf-8"
+    )
+
     settings = raiz / ".claude" / "settings.json"
     settings.write_text(
         json.dumps(
@@ -176,6 +185,23 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
         copiados = {p.name for p in (self.destino / "agents").glob("*.md")}
         self.assertEqual(copiados, {"planner.md", "developer.md"})
+
+    def test_dois_comandos_copiados_com_project_reescrito(self):
+        """`0004-06` — `/implement` e `/delegate` viajam, e `project:` declara o plugin."""
+        empacotar.construir(self.destino)
+        copiados = {p.name for p in (self.destino / "commands").glob("*.md")}
+        self.assertEqual(copiados, {"implement.md", "delegate.md"})
+
+        texto = (self.destino / "commands" / "implement.md").read_text(encoding="utf-8")
+        self.assertIn("project: exemplo", texto)
+        self.assertNotIn(f"project: {self.raiz.name}", texto)
+
+    def test_fonte_comandos_ausente_levanta_antes_de_escrever(self):
+        shutil.rmtree(self.raiz / ".claude" / "commands")
+
+        with self.assertRaises(FileNotFoundError):
+            empacotar.construir(self.destino)
+        self.assertFalse(self.destino.exists())
 
     def test_hooks_json_mesmos_eventos_do_settings_e_ancora_trocada(self):
         empacotar.construir(self.destino)
@@ -298,6 +324,20 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertTrue(norma.is_file())
             self.assertTrue(move_md.is_file())
             self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
+            self.assertEqual(empacotar.verificar(destino), [])
+
+    def test_comandos_presentes_no_pacote_real_e_verificar_continua_limpo(self):
+        """Critério de aceite da `0004-06` — contra o repositório real, não fixture (`L-31`)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            implement = destino / "commands" / "implement.md"
+            delegate = destino / "commands" / "delegate.md"
+            self.assertTrue(implement.is_file())
+            self.assertTrue(delegate.is_file())
+            self.assertIn("project: decode-and-code", implement.read_text(encoding="utf-8"))
+            self.assertNotIn(f"project: {lib.repo_root().name}", implement.read_text(encoding="utf-8"))
             self.assertEqual(empacotar.verificar(destino), [])
 
 

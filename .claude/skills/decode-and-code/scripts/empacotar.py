@@ -48,6 +48,7 @@ def _fontes() -> dict[str, Path]:
         "settings": raiz / ".claude" / "settings.json",
         "agents": raiz / ".claude" / "agents",
         "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
+        "commands": raiz / ".claude" / "commands",
     }
 
 
@@ -75,6 +76,7 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     escritos.extend(_copiar_hooks(fontes["hooks"], destino))
     escritos.append(_escrever_hooks_json(fontes["settings"], destino))
     escritos.extend(_copiar_agentes(fontes["agents"], destino))
+    escritos.extend(_copiar_comandos(fontes["commands"], destino, nome_plugin))
     return escritos
 
 
@@ -154,6 +156,26 @@ def _copiar_agentes(origem: Path, destino: Path) -> list[Path]:
     for agente in sorted(origem.glob("*.md")):
         copia = alvo / agente.name
         shutil.copy2(agente, copia)
+        escritos.append(copia)
+    return escritos
+
+
+def _copiar_comandos(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
+    """Copia `.claude/commands/*.md` para `commands/` do pacote — unidade `0004-06`.
+
+    `/implement` e `/delegate` são mecanismo puro (validados contra unidades reais deste plano,
+    2026-08-28): disparam a skill ou o agent `developer` em cold-start, sem citar nada deste
+    repositório na prosa. O que precisa de reescrita é o **frontmatter** — `project:` vazaria o
+    nome do repositório de origem como a `04` já corrigiu para a norma e o `SKILL.md`, mesma classe
+    de defeito, mesma correção (`_declarar_o_plugin`).
+    """
+    alvo = destino / "commands"
+    alvo.mkdir(parents=True, exist_ok=True)
+    escritos = []
+    for comando in sorted(origem.glob("*.md")):
+        copia = alvo / comando.name
+        shutil.copy2(comando, copia)
+        _declarar_o_plugin(copia, nome_plugin)
         escritos.append(copia)
     return escritos
 

@@ -609,6 +609,13 @@ e não há ponte entre sessões a construir.
 execução, como no backlog. O prefixo `_` a mantém fora de `PADRAO_ARQUIVO_UNIDADE`, que é o que
 conta unidades.
 
+**O prompt nomeia dois comandos — um por cenário de cold-start.** `/implement <unidade>` para
+sessão nova: ela já chega em cold-start por conta própria, e o comando invoca a skill direto, no
+modo `implement`. `/delegate <unidade>` para a própria sessão de orquestração: delega ao agent
+`developer`, sem gastar o contexto que ela guarda. Os dois vivem em `.claude/commands/` e viajam no
+pacote, mesmo mecanismo de skill e agentes — sem eles, o prompt diria "unidades rodam em cold-start
+próprio" sem dizer como disparar isso.
+
 > **A suíte não entra contada, e é deliberado.** O prompt carrega o **comando** e a regra de somar
 > as duas linhas `Ran`; quem lê mede. Número declarado envelhece no primeiro commit, e o prompt
 > inteiro existe para dizer que declaração é alegação — congelar o próprio número seria contradizê-lo

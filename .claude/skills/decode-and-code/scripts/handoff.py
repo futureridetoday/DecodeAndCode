@@ -43,6 +43,15 @@ _ESQUELETO = """\
 Você orquestra a execução deste plano. **Você não executa unidade** — unidades rodam em cold-start
 próprio, uma por vez. Você prepara, revisa o que volta, e versiona depois de revisar.
 
+## Como disparar cold-start
+
+Dois comandos, um por cenário:
+
+| Comando | Cenário |
+|---|---|
+| `/implement <unidade>` | **Sessão nova** — já chega em cold-start por conta própria, executa o modo `implement` da skill direto |
+| `/delegate <unidade>` | **Esta sessão** — delega ao agent `developer`, sem gastar o contexto de orquestração que você guarda |
+
 ## Regras que não mudam
 
 - **Aprovação é do humano.** Nenhum `derive` sem ele dizer, explicitamente, para aquele alvo

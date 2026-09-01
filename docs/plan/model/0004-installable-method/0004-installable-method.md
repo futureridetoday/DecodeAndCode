@@ -99,10 +99,12 @@ implementadas e fechadas — **sem nada deste repositório**.
 |---|---|---|
 | 04 | `package-carries-norm` | `construir` passa a levar a norma-mecanismo e o `move-md`, e a expor o bootstrap; `verificar` continua limpo, e `claude plugin validate` continua aprovando |
 | 05 | `installed-cycle-proof` | O teste que **roda o ciclo inteiro num projeto zerado**, a partir do pacote construído: bootstrap, aprovar, gate de entrada sobre uma unidade sintética, gate de saída, fechamento. É o oráculo que teria pego a Fase 1 antes de alguém tropeçar nela. *Derivar* fica de fora por natureza — é julgamento da skill, não passo de script |
+| 06 | `commands-travel` | `construir` passa a levar `.claude/commands/` — `/implement` e `/delegate`, os dois comandos que disparam cold-start —, e o esqueleto do handoff mais a norma-mecanismo passam a dizer que eles existem. Não estava na Fase 3 original porque os comandos não existiam quando o plano foi derivado (`D-08`) |
 
-**Cinco unidades, e a última é a que muda o método.** As quatro primeiras entregam o que falta; a
-quinta transforma *"o pacote instala"* em algo que a suíte afirma a cada execução, em vez de
-depender de alguém lembrar de testar num diretório vazio.
+**Seis unidades.** As quatro primeiras entregam o que falta; a quinta transforma *"o pacote
+instala"* em algo que a suíte afirma a cada execução, em vez de depender de alguém lembrar de
+testar num diretório vazio; a sexta fecha, no pacote, a mesma lacuna que abriu o plano — só que
+num artefato que nasceu depois da derivação.
 
 ## Independência
 
@@ -150,6 +152,7 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 | D-05 | **O bootstrap não cria runner de teste** | `test-python.sh` é instância deste repositório. Criar um na casa de quem instala é feature além do pedido; o projeto declara o seu em `runners`. A `05` monta um stub no próprio fixture |
 | D-06 | **`move-md.py` viaja; `test-python.sh` não** | O primeiro é mecanismo puro — reescrita de link markdown, sem instância nenhuma — e o `scaffold` o carrega no import. O segundo é instância. A distinção é o invariante 2 aplicado arquivo a arquivo |
 | D-07 | **A norma-mecanismo mantém o caminho que a skill já cita** | `SKILL.md` referencia `<plan_root>/system/modelo-dev-units.md` em três lugares. O mecanismo fica com esse nome, e o **registro** deste projeto é que ganha arquivo novo. O contrário faria a skill ler o registro |
+| D-08 | **`.claude/commands/implement.md` e `.claude/commands/delegate.md` viajam no pacote, como unidade nova (`06`) em vez de lacuna adiada** | Os dois comandos nasceram depois da derivação deste plano, em 2026-08-28, testando os cenários de execução em nova sessão e via agente. São mecanismo puro — sem marca de instância, mesmo padrão de skill/agents/hooks — e ficar de fora repetiria a lacuna que abriu o `0004`: *"skill que funciona, agentes que carregam... e nenhum caminho para usar nada disso"*. Adiar para plano futuro criaria dependência entre planos em andamento, o padrão que *Avaliação de escopo* pede para evitar; a `04` já tinha aberto o precedente de reescrever `project:` no frontmatter copiado (`_declarar_o_plugin`), que a `06` reaproveita |
 
 ## Lacunas
 
@@ -183,6 +186,7 @@ Tomadas na derivação de **2026-08-27**, sobre a medição registrada acima.
 | [0004-03](03-norm-split.md) | norm-split | `verified` |
 | [0004-04](04-package-carries-norm.md) | package-carries-norm | `verified` |
 | [0004-05](05-installed-cycle-proof.md) | installed-cycle-proof | `spec` |
+| [0004-06](06-commands-travel.md) | commands-travel | `verified` |
 
-5 de 5 derivadas · 4 verificadas · atualizado em 2026-08-28
+6 de 6 derivadas · 5 verificadas · atualizado em 2026-09-01
 <!-- backlog:end -->

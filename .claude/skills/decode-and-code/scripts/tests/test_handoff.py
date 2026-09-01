@@ -76,6 +76,13 @@ class TestEsqueleto(_BaseComPlanoSintetico):
         for parte in _JULGAMENTO.values():
             self.assertIn(parte, texto)
 
+    def test_nomeia_os_dois_comandos_de_cold_start(self):
+        """`0004-06` — sem isso, o prompt diz 'cold-start' sem dizer como disparar."""
+        texto = self._gerar().read_text(encoding="utf-8")
+
+        self.assertIn("/implement", texto)
+        self.assertIn("/delegate", texto)
+
     def test_cita_a_norma_em_vez_de_copiar_a_disciplina(self):
         texto = self._gerar().read_text(encoding="utf-8")
 
