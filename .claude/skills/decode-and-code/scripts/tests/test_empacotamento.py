@@ -42,7 +42,7 @@ import lib
 
 def _montar_fonte(raiz: Path) -> None:
     """Escreve a árvore-fonte sintética sob `raiz` — o par completo que `construir` exige."""
-    manifesto = raiz / ".claude-plugin" / "plugin.json"
+    manifesto = raiz / ".claude" / "plugin.json"
     manifesto.parent.mkdir(parents=True, exist_ok=True)
     manifesto.write_text(
         json.dumps({"name": "exemplo", "version": "1.0.0"}, ensure_ascii=False), encoding="utf-8"
@@ -339,6 +339,59 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertIn("project: decode-and-code", implement.read_text(encoding="utf-8"))
             self.assertNotIn(f"project: {lib.repo_root().name}", implement.read_text(encoding="utf-8"))
             self.assertEqual(empacotar.verificar(destino), [])
+
+
+def _arvore(raiz: Path) -> dict[str, bytes]:
+    """Mapa `caminho relativo → conteúdo`, ignorando lixo que não é produto de `construir`.
+
+    `__pycache__` aparece dentro do pacote assim que alguém importa um script de lá, e `.DS_Store`
+    aparece assim que o Finder abre a pasta. Nenhum dos dois é escrito por `construir` — compará-los
+    faria o teste falhar por um `ls` no Finder, que é exatamente o gate que se desliga.
+    """
+    return {
+        str(p.relative_to(raiz)): p.read_bytes()
+        for p in sorted(raiz.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store"
+    }
+
+
+class TestPacoteCommitadoEstaSincronizado(unittest.TestCase):
+    """O pacote em `dist/decode-and-code` é versionado, e este caso é o preço disso.
+
+    A `D-21` do plano `0001` decidiu o contrário — build reproduzível, `dist/` no `.gitignore` —,
+    e a razão dada era boa: *árvore construída e commitada envelhece a cada mudança da fonte, e
+    nada avisa*. A distribuição reverte a decisão, porque `.claude-plugin/marketplace.json` aponta
+    `source` para um caminho que precisa **existir no repositório clonado** — quem instala não roda
+    `construir`. O que a `D-21` temia continua verdade; o que muda é o *nada avisa*: este caso é o
+    aviso, e sem ele a reversão seria a divergência de 2026-08-01 outra vez.
+    """
+
+    def test_dist_versionado_bate_com_a_construcao_recem_feita(self):
+        commitado = empacotar._resolver_destino(empacotar._DESTINO_DEFAULT)
+        self.assertTrue(
+            commitado.is_dir(),
+            f"o pacote versionado não existe em {commitado} — rode empacotar.construir()",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            recem = Path(tmp) / "pkg"
+            empacotar.construir(recem)
+
+            esperado = _arvore(recem)
+            obtido = _arvore(commitado)
+
+        faltando = sorted(set(esperado) - set(obtido))
+        sobrando = sorted(set(obtido) - set(esperado))
+        diferentes = sorted(
+            nome for nome in set(esperado) & set(obtido) if esperado[nome] != obtido[nome]
+        )
+
+        self.assertEqual(
+            ([], [], []),
+            (faltando, sobrando, diferentes),
+            "o pacote versionado divergiu da fonte — rode empacotar.construir() e commite "
+            f"{commitado.name}/ (faltando={faltando}, sobrando={sobrando}, diferentes={diferentes})",
+        )
 
 
 class TestScaffoldImportaDoPacote(unittest.TestCase):

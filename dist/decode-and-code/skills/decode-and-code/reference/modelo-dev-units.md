@@ -2,7 +2,7 @@
 # about
 name: modelo-dev-units
 type: doc
-project: DecodeAndCode
+project: decode-and-code
 description: Norma do modelo de Unidades de Desenvolvimento — hierarquia core/module/block/unit, unidade como arquivo autossuficiente para cold-start, estado derivado de verificação, norma de lote de 8 passos, avaliação de escopo e a skill dev-units. Documento normativo: define o formato que os planos obedecem
 tags: [dev-units, metodologia, spec-driven, clean-architecture, core, cold-start, processo, documentacao, fix, plan]
 

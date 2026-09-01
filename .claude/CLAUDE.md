@@ -52,6 +52,12 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
   exceção
 - `docs/plan/` — planos e unidades, destino de todo trabalho novo
 - `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
+- `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
+  `empacotar.construir` copia
+- `.claude-plugin/marketplace.json` — o catálogo, e a única coisa que a raiz declara: a raiz é
+  marketplace, nunca plugin
+- `dist/decode-and-code/` — o pacote construído, **versionado** (`D-09` do plano `0004`): quem
+  instala clona e não roda o build. A sincronia com a fonte é caso de teste, não disciplina
 
 ## Recursos Instalados
 

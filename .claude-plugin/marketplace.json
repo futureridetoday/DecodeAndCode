@@ -1,0 +1,21 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "bortoli",
+  "description": "Métodos de desenvolvimento empacotados como plugins do Claude Code",
+  "owner": {
+    "name": "Bortoli"
+  },
+  "plugins": [
+    {
+      "name": "decode-and-code",
+      "source": "./dist/decode-and-code",
+      "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
+      "version": "1.0.0",
+      "author": {
+        "name": "Bortoli"
+      },
+      "repository": "https://github.com/futureridetoday/DecodeAndCode",
+      "keywords": ["metodo", "planejamento", "dev-units", "cold-start"]
+    }
+  ]
+}
