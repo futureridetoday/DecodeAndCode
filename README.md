@@ -28,6 +28,25 @@ Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
 (`decode-and-code-1.0.0.zip`).
 
+### Atualização
+
+Quando sai uma versão nova do plugin:
+
+```bash
+/plugin marketplace update future-ride-today
+```
+
+```bash
+/plugin update decode-and-code@future-ride-today
+```
+
+O primeiro refresca o metadado do marketplace (nova `version`, `url`, `sha256`); o segundo baixa o
+zip do Release novo, confere o `sha256` e instala. **Reiniciar o Claude Code** para aplicar — ou
+usar o painel `/plugin` → aba Installed, que sinaliza *update available*.
+
+Mudança que fica só no repositório (`README.md`, `docs/`, `docs/plan/`) não entra no pacote e não
+exige nada de quem instalou.
+
 ### Para desenvolver ou testar sem instalar
 
 Depois de `empacotar.construir()` (ver *Como este repositório se relaciona com o pacote*), que
@@ -91,13 +110,15 @@ O repositório precisa estar **público**: `source: archive` baixa o asset por U
 privado devolve `404` para qualquer cliente sem token — inclusive `claude --plugin-url` e
 `/plugin marketplace add`.
 
-1. `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e imprime o
+1. Bump de `version` em **`.claude/plugin.json` e na entrada do plugin no `marketplace.json`** — os
+   dois têm que concordar (`claude plugin tag` valida isso)
+2. `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e imprime o
    caminho do zip e o SHA-256
-2. `gh release create v<versão> decode-and-code-<versão>.zip --title "Decode and Code <versão>" --notes "…"`
-3. Copiar a URL do asset publicado e o SHA-256 para a entrada do plugin no `marketplace.json`
-   (`url`, `sha256`, `version`)
-4. Commit, push
-5. `/plugin marketplace update future-ride-today`
+3. `gh release create v<versão> decode-and-code-<versão>.zip --title "Decode and Code <versão>" --notes "…"`
+4. Copiar a URL do asset publicado e o SHA-256 para a entrada do plugin no `marketplace.json`
+   (`url`, `sha256`)
+5. Commit, push
+6. `/plugin marketplace update future-ride-today` — e os usuários rodam a *Atualização* acima
 
 ## Desenvolvimento
 
