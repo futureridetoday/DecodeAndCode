@@ -30,24 +30,32 @@ Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 
 ### Para desenvolver ou testar sem instalar
 
+Depois de `empacotar.construir()` (ver *Como este repositório se relaciona com o pacote*), que
+escreve o staging em `dist/decode-and-code/`:
+
 ```bash
 claude --plugin-dir dist/decode-and-code
 ```
 
+Ou direto do asset publicado, sem build local:
+
 ```bash
-claude --plugin-url <url do asset do Release>
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.0.0/decode-and-code-1.0.0.zip
 ```
 
-## O que vem junto
+## Como usar o Decode And Code
 
-| Componente | O que faz |
-|---|---|
-| Skill `decode-and-code` | Os três modos — revisar um plano, derivar estrutura e unidades, implementar uma unidade em cold-start |
-| Agent `planner` | Revisa um plano antes da aprovação, e deriva as unidades de um plano aprovado |
-| Agent `developer` | Implementa uma unidade já derivada, em cold-start |
-| Comando `/implement` | Dispara a implementação de uma unidade |
-| Comando `/delegate` | Delega a unidade ao `developer` em sessão limpa |
-| Hooks | Carregam a norma e as guidelines ativas na abertura da sessão e após compactação |
+Um documento por recurso, em [`docs/recursos/`](docs/recursos/), no formato *o que é · problema que
+resolve · como funciona · como usar · exemplos · fundamentação · base de conhecimento · limites*.
+
+| Tipo | Recurso | O que faz | Doc |
+|---|---|---|---|
+| skill | `decode-and-code` | Os três modos — `review` um plano, `derive` estrutura e unidades, `implement` uma unidade em cold-start | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| agent | `planner` | Revisa um plano antes da aprovação, e deriva as unidades de um plano aprovado (Opus) | [planner.md](docs/recursos/planner.md) |
+| agent | `developer` | Implementa uma unidade já derivada, em cold-start isolado (Sonnet) | [developer.md](docs/recursos/developer.md) |
+| command | `/decode-and-code:implement` | Roda o modo `implement` na sessão atual — pensado para sessão nova | [implement.md](docs/recursos/implement.md) |
+| command | `/decode-and-code:delegate` | Delega a unidade ao agent `developer` sem sair da sessão de orquestração | [delegate.md](docs/recursos/delegate.md) |
+| hooks | 4 hooks | Guardrail do projeto (`PreToolUse`) e anúncio de norma/guidelines/subagente — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 
 O plugin carrega o **mecanismo**. Guardrail e guideline são do projeto que instala — o método os
 materializa lá, e nunca viaja com os deste repositório.
@@ -78,6 +86,10 @@ python3 -c "import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scrip
 ```
 
 ### Procedimento de release
+
+O repositório precisa estar **público**: `source: archive` baixa o asset por URL anônima, e um repo
+privado devolve `404` para qualquer cliente sem token — inclusive `claude --plugin-url` e
+`/plugin marketplace add`.
 
 1. `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e imprime o
    caminho do zip e o SHA-256
