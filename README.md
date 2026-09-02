@@ -75,8 +75,10 @@ claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/do
 
 ## Como usar o Decode And Code
 
-Um documento por recurso, em [`docs/recursos/`](docs/recursos/), no formato *o que é · problema que
-resolve · como funciona · como usar · exemplos · fundamentação · base de conhecimento · limites*.
+Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skill, agent, comando, hooks)
+no formato *o que é · problema · como funciona · como usar · exemplos · fundamentação · base de
+conhecimento · limites*, e um **guia de uso** por camada normativa — quando e como criar um
+princípio, uma guideline, um guardrail.
 
 | Tipo | Recurso | O que faz | Doc |
 |---|---|---|---|
@@ -86,6 +88,9 @@ resolve · como funciona · como usar · exemplos · fundamentação · base de 
 | command | `/decode-and-code:implement` | Roda o modo `implement` na sessão atual — pensado para sessão nova | [implement.md](docs/recursos/implement.md) |
 | command | `/decode-and-code:delegate` | Delega a unidade ao agent `developer` sem sair da sessão de orquestração | [delegate.md](docs/recursos/delegate.md) |
 | hooks | 4 hooks | Guardrail do projeto (`PreToolUse`) e anúncio de norma/guidelines/subagente — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
+| guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
+| guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
+| guia de uso | Criar um guardrail | Quando e como adicionar uma regra a `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
 
 O plugin carrega o **mecanismo**. Guardrail e guideline são do projeto que instala — o método os
 materializa lá, e nunca viaja com os deste repositório.
