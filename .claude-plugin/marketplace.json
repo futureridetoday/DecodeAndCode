@@ -12,7 +12,8 @@
       "displayName": "Decode and Code",
       "source": {
         "source": "archive",
-        "url": "PENDENTE-RELEASE-v1.0.0"
+        "url": "https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.0.0/decode-and-code-1.0.0.zip",
+        "sha256": "dec6c308b4fbbde8728c69ab690040951c7e3167075183e8c71aaf489674d69f"
       },
       "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
       "version": "1.0.0",
