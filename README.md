@@ -1,11 +1,22 @@
 # decode-and-code
 
-Plugin do Claude Code que empacota o método **decode-and-code**: a norma em camadas (princípio,
-guideline, guardrail), o porte de plano, e o ciclo `plano → unidade → cold-start`.
+Plugin do Claude Code que empacota o método **decode-and-code**: o ciclo `plano → unidade →
+cold-start` que transforma trabalho novo em unidades executáveis por uma sessão sem contexto, e a
+**norma em camadas** que decide o que cada unidade pode assumir sem perguntar.
 
-O problema que ele resolve: uma sessão nova não sabe o que a anterior sabia. O método faz o plano
-carregar essa diferença — cada unidade é escrita para ser executada por alguém que chega sem
-contexto, e o critério de que ela está pronta é justamente esse.
+**O problema.** Uma sessão nova do modelo não sabe o que a anterior sabia — o custo aparece como
+retrabalho, decisão re-tomada e execução que diverge do combinado. Documentação solta não resolve:
+não é lida no momento certo, e envelhece sem ninguém notar.
+
+**A resposta.** O método faz o *plano* carregar a diferença entre sessões. Trabalho novo vira um
+plano; o plano é derivado em *unidades*; cada unidade é escrita para quem chega **sem contexto** da
+conversa que a produziu — com contrato, arquivos que toca, normas que referencia e um **teste
+declarado**. O critério de que ela está pronta é esse teste passando, não a opinião de quem revisa.
+O que a unidade não repete, ela referencia — a norma em camadas guarda o que vale, *uma fonte por
+fato*.
+
+**A evidência.** A skill de origem, medida no AmFlow: 15 de 15 unidades executadas por Sonnet em
+sessões novas, sem uma pergunta sobre o conteúdo da unidade.
 
 ## Instalação
 
@@ -91,6 +102,51 @@ materializa lá, e nunca viaja com os deste repositório.
 
 Quem executa uma unidade entrega arquivos e relatório, e não commita. O estado de cada unidade
 (`spec` → `wip` → `verified`) é **projetado a partir do teste**, nunca editado à mão.
+
+## A norma em camadas
+
+O que uma unidade pode assumir sem perguntar vive em quatro camadas, separadas por quão negociável
+cada uma é. A unidade **referencia** a camada, nunca a copia — *uma fonte por fato*.
+
+| Camada | O que é | Onde fica registrado | Como entra em contexto |
+|---|---|---|---|
+| **Princípio** | a direção e o porquê — estável, muda só por decisão deliberada | [`.claude/rules/principles.md`](.claude/rules/principles.md) | carrega em **toda sessão** — o arquivo não declara `paths:` |
+| **Guideline** | o "como" técnico de um escopo — decisão de projeto | um arquivo por regra em `.claude/rules/`, com `paths:` no frontmatter (desligadas ficam no irmão `.claude/rules-off/`) | **ativa sozinha** quando um arquivo que casa `paths:` é tocado |
+| **Guardrail** | um limite verificável — o que nunca se faz | `.claude/guardrails.json` | o hook `PreToolUse` consulta a cada chamada de ferramenta e pode **negar**, com a regra no motivo |
+| **Referência** | fonte externa canônica — a doc oficial de uma biblioteca-chave | citada no `<core>/system/` | a unidade aponta quando é relevante |
+
+O `CLAUDE.md` é a camada de **processo**; `<core>/system/` cobre o **domínio**.
+
+**Princípio ou guideline? O teste.** *Uma equipe competente pode rejeitar isto e ainda estar
+fazendo trabalho bom?* Se **não**, é princípio — os deste repositório (*código é custo*, *subtração
+antes de adição*, *evidência acima de opinião*, mais o fluxo de decodificação e o protocolo de
+exceção) estão em [`principles.md`](.claude/rules/principles.md), com a proveniência em
+[`03-principles-rule.md`](docs/plan/model/0001-decode-and-code-foundation/03-principles-rule.md). Se
+**sim**, é guideline. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
+`paths:` e carrega por escopo.
+
+**Guideline ou skill?** Skill é **invocada** — alguém pede, e ela responde *como fazer X*. Guideline
+é **ativada** — entra sozinha pelo caminho do arquivo, e responde *o que vale quando eu toco Y*.
+
+### Como cada camada nasce
+
+- **Princípio** — entra como unidade de tipo `norma` (entrega prosa normativa, com aprovação
+  humana). Não se descobre em execução, e não muda por conveniência.
+- **Guideline e guardrail** — **se escolhem por evidência de falha, não por elegância.** Uma
+  guideline nasce na primeira divergência observada entre duas execuções; um guardrail, quando um
+  incidente mostra o limite que faltava. Por isso a instância vive no projeto que instala — um repo
+  novo é greenfield e não tem incidente nenhum.
+- **Ligar e desligar guideline é operação de arquivo, não edição.** Mover entre `.claude/rules/` e
+  o irmão `.claude/rules-off/` (fora do que o Claude Code carrega); o `registry.json` que acompanha
+  é projeção, nunca fonte.
+
+### O que viaja no plugin
+
+O **mecanismo**: o carregamento nativo por `paths:`, o hook do guardrail, `rules.auditar_arvore()`,
+e a norma [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md) que **define** as camadas
+(seção *Camada normativa*). **Não viaja** o conteúdo: `.claude/rules/*` e `.claude/guardrails.json`
+são instância — cada projeto escreve os seus. `bootstrap.iniciar` materializa a norma no projeto que
+instala; as camadas, cada projeto preenche.
 
 ## Huddle
 
