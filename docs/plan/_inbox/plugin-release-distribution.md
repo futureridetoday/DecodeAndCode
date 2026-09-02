@@ -184,12 +184,30 @@ O executor **prepara e apresenta**; o humano autoriza o que sai do repositório.
 2. Executor: monta o comando `gh release create v1.0.0 <zip> --title "Decode and Code 1.0.0" --notes "…"`
    e a versão final do `marketplace.json` com `url`/`sha256` preenchidos — **apresenta, não roda**
 3. Humano (ou executor com autorização explícita): `git push`, cria o Release, sobe o asset
-4. Verificação, e **fecha a `L-01` do `0004`**:
+4. Verificação, e **fecha a `L-01` do `0004`**. Pré-condição: o repositório **público** — `source:
+   archive` baixa o asset por URL anônima, e repo privado devolve `404` (ver *Notas de execução →
+   Passo 9*):
    - `claude --plugin-url <URL do asset>` — carrega sem erro na aba `/plugin` → *Errors*?
      (se recusar, é o layout do zip — voltar ao passo 2, reempacotar com diretório-raiz, novo Release ou novo asset)
    - numa sessão real: `/plugin marketplace add futureridetoday/DecodeAndCode` →
      `/plugin install decode-and-code@future-ride-today`
-   - confirmar: skill `decode-and-code` disponível; `/decode-and-code:implement` e `/decode-and-code:delegate` listados; `@decode-and-code:planner` e `@decode-and-code:developer` presentes; invocar `@decode-and-code:planner` e reler o log de ativação para saber se `skills:` traz a skill junto
+   - **inventário** — `claude plugin details decode-and-code@future-ride-today` lista a skill
+     `decode-and-code`, os comandos `implement`/`delegate` (o CLI os agrupa sob *Skills*), os agents
+     `planner`/`developer` e os 4 hooks
+   - **`L-01` — `skills:` entrega a norma ao subagente?** Por **sonda comportamental**, nunca pelo
+     log de ativação: o hook `InstructionsLoaded` não registra skill, só memória e rules, então
+     ausência de linha de `SKILL.md` no log não conclui nada (ver *Notas de execução → Passo 9*).
+     Invocar `@decode-and-code:planner` e pedir, **sem ferramentas e sem ler arquivos**, três coisas
+     que só estão no `SKILL.md` e não no corpo do `planner.md`:
+     1. o terceiro modo que a skill define além de `review`/`derive` — esperado `implement`
+     2. a frase de recusa de modo ausente, palavra por palavra — esperado *"Modo ausente ou
+        desconhecido. Use um dos três: `review <plano>`, `derive <plano>`, `implement <unidade>`."*
+     3. um dos cinco scripts que o modo `derive` compõe — `scaffold.py`, `numeracao.py`,
+        `lint_unidade.py`, `backlog.py`, `handoff.py`
+
+     As três certas ⇒ `skills:` injeta a skill no contexto do subagente, `L-01` fecha. "Não está no
+     contexto", paráfrase da frase, ou só `review`/`derive` ⇒ `skills:` não carrega, defeito deste
+     plano
 5. Relatar o resultado — e, se algo falhar, é defeito **deste plano**, corrigido aqui
 
 ## Oráculo
@@ -226,6 +244,31 @@ Zip real gerado e inspecionado nesta sessão: `.claude-plugin/plugin.json` no n�
 (primeira tentativa do passo 2, layout confirmado contra a doc oficial — ver docstring de
 `empacotar_zip`), `claude plugin validate` aprova sobre o zip extraído. A prova que falta é
 `--plugin-url` contra um asset publicado de verdade — passo 9.
+
+### Passo 9 — 2026-09-02
+
+| Achado | Correção |
+|---|---|
+| `source: archive` referencia o asset por URL pública. `futureridetoday/DecodeAndCode` era privado; `claude --plugin-url <asset>` recebia `HTTP 404` — GitHub responde 404 (não 403) a recurso de repo privado sem autenticação. O `gh` funcionava nos passos 1–2 por mandar token, o que mascarou a falha. Rompe as vias por comando (`--plugin-url`, `/plugin marketplace add`) e a de marketplace comunitário; a de upload manual do zip escapa, porque o dono baixa autenticado | Repositório tornado público (`gh repo edit --visibility public --accept-visibility-change-consequences`). Varredura antes: sem `.env`, token, chave ou segredo na árvore ou no histórico. Busca anônima ponta a ponta passou a fechar — `302 → 200`, `sha256` do baixado idêntico ao do `marketplace.json`. O plano assumiu URL pública sem checar visibilidade; passa a exigir repo público como pré-condição do passo 9 |
+| `claude plugin details` lista `implement`/`delegate` sob **Skills**, não numa seção `Commands` — no repo são `type: command`. Rótulo do CLI, não defeito de empacotamento | Nenhuma. O critério do inventário no passo 9.4 é "componente presente", não a seção onde aparece |
+| O método original da `L-01` no passo 9.4 — "reler o log de ativação para saber se `skills:` traz a skill junto" — não funciona: skill nunca aparece no log de ativação (todos os 68 registros já escritos são `load_reason=session_start` sobre `CLAUDE.md`/`principles.md`). O hook `InstructionsLoaded` vê memória e rules, não skills. Ausência de linha de `SKILL.md` no log ⇒ nada se conclui | Trocado por **sonda comportamental**, agora especificada no passo 9.4: invocar `@decode-and-code:planner` e pedir, sem ferramentas, conteúdo exclusivo do `SKILL.md`. O `relatorio()` sai do método da `L-01` |
+
+Instalação real provada nesta sessão: `/plugin marketplace add futureridetoday/DecodeAndCode` +
+`/plugin install decode-and-code@future-ride-today`. `claude plugin details
+decode-and-code@future-ride-today` inventaria a skill `decode-and-code`, os agents
+`planner`/`developer`, os 2 comandos e os 4 hooks; o plugin é desempacotado do zip do Release em
+`~/.claude/plugins/cache/future-ride-today/decode-and-code/1.0.0/`, e a árvore do repo é clonada à
+parte em `~/.claude/plugins/marketplaces/future-ride-today/` só para ler o `marketplace.json`.
+
+**`L-01` fechada.** A sonda comportamental devolveu, do `@decode-and-code:planner` invocado sem
+ferramentas: o terceiro modo `implement`; a frase de modo ausente palavra por palavra ("Modo
+ausente ou desconhecido. Use um dos três: `review <plano>`, `derive <plano>`, `implement
+<unidade>`."); e os cinco scripts que o `derive` compõe (`scaffold.py`, `numeracao.py`,
+`lint_unidade.py`, `backlog.py`, `handoff.py`), com o detalhe do passo 1 do `scaffold.aprovar`.
+Nada disso está no corpo do `planner.md` — só no `SKILL.md`. Logo `skills: [decode-and-code]` no
+frontmatter do agent injeta a skill no contexto do subagente, provado contra um plugin instalado
+do marketplace por `source: archive`. (Rodou no repo de desenvolvimento, que tem a cópia local da
+skill; a `L-01` pergunta pelo mecanismo, não pela cópia — e o mecanismo carrega.)
 
 ## Fonte
 
