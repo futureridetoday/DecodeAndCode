@@ -16,7 +16,7 @@ block: ""
 # history
 author: Bortoli
 created: 2026-09-01
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: Bortoli
@@ -210,6 +210,22 @@ O executor **prepara e apresenta**; o humano autoriza o que sai do repositório.
      plano
 5. Relatar o resultado — e, se algo falhar, é defeito **deste plano**, corrigido aqui
 
+## Tarefas
+
+Espelho dos nove passos do *Escopo*, para a projeção de situação do porte médio. Todos entregues —
+os passos 1–8 na sessão de 2026-09-01, o passo 9 (Release + distribuição + instalação + fecho da
+`L-01`) na sessão de 2026-09-02, com os achados em *Notas de execução*.
+
+- [x] 1 — Manifestos e licença (`displayName`, identidade `Future Ride Today`, `license: MIT`, `LICENSE`, `source: archive`)
+- [x] 2 — Build produz zip (`empacotar_zip`, staging gitignorado, layout com `.claude-plugin/plugin.json` no nível 0)
+- [x] 3 — Testes (`TestPacoteCommitadoEstaSincronizado` removido, `TestEmpacotarZip` adicionado, suíte verde)
+- [x] 4 — Árvore construída removida do git (`dist/` e `*.zip` no `.gitignore`)
+- [x] 5 — Norma reconciliada (`modelo-dev-units.md`, subseção *Empacotamento* com uma narrativa só)
+- [x] 6 — README.md (instalação por comando/upload, procedimento de release)
+- [x] 7 — CLAUDE.md, seção Arquitetura (`dist/` volta a staging gitignorado, `source: archive`)
+- [x] 8 — Registro em `docs/plan/` (`D-11` do `0004` aponta para este arquivo, já como `0005`)
+- [x] 9 — Primeiro Release `v1.0.0` + verificação ponta a ponta, `L-01` fechada por sonda comportamental
+
 ## Oráculo
 
 | Alvo | Como se sabe que funcionou |
@@ -274,6 +290,17 @@ skill; a `L-01` pergunta pelo mecanismo, não pela cópia — e o mecanismo carr
 ## Backlog
 
 <!-- backlog:start -->
+- [x] 1 — Manifestos e licença (`displayName`, identidade `Future Ride Today`, `license: MIT`, `LICENSE`, `source: archive`)
+- [x] 2 — Build produz zip (`empacotar_zip`, staging gitignorado, layout com `.claude-plugin/plugin.json` no nível 0)
+- [x] 3 — Testes (`TestPacoteCommitadoEstaSincronizado` removido, `TestEmpacotarZip` adicionado, suíte verde)
+- [x] 4 — Árvore construída removida do git (`dist/` e `*.zip` no `.gitignore`)
+- [x] 5 — Norma reconciliada (`modelo-dev-units.md`, subseção *Empacotamento* com uma narrativa só)
+- [x] 6 — README.md (instalação por comando/upload, procedimento de release)
+- [x] 7 — CLAUDE.md, seção Arquitetura (`dist/` volta a staging gitignorado, `source: archive`)
+- [x] 8 — Registro em `docs/plan/` (`D-11` do `0004` aponta para este arquivo, já como `0005`)
+- [x] 9 — Primeiro Release `v1.0.0` + verificação ponta a ponta, `L-01` fechada por sonda comportamental
+
+9 de 9 tarefas concluídas · atualizado em 2026-09-02
 <!-- backlog:end -->
 
 ## Fonte
