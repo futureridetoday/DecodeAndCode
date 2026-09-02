@@ -7,8 +7,8 @@ description: A distribuição do plugin migra de dist/ commitado para asset de G
 tags: [decode-and-code, plugin, marketplace, distribuicao, release, github]
 
 # alvo
-plan_id: ""
-plan_size: medio
+plan_id: "0005"
+plan_size: médio
 core: model
 module: plugin-release-distribution
 block: ""
@@ -252,6 +252,7 @@ Zip real gerado e inspecionado nesta sessão: `.claude-plugin/plugin.json` no n�
 | `source: archive` referencia o asset por URL pública. `futureridetoday/DecodeAndCode` era privado; `claude --plugin-url <asset>` recebia `HTTP 404` — GitHub responde 404 (não 403) a recurso de repo privado sem autenticação. O `gh` funcionava nos passos 1–2 por mandar token, o que mascarou a falha. Rompe as vias por comando (`--plugin-url`, `/plugin marketplace add`) e a de marketplace comunitário; a de upload manual do zip escapa, porque o dono baixa autenticado | Repositório tornado público (`gh repo edit --visibility public --accept-visibility-change-consequences`). Varredura antes: sem `.env`, token, chave ou segredo na árvore ou no histórico. Busca anônima ponta a ponta passou a fechar — `302 → 200`, `sha256` do baixado idêntico ao do `marketplace.json`. O plano assumiu URL pública sem checar visibilidade; passa a exigir repo público como pré-condição do passo 9 |
 | `claude plugin details` lista `implement`/`delegate` sob **Skills**, não numa seção `Commands` — no repo são `type: command`. Rótulo do CLI, não defeito de empacotamento | Nenhuma. O critério do inventário no passo 9.4 é "componente presente", não a seção onde aparece |
 | O método original da `L-01` no passo 9.4 — "reler o log de ativação para saber se `skills:` traz a skill junto" — não funciona: skill nunca aparece no log de ativação (todos os 68 registros já escritos são `load_reason=session_start` sobre `CLAUDE.md`/`principles.md`). O hook `InstructionsLoaded` vê memória e rules, não skills. Ausência de linha de `SKILL.md` no log ⇒ nada se conclui | Trocado por **sonda comportamental**, agora especificada no passo 9.4: invocar `@decode-and-code:planner` e pedir, sem ferramentas, conteúdo exclusivo do `SKILL.md`. O `relatorio()` sai do método da `L-01` |
+| `plan_size: medio` no frontmatter, sem acento — fora do vocabulário `("pequeno", "médio", "grande")` de `lib.PLAN_SIZES_VALIDOS`; `scaffold.aprovar` recusava com `ValueError` | Corrigido para `médio`. Feito o passo 8: `scaffold.aprovar` moveu o plano do `_inbox/` para `model/0005-plugin-release-distribution.md`, projetou `plan_id: "0005"`/`status: approved`, inseriu a seção `## Backlog`, registrou a linha em `_planos.md` e reescreveu o link da `D-11` no `0004` para `../0005-plugin-release-distribution.md` |
 
 Instalação real provada nesta sessão: `/plugin marketplace add futureridetoday/DecodeAndCode` +
 `/plugin install decode-and-code@future-ride-today`. `claude plugin details
@@ -269,6 +270,11 @@ Nada disso está no corpo do `planner.md` — só no `SKILL.md`. Logo `skills: [
 frontmatter do agent injeta a skill no contexto do subagente, provado contra um plugin instalado
 do marketplace por `source: archive`. (Rodou no repo de desenvolvimento, que tem a cópia local da
 skill; a `L-01` pergunta pelo mecanismo, não pela cópia — e o mecanismo carrega.)
+
+## Backlog
+
+<!-- backlog:start -->
+<!-- backlog:end -->
 
 ## Fonte
 
