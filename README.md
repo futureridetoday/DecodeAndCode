@@ -92,6 +92,40 @@ materializa lá, e nunca viaja com os deste repositório.
 Quem executa uma unidade entrega arquivos e relatório, e não commita. O estado de cada unidade
 (`spec` → `wip` → `verified`) é **projetado a partir do teste**, nunca editado à mão.
 
+## Huddle
+
+[`docs/plan/system/huddle.md`](docs/plan/system/huddle.md) é a **fila do que ainda não foi
+decidido** — a pauta da conversa recorrente entre quem conduz o projeto e o modelo. Um arquivo por
+projeto, nunca carregado automaticamente: entra em contexto quando a conversa acontece, senão
+competiria com norma já decidida.
+
+**Para que serve.** As três camadas normativas (princípio, guideline, guardrail) só guardam o que
+já foi decidido. O huddle guarda o resto: pergunta em aberto, contradição que a execução contornou,
+padrão que uma sessão sozinha não revela, alternativa rejeitada cuja premissa pode ter mudado, algo
+que o humano corrigiu. **Nada ali é autoritativo enquanto está ali.** Uma entrada nasce aberta, é
+discutida, e quando resolve **sai** — para a norma, uma guideline, ou o `## Decisões` de um plano —,
+deixando uma linha em `## Fechadas` com data e destino. Um huddle onde nada fecha só cresce.
+
+**Como usar.**
+
+- **Criar o seu.** O `huddle.md` não viaja no pacote — é instância pura de cada projeto. Quem
+  instala o plugin roda `huddle.iniciar(<plan_root>/system/huddle.md)` e recebe o esqueleto vazio,
+  com as seções `## Abertas` e `## Fechadas`.
+- **Abrir uma entrada.** Cabeçalho de linha única — `### H-XX · <tipo> · AAAA-MM-DD · autor` —, com
+  `<tipo>` de vocabulário fechado: `pergunta`, `divergência`, `padrão`, `revisitar`, `observação`.
+- **Quando escrever.** No fecho do relatório de qualquer um dos três modos (`review`, `derive`,
+  `implement`), uma linha declara `entradas novas no huddle: N` — obrigatória mesmo com `N` igual a
+  zero, para separar *conferi e não havia* de *nunca conferi*.
+- **Verificar.** `huddle.lint_arquivo(<caminho>)` prova o invariante de despejo: o mesmo `H-XX`
+  nunca em `## Abertas` e `## Fechadas` ao mesmo tempo. `huddle.lint_relatorio(<texto>)` recusa o
+  relatório sem a linha de fecho.
+- **A conversa recorrente.** O próprio `huddle.md` traz um *Prompt de continuidade*, preenchido com
+  o estado fresco no fim do trabalho e colado numa sessão nova: `## Como conversamos` define as
+  condições da conversa, `## Abertas` é a pauta.
+
+Formato completo, os cinco gatilhos de escrita e a regra de despejo:
+[`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md), seção *Huddle*.
+
 ## Como este repositório se relaciona com o pacote
 
 `.claude/` é a **fonte** — a skill, os hooks, os agentes, os comandos e o manifesto
