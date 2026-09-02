@@ -80,8 +80,10 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 - Português brasileiro na documentação; identificadores em inglês
 
 **Git**
-- PRs para `main` exigem revisão manual
-- Nunca fazer force push em `main`
+- `dev` é o branch default e recebe todo o trabalho normal — plano, doc e código entram por PR para `dev`
+- `main` é produção: só recebe promoção de `dev` no release (merge + tag), nunca commit direto
+- PRs exigem revisão manual — convenção, não regra no GitHub
+- Force push proibido em `main`; em `dev` é permitido
 
 **Autonomia**
 - Decisões arquiteturais exigem aprovação prévia

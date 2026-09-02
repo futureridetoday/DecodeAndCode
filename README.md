@@ -23,15 +23,16 @@ sessões novas, sem uma pergunta sobre o conteúdo da unidade.
 ### Por comando
 
 ```bash
-/plugin marketplace add futureridetoday/DecodeAndCode
+/plugin marketplace add futureridetoday/DecodeAndCode@main
 ```
 
 ```bash
 /plugin install decode-and-code@future-ride-today
 ```
 
-Os dois comandos rodam dentro do Claude Code. O primeiro registra o marketplace deste repositório;
-o segundo instala o plugin a partir dele.
+Os dois comandos rodam dentro do Claude Code. O primeiro registra o marketplace deste repositório,
+fixado no branch **`main`** (produção) — o `@main` persiste entre atualizações, mesmo com `dev`
+como branch default; o segundo instala o plugin a partir dele.
 
 ### Por upload
 
@@ -201,18 +202,19 @@ python3 -c "import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scrip
 
 ### Procedimento de release
 
-O repositório precisa estar **público**: `source: archive` baixa o asset por URL anônima, e um repo
-privado devolve `404` para qualquer cliente sem token — inclusive `claude --plugin-url` e
-`/plugin marketplace add`.
+Desenvolvimento acontece em **`dev`** (staging, branch default). O release promove `dev` → `main`
+(produção) e publica dali — a instalação por comando fixa `@main` (ver *Instalação*). O repositório
+precisa estar **público**: `source: archive` baixa o asset por URL anônima, e um repo privado
+devolve `404` para qualquer cliente sem token.
 
-1. Bump de `version` em **`.claude/plugin.json` e na entrada do plugin no `marketplace.json`** — os
-   dois têm que concordar (`claude plugin tag` valida isso)
-2. `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e imprime o
-   caminho do zip e o SHA-256
-3. `gh release create v<versão> decode-and-code-<versão>.zip --title "Decode and Code <versão>" --notes "…"`
-4. Copiar a URL do asset publicado e o SHA-256 para a entrada do plugin no `marketplace.json`
-   (`url`, `sha256`)
-5. Commit, push
+1. Em `dev`: bump de `version` em **`.claude/plugin.json` e na entrada do plugin no
+   `marketplace.json`** — os dois têm que concordar (`claude plugin tag` valida isso)
+2. Em `dev`: `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e
+   imprime o caminho do zip e o SHA-256
+3. Em `dev`: preencher no `marketplace.json` a `url` (determinística —
+   `…/releases/download/v<versão>/decode-and-code-<versão>.zip`) e o `sha256` do passo 2; commit
+4. Promover `dev` → `main` (merge, sem force) e push
+5. Em `main`: `gh release create v<versão> decode-and-code-<versão>.zip --target main --title "Decode and Code <versão>" --notes "…"`
 6. `/plugin marketplace update future-ride-today` — e os usuários rodam a *Atualização* acima
 
 ## Desenvolvimento
