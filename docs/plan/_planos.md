@@ -33,7 +33,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0002 | [record-plan-closure](model/0002-record-plan-closure.md) | model | record-plan-closure | — | concluído | 2026-08-27 |
 | 0003 | [derive-handoff-prompt](model/0003-derive-handoff-prompt.md) | model | derive-handoff-prompt | — | concluído | 2026-08-27 |
 | 0004 | [installable-method](model/0004-installable-method/0004-installable-method.md) | model | installable-method | — | concluído | 2026-08-27 |
-| 0005 | [plugin-release-distribution](model/0005-plugin-release-distribution.md) | model | plugin-release-distribution | — | em desenvolvimento | 2026-09-01 |
+| 0005 | [plugin-release-distribution](model/0005-plugin-release-distribution.md) | model | plugin-release-distribution | — | concluído | 2026-09-01 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
