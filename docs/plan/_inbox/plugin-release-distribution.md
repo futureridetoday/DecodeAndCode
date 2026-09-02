@@ -214,6 +214,19 @@ O executor **prepara e apresenta**; o humano autoriza o que sai do repositório.
 | Passos 1–8 não commitam nem fazem push; passo 9 é ato humano | este plano |
 | Nada específico deste repositório pode vazar no pacote — `empacotar.verificar` é o guarda | `CLAUDE.md`, Invariante 2 |
 
+## Notas de execução
+
+Achado durante a execução dos passos 1–8, em 2026-09-01. Não reabre nenhuma decisão travada.
+
+| Achado | Correção |
+|---|---|
+| `empacotar.verificar()` acusava falso positivo em `.claude-plugin/plugin.json`: os campos `repository`/`homepage` novos (`T-2`) apontam para o GitHub deste método, e o nome do repositório aparece ali sempre que o diretório local se chama como o repositório real — o caso comum, não vazamento do checkout que construiu o pacote | `verificar()` passou a excluir o manifesto do escaneamento de instância; ele é copiado verbatim (nunca passa por `_declarar_o_plugin`) e sua função é justamente declarar essa identidade fixa. Documentado no docstring de `verificar()` |
+
+Zip real gerado e inspecionado nesta sessão: `.claude-plugin/plugin.json` no nível 0 do archive
+(primeira tentativa do passo 2, layout confirmado contra a doc oficial — ver docstring de
+`empacotar_zip`), `claude plugin validate` aprova sobre o zip extraído. A prova que falta é
+`--plugin-url` contra um asset publicado de verdade — passo 9.
+
 ## Fonte
 
 - Doc oficial do Claude, consultada em 2026-09-01:

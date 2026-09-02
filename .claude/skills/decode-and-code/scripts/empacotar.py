@@ -17,10 +17,12 @@ o par que fecha o invariante nos dois sentidos.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
 import subprocess
+import zipfile
 from pathlib import Path
 
 import lib
@@ -31,6 +33,8 @@ _ANCORA_PLUGIN = "${CLAUDE_PLUGIN_ROOT}/hooks"
 _PROJECT_RE = re.compile(r"(?m)^project:.*$")
 
 _DESTINO_DEFAULT = "dist/decode-and-code"
+
+_MANIFESTO_RELATIVO = Path(".claude-plugin") / "plugin.json"
 
 
 def _resolver_destino(destino: Path | str) -> Path:
@@ -235,6 +239,16 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     """Percorre `destino` e devolve um problema por ocorrência de instância do projeto de origem.
 
     Lista vazia quando o pacote está limpo — mesmo padrão de `lint_*`.
+
+    **O manifesto fica fora do escaneamento, medido nesta sessão (2026-09-01).**
+    `.claude-plugin/plugin.json` declara `repository`/`homepage` apontando para o GitHub deste
+    método — texto fixo e autoral, correto em qualquer checkout —, e por isso carrega o nome do
+    repositório de origem sempre que o diretório local se chamar como o repositório real (o caso
+    comum: quem clona não costuma renomear). Não é o vazamento que o marcador persegue — esse é a
+    cópia de `SKILL.md`/comandos/norma citando o checkout que os construiu, e `_copiar_manifesto`
+    nunca passa pela reescrita que os outros três recebem (`_declarar_o_plugin`): o manifesto é
+    copiado verbatim porque sua função é justamente declarar essa identidade, e ela não muda com o
+    nome do diretório de quem constrói.
     """
     destino = _resolver_destino(destino)
     marcadores = _marcadores_instancia()
@@ -242,6 +256,8 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     problemas = []
     for arquivo in sorted(destino.rglob("*")):
         if not arquivo.is_file():
+            continue
+        if arquivo.relative_to(destino) == _MANIFESTO_RELATIVO:
             continue
         texto = _texto(arquivo)
         for marcador in marcadores:
@@ -278,6 +294,59 @@ def validar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
         return []
     saida = resultado.stdout.decode("utf-8", errors="replace").strip()
     return [f"claude plugin validate reprovou: {saida}"]
+
+
+def empacotar_zip(staging: Path | str | None = None) -> tuple[Path, str]:
+    """Zipa a árvore do plugin e devolve `(caminho_do_zip, sha256_hex)` — imprime os dois.
+
+    `staging` ausente constrói no destino default (`_DESTINO_DEFAULT`) antes de zipar; passado,
+    assume que quem chamou já construiu ali — o mesmo contrato de `verificar`/`validar`, que também
+    recebem a árvore pronta em vez de construí-la.
+
+    **Gate antes da escrita.** `verificar` (vazamento de instância) e `validar` (`claude plugin
+    validate`) rodam sobre o staging antes de qualquer byte de zip ser escrito; qualquer problema
+    levanta `RuntimeError` — zip que carrega instância do projeto de origem ou reprova o validador
+    oficial não deveria existir no disco, nem para inspeção.
+
+    **Layout — raiz do plugin no topo do archive, medido contra a doc oficial, não suposto.**
+    `plugin-marketplaces` (*Zip Archive source*, consultada em 2026-09-01) diz que o Claude Code
+    procura `.claude-plugin/` na raiz do zip e, se não achar, dentro de uma única pasta de nível 1 —
+    os dois layouts instalam. Esta função usa o primeiro. A prova ponta a ponta com `--plugin-url`
+    contra um asset real de Release é ato humano; se recusar, o conserto é trocar para o segundo
+    layout aqui, não noutro lugar.
+
+    **`date_time` fixo, não o mtime do disco.** `_declarar_o_plugin` reescreve alguns arquivos a
+    cada `construir` (`SKILL.md`, a norma copiada, os dois comandos), o que muda o mtime a cada
+    build mesmo com o conteúdo idêntico. Um zip que varia byte a byte entre duas construções da
+    mesma fonte não serve de artefato reprodutível — por isso todo `ZipInfo` nasce com a mesma
+    data, e só o conteúdo decide o hash.
+    """
+    if staging is None:
+        staging = _resolver_destino(_DESTINO_DEFAULT)
+        construir(staging)
+    else:
+        staging = _resolver_destino(staging)
+
+    problemas = verificar(staging) + validar(staging)
+    if problemas:
+        raise RuntimeError(
+            "empacotar_zip: staging reprovado, zip não escrito — " + "; ".join(problemas)
+        )
+
+    manifesto = json.loads((staging / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    caminho_zip = lib.repo_root() / f"decode-and-code-{manifesto['version']}.zip"
+
+    with zipfile.ZipFile(caminho_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+        for arquivo in sorted(staging.rglob("*")):
+            if not arquivo.is_file():
+                continue
+            info = zipfile.ZipInfo(str(arquivo.relative_to(staging)), date_time=(1980, 1, 1, 0, 0, 0))
+            zf.writestr(info, arquivo.read_bytes(), zipfile.ZIP_DEFLATED)
+
+    sha256 = hashlib.sha256(caminho_zip.read_bytes()).hexdigest()
+    print(caminho_zip)
+    print(sha256)
+    return caminho_zip, sha256
 
 
 def materializar(origem: Path, projeto: Path) -> Path:

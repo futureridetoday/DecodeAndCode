@@ -31,6 +31,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest import mock
 
@@ -341,57 +342,85 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertEqual(empacotar.verificar(destino), [])
 
 
-def _arvore(raiz: Path) -> dict[str, bytes]:
-    """Mapa `caminho relativo → conteúdo`, ignorando lixo que não é produto de `construir`.
+class TestEmpacotarZip(unittest.TestCase):
+    """`empacotar_zip` sobre o pacote real — par de `TestPacoteRealEstaLimpo` para o zip.
 
-    `__pycache__` aparece dentro do pacote assim que alguém importa um script de lá, e `.DS_Store`
-    aparece assim que o Finder abre a pasta. Nenhum dos dois é escrito por `construir` — compará-los
-    faria o teste falhar por um `ls` no Finder, que é exatamente o gate que se desliga.
-    """
-    return {
-        str(p.relative_to(raiz)): p.read_bytes()
-        for p in sorted(raiz.rglob("*"))
-        if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store"
-    }
-
-
-class TestPacoteCommitadoEstaSincronizado(unittest.TestCase):
-    """O pacote em `dist/decode-and-code` é versionado, e este caso é o preço disso.
-
-    A `D-21` do plano `0001` decidiu o contrário — build reproduzível, `dist/` no `.gitignore` —,
-    e a razão dada era boa: *árvore construída e commitada envelhece a cada mudança da fonte, e
-    nada avisa*. A distribuição reverte a decisão, porque `.claude-plugin/marketplace.json` aponta
-    `source` para um caminho que precisa **existir no repositório clonado** — quem instala não roda
-    `construir`. O que a `D-21` temia continua verdade; o que muda é o *nada avisa*: este caso é o
-    aviso, e sem ele a reversão seria a divergência de 2026-08-01 outra vez.
+    `verificar`/`validar` sintéticos já têm caso próprio (`TestVerificar`,
+    `TestValidarPelaFerramentaOficial`); aqui o alvo é o que só existe depois do zip: o conteúdo do
+    archive, o gate que veste os dois antes de escrevê-lo, e o determinismo do hash.
     """
 
-    def test_dist_versionado_bate_com_a_construcao_recem_feita(self):
-        commitado = empacotar._resolver_destino(empacotar._DESTINO_DEFAULT)
-        self.assertTrue(
-            commitado.is_dir(),
-            f"o pacote versionado não existe em {commitado} — rode empacotar.construir()",
-        )
+    def _construir_e_zipar(self, tmp: str):
+        """`None` quando `claude` está ausente — `empacotar_zip` recusa, sem exceção, sem zip."""
+        destino = Path(tmp) / "pkg"
+        empacotar.construir(destino)
+        if shutil.which("claude") is None:
+            with self.assertRaises(RuntimeError):
+                empacotar.empacotar_zip(destino)
+            return None
+        caminho_zip, sha256 = empacotar.empacotar_zip(destino)
+        self.addCleanup(lambda: caminho_zip.unlink(missing_ok=True))
+        return destino, caminho_zip, sha256
 
+    def test_zip_contem_manifesto_no_nivel_zero_e_parseavel(self):
         with tempfile.TemporaryDirectory() as tmp:
-            recem = Path(tmp) / "pkg"
-            empacotar.construir(recem)
+            resultado = self._construir_e_zipar(tmp)
+            if resultado is None:
+                return
+            _, caminho_zip, _ = resultado
 
-            esperado = _arvore(recem)
-            obtido = _arvore(commitado)
+            with zipfile.ZipFile(caminho_zip) as zf:
+                self.assertIn(".claude-plugin/plugin.json", zf.namelist())
+                manifesto = json.loads(zf.read(".claude-plugin/plugin.json"))
+            self.assertEqual(manifesto["name"], "decode-and-code")
 
-        faltando = sorted(set(esperado) - set(obtido))
-        sobrando = sorted(set(obtido) - set(esperado))
-        diferentes = sorted(
-            nome for nome in set(esperado) & set(obtido) if esperado[nome] != obtido[nome]
-        )
+    def test_verificar_e_validar_ficam_limpos_sobre_o_staging_do_zip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            resultado = self._construir_e_zipar(tmp)
+            if resultado is None:
+                return
+            destino, _, _ = resultado
+            self.assertEqual(empacotar.verificar(destino), [])
+            self.assertEqual(empacotar.validar(destino), [])
 
-        self.assertEqual(
-            ([], [], []),
-            (faltando, sobrando, diferentes),
-            "o pacote versionado divergiu da fonte — rode empacotar.construir() e commite "
-            f"{commitado.name}/ (faltando={faltando}, sobrando={sobrando}, diferentes={diferentes})",
-        )
+    def test_sha256_tem_64_hex_e_e_igual_entre_duas_construcoes(self):
+        with tempfile.TemporaryDirectory() as tmp1, tempfile.TemporaryDirectory() as tmp2:
+            resultado1 = self._construir_e_zipar(tmp1)
+            if resultado1 is None:
+                return
+            _, zip1, sha1 = resultado1
+            self.assertRegex(sha1, r"^[0-9a-f]{64}$")
+            conteudo1 = zip1.read_bytes()
+
+            _, zip2, sha2 = self._construir_e_zipar(tmp2)
+            self.assertEqual(sha1, sha2)
+            self.assertEqual(conteudo1, zip2.read_bytes())
+
+    def test_nao_escreve_zip_se_verificar_ou_validar_reprovarem(self):
+        """Confere preservação, nunca ausência — `esperado` é o caminho real de release
+        (`lib.repo_root()`, versão do `plugin.json`), e pode já existir de um build anterior. Um
+        `assertFalse(esperado.exists())` reprovaria (e o cleanup apagaria) um zip legítimo que já
+        estivesse lá; o gate provado aqui é que a chamada reprovada não o toca, exista ele ou não.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+            versao = json.loads(
+                (destino / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+            )["version"]
+            esperado = lib.repo_root() / f"decode-and-code-{versao}.zip"
+            conteudo_antes = esperado.read_bytes() if esperado.exists() else None
+
+            with mock.patch.object(empacotar, "validar", return_value=["forçado para o teste"]):
+                with self.assertRaises(RuntimeError):
+                    empacotar.empacotar_zip(destino)
+
+            if conteudo_antes is None:
+                self.assertFalse(esperado.exists(), "gate reprovado não deveria criar o zip")
+            else:
+                self.assertEqual(
+                    esperado.read_bytes(), conteudo_antes, "gate reprovado não deveria tocar um zip preexistente"
+                )
 
 
 class TestScaffoldImportaDoPacote(unittest.TestCase):

@@ -1,18 +1,23 @@
 {
-  "$schema": "https://code.claude.com/schemas/marketplace.json",
-  "name": "bortoli",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "future-ride-today",
   "description": "Métodos de desenvolvimento empacotados como plugins do Claude Code",
   "owner": {
-    "name": "Bortoli"
+    "name": "Future Ride Today",
+    "url": "https://github.com/futureridetoday"
   },
   "plugins": [
     {
       "name": "decode-and-code",
-      "source": "./dist/decode-and-code",
+      "displayName": "Decode and Code",
+      "source": {
+        "source": "archive",
+        "url": "PENDENTE-RELEASE-v1.0.0"
+      },
       "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
       "version": "1.0.0",
       "author": {
-        "name": "Bortoli"
+        "name": "Future Ride Today"
       },
       "repository": "https://github.com/futureridetoday/DecodeAndCode",
       "keywords": ["metodo", "planejamento", "dev-units", "cold-start"]

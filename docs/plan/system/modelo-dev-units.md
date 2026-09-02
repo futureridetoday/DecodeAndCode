@@ -315,12 +315,14 @@ gate que se desliga.
 > `.claude-plugin/marketplace.json` só entra quando se quer **catalogar** plugins para outros. O
 > pacote deste repositório passa em `claude plugin validate` sem marketplace nenhum.
 
-**Distribuir é a operação seguinte, e cobra o pacote versionado.** Quem instala clona o repositório
-e não roda `construir`: o `source` de cada entrada do `marketplace.json` aponta um caminho que
-precisa **existir no clone**. Por isso `dist/decode-and-code/` saiu do `.gitignore` — e por isso a
-sincronia entre fonte e pacote virou caso de teste, não disciplina. Árvore construída e commitada
-envelhece a cada mudança da fonte; o que separa isso de drift é haver um gate que reprova quando
-o commitado e o recém-construído divergem em um byte.
+**Distribuir é a operação seguinte, e não cobra pacote no clone.** `empacotar.empacotar_zip(staging)`
+zipa a árvore já construída e devolve `(caminho, sha256)`; o zip — `decode-and-code-<version>.zip` —
+vira asset de um **GitHub Release**, e cada entrada do `marketplace.json` o referencia por
+`source: { "source": "archive", "url": "<https>", "sha256": "<64 hex>" }`. O Claude Code baixa o zip
+dessa URL e confere o hash a cada instalação: nada precisa existir de antemão no repositório
+clonado, e `dist/decode-and-code/` — o `destino` default de `construir` — permanece **staging
+gitignorado**, junto de `*.zip`. Publicar é ato humano: constrói, zipa, sobe o asset ao Release, e
+copia `url`/`sha256` para o `marketplace.json`.
 
 > **Os dois papéis do repositório de origem separam-se por diretório, e o `.claude-plugin/` da raiz
 > é do marketplace.** O manifesto do plugin é **fonte**, e mora junto das outras fontes que
@@ -346,10 +348,6 @@ plugin — é o controle que separa o hook empacotado do hook do projeto, e a tr
 guideline específica para `<projeto>/.claude/rules/`, e levanta `FileExistsError` sem tocar o
 destino se ele já existir — nunca sobrescreve norma em silêncio. O plugin não embarca catálogo de
 guideline nenhum; quem instala escolhe o que materializar.
-
-**O pacote não é versionado** — `destino` default é `dist/decode-and-code/`, e `dist/` entra no
-`.gitignore`. Árvore construída e commitada envelhece em silêncio a cada mudança da fonte. Publicar
-é ato humano.
 
 #### Reconciliação — divergência por conteúdo, nunca por versão
 

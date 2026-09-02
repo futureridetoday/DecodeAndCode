@@ -53,11 +53,14 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 - `docs/plan/` — planos e unidades, destino de todo trabalho novo
 - `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
 - `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
-  `empacotar.construir` copia
-- `.claude-plugin/marketplace.json` — o catálogo, e a única coisa que a raiz declara: a raiz é
-  marketplace, nunca plugin
-- `dist/decode-and-code/` — o pacote construído, **versionado** (`D-09` do plano `0004`): quem
-  instala clona e não roda o build. A sincronia com a fonte é caso de teste, não disciplina
+  `empacotar.construir` copia (`D-10` do plano `0004`: a raiz do repositório carrega só o
+  marketplace, nunca o plugin)
+- `.claude-plugin/marketplace.json` — o catálogo do marketplace `future-ride-today` (owner
+  `Future Ride Today`); a entrada do plugin referencia `source: archive` — zip anexado a um
+  GitHub Release, não caminho no clone (`D-11` do plano `0004`)
+- `dist/decode-and-code/` — staging **gitignorado**: `empacotar.construir` o escreve do zero a
+  cada build. O que se distribui é o zip que `empacotar.empacotar_zip` produz dali, publicado
+  como asset de Release
 
 ## Recursos Instalados
 

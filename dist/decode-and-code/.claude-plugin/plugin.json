@@ -1,8 +1,0 @@
-{
-  "name": "decode-and-code",
-  "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
-  "version": "1.0.0",
-  "author": {
-    "name": "Bortoli"
-  }
-}
