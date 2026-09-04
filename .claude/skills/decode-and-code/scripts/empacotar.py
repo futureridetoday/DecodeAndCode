@@ -213,17 +213,25 @@ def _marcadores_instancia() -> tuple[str, ...]:
 
 
 def _ancora_de_projeto(destino: Path) -> list[str]:
-    """`${CLAUDE_PROJECT_DIR}` dentro de `hooks/` — onde a âncora errada quebra de verdade.
+    """`${CLAUDE_PROJECT_DIR}` (forma de placeholder, com `${...}`) dentro de `hooks/` — onde a
+    âncora errada quebra de verdade: um hook cujo comando não passou pela troca de
+    `_escrever_hooks_json` continua citando o placeholder de substituição de texto, e o
+    processo instalado vai procurar o próprio código — mecanismo, não instância — na árvore de
+    quem instalou. Mesmo erro de quadro de referência da `L-24`: ancorar a busca onde ela
+    significa alguma coisa, nunca no texto inteiro.
 
-    Fora de `hooks/` a string é dado (a constante que orienta a troca); dentro dela é um hook que
-    vai procurar o próprio código na árvore de quem instalou. É o mesmo erro de quadro de
-    referência da `L-24`: ancorar a busca onde ela significa alguma coisa, nunca no texto inteiro.
+    **Só a forma com `${...}`, não a palavra nua.** Medido em 2026-09-04 (AmFlow, correção do
+    guardrail): `pre_tool_use.py` passou a ler `os.environ.get("CLAUDE_PROJECT_DIR")` para achar
+    `guardrails.json` — dado do projeto que instala, não o próprio código —, e isso é exatamente
+    o que a doc oficial recomenda para um hook (`code.claude.com/docs/en/hooks`, a variável é
+    exportada no processo). Buscar a palavra nua reprovava esse uso correto — e a prosa do
+    docstring que o explica — junto com o placeholder que de fato indica âncora esquecida.
     """
     pasta = destino / "hooks"
     problemas = []
     for arquivo in sorted(pasta.rglob("*")) if pasta.is_dir() else []:
-        if arquivo.is_file() and "CLAUDE_PROJECT_DIR" in _texto(arquivo):
-            problemas.append(f"{arquivo.relative_to(destino)}: âncora 'CLAUDE_PROJECT_DIR' em hooks/")
+        if arquivo.is_file() and "${CLAUDE_PROJECT_DIR}" in _texto(arquivo):
+            problemas.append(f"{arquivo.relative_to(destino)}: âncora '${{CLAUDE_PROJECT_DIR}}' em hooks/")
     return problemas
 
 
