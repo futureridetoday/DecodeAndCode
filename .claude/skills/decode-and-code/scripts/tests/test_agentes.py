@@ -83,6 +83,34 @@ class TestDeveloperReal(unittest.TestCase):
         self.assertIn("volta para quem deriva", self.texto)
 
 
+class TestAiBuilderReal(unittest.TestCase):
+    """O caso contra o artefato real — sem ele, o lint prova só o mecanismo (L-31)."""
+
+    def setUp(self):
+        self.alvo = lib.repo_root() / ".claude" / "agents" / "ai-builder.md"
+        self.texto = self.alvo.read_text(encoding="utf-8")
+
+    def test_ai_builder_aprova_no_lint(self):
+        self.assertEqual(lint_agente.lint(self.alvo), [])
+
+    def test_ai_builder_declara_model_opus(self):
+        self.assertRegex(self.texto, r"(?m)^model:\s*opus\s*$")
+
+    def test_ai_builder_nao_declara_skills(self):
+        """Diferente de `planner`/`developer`: a decisão da escada é anterior à skill
+        `decode-and-code` e não depende dela — só recomenda abrir plano, nunca a invoca."""
+        self.assertNotRegex(self.texto, r"(?m)^skills:")
+
+    def test_ai_builder_declara_contrato_nao_escreve_plano(self):
+        self.assertIn("recomenda abrir o plano e para", self.texto)
+
+    def test_ai_builder_declara_fronteira_com_planner(self):
+        self.assertIn("isso é do agente `planner`", self.texto)
+
+    def test_ai_builder_declara_fronteira_com_developer(self):
+        self.assertIn("isso é do agente `developer`", self.texto)
+
+
 class TestArquivoInexistente(unittest.TestCase):
     def test_levanta_file_not_found_error(self):
         with tempfile.TemporaryDirectory() as tmp:
