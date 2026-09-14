@@ -96,19 +96,30 @@ class TestAiBuilderReal(unittest.TestCase):
     def test_ai_builder_declara_model_opus(self):
         self.assertRegex(self.texto, r"(?m)^model:\s*opus\s*$")
 
-    def test_ai_builder_nao_declara_skills(self):
-        """Diferente de `planner`/`developer`: a decisão da escada é anterior à skill
-        `decode-and-code` e não depende dela — só recomenda abrir plano, nunca a invoca."""
-        self.assertNotRegex(self.texto, r"(?m)^skills:")
+    def test_ai_builder_declara_skill_existente_em_disco(self):
+        """Passa a depender da skill: grava esboço reaproveitando numeracao/nomenclatura/lint_plano
+        — diferente da versão anterior, que só recomendava abrir plano e nunca escrevia."""
+        self.assertRegex(self.texto, r"(?m)^skills:.*decode-and-code")
+        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "decode-and-code").is_dir())
 
-    def test_ai_builder_declara_contrato_nao_escreve_plano(self):
-        self.assertIn("recomenda abrir o plano e para", self.texto)
+    def test_ai_builder_declara_webfetch(self):
+        """Confirmar schema oficial em docs.claude.com precisa de ferramenta que alcance."""
+        self.assertRegex(self.texto, r"(?m)^tools:.*WebFetch")
+
+    def test_ai_builder_declara_contrato_recomenda_planner_review(self):
+        self.assertIn("planner review", self.texto)
 
     def test_ai_builder_declara_fronteira_com_planner(self):
         self.assertIn("isso é do agente `planner`", self.texto)
 
     def test_ai_builder_declara_fronteira_com_developer(self):
         self.assertIn("isso é do agente `developer`", self.texto)
+
+    def test_ai_builder_aplica_gates_do_principles(self):
+        """Defesa contra esboço inflado: reaproveita Clarificar/Evitar/Reduzir + Gates A/B de
+        `principles.md` em vez de inventar um critério de tamanho próprio."""
+        self.assertIn("Gate A", self.texto)
+        self.assertIn("Gate B", self.texto)
 
 
 class TestArquivoInexistente(unittest.TestCase):
