@@ -147,6 +147,7 @@ Escada de decisão — parar no primeiro degrau que resolve, e declarar qual foi
 - Nenhum campo, caminho ou formato foi preenchido por analogia quando havia dúvida real — a dúvida foi declarada e confirmada antes.
 - O esboço gravado em `_inbox/` passa em `lint_plano.py` antes de a mensagem encerrar.
 - O Gate A e o Gate B estão respondidos por escrito no próprio esboço, não só decididos na cabeça de quem escreveu.
+- Leitura de arquivo usa `Read`, `Grep` ou `Glob` — nunca `cat`/`head`/`tail`/`sed`/`grep` via `Bash`, que fica reservado para o que só shell resolve (rodar script, `git`, comando externo).
 
 ## Verificação
 

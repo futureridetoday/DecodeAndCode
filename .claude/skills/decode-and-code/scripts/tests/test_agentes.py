@@ -121,6 +121,11 @@ class TestAiBuilderReal(unittest.TestCase):
         self.assertIn("Gate A", self.texto)
         self.assertIn("Gate B", self.texto)
 
+    def test_ai_builder_declara_leitura_via_read(self):
+        """Medido num teste de execução real: as 13 chamadas de uma invocação foram todas `Bash`
+        com cat/head/sed/grep, nunca `Read`/`Grep`/`Glob` — apesar de declarados em `tools:`."""
+        self.assertIn("nunca `cat`/`head`/`tail`/`sed`/`grep` via `Bash`", self.texto)
+
 
 class TestArquivoInexistente(unittest.TestCase):
     def test_levanta_file_not_found_error(self):
