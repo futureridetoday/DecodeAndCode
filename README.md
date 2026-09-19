@@ -38,7 +38,7 @@ como branch default; o segundo instala o plugin a partir dele.
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-1.1.0.zip`).
+(`decode-and-code-1.1.1.zip`).
 
 ### Atualização
 
@@ -71,7 +71,7 @@ claude --plugin-dir dist/decode-and-code
 Ou direto do asset publicado, sem build local:
 
 ```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.0/decode-and-code-1.1.0.zip
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.1/decode-and-code-1.1.1.zip
 ```
 
 ## Como usar o Decode And Code
@@ -84,7 +84,7 @@ princípio, uma guideline, um guardrail.
 | Tipo | Recurso | O que faz | Doc |
 |---|---|---|---|
 | skill | `decode-and-code` | Os três modos — `review` um plano, `derive` estrutura e unidades, `implement` uma unidade em cold-start | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto ou recomenda abrir plano em `_inbox/` (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
+| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para o `planner` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
 | agent | `planner` | Revisa um plano antes da aprovação, e deriva as unidades de um plano aprovado (Opus) | [planner.md](docs/recursos/planner.md) |
 | agent | `developer` | Implementa uma unidade já derivada, em cold-start isolado (Sonnet) | [developer.md](docs/recursos/developer.md) |
 | command | `/decode-and-code:implement` | Roda o modo `implement` na sessão atual — pensado para sessão nova | [implement.md](docs/recursos/implement.md) |

@@ -11,7 +11,7 @@ author: Bortoli
 created: 2026-08-22
 status: draft
 version: 0.3.0
-updated: 2026-08-22
+updated: 2026-09-14
 
 # system
 scope: project
@@ -64,6 +64,26 @@ Derivado do que funcionou na conversa de 2026-08-22, não do que soa bem. Cada l
 ---
 
 ## Abertas
+
+### H-11 · `padrão` · 2026-09-14 · Claude
+
+**Instrução em markdown reduziu mas não eliminou o desvio Read/Grep/Glob → Bash com cat/head/sed/grep.**
+
+Medido em duas execuções reais do `ai-builder` no mesmo dia. Antes de qualquer instrução no
+corpo do agent: 13/13 chamadas de leitura via `Bash` (`cat`/`head`/`sed`/`grep`), zero `Read`,
+zero `Grep`. Depois de uma linha em *Padrões de Qualidade* proibindo isso: 2/8. Redução real,
+não eliminação.
+
+**O que conteve o risco não foi a instrução — foi a auditoria.** Nenhuma das duas ocorrências
+produziu conclusão errada, e na segunda execução o próprio agent nomeou o desvio sem eu
+perguntar sobre ele diretamente, no mesmo turno em que reavaliou a força da própria evidência
+(distinguiu citação literal de resumo de `WebFetch`). O mecanismo que pegou o defeito foi pedir
+a trilha bruta depois do fato, não a instrução antes.
+
+**O que eu ainda não sei:** se três desvios seguidos justificam guardrail (`PreToolUse`
+bloqueando os comandos), ou se a taxa já estabilizou em algo tolerável porque a auditoria
+pós-hoc cobre o risco residual — `B-02` do backlog usa "primeira divergência" como gatilho para
+o caso análogo entre instalações; este é o mesmo tipo de decisão, dentro de um agent só.
 
 ### H-10 · `divergência` · 2026-08-28 · Claude
 
