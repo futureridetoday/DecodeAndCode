@@ -12,11 +12,11 @@
       "displayName": "Decode and Code",
       "source": {
         "source": "archive",
-        "url": "https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.0/decode-and-code-1.1.0.zip",
-        "sha256": "153b127270f5351f96e6a261e27ed85ba0f215ea979b1193347c81f4f407a33a"
+        "url": "https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.1/decode-and-code-1.1.1.zip",
+        "sha256": "618bd269681eb6f6125860f4f5a547a4d28dafd10d3e6902b0bb044c8f505948"
       },
       "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "Future Ride Today"
       },
