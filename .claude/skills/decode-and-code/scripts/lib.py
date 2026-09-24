@@ -35,7 +35,7 @@ _DEFAULTS = {
     # Marcas da raiz. Só `.claude/` não bastaria: qualquer projeto pode ter uma.
     "root_markers": [".claude", "docs"],
     "move_script": "scripts/move-md.py",
-    "runners": {".py": "scripts/test-python.sh"},
+    "runners": {".py": "scripts/test-python.sh", ".ts": "scripts/test-ts.sh"},
 }
 
 # Os defaults são a fonte única. `_find_repo_root` lê a versão resolvida pelo config,

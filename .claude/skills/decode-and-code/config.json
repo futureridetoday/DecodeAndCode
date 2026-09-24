@@ -3,6 +3,7 @@
   "root_markers": [".claude", "docs"],
   "move_script": "scripts/move-md.py",
   "runners": {
-    ".py": "scripts/test-python.sh"
+    ".py": "scripts/test-python.sh",
+    ".ts": "scripts/test-ts.sh"
   }
 }

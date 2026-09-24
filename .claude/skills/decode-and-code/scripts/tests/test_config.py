@@ -168,6 +168,35 @@ class TestRunnersAcompanhaConfig(unittest.TestCase):
                     verificacao._comando(raiz / "test_algo.js", raiz)
 
 
+class TestRunnersDeclaraTsPorDefault(unittest.TestCase):
+    """Fecha a L-11 (plano 0022 do AmFlow): o mapa resolvido já declara `.ts`, sem config.json."""
+
+    def setUp(self):
+        _resetar_cache()
+        self.addCleanup(_resetar_cache)
+
+    def test_mapa_resolvido_declara_ts_com_o_runner_esperado(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            caminho_inexistente = Path(tmp) / "config.json"
+            with mock.patch.object(lib, "_config_path", return_value=caminho_inexistente):
+                resolvido = lib.config()
+
+        self.assertEqual(resolvido["runners"][".ts"], "scripts/test-ts.sh")
+
+    def test_teste_ts_nao_cai_em_extensao_sem_runner(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp).resolve()
+            caminho_inexistente = raiz / "config.json"
+            with mock.patch.object(lib, "_config_path", return_value=caminho_inexistente):
+                comando, cwd = verificacao._comando(raiz / "hub" / "test" / "algo.test.ts", raiz)
+
+        self.assertEqual(
+            comando,
+            [str(raiz / "scripts" / "test-ts.sh"), str(Path("hub") / "test" / "algo.test.ts")],
+        )
+        self.assertEqual(cwd, raiz)
+
+
 class TestScaffoldSegueOAlvoDoConfig(unittest.TestCase):
     """Segunda metade do critério de aceite: `scaffold` grava no alvo que o config declara."""
 
