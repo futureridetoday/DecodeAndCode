@@ -38,7 +38,7 @@ como branch default; o segundo instala o plugin a partir dele.
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-1.1.1.zip`).
+(`decode-and-code-1.1.2.zip`).
 
 ### Atualização
 
@@ -71,7 +71,7 @@ claude --plugin-dir dist/decode-and-code
 Ou direto do asset publicado, sem build local:
 
 ```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.1/decode-and-code-1.1.1.zip
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.2/decode-and-code-1.1.2.zip
 ```
 
 ## Como usar o Decode And Code
