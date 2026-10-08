@@ -22,6 +22,24 @@
       },
       "repository": "https://github.com/futureridetoday/DecodeAndCode",
       "keywords": ["metodo", "planejamento", "dev-units", "cold-start"]
+    },
+    {
+      "name": "brand-boost",
+      "description": "Plugin de teste (poc)",
+      "source": {
+        "source": "github",
+        "repo": "futureridetoday/BrandBoost",
+        "ref": "poc"
+      }
+    },
+    {
+      "name": "brand-boost-resources",
+      "description": "Plugin de teste (poc)",
+      "source": {
+        "source": "github",
+        "repo": "futureridetoday/BrandResources",
+        "ref": "poc"
+      }
     }
   ]
 }
