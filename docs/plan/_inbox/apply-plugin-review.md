@@ -75,6 +75,21 @@ plugin `1.1.2`):
 3. Há peças demais em volta do núcleo, e elas vão para todo usuário. Isso pesa contra a configuração
    mínima e contra o princípio de que código é custo.
 
+## Como as correções são executadas
+
+Acordado com o humano em 2026-10-15. Vale para cada `P-XX`, um por vez:
+
+| # | Etapa | Quem |
+|---|---|---|
+| 1 | Ler o achado e apresentar o problema e a solução recomendada, com detalhe suficiente para delegar sem pergunta: arquivos, mudança esperada, testes e critério de aceite | Orquestrador (Claude) |
+| 2 | Aprovar a solução | Humano |
+| 3 | Implementar — agent `general-purpose` em Sonnet ou Haiku, modelo declarado antes de delegar. O agent `developer` não serve: seu gate de entrada exige unidade derivada. O prompt carrega as regras do projeto: não commitar, tocar só os arquivos listados, harness em 3.10 | Agente de desenvolvimento |
+| 4 | Revisar a entrega — diff, suíte no harness em 3.10, reprodução do defeito e da correção quando der. Com erro, devolver ao **mesmo** agente a lista exata do que corrigir, até ficar certo | Orquestrador |
+| 5 | Validar a solução implementada | Humano |
+| 6 | Registrar no achado a linha **Implementado**, com data, PR, commit e a evidência — commit no mesmo branch da correção, antes do merge | Orquestrador |
+
+A região `backlog` fica intocada: é projeção do script.
+
 ## Achados
 
 Cada achado tem um `P-XX`, o impacto, o critério violado, a evidência, a solução recomendada e como
@@ -124,6 +139,25 @@ verificar que a solução funcionou. A coluna *Unidade* da seção `## Escopo` a
   composição.
 - Prova manual registrada: `claude --plugin-dir dist/decode-and-code` num projeto vazio, rodando
   `bootstrap` e depois `review` sobre um plano de exemplo, sem nenhuma chamada a `find`.
+
+**Implementado em 2026-10-15** — [PR #6](https://github.com/futureridetoday/DecodeAndCode/pull/6),
+commit [`d28fe5d`](https://github.com/futureridetoday/DecodeAndCode/commit/d28fe5d), mesclado em
+`dev` como [`dc051f4`](https://github.com/futureridetoday/DecodeAndCode/commit/dc051f4). Validado
+pelo humano. Entrou direto por PR, sem plano aprovado nem unidade derivada — exceção ao ciclo por
+decisão do humano.
+
+| Evidência | Resultado |
+|---|---|
+| Sonda com `claude -p --plugin-dir` num projeto vazio, **antes** | A skill citou `.claude/skills/decode-and-code/scripts/nomenclatura.py`; `ls` devolveu `No such file or directory` |
+| A mesma sonda, **depois**, no plugin | O caminho citado virou o absoluto da skill dentro do plugin; `ls` encontrou o script |
+| A mesma sonda, **depois**, neste repositório (skill de projeto) | O caminho citado virou `/…/DecodeAndCode/.claude/skills/decode-and-code/scripts/`; `ls` encontrou o script |
+| `scripts/test-python.sh` em Python 3.10.20 | 490 testes OK |
+| Os 3 testes novos contra o código anterior | Os 3 falham — pegam o defeito |
+| `empacotar.verificar`, `empacotar.validar`, `claude plugin validate` | Limpos; os 4 avisos restantes são do `P-08` |
+
+**O que ficou de fora.** A sonda carregou a skill e checou o caminho, mas não rodou `bootstrap` e
+`review` de ponta a ponta no projeto vazio — isso continua com a unidade `02`
+(`installed-skill-proof`), junto da medição do `P-13`.
 
 #### P-02 · Os testes escrevem no repositório real
 
