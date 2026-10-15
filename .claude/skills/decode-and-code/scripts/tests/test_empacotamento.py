@@ -133,6 +133,36 @@ def _montar_fonte(raiz: Path) -> None:
     (docs / "modelo-dev-units.md").write_text("# norma — mecanismo sintético\n", encoding="utf-8")
 
 
+def _escrever_pacote_minimo(raiz: Path, comando: str) -> None:
+    """Pacote de plugin mínimo que o validador oficial aceita sem aviso próprio — `P-08`.
+
+    Manifesto com `description` e `author` (sem eles o `--strict` reprova pelo manifesto) e um
+    `hooks/hooks.json` com um único comando, o que o teste varia.
+    """
+    manifesto = raiz / ".claude-plugin" / "plugin.json"
+    manifesto.parent.mkdir(parents=True)
+    manifesto.write_text(
+        json.dumps(
+            {
+                "name": "minimo",
+                "version": "1.0.0",
+                "description": "pacote sintético para o teste do validador",
+                "author": {"name": "teste"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    hooks = raiz / "hooks"
+    hooks.mkdir()
+    (hooks / "hooks.json").write_text(
+        json.dumps(
+            {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": comando}]}]}}
+        ),
+        encoding="utf-8",
+    )
+
+
 class _BaseComFonteSintetica(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -389,6 +419,36 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
             self.assertEqual(empacotar.verificar(destino), [])
 
+    def test_hooks_json_gerado_cita_o_plugin_root_entre_aspas(self):
+        """`P-08` — contra o `settings.json` real (`L-31`), sem precisar do `claude`.
+
+        O validador acusa `${CLAUDE_PLUGIN_ROOT}` sem aspas, e o aviso nasce na fonte: o build só
+        troca a âncora (`_escrever_hooks_json`), então as aspas do `settings.json` atravessam
+        intactas. Este caso prende o que `validar` só pega quando o `claude` está instalado — e o
+        teste vizinho de `TestValidarPelaFerramentaOficial` pula sem ele.
+        """
+        placeholder = "${CLAUDE_PLUGIN_ROOT}"
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            eventos = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            comandos = [
+                hook["command"] for grupos in eventos.values() for grupo in grupos for hook in grupo["hooks"]
+            ]
+
+            ocorrencias = 0
+            for comando in comandos:
+                posicao = comando.find(placeholder)
+                while posicao != -1:
+                    ocorrencias += 1
+                    with self.subTest(comando=comando):
+                        # Entre aspas duplas: número ímpar de `"` antes, e uma que fecha depois.
+                        self.assertEqual(comando[:posicao].count('"') % 2, 1, comando)
+                        self.assertIn('"', comando[posicao + len(placeholder) :], comando)
+                    posicao = comando.find(placeholder, posicao + 1)
+            self.assertGreater(ocorrencias, 0, "nenhum comando cita o placeholder — o caso ficaria vácuo")
+
     def test_pacote_real_sem_commands_e_verificar_continua_limpo(self):
         """`P-03` — contra o repositório real, não fixture (`L-31`): nenhum `commands/` no pacote."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -554,6 +614,31 @@ class TestValidarPelaFerramentaOficial(unittest.TestCase):
                 json.dumps({"description": "sem name"}), encoding="utf-8"
             )
             self.assertTrue(empacotar.validar(destino), "manifesto sem 'name' devia reprovar")
+
+    @unittest.skipUnless(shutil.which("claude"), "claude ausente do PATH — a validação real não roda")
+    def test_aviso_de_plugin_root_sem_aspas_reprova_pela_ferramenta_de_verdade(self):
+        """`P-08` — o **comando** montado, não a saída: só a ferramenta real responde à flag.
+
+        Sem `--strict` o binário sai com `0` sobre aviso ("Validation passed with warnings") e
+        `validar` devolvia `[]` — os quatro avisos de `${CLAUDE_PLUGIN_ROOT}` sem aspas passaram
+        calados até 2026-10-15 (`scripts.md`, *Comando externo*). Mock de `subprocess.run` não pega
+        isso: devolveria o que mandassem, com a flag ou sem ela.
+
+        O pacote é mínimo e **o manifesto leva `description` e `author`** — medido: sem eles o
+        `--strict` já reprova pelo manifesto, e o braço das aspas deixaria de provar que a única
+        diferença entre os dois pacotes é a aspa. É o braço contrário que impede o gate vácuo.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            sem_aspas = Path(tmp) / "sem-aspas"
+            com_aspas = Path(tmp) / "com-aspas"
+            _escrever_pacote_minimo(sem_aspas, "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/x.py")
+            _escrever_pacote_minimo(com_aspas, 'python3 "${CLAUDE_PLUGIN_ROOT}/hooks/x.py"')
+
+            problemas = empacotar.validar(sem_aspas)
+            self.assertEqual(len(problemas), 1, problemas)
+            self.assertIn("${CLAUDE_PLUGIN_ROOT} without quotes", problemas[0])
+
+            self.assertEqual(empacotar.validar(com_aspas), [])
 
     def test_returncode_um_vira_problema_com_a_saida(self):
         saida = b"Validating...\n\xe2\x9c\x98 Found 1 error:\n  no manifest"

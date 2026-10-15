@@ -1,0 +1,37 @@
+# O `claude` é instalado de propósito: sem ele os testes pulam a validação real do
+# pacote (`claude plugin validate --strict`) e o CI ficaria verde sem rodá-la.
+# Python 3.10 fixo: é a versão do Cowork, e a prova de compatibilidade é esta.
+name: CI
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar o Claude Code
+        run: npm install -g @anthropic-ai/claude-code@2.1.300
+
+      - name: Conferir que o claude está no PATH
+        run: claude --version
+
+      - name: Rodar a suíte
+        run: bash scripts/test-python.sh

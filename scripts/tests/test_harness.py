@@ -2,12 +2,13 @@
 """Sentinela do harness de teste Python.
 
 Prova três coisas sobre a infra, não sobre regra de negócio:
-o discover encontra os testes, o interpretador é o declarado na norma, e uma
-falha real é reportada como falha.
+o discover encontra os testes, o interpretador atende à norma (>= 3.10 local,
+3.10 exato no CI), e uma falha real é reportada como falha.
 
 Ver docs/plan/system/language-policy.md §4.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -24,12 +25,25 @@ class TestHarness(unittest.TestCase):
         self.assertTrue(True)
 
     def test_interpretador_e_a_versao_alvo(self):
-        self.assertEqual(
-            sys.version_info[:2],
-            VERSAO_ALVO,
-            f"harness rodou em {sys.version_info[0]}.{sys.version_info[1]}; "
-            f"a norma exige {VERSAO_ALVO[0]}.{VERSAO_ALVO[1]} — a versão do Cowork",
-        )
+        # Local aceita >= 3.10; o CI (GitHub Actions define CI=true) exige 3.10
+        # exato, porque é ele que comprova a compatibilidade com o Cowork — uma
+        # versão mais nova passando não prova que o 3.10 da VM aceita a sintaxe.
+        atual = sys.version_info[:2]
+        rodou = f"{atual[0]}.{atual[1]}"
+        alvo = f"{VERSAO_ALVO[0]}.{VERSAO_ALVO[1]}"
+        if os.environ.get("CI"):
+            self.assertEqual(
+                atual,
+                VERSAO_ALVO,
+                f"CI rodou em Python {rodou}; o workflow tem de fixar {alvo} — "
+                f"é a prova de compatibilidade com o Cowork (3.10.12)",
+            )
+        else:
+            self.assertGreaterEqual(
+                atual,
+                VERSAO_ALVO,
+                f"harness rodou em Python {rodou}; o mínimo é {alvo} — a versão do Cowork",
+            )
 
     def test_script_se_auto_localiza(self):
         # CLAUDE_PLUGIN_ROOT veio vazia nos dois ambientes medidos; todo script

@@ -223,7 +223,9 @@ devolve `404` para qualquer cliente sem token.
 bash scripts/test-python.sh
 ```
 
-Exige Python 3.10 explícito — ver [`language-policy.md`](docs/plan/system/language-policy.md) para
-a medição de ambientes que fixou o alvo.
+O harness aceita Python ≥ 3.10, prefere o 3.10 e avisa quando roda em outra versão; o CI roda em
+3.10 fixo e é a prova de compatibilidade com o Cowork. Ver
+[`language-policy.md`](docs/plan/system/language-policy.md) para a medição de ambientes que fixou o
+alvo.
 
 A norma completa fica em [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md).
