@@ -77,16 +77,23 @@ plugin `1.1.2`):
 
 ## Como as correções são executadas
 
-Acordado com o humano em 2026-10-15. Vale para cada `P-XX`, um por vez:
+Acordado com o humano em 2026-10-15 e revisto no mesmo dia. Vale para cada `P-XX`, um por vez:
 
 | # | Etapa | Quem |
 |---|---|---|
 | 1 | Ler o achado e apresentar o problema e a solução recomendada, com detalhe suficiente para delegar sem pergunta: arquivos, mudança esperada, testes e critério de aceite | Orquestrador (Claude) |
 | 2 | Aprovar a solução | Humano |
-| 3 | Implementar — agent `general-purpose` em Sonnet ou Haiku, modelo declarado antes de delegar. O agent `developer` não serve: seu gate de entrada exige unidade derivada. O prompt carrega as regras do projeto: não commitar, tocar só os arquivos listados, harness em 3.10 | Agente de desenvolvimento |
+| 3 | Implementar num branch próprio, **sem PR** — agent `general-purpose` em Sonnet ou Haiku, modelo declarado antes de delegar. O agent `developer` não serve: seu gate de entrada exige unidade derivada. O prompt carrega as regras do projeto: não commitar, tocar só os arquivos listados, harness em 3.10 | Agente de desenvolvimento |
 | 4 | Revisar a entrega — diff, suíte no harness em 3.10, reprodução do defeito e da correção quando der. Com erro, devolver ao **mesmo** agente a lista exata do que corrigir, até ficar certo | Orquestrador |
-| 5 | Validar a solução implementada | Humano |
-| 6 | Registrar no achado a linha **Implementado**, com data, PR, commit e a evidência — commit no mesmo branch da correção, antes do merge | Orquestrador |
+| 5 | Commit e push **só do branch**, com o link de comparação contra `dev` para o humano ver o diff | Orquestrador |
+| 6 | Validar a solução implementada | Humano |
+| 7 | Registrar no achado a linha **Implementado**, com data, commit e a evidência — commit no mesmo branch | Orquestrador |
+| 8 | Abrir o PR, já completo: correção e registro juntos | Orquestrador |
+| 9 | Merge | Humano |
+
+**Um PR por correção**, aberto só depois de tudo pronto e aprovado: nada chega a `dev` sem a
+validação do humano. O registro cita o **commit** da correção, não o PR: quando o registro é
+escrito o PR ainda não existe, e o GitHub liga o commit ao PR que o mesclou.
 
 A região `backlog` fica intocada: é projeção do script.
 
@@ -181,6 +188,23 @@ mesmo padrão que `test_auditoria.py` já usa.
 
 **Como verificar.** `git status --porcelain` vazio antes e depois de rodar a suíte inteira. Esse
 teste pode virar um passo do próprio harness: falhar se a suíte deixar diff.
+
+**Implementado em 2026-10-15** — [PR #8](https://github.com/futureridetoday/DecodeAndCode/pull/8),
+commit [`e5bfdd2`](https://github.com/futureridetoday/DecodeAndCode/commit/e5bfdd2), mesclado em
+`dev` como [`5b52111`](https://github.com/futureridetoday/DecodeAndCode/commit/5b52111). Validado
+pelo humano com o merge. Implementado por agente `general-purpose` em Sonnet, revisado pelo
+orquestrador sem rodada de correção.
+
+| Evidência | Resultado |
+|---|---|
+| Suíte numa árvore limpa, **antes** | Deixava `.claude/rules/registry.json` modificado e `.claude/rules-off/` criado vazio — a pasta vazia o `git status` não mostra |
+| `test_registry.py`, classe `TestGuidelineReal` | Os bytes reais de `scripts.md` vão para um `tempfile`, com `lib.repo_root` mockado; mesmas asserções, mais duas que provam que `desligar`/`ligar` operam no `tempfile`. Um `alvo.py` vazio mantém o `lint_guideline` significativo, porque o `paths:` real (`**/*.py`) é casado contra o disco |
+| `scripts/test-python.sh` | Guarda nova: `git status --porcelain --untracked-files=all` antes e depois da suíte; diferença falha e lista o que mudou |
+| `scripts/test-python.sh` em Python 3.10.20, **depois**, duas vezes seguidas | 490 testes OK; árvore intocada; sem `rules-off/` |
+| Guarda contra o defeito original — `test_registry.py` antigo com o harness novo | Falha nomeando `M .claude/rules/registry.json` |
+
+**Limite conhecido.** A guarda compara status, não conteúdo: um arquivo já modificado antes da
+suíte e alterado de novo durante ela mantém o mesmo status e não dispara.
 
 ### Impacto médio
 
