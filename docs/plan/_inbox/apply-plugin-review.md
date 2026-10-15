@@ -596,6 +596,37 @@ achado.
 **Como verificar.** Numa sessão real, dentro de uma skill, um comando fora do ponto de entrada pede
 aprovação, e as operações das três skills rodam sem pedir.
 
+**Implementado em 2026-10-15**, no commit
+[`0a474ee`](https://github.com/futureridetoday/DecodeAndCode/commit/0a474ee), com a opção C (`D-05`).
+Validado pelo humano em 2026-10-15, sobre o diff e o CI verde no branch, antes do PR. Implementado
+por agente `general-purpose` em Sonnet, revisado pelo orquestrador, com duas rodadas de correção.
+
+**O que mudou.**
+- `scripts/dc.py` é o ponto de entrada único, um dispatcher fino com 9 subcomandos. O código de
+  saída é 0 em sucesso, 1 em reprovação e 2 em erro de uso.
+- Cada skill ganha um atalho `dc.py` na própria pasta, que repassa para o compartilhado.
+- O `allowed-tools` de cada skill passa a ser `Bash(python3 "${CLAUDE_SKILL_DIR}/dc.py" *)`, mais a
+  mesma regra sem aspas.
+- A varredura de concorrência vira código, em `scaffold.concorrentes`. `verificacao.verificar_com_saida`
+  expõe a saída do teste, que o `dc.py verificar` imprime quando a unidade não fica `verified`.
+- O `lint_skill` recusa `Bash` sem especificador e `Bash(*)`.
+
+| Evidência | Resultado |
+|---|---|
+| Plugin de prova, modo de permissão padrão | A regra estreita libera o `dc.py`, inclusive com heredoc, e recusa `python3 -c` |
+| Sessão real, primeira versão (`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/dc.py`) | **11 recusas** de chamadas legítimas: o modelo normaliza o `..`, tira as aspas ou põe o caminho numa variável, e a regra deixa de casar o texto |
+| Sessão real, com o atalho por skill | Todas as chamadas no formato da skill passaram. Sobraram 4 recusas: 3 leituras de arquivos internos do plugin por `cat`/`ls`/`grep` (as ferramentas `Read` e `Grep` continuam liberadas) e 1 chamada ao `dc.py` por caminho relativo. Em todos os casos, o que não casa pede aprovação em vez de rodar |
+| Suíte em 3.10 | 602 testes OK (eram 504), com `git status` estável |
+| Pacote | `verificar` e `validar` vazios; `--strict` limpo |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38809013470) | Verde |
+
+**O que ficou de fora.**
+- O `ai-builder` continua compondo `numeracao`, `nomenclatura` e `lint_plano` à moda antiga. Ele é
+  agent, e o `allowed-tools` não se aplica a agent. Fica com o `P-06`.
+- O `dc.py` não tem subcomando para o próximo número de plano nem para o `lint_plano`.
+- Com a pasta compartilhada ausente, o atalho sai com traceback e código 1, e não com 2. Isso é
+  instalação quebrada e não foi tratado.
+
 ### Impacto baixo
 
 #### P-10 · Frontmatter fora da especificação no que viaja
@@ -784,7 +815,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-02`, `D-03` e `D-05` esperam o humano.
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` e `D-03` esperam o humano.
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
@@ -792,7 +823,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | D-02 | **Quais hooks de anúncio continuam no pacote** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
 | D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
-| D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
+| D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
 
 ## Lacunas
 
