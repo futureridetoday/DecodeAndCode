@@ -49,6 +49,10 @@ ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 # vocabulário é da norma.
 PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
+# As skills do método, uma por modo — a fonte única de quem viaja no pacote (`empacotar`) e de quem o
+# prompt de orquestração cita (`handoff`). Acrescentar skill é editar só aqui.
+SKILLS = ("review-plan", "derive", "implement")
+
 _config_cache: dict | None = None
 
 

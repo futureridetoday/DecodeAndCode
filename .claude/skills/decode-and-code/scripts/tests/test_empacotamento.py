@@ -4,15 +4,19 @@
 Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
-de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, skill com
-`scripts/tests/` e `__pycache__` para provar a exclusão, quatro hooks e um `settings.json` com a
-âncora `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
+de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as três skills, a
+pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, quatro hooks e um
+`settings.json` com a âncora `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
 
 **Fonte real**, em `TestPacoteRealEstaLimpo`, para a **instância**: constrói deste repositório e
 exige `verificar() == []`. A primeira entrega tinha só a sintética, e ela respondia `[]` sobre uma
 árvore montada para não conter marcador nenhum — enquanto o pacote real saía com o nome do projeto
 no `SKILL.md` e dentro do `_CONTEUDO_INICIAL` de `porte.py`. Fixture prova o mecanismo, nunca a
 instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza a regra.
+
+O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`) mais a pasta
+compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; os comandos saem do
+pacote, e dos agents só o `ai-builder` fica.
 
 A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
 de graça — mora dentro da skill desde a `0004-04`, e `_copiar_skill` já copia a árvore inteira —,
@@ -42,6 +46,9 @@ import lib
 import lint_skill
 
 
+NOMES_DAS_SKILLS = lib.SKILLS
+
+
 def _montar_fonte(raiz: Path) -> None:
     """Escreve a árvore-fonte sintética sob `raiz` — o par completo que `construir` exige."""
     manifesto = raiz / ".claude" / "plugin.json"
@@ -50,9 +57,17 @@ def _montar_fonte(raiz: Path) -> None:
         json.dumps({"name": "exemplo", "version": "1.0.0"}, ensure_ascii=False), encoding="utf-8"
     )
 
-    skill = raiz / ".claude" / "skills" / "decode-and-code"
+    skills = raiz / ".claude" / "skills"
+    for nome in NOMES_DAS_SKILLS:
+        (skills / nome).mkdir(parents=True, exist_ok=True)
+        # `project:` com o nome do repositório de origem: é o que o build precisa reescrever.
+        (skills / nome / "SKILL.md").write_text(
+            f"---\nproject: {raiz.name}\n---\n# {nome} sintético\n", encoding="utf-8"
+        )
+
+    skill = skills / "decode-and-code"
     skill.mkdir(parents=True, exist_ok=True)
-    (skill / "SKILL.md").write_text("# skill sintética\n", encoding="utf-8")
+    (skill / "config.json").write_text("{}\n", encoding="utf-8")
 
     scripts = skill / "scripts"
     scripts.mkdir(parents=True, exist_ok=True)
@@ -75,17 +90,7 @@ def _montar_fonte(raiz: Path) -> None:
 
     agents = raiz / ".claude" / "agents"
     agents.mkdir(parents=True, exist_ok=True)
-    (agents / "planner.md").write_text("# planner sintético\n", encoding="utf-8")
-    (agents / "developer.md").write_text("# developer sintético\n", encoding="utf-8")
-
-    commands = raiz / ".claude" / "commands"
-    commands.mkdir(parents=True, exist_ok=True)
-    (commands / "implement.md").write_text(
-        "---\nproject: exemplo\n---\n# implement sintético\n", encoding="utf-8"
-    )
-    (commands / "delegate.md").write_text(
-        "---\nproject: exemplo\n---\n# delegate sintético\n", encoding="utf-8"
-    )
+    (agents / "ai-builder.md").write_text("# ai-builder sintético\n", encoding="utf-8")
 
     settings = raiz / ".claude" / "settings.json"
     settings.write_text(
@@ -151,11 +156,46 @@ class TestConstruir(_BaseComFonteSintetica):
         for caminho in escritos:
             self.assertTrue(caminho.is_file(), f"não escrito: {caminho}")
 
-    def test_manifesto_e_skill_md_presentes(self):
+    def test_manifesto_e_as_tres_skills_presentes(self):
         empacotar.construir(self.destino)
         self.assertTrue((self.destino / ".claude-plugin" / "plugin.json").is_file())
-        self.assertTrue((self.destino / "skills" / "decode-and-code" / "SKILL.md").is_file())
-        self.assertTrue((self.destino / "skills" / "decode-and-code" / "scripts" / "lib.py").is_file())
+        for nome in NOMES_DAS_SKILLS:
+            with self.subTest(skill=nome):
+                self.assertTrue((self.destino / "skills" / nome / "SKILL.md").is_file())
+
+    def test_pasta_compartilhada_tem_scripts_e_config_e_nao_tem_skill_md(self):
+        empacotar.construir(self.destino)
+        compartilhada = self.destino / "skills" / "decode-and-code"
+        self.assertFalse((compartilhada / "SKILL.md").exists())
+        self.assertTrue((compartilhada / "scripts" / "lib.py").is_file())
+        self.assertTrue((compartilhada / "config.json").is_file())
+
+    def test_skills_com_project_reescrito_para_o_plugin(self):
+        """`project:` declara o plugin, nunca o repositório que o produziu."""
+        empacotar.construir(self.destino)
+        for nome in NOMES_DAS_SKILLS:
+            with self.subTest(skill=nome):
+                texto = (self.destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("project: exemplo", texto)
+                self.assertNotIn(f"project: {self.raiz.name}", texto)
+
+    def test_so_as_tres_skills_e_a_compartilhada_viajam(self):
+        """Uma skill de desenvolvimento do repositório não vaza: a lista é explícita, não `skills/*`."""
+        so_de_desenvolvimento = self.raiz / ".claude" / "skills" / "so-de-desenvolvimento"
+        so_de_desenvolvimento.mkdir()
+        (so_de_desenvolvimento / "SKILL.md").write_text("# fica de fora\n", encoding="utf-8")
+
+        empacotar.construir(self.destino)
+        viajaram = {p.name for p in (self.destino / "skills").iterdir()}
+        self.assertEqual(viajaram, {"decode-and-code", *NOMES_DAS_SKILLS})
+
+    def test_fonte_de_skill_ausente_levanta_antes_de_escrever(self):
+        (self.raiz / ".claude" / "skills" / "derive" / "SKILL.md").unlink()
+        (self.raiz / ".claude" / "skills" / "derive").rmdir()
+
+        with self.assertRaises(FileNotFoundError):
+            empacotar.construir(self.destino)
+        self.assertFalse(self.destino.exists())
 
     def test_sem_scripts_tests_sem_pycache_sem_guardrails_sem_docs(self):
         empacotar.construir(self.destino)
@@ -183,27 +223,15 @@ class TestConstruir(_BaseComFonteSintetica):
             {"pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py"},
         )
 
-    def test_dois_agentes_copiados(self):
+    def test_so_o_ai_builder_copiado(self):
         empacotar.construir(self.destino)
         copiados = {p.name for p in (self.destino / "agents").glob("*.md")}
-        self.assertEqual(copiados, {"planner.md", "developer.md"})
+        self.assertEqual(copiados, {"ai-builder.md"})
 
-    def test_dois_comandos_copiados_com_project_reescrito(self):
-        """`0004-06` — `/implement` e `/delegate` viajam, e `project:` declara o plugin."""
+    def test_pacote_nao_tem_commands(self):
+        """`P-03` — os comandos viraram skills, e `commands/` deixou de ser fonte e de ser destino."""
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "commands").glob("*.md")}
-        self.assertEqual(copiados, {"implement.md", "delegate.md"})
-
-        texto = (self.destino / "commands" / "implement.md").read_text(encoding="utf-8")
-        self.assertIn("project: exemplo", texto)
-        self.assertNotIn(f"project: {self.raiz.name}", texto)
-
-    def test_fonte_comandos_ausente_levanta_antes_de_escrever(self):
-        shutil.rmtree(self.raiz / ".claude" / "commands")
-
-        with self.assertRaises(FileNotFoundError):
-            empacotar.construir(self.destino)
-        self.assertFalse(self.destino.exists())
+        self.assertFalse((self.destino / "commands").exists())
 
     def test_hooks_json_mesmos_eventos_do_settings_e_ancora_trocada(self):
         empacotar.construir(self.destino)
@@ -297,37 +325,56 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             empacotar.construir(destino)
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_skill_empacotada_declara_o_plugin_e_nao_o_repositorio(self):
+    def test_as_tres_skills_empacotadas_declaram_o_plugin_e_nao_o_repositorio(self):
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            texto = (destino / "skills" / "decode-and-code" / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("project: decode-and-code", texto)
-            self.assertNotIn(f"project: {lib.repo_root().name}", texto)
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    texto = (destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+                    self.assertIn("project: decode-and-code", texto)
+                    self.assertNotIn(f"project: {lib.repo_root().name}", texto)
 
-    def test_skill_empacotada_cita_scripts_que_existem_no_pacote(self):
-        """`P-01` do plano `apply-plugin-review` — lint sobre a cópia empacotada, não sobre a fonte.
+    def test_skills_empacotadas_citam_scripts_que_existem_no_pacote(self):
+        """`P-01` e `P-03` — lint sobre a cópia empacotada, não sobre a fonte.
 
-        `lint_skill` resolve `${CLAUDE_SKILL_DIR}/scripts/` contra o diretório da skill que recebe,
-        então aqui prova que cada script citado viaja, e que nenhum caminho fixo sobrou.
+        `lint_skill` resolve `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/` contra o diretório da
+        skill que recebe, então aqui prova que cada script citado viaja na pasta irmã, que o `..`
+        resolve dentro do pacote, e que nenhum caminho fixo sobrou.
         """
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            skill = destino / "skills" / "decode-and-code" / "SKILL.md"
-            self.assertIn("${CLAUDE_SKILL_DIR}/scripts/", skill.read_text(encoding="utf-8"))
-            self.assertEqual(lint_skill.lint(skill), [])
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    skill = destino / "skills" / nome / "SKILL.md"
+                    self.assertIn(
+                        "${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/", skill.read_text(encoding="utf-8")
+                    )
+                    self.assertEqual(lint_skill.lint(skill), [])
 
-    def test_dois_agentes_presentes_no_pacote_real(self):
-        """`D-27` — os dois agentes viajam, e o `planner` deixou de citar caminho deste projeto."""
+    def test_pasta_compartilhada_do_pacote_real_nao_tem_skill_md(self):
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            self.assertTrue((destino / "agents" / "planner.md").is_file())
-            self.assertTrue((destino / "agents" / "developer.md").is_file())
+            compartilhada = destino / "skills" / "decode-and-code"
+            self.assertFalse((compartilhada / "SKILL.md").exists())
+            self.assertTrue((compartilhada / "scripts").is_dir())
+            self.assertTrue((compartilhada / "config.json").is_file())
+            self.assertEqual(
+                {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *NOMES_DAS_SKILLS}
+            )
+
+    def test_so_o_ai_builder_presente_no_pacote_real(self):
+        """`D-27` e `P-03` — o agent que fica viaja; o ciclo review/derive/implement é skill."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            self.assertEqual({p.name for p in (destino / "agents").iterdir()}, {"ai-builder.md"})
 
     def test_norma_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
         """Critério de aceite da `0004-04` — contra o repositório real, não fixture (`L-31`)."""
@@ -342,18 +389,13 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_comandos_presentes_no_pacote_real_e_verificar_continua_limpo(self):
-        """Critério de aceite da `0004-06` — contra o repositório real, não fixture (`L-31`)."""
+    def test_pacote_real_sem_commands_e_verificar_continua_limpo(self):
+        """`P-03` — contra o repositório real, não fixture (`L-31`): nenhum `commands/` no pacote."""
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            implement = destino / "commands" / "implement.md"
-            delegate = destino / "commands" / "delegate.md"
-            self.assertTrue(implement.is_file())
-            self.assertTrue(delegate.is_file())
-            self.assertIn("project: decode-and-code", implement.read_text(encoding="utf-8"))
-            self.assertNotIn(f"project: {lib.repo_root().name}", implement.read_text(encoding="utf-8"))
+            self.assertFalse((destino / "commands").exists())
             self.assertEqual(empacotar.verificar(destino), [])
 
 

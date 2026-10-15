@@ -45,12 +45,8 @@ próprio, uma por vez. Você prepara, revisa o que volta, e versiona depois de r
 
 ## Como disparar cold-start
 
-Dois comandos, um por cenário:
-
-| Comando | Cenário |
-|---|---|
-| `/implement <unidade>` | **Sessão nova** — já chega em cold-start por conta própria, executa o modo `implement` da skill direto |
-| `/delegate <unidade>` | **Esta sessão** — delega ao agent `developer`, sem gastar o contexto de orquestração que você guarda |
+Uma forma só: a skill `implement <unidade>`. Ela roda sempre num subagent isolado (`context: fork`,
+Sonnet), em qualquer sessão, e por isso não gasta o contexto de orquestração que você guarda.
 
 ## Regras que não mudam
 
@@ -106,7 +102,8 @@ Rode você mesmo, e **some as duas linhas `Ran`** — o total é a soma, nunca a
 
 1. `.claude/CLAUDE.md` — invariantes e protocolo
 2. `{norma}` — a norma
-3. `{skill}` — os três modos
+3. As skills, uma por modo:
+{skills}
 4. `{plano_md}` — o plano, com *Escopo*, *Decisões* e *Lacunas*
 """
 
@@ -138,6 +135,18 @@ def _relativo(caminho: Path, raiz: Path) -> str:
         return caminho.relative_to(raiz).as_posix()
     except ValueError:
         return caminho.as_posix()
+
+
+def _skills_citadas(raiz: Path) -> str:
+    """Um item por skill, com o `SKILL.md` de cada uma — irmãs da pasta que guarda o `config.json`.
+
+    A pasta do `config.json` (`decode-and-code/`) é a compartilhada e não tem `SKILL.md`: as skills
+    moram ao lado dela, tanto no checkout quanto no pacote.
+    """
+    pasta_skills = lib._config_path().parent.parent
+    return "\n".join(
+        f"   - `{_relativo(pasta_skills / nome / 'SKILL.md', raiz)}`" for nome in lib.SKILLS
+    )
 
 
 def _contagem(dir_plano: Path) -> tuple[int, int]:
@@ -175,7 +184,7 @@ def gerar(dir_plano: Path, *, fila: str, pendencias: str, sugestao: str) -> Path
         pendencias=pendencias.strip(),
         sugestao=sugestao.strip(),
         norma=_relativo(lib.plan_root() / "system" / "modelo-dev-units.md", raiz),
-        skill=_relativo(lib._config_path().parent / "SKILL.md", raiz),
+        skills=_skills_citadas(raiz),
         plano_md=_relativo(plano_md, raiz),
     )
 

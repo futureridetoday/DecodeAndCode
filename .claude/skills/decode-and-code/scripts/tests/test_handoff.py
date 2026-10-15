@@ -76,12 +76,26 @@ class TestEsqueleto(_BaseComPlanoSintetico):
         for parte in _JULGAMENTO.values():
             self.assertIn(parte, texto)
 
-    def test_nomeia_os_dois_comandos_de_cold_start(self):
-        """`0004-06` — sem isso, o prompt diz 'cold-start' sem dizer como disparar."""
+    def test_nomeia_uma_unica_forma_de_disparar_cold_start(self):
+        """`0004-06` e `P-03` — sem isso, o prompt diz 'cold-start' sem dizer como disparar.
+
+        Eram dois comandos, conforme a sessão; agora é a skill `implement`, que roda
+        sempre em fork. O caso contrário prova que os dois comandos não sobraram no texto.
+        """
         texto = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("/implement", texto)
-        self.assertIn("/delegate", texto)
+        self.assertIn("a skill `implement <unidade>`", texto)
+        self.assertIn("`context: fork`", texto)
+        self.assertNotIn("/implement", texto)
+        self.assertNotIn("delegate", texto)
+
+    def test_onde_ler_aponta_para_as_tres_skills_e_nao_para_o_skill_md_unico(self):
+        texto = self._gerar().read_text(encoding="utf-8")
+
+        for nome in lib.SKILLS:
+            with self.subTest(skill=nome):
+                self.assertIn(f"{nome}/SKILL.md", texto)
+        self.assertNotIn("decode-and-code/SKILL.md", texto)
 
     def test_cita_a_norma_em_vez_de_copiar_a_disciplina(self):
         texto = self._gerar().read_text(encoding="utf-8")
@@ -142,6 +156,22 @@ class TestContagemMedida(_BaseComPlanoSintetico):
 
 class TestContraOPlanoReal(unittest.TestCase):
     """`L-31` — só o caso real prova que os números vêm de medição, e não de literal."""
+
+    def test_caminhos_das_skills_citadas_existem_no_repositorio(self):
+        """O mock acima só prova o texto; este prova que cada caminho citado aponta para um arquivo."""
+        with tempfile.TemporaryDirectory() as tmp:
+            copia = Path(tmp) / _DIR_0001.name
+            copia.mkdir()
+            for arquivo in _DIR_0001.glob("*.md"):
+                (copia / arquivo.name).write_text(arquivo.read_text(encoding="utf-8"), encoding="utf-8")
+
+            texto = handoff.gerar(copia, **_JULGAMENTO).read_text(encoding="utf-8")
+
+        for nome in lib.SKILLS:
+            with self.subTest(skill=nome):
+                caminho = f".claude/skills/{nome}/SKILL.md"
+                self.assertIn(f"`{caminho}`", texto)
+                self.assertTrue((lib.repo_root() / caminho).is_file())
 
     def test_numeros_batem_com_o_oraculo_no_mesmo_instante(self):
         with tempfile.TemporaryDirectory() as tmp:

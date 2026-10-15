@@ -249,6 +249,57 @@ Efeitos colaterais que a mesma mudança carrega:
 - Numa sessão real, invocar `implement` sobre uma unidade de exemplo roda em Sonnet, conferido no
   transcript.
 
+**Implementado em 2026-10-15**, em duas etapas no mesmo branch:
+- commit [`6fa1b2a`](https://github.com/futureridetoday/DecodeAndCode/commit/6fa1b2a) — código e
+  pacote;
+- commit [`30edd4e`](https://github.com/futureridetoday/DecodeAndCode/commit/30edd4e) — norma,
+  registro, README, `CLAUDE.md` e `docs/recursos/`.
+
+`D-01` aprovada pelo humano antes da implementação, com os ajustes abaixo. Validado pelo humano em
+2026-10-15, sobre o diff do branch, antes do PR. Cada etapa foi implementada por agente
+`general-purpose` em Sonnet e revisada pelo orquestrador; cada uma teve uma rodada de correção (3
+itens na A, 2 na B).
+
+| Evidência | Resultado |
+|---|---|
+| Plugin de prova, Claude Code 2.1.300, `claude -p --plugin-dir`, **antes** de propor | `model: haiku` numa skill sem fork rodou o turno em Haiku. `context: fork` com `agent: general-purpose` e `model: haiku` rodou o subagent em Haiku. `agent: developer` (nome curto, agent do próprio plugin) **não resolveu**: caiu no padrão, sem aviso; `agent: probe:developer` resolveu. Uma pasta em `skills/` sem `SKILL.md` passou no `claude plugin validate` |
+| Conteúdo dos modos | Os trechos `review`, `derive`, `implement` e *Começando um projeto do zero* foram conferidos contra o `SKILL.md` antigo: idênticos, salvo o caminho dos scripts |
+| `scripts/test-python.sh` em 3.10, duas vezes por etapa | 502 testes OK (eram 490); `git status` igual antes e depois |
+| Pacote construído: `verificar` e `validar` | Listas vazias. Inventário: `skills/{review-plan,derive,implement}/SKILL.md`, `skills/decode-and-code/` sem `SKILL.md`, sem `commands/`, `agents/` só com `ai-builder.md` |
+| Sessão real: `/decode-and-code:implement 0001-01` numa sessão **Opus** | O subagent rodou só em Sonnet (`modelUsage`); o gate de entrada recusou a unidade inexistente sem escrever nada |
+| Sessão real: `/decode-and-code:review-plan` numa sessão **Sonnet** | O turno rodou em Opus |
+| Sessão real: o modelo chama `decode-and-code:derive` pelo Skill tool | Recusado: "cannot be used with Skill tool due to disable-model-invocation" |
+| `ai-builder` no plugin, linha de base e branch | O debug log da linha de base mostra `Preloaded skill 'decode-and-code'`; com `skills: [review-plan]`, o agent recebe o caminho absoluto dos scripts no plugin |
+| Referências e links | Nenhuma menção a `planner`, `developer`, `/delegate` ou `commands/` fora de planos históricos; 40 links relativos de README, `CLAUDE.md` e `docs/recursos/` resolvem |
+
+**Diferenças em relação à solução recomendada.**
+- **`implement` com `agent: general-purpose`, não `developer`.** Com nome curto, o agent do plugin
+  não resolve (medido). O `model: sonnet` da skill vale para o subagent, e o agent `developer` saiu.
+- **Scripts numa pasta compartilhada.** `decode-and-code/` ficou sem `SKILL.md`, com `scripts/`,
+  `config.json` e `reference/`. As três skills a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`,
+  porque `${CLAUDE_PLUGIN_ROOT}` não é substituído numa skill de projeto. `lib.SKILLS` é a fonte única
+  dos três nomes.
+- **`review-plan`, não `review`.** `/review` é alias do `/code-review` embutido. A colisão foi deduzida
+  da documentação, não medida.
+- **O `planner` saiu na mesma mudança** (unidade `15`). O modelo de `review` e `derive` já está
+  declarado na skill. Que o isolamento de contexto não faça falta é interpretação do revisor: os
+  achados desses modos são conversados com o humano.
+- **O `ai-builder` manteve `skills:`**, agora `[review-plan]`, contra a recomendação do `P-06` (ver
+  a atualização lá).
+- **O `effort` ficou vazio**, porque não há evidência para escolher um nível.
+
+**O que ficou de fora.**
+- O conteúdo não foi enxugado (`P-07`) e o frontmatter amflow continua (`P-10`).
+- `.claude/plugin.json` segue em `1.1.2`, mas a invocação mudou de nome (`/decode-and-code:decode-and-code
+  review` → `/decode-and-code:review-plan`). Subir a versão é decisão de release.
+- Num projeto sem estrutura, o `review-plan` não rodou o bootstrap, e os scripts não acharam a raiz
+  do repositório. O comportamento é anterior a esta mudança e fica para a unidade `02`.
+- `docs/plan/_inbox/huddle-command.md` cita `.claude/commands/implement.md` como exemplo de formato.
+  É plano pendente, por isso não foi editado.
+- Nenhum teste lê README, `CLAUDE.md` ou `docs/recursos/`; o drift ali só é pego por conferência
+  manual.
+- O frontmatter da norma ainda descreve "a skill dev-units", e `version`/`updated` não acompanharam.
+
 #### P-04 · O `/delegate` rebaixa o modelo da sessão que orquestra
 
 | | |
@@ -268,6 +319,9 @@ Efeitos colaterais que a mesma mudança carrega:
 achado se resolve com ela.
 
 **Como verificar.** Teste de frontmatter: `delegate.md` não declara `model:`.
+
+**Resolvido pelo `P-03` em 2026-10-15.** O `/delegate` saiu, e o `implement` roda em fork com
+`model: sonnet`. Medido: numa sessão Opus, só o subagent rodou em Sonnet. Ver o registro do `P-03`.
 
 #### P-05 · Ferramentas de diagnóstico e de desenvolvimento vão para todo usuário
 
@@ -352,6 +406,12 @@ achado se resolve com ela.
 - Teste de tamanho: descrição ≤ 600 caracteres e arquivo ≤ 4 KB.
 - Uma execução real com o exemplo de *exportação de relatórios*, conferindo que o esboço passa no
   `lint_plano`.
+
+**Atualização de 2026-10-15, medida no `P-03`.** A "pré-carga sem uso" estava errada. No plugin, o
+`skills:` é o que entrega ao `ai-builder` o caminho absoluto dos scripts que o passo 8 usa
+(`numeracao`, `nomenclatura`, `lint_plano`); fora do checkout, ele não tem outro jeito de achá-los.
+Hoje o agent declara `skills: [review-plan]`. O item 3 da solução vale só para a persona, e só tira o
+`skills:` se outra via der o caminho dos scripts.
 
 #### P-07 · O contexto injetado é pesado e carrega histórico
 
@@ -515,6 +575,12 @@ não resolver, usar o nome com namespace.
 **Como verificar.** O log de debug não contém o aviso de skill ausente, e o transcript do subagent
 mostra o conteúdo da skill.
 
+**Medido em 2026-10-15, dentro do `P-03`.** O nome curto **resolve** em `skills:` de um agent de
+plugin: o debug log mostra `[Agent: decode-and-code:ai-builder] Preloaded skill 'decode-and-code'`,
+e o mesmo acontece com `skills: [review-plan]`. A falha silenciosa existe no caso inverso: `agent:`
+com nome curto, numa skill de plugin, não acha o agent e cai no padrão sem aviso. Nenhuma mudança é
+necessária aqui. Ver o registro do `P-03`.
+
 ## O que manter
 
 | Peça | Por quê |
@@ -613,11 +679,11 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-Nenhuma decisão foi tomada. As quatro abaixo esperam o humano.
+`D-01` foi aprovada em 2026-10-15, com os ajustes registrados no `P-03`. As outras três esperam o humano.
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
-| D-01 | **Adotar a topologia de três skills** (Fase 3) | Sim | É decisão arquitetural (`CLAUDE.md`, *Autonomia*). A premissa que justificou agents e commands — "a troca não é declarável na skill" (norma, *Modelos*) — não confere com a documentação atual |
+| D-01 | **Adotar a topologia de três skills** (Fase 3) — **aprovada em 2026-10-15** | Sim | É decisão arquitetural (`CLAUDE.md`, *Autonomia*). A premissa que justificou agents e commands — "a troca não é declarável na skill" (norma, *Modelos*) — não confere com a documentação atual |
 | D-02 | **Quais hooks de anúncio continuam no pacote** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
 | D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
@@ -626,12 +692,12 @@ Nenhuma decisão foi tomada. As quatro abaixo esperam o humano.
 
 | # | Lacuna | Por que fica registrada |
 |---|---|---|
-| L-01 | **A resolução de `skills: [decode-and-code]` no namespace do plugin não foi medida** | A documentação não cobre plugin, e a falha é silenciosa — ver `P-13`. Medição prevista na unidade `02` |
+| L-01 | **A resolução de `skills: [decode-and-code]` no namespace do plugin não foi medida** | A documentação não cobre plugin, e a falha é silenciosa — ver `P-13`. Medição prevista na unidade `02`. **Fechada em 2026-10-15**: o nome curto resolve (ver `P-13`) |
 | L-02 | **Não se sabe se o upload de plugin pelo claude.ai recusa campos de frontmatter fora da especificação** | A documentação afirma isso para skill avulsa (claude.ai e Skills API), não para plugin. O README oferece o upload como caminho de instalação |
 | L-03 | **O sinal do `post_compact.py` não foi medido** | Ver `P-12` |
 | L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
-| L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso |
+| L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
 
 ## Backlog
 

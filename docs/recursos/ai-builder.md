@@ -9,8 +9,8 @@ Versão 1.0.0 · agent
 O agent que decide o menor mecanismo do Claude Code que resolve um pedido de automação —
 instrução, hook, command, skill ou agent — antes de qualquer plano nascer em `_inbox/`. Quando o
 pedido não é automação, mas um esboço de plano, um problema de produto ou uma feature, consulta os
-arquivos do sistema, aplica os gates de mínimo viável, e grava o esboço em `_inbox/` para o
-`planner` revisar. Roda em Opus.
+arquivos do sistema, aplica os gates de mínimo viável, e grava o esboço em `_inbox/` para a skill
+[`review-plan`](decode-and-code.md) revisar. Roda em Opus.
 
 ## Problema que resolve
 
@@ -19,13 +19,13 @@ Dois problemas do mesmo ponto do ciclo, a etapa 1 (*o plano nasce*):
 - Qualquer pedido de skill, agent ou hook virava plano, mesmo quando três linhas de instrução ou
   um hook resolveriam sozinhos.
 - Um esboço de plano nascia sem crivo contra o problema real — nada no ciclo audita se o plano é
-  maior do que o necessário. A *Avaliação de escopo* do `planner` testa acoplamento entre planos,
-  nunca se um plano sozinho é maior do que o problema pede (`modelo-dev-units.md`, seção *O que a
-  avaliação não faz*). Um esboço superficial pode convencer o humano a aprovar dez unidades onde
-  uma bastava, e depois disso não existe outro checkpoint.
+  maior do que o necessário. A *Avaliação de escopo* do `review-plan` testa acoplamento entre
+  planos, nunca se um plano sozinho é maior do que o problema pede (`modelo-dev-units.md`, seção *O
+  que a avaliação não faz*). Um esboço superficial pode convencer o humano a aprovar dez unidades
+  onde uma bastava, e depois disso não existe outro checkpoint.
 
 O agent isola os dois: chega sem o contexto da conversa, aplica a escada ou os gates conforme o
-tipo de pedido, e só deixa passar para `planner review` o que já foi reduzido ao mínimo que resolve
+tipo de pedido, e só deixa passar para o `review-plan` o que já foi reduzido ao mínimo que resolve
 agora.
 
 ## Como funciona
@@ -42,10 +42,10 @@ Para **esboço de plano, problema ou feature**: lê os arquivos do sistema relac
 aplica Clarificar → Evitar → Reduzir e os dois gates de `principles.md`. Sem impacto mensurável
 agora (Gate A), para e reporta. Com impacto, reduz o escopo até a menor fatia que resolve 80% do
 problema (Gate B), registra por escrito o que foi cortado, numera e nomeia o esboço reaproveitando
-os scripts da skill `decode-and-code`, grava em `docs/plan/_inbox/`, roda `lint_plano.py` contra o
-próprio arquivo, e recomenda `planner review <caminho>`. Faltando informação para fechar qualquer
-um dos três estágios, para numa única rodada e lista exatamente o que falta — nunca itera pedindo
-confirmação no meio da análise.
+os scripts da pasta compartilhada `decode-and-code/`, grava em `docs/plan/_inbox/`, roda
+`lint_plano.py` contra o próprio arquivo, e recomenda `review-plan <caminho>`. Faltando informação
+para fechar qualquer um dos três estágios, para numa única rodada e lista exatamente o que falta —
+nunca itera pedindo confirmação no meio da análise.
 
 ## Como usar
 
@@ -69,7 +69,7 @@ original.
 
 **Problema de produto, sem esboço prévio.** O pedido descreve um sintoma, não um recurso do Claude
 Code. `@decode-and-code:ai-builder` lê os arquivos relacionados, aplica os gates, e grava um
-esboço mínimo em `docs/plan/_inbox/` para o `planner` revisar.
+esboço mínimo em `docs/plan/_inbox/` para o `review-plan` revisar.
 
 **Esboço maior do que o problema pede.** O usuário já chega com um rascunho de feature com múltiplas
 partes. O Gate B reprova o escopo como está — o agent reduz para o que resolve agora, registra o
@@ -86,16 +86,20 @@ Unidades de Desenvolvimento entrar em jogo.
 
 ## Base de conhecimento
 
-Depende da skill `decode-and-code` para os scripts que reaproveita ao gravar um esboço —
-`numeracao.py` (próximo número de plano), `nomenclatura.py` (sintaxe e colisão do nome) e
+Depende dos scripts da pasta compartilhada `decode-and-code/` para o que reaproveita ao gravar um
+esboço — `numeracao.py` (próximo número de plano), `nomenclatura.py` (sintaxe e colisão do nome) e
 `lint_plano.py` (formato do esboço antes de encerrar). A escada de mecanismo continua independente
-da skill: só o ramo de esboço a usa. O agent declara `tools: Glob, Grep, Read, Bash, Write, Edit,
-WebFetch`, `model: opus` e `skills: [decode-and-code]`.
+deles: só o ramo de esboço os usa. O agent declara `tools: Glob, Grep, Read, Bash, Write, Edit,
+WebFetch`, `model: opus` e `skills: [review-plan]`.
+
+O `skills:` pré-carrega o `review-plan`, e é por ele que o agent acha os scripts fora do checkout:
+medido em 2026-10-15 com `--plugin-dir`, o debug log mostra `Preloaded skill` e o agent recebe o
+corpo da skill com o caminho absoluto dos scripts no plugin.
 
 ## Limites
 
-- **Não deriva nem implementa.** Plano aprovado é trabalho do agent [`planner`](planner.md);
-  unidade derivada é trabalho do agent [`developer`](developer.md).
+- **Não deriva nem implementa.** Plano aprovado é trabalho da skill `derive`; unidade derivada, da
+  skill `implement` ([decode-and-code.md](decode-and-code.md)).
 - **Não aprova.** Aprovação de plano é sempre do humano.
 - **Não publica.** Não interage com hub nem marketplace.
 - **Uma mensagem só.** Falta de informação para fechar um gate para a análise numa única rodada —
