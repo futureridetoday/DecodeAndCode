@@ -20,7 +20,6 @@ import os
 import re
 from pathlib import Path
 
-import lib
 import regioes
 
 # O conjunto presente em 11 de 11 skills do repositório (decisão D-02) — não
@@ -53,6 +52,11 @@ CAMPOS_FRONTMATTER = (
 # Interpretadores que dispensam bit de execução no script citado.
 _INTERPRETES_RE = re.compile(r"\b(python3|python|bash|sh|zsh|node|npx)\b")
 
+# Âncora que o Claude Code substitui, no corpo da skill, pelo diretório dela — no checkout e no
+# plugin instalado (code.claude.com/docs/en/skills, *Available string substitutions*).
+_SKILL_DIR = "${CLAUDE_SKILL_DIR}"
+_SCRIPT_RE = re.compile(re.escape(_SKILL_DIR) + r"/scripts/[^\s`)\"'<>]+")
+
 # Abertura/fechamento de bloco de código — mesma marca do move-md.py.
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
@@ -73,6 +77,7 @@ def lint(skill: Path, modos: list[str] | None = None) -> list[str]:
     problemas.extend(_checar_frontmatter(skill))
     problemas.extend(_checar_nome_e_descricao(skill))
     problemas.extend(_checar_modos(corpo, modos or []))
+    problemas.extend(_checar_caminho_fixo(skill, corpo))
     problemas.extend(_checar_scripts(skill, corpo))
     problemas.extend(_checar_links(skill, corpo))
     return problemas
@@ -130,33 +135,48 @@ def _checar_modos(corpo: str, modos: list[str]) -> list[str]:
     return [f"modo não declarado no corpo: {modo}" for modo in modos if modo not in corpo]
 
 
-def _caminhos_de_scripts(skill: Path, corpo: str) -> dict[str, list[str]]:
-    """Caminhos citados sob o `scripts/` da própria skill, com o texto que precede cada um na linha.
+def _checar_caminho_fixo(skill: Path, corpo: str) -> list[str]:
+    """Recusa `.claude/skills/<nome>/` no corpo — `P-01` do plano `apply-plugin-review`.
 
-    Só conta o prefixo inequívoco `.claude/skills/<nome>/scripts/` — uma
-    citação nua como `scripts/x.py`, ou `./scripts/x.py`, é ambígua: pode ser
-    de outro diretório de trabalho (o `cd hub` que precede
-    `./scripts/new-migration.sh` em hub-env/SKILL.md aponta para
-    `hub/scripts/`, não para o `scripts/` da própria skill nem o da raiz do
-    repositório) e não é checável sem interpretar o shell ao redor.
+    O caminho só existe no checkout que contém a skill. Instalada como plugin, ela mora no
+    diretório do plugin, e o modelo que segue o caminho fixo não acha o script — medido em
+    2026-10-15 com `claude --plugin-dir` num projeto vazio: `ls` sobre o caminho citado devolveu
+    `No such file or directory`, e o mesmo citado por `${CLAUDE_SKILL_DIR}` resolveu.
     """
-    nome = skill.parent.name
-    padrao = re.compile(r"\.claude/skills/" + re.escape(nome) + r"/scripts/[^\s`)\"'<>]+")
+    padrao = re.compile(r"\.claude/skills/" + re.escape(skill.parent.name) + r"/[^\s`)\"'<>]*")
+    return [
+        f"caminho fixo não resolve no plugin instalado — use {_SKILL_DIR}/: {caminho}"
+        for caminho in sorted(set(padrao.findall(corpo)))
+    ]
 
+
+def _caminhos_de_scripts(corpo: str) -> dict[str, list[str]]:
+    """Caminhos citados sob `${CLAUDE_SKILL_DIR}/scripts/`, com o texto que precede cada um na linha.
+
+    Só conta a âncora `${CLAUDE_SKILL_DIR}` — é a única citação que resolve tanto no checkout
+    quanto no plugin instalado. Uma citação nua como `scripts/x.py`, ou `./scripts/x.py`, é
+    ambígua: pode ser de outro diretório de trabalho (o `cd hub` que precede
+    `./scripts/new-migration.sh` em hub-env/SKILL.md aponta para `hub/scripts/`, não para o
+    `scripts/` da própria skill nem o da raiz do repositório) e não é checável sem interpretar o
+    shell ao redor.
+    """
     encontrados: dict[str, list[str]] = {}
     for linha in corpo.split("\n"):
-        for m in padrao.finditer(linha):
+        for m in _SCRIPT_RE.finditer(linha):
             prefixo = linha[: m.start()]
             encontrados.setdefault(m.group(0), []).append(prefixo)
     return encontrados
 
 
 def _checar_scripts(skill: Path, corpo: str) -> list[str]:
-    """Existência em disco (passo 4) e bit de execução ou interpretador explícito (passo 5)."""
-    raiz = lib.repo_root()
+    """Existência em disco (passo 4) e bit de execução ou interpretador explícito (passo 5).
+
+    Resolve contra o diretório da própria skill — o mesmo que `${CLAUDE_SKILL_DIR}` vira em sessão —,
+    e por isso vale igual para a fonte e para a cópia empacotada.
+    """
     problemas: list[str] = []
-    for caminho, prefixos in _caminhos_de_scripts(skill, corpo).items():
-        alvo = raiz / caminho
+    for caminho, prefixos in _caminhos_de_scripts(corpo).items():
+        alvo = skill.parent / caminho.removeprefix(_SKILL_DIR + "/")
         if not alvo.is_file():
             problemas.append(f"script citado não existe: {caminho}")
             continue

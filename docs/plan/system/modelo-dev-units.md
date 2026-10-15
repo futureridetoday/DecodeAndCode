@@ -256,12 +256,17 @@ devolve uma linha por instrução carregada, com caminho, motivo e veredito:
 
 ```
 python3 -c "
-import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scripts')
+import sys; sys.path.insert(0, '<scripts-da-skill>')
 import activation_notice
 for linha in activation_notice.relatorio('<caminho-do-log>'):
     print(linha)
 "
 ```
+
+`<scripts-da-skill>` é o `scripts/` da skill: `.claude/skills/decode-and-code/scripts` no checkout
+que a contém; no plugin instalado, o caminho que a própria skill cita como
+`${CLAUDE_SKILL_DIR}/scripts`. A variável só é substituída no corpo da skill — num arquivo lido,
+como este, ela chega literal.
 
 **O controle de três estados**, e que qualquer projeto que instalar o plugin
 repete para validar a própria camada: guideline **ligada** produz entrada no log; movida para

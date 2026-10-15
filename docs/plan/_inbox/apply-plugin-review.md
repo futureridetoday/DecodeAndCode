@@ -109,10 +109,14 @@ verificar que a solução funcionou. A coluna *Unidade* da seção `## Escopo` a
 
 1. Trocar no corpo do `SKILL.md` toda referência a `.claude/skills/decode-and-code/scripts/` por
    `${CLAUDE_SKILL_DIR}/scripts/`.
-2. Restringir `allowed-tools` a `Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)`, além de
-   `Read Write Edit Glob Grep`. Os scripts passam a rodar sem pedir permissão, e só eles.
-3. Fazer o `lint_skill.py` aceitar o prefixo `${CLAUDE_SKILL_DIR}/scripts/` e recusar o prefixo fixo.
-4. Atualizar o exemplo da norma, linha 259.
+2. Fazer o `lint_skill.py` aceitar o prefixo `${CLAUDE_SKILL_DIR}/scripts/`, resolvendo contra o
+   diretório da própria skill, e recusar o prefixo fixo.
+3. No exemplo da norma (linha 259), trocar o caminho por um marcador. A norma é lida como
+   arquivo, e `${CLAUDE_SKILL_DIR}` só é substituído no corpo da skill.
+
+> **Corrigido na implementação.** A primeira versão desta recomendação também restringia
+> `allowed-tools` a `Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)`. Não funciona: a skill compõe os
+> scripts por `python3 -c "…"`, e essa regra não casa. Restringir permissão fica com `P-09`.
 
 **Como verificar.**
 
@@ -475,7 +479,7 @@ As fases seguem a ordem de prioridade. Cada uma passa sozinha no teste de indepe
 
 | # | Unidade | Responsabilidade | Achado |
 |---|---|---|---|
-| 01 | `skill-dir-paths` | O `SKILL.md` compõe os scripts por `${CLAUDE_SKILL_DIR}/scripts/`; `allowed-tools` restringe o `Bash` a esses scripts; o `lint_skill` aceita o novo prefixo e recusa o fixo; o exemplo da norma acompanha | P-01, P-11 |
+| 01 | `skill-dir-paths` | O `SKILL.md` compõe os scripts por `${CLAUDE_SKILL_DIR}/scripts/`; o `lint_skill` aceita o novo prefixo e recusa o fixo; o exemplo da norma passa a usar um marcador | P-01, P-11 |
 | 02 | `installed-skill-proof` | Teste de pacote sobre o `SKILL.md` construído, mais o roteiro da prova manual com `--plugin-dir`, registrado no plano com o resultado. A mesma sessão mede `P-13` | P-01, P-13 |
 | 03 | `hermetic-registry-test` | `test_registry` isolado em `tempfile`; o harness falha se a suíte deixar diff no repositório | P-02 |
 | 04 | `strict-validate` | `validar()` com `--strict`; `hooks.json` com o caminho entre aspas | P-08 |
