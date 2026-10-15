@@ -4,8 +4,8 @@
 Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
-de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as três skills, a
-pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os quatro scripts de
+de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as quatro skills, a
+pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os três scripts de
 desenvolvimento (`P-05`), quatro hooks e um `settings.json` com os quatro eventos e a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
 
@@ -17,7 +17,8 @@ instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza
 
 O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`) mais a pasta
 compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; os comandos saem do
-pacote, e dos agents só o `ai-builder` fica.
+pacote. O `P-06` converte o único agent na skill `intake` (`D-03`): o pacote passa a ter quatro
+skills e nenhum `agents/`.
 
 A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
 de graça — mora dentro da skill desde a `0004-04`, e `_copiar_skill` já copia a árvore inteira —,
@@ -27,10 +28,10 @@ destino próprios (`docs/plan/system/modelo-dev-units.md` → `reference/`, dent
 pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacotar._fontes` agora
 declara.
 
-O `P-05` enxuga o pacote: os quatro scripts de desenvolvimento (`empacotar`, `reconciliar`,
-`lint_skill`, `lint_agente`) e os hooks `PostCompact` e `SubagentStart` ficam só neste repositório
-(`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o do **checkout**,
-porque o do pacote deixou de existir.
+O `P-05` enxuga o pacote: os scripts de desenvolvimento (`empacotar`, `reconciliar` e `lint_skill`;
+o lint de agent saiu com o agent, no `P-06`) e os hooks `PostCompact` e `SubagentStart` ficam só
+neste repositório (`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o
+do **checkout**, porque o do pacote deixou de existir.
 """
 
 from __future__ import annotations
@@ -105,10 +106,6 @@ def _montar_fonte(raiz: Path) -> None:
     hooks.mkdir(parents=True, exist_ok=True)
     for nome in _HOOKS_DA_FONTE.values():
         (hooks / nome).write_text(f"# {nome}\n", encoding="utf-8")
-
-    agents = raiz / ".claude" / "agents"
-    agents.mkdir(parents=True, exist_ok=True)
-    (agents / "ai-builder.md").write_text("# ai-builder sintético\n", encoding="utf-8")
 
     settings = raiz / ".claude" / "settings.json"
     settings.write_text(
@@ -194,7 +191,7 @@ class TestConstruir(_BaseComFonteSintetica):
         for caminho in escritos:
             self.assertTrue(caminho.is_file(), f"não escrito: {caminho}")
 
-    def test_manifesto_e_as_tres_skills_presentes(self):
+    def test_manifesto_e_as_quatro_skills_presentes(self):
         empacotar.construir(self.destino)
         self.assertTrue((self.destino / ".claude-plugin" / "plugin.json").is_file())
         for nome in NOMES_DAS_SKILLS:
@@ -217,7 +214,7 @@ class TestConstruir(_BaseComFonteSintetica):
                 self.assertIn("project: exemplo", texto)
                 self.assertNotIn(f"project: {self.raiz.name}", texto)
 
-    def test_so_as_tres_skills_e_a_compartilhada_viajam(self):
+    def test_so_as_quatro_skills_e_a_compartilhada_viajam(self):
         """Uma skill de desenvolvimento do repositório não vaza: a lista é explícita, não `skills/*`."""
         so_de_desenvolvimento = self.raiz / ".claude" / "skills" / "so-de-desenvolvimento"
         so_de_desenvolvimento.mkdir()
@@ -260,7 +257,7 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertEqual(copiados, {*_HOOKS_QUE_VIAJAM, "hooks.json"})
 
     def test_scripts_de_desenvolvimento_nao_viajam_na_pasta_compartilhada(self):
-        """`P-05` — o `empacotar`, o `reconciliar` e os dois `lint_*` só servem a quem desenvolve."""
+        """`P-05` — o `empacotar`, o `reconciliar` e o `lint_skill` só servem a quem desenvolve."""
         empacotar.construir(self.destino)
         scripts = self.destino / "skills" / "decode-and-code" / "scripts"
         for nome in empacotar._SCRIPTS_DE_DESENVOLVIMENTO:
@@ -283,10 +280,15 @@ class TestConstruir(_BaseComFonteSintetica):
             empacotar.construir(self.destino)
         self.assertFalse(self.destino.exists())
 
-    def test_so_o_ai_builder_copiado(self):
+    def test_pacote_nao_tem_agents_nem_quando_a_fonte_tem(self):
+        """`P-06` — o único agent virou a skill `intake`; o pacote não copia agent de lugar nenhum."""
+        agents = self.raiz / ".claude" / "agents"
+        agents.mkdir()
+        (agents / "qualquer.md").write_text("# agent que não viaja\n", encoding="utf-8")
+
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "agents").glob("*.md")}
-        self.assertEqual(copiados, {"ai-builder.md"})
+        self.assertFalse((self.destino / "agents").exists())
+        self.assertEqual([], [str(p) for p in self.destino.rglob("qualquer.md")])
 
     def test_pacote_nao_tem_commands(self):
         """`P-03` — os comandos viraram skills, e `commands/` deixou de ser fonte e de ser destino."""
@@ -387,7 +389,7 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             empacotar.construir(destino)
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_as_tres_skills_empacotadas_declaram_o_plugin_e_nao_o_repositorio(self):
+    def test_as_quatro_skills_empacotadas_declaram_o_plugin_e_nao_o_repositorio(self):
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
@@ -430,13 +432,16 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
                 {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *NOMES_DAS_SKILLS}
             )
 
-    def test_so_o_ai_builder_presente_no_pacote_real(self):
-        """`D-27` e `P-03` — o agent que fica viaja; o ciclo review/derive/implement é skill."""
+    def test_pacote_real_tem_o_intake_e_nenhum_agent(self):
+        """`P-06` e `D-03` — o `intake` viaja como skill, com o atalho `dc.py`; não há `agents/`."""
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            self.assertEqual({p.name for p in (destino / "agents").iterdir()}, {"ai-builder.md"})
+            self.assertTrue((destino / "skills" / "intake" / "SKILL.md").is_file())
+            self.assertTrue((destino / "skills" / "intake" / "dc.py").is_file())
+            self.assertFalse((destino / "agents").exists())
+            self.assertEqual(empacotar.verificar(destino), [])
 
     def test_norma_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
         """Critério de aceite da `0004-04` — contra o repositório real, não fixture (`L-31`)."""
@@ -494,17 +499,17 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
 class TestPacoteEnxuto(unittest.TestCase):
     """`P-05` e `D-02` — o que o pacote **real** não leva, e a prova de que nada faz falta.
 
-    O sintético (`TestConstruir`) prova o mecanismo; só o repositório real diz que os quatro
+    O sintético (`TestConstruir`) prova o mecanismo; só o repositório real diz que os três
     scripts de desenvolvimento e os dois hooks de anúncio podem sair (`L-31`).
     """
 
-    def test_pacote_real_sem_os_quatro_scripts_de_desenvolvimento(self):
+    def test_pacote_real_sem_os_tres_scripts_de_desenvolvimento(self):
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
             scripts = destino / "skills" / "decode-and-code" / "scripts"
-            for nome in ("empacotar.py", "reconciliar.py", "lint_skill.py", "lint_agente.py"):
+            for nome in ("empacotar.py", "reconciliar.py", "lint_skill.py"):
                 with self.subTest(script=nome):
                     self.assertFalse((scripts / nome).exists())
             self.assertTrue((scripts / "dc.py").is_file())
@@ -539,11 +544,11 @@ class TestPacoteEnxuto(unittest.TestCase):
                         citados.update(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/hooks/([\w.-]+\.py)", hook["command"]))
             self.assertEqual(citados, {p.name for p in (destino / "hooks").glob("*.py")})
 
-    def test_todo_script_e_hook_do_pacote_importa_sem_os_quatro(self):
+    def test_todo_script_e_hook_do_pacote_importa_sem_os_tres(self):
         """Nenhum runtime nem hook importa o que saiu — executado de verdade, não lido por `grep`.
 
         Subprocesso novo, `-I` e `cwd` sem projeto: `import` aqui devolveria o módulo já carregado
-        da fonte, que tem os quatro ao lado. Os hooks entram por caminho, porque `hooks/` não está
+        da fonte, que tem os três ao lado. Os hooks entram por caminho, porque `hooks/` não está
         no `sys.path` — e o `sys.path.insert` de cada um aponta para o pacote, não para a fonte.
         """
         codigo = (
@@ -707,7 +712,7 @@ class TestValidarPelaFerramentaOficial(unittest.TestCase):
 
         Sem os dois o gate seria vácuo: a primeira tentativa de quebrar o pacote foi apagar o
         manifesto, e ele **continuou válido** — a doc diz que plugin precisa de manifesto **ou** de
-        componentes, e o nosso tem `skills/`, `agents/` e `hooks/`. `name` ausente reprova de
+        componentes, e o nosso tem `skills/` e `hooks/`. `name` ausente reprova de
         verdade, medido em 2026-08-27.
 
         Sem `claude` no `PATH`, afirma a degradação declarada. As duas pontas são comportamento

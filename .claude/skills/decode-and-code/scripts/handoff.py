@@ -138,14 +138,14 @@ def _relativo(caminho: Path, raiz: Path) -> str:
 
 
 def _skills_citadas(raiz: Path) -> str:
-    """Um item por skill, com o `SKILL.md` de cada uma — irmãs da pasta que guarda o `config.json`.
+    """Um item por modo (`lib.MODOS`), com o `SKILL.md` da skill de cada um — irmãs da pasta que guarda o `config.json`.
 
     A pasta do `config.json` (`decode-and-code/`) é a compartilhada e não tem `SKILL.md`: as skills
     moram ao lado dela, tanto no checkout quanto no pacote.
     """
     pasta_skills = lib._config_path().parent.parent
     return "\n".join(
-        f"   - `{_relativo(pasta_skills / nome / 'SKILL.md', raiz)}`" for nome in lib.SKILLS
+        f"   - `{_relativo(pasta_skills / nome / 'SKILL.md', raiz)}`" for nome in lib.MODOS
     )
 
 

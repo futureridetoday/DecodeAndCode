@@ -7,7 +7,7 @@ deixa de casar — medido em sessão real: 11 recusas nas três skills. Este arq
 cada skill, então o comando é `${CLAUDE_SKILL_DIR}/dc.py`, sem `..` para normalizar.
 
 Só executa o `dc.py` da pasta compartilhada, com o mesmo `argv`, o mesmo stdin e o mesmo código de
-saída; a lógica não mora aqui. As três cópias (`review-plan`, `derive`, `implement`) são idênticas, e
+saída; a lógica não mora aqui. As cópias, uma por skill do método, são idênticas, e
 um teste confere.
 """
 
