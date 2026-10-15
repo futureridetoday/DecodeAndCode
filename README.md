@@ -76,19 +76,17 @@ claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/do
 
 ## Como usar o Decode And Code
 
-Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skill, agent, comando, hooks)
+Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, agent, hooks)
 no formato *o que é · problema · como funciona · como usar · exemplos · fundamentação · base de
 conhecimento · limites*, e um **guia de uso** por camada normativa — quando e como criar um
 princípio, uma guideline, um guardrail.
 
 | Tipo | Recurso | O que faz | Doc |
 |---|---|---|---|
-| skill | `decode-and-code` | Os três modos — `review` um plano, `derive` estrutura e unidades, `implement` uma unidade em cold-start | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para o `planner` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
-| agent | `planner` | Revisa um plano antes da aprovação, e deriva as unidades de um plano aprovado (Opus) | [planner.md](docs/recursos/planner.md) |
-| agent | `developer` | Implementa uma unidade já derivada, em cold-start isolado (Sonnet) | [developer.md](docs/recursos/developer.md) |
-| command | `/decode-and-code:implement` | Roda o modo `implement` na sessão atual — pensado para sessão nova | [implement.md](docs/recursos/implement.md) |
-| command | `/decode-and-code:delegate` | Delega a unidade ao agent `developer` sem sair da sessão de orquestração | [delegate.md](docs/recursos/delegate.md) |
+| skill | `review-plan` | Revisa um plano antes da aprovação — os seis checks, parte por script, parte por julgamento (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
 | hooks | 4 hooks | Guardrail do projeto (`PreToolUse`) e anúncio de norma/guidelines/subagente — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
 | guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
@@ -102,10 +100,10 @@ materializa lá, e nunca viaja com os deste repositório.
 | # | Etapa | Onde |
 |---|---|---|
 | 1 | O plano nasce | `docs/plan/_inbox/` |
-| 2 | Revisão | modo `review` |
+| 2 | Revisão | skill `review-plan` |
 | 3 | **Aprovação** | humano |
-| 4 | Derivação em unidades | modo `derive` |
-| 5 | Implementação, uma unidade por vez | modo `implement`, em cold-start |
+| 4 | Derivação em unidades | skill `derive` |
+| 5 | Implementação, uma unidade por vez | skill `implement`, em cold-start |
 
 Quem executa uma unidade entrega arquivos e relatório, e não commita. O estado de cada unidade
 (`spec` → `wip` → `verified`) é **projetado a partir do teste**, nunca editado à mão.
@@ -191,11 +189,12 @@ Formato completo, os cinco gatilhos de escrita e a regra de despejo:
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — a skill, os hooks, os agentes, os comandos e o manifesto
-(`.claude/plugin.json`). `dist/decode-and-code/` é staging **gitignorado**: `empacotar.construir()`
-o escreve do zero a cada build, e nada dali é commitado. O que se distribui é o **zip** que
-`empacotar.empacotar_zip()` produz a partir dessa mesma árvore, publicado como asset de um GitHub
-Release e referenciado por `source: archive` (`url` + `sha256`) no `marketplace.json`.
+`.claude/` é a **fonte** — as três skills e a pasta compartilhada `decode-and-code/` (scripts), os
+hooks, o agente e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
+**gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
+que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,
+publicado como asset de um GitHub Release e referenciado por `source: archive` (`url` + `sha256`) no
+`marketplace.json`.
 
 ```bash
 python3 -c "import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scripts'); import empacotar; empacotar.construir()"

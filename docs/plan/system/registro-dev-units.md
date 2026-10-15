@@ -127,7 +127,7 @@ imediato.
 | 15 | Teste inexistente | Gate de entrada exige teste **declarado**, não existente; `implement` escreve teste e código |
 | 16 | Alvo do plano | Frontmatter com `core`/`module`/`block`; **um plano, um alvo** |
 | 17 | Backlog | Marcadores `<!-- backlog:start -->` / `<!-- backlog:end -->`; script substitui só o miolo |
-| 18 | Modelo por modo | **Não declarável em skill** — política operacional; automatizar exigiria agent. Continua verdadeiro para a skill — **revisado em 2026-08-26**: agent deixou de estar fora de escopo (ver *Modelos*) |
+| 18 | Modelo por modo | **Não declarável em skill** — política operacional; automatizar exigiria agent — **revisado em 2026-08-26**: agent deixou de estar fora de escopo; **refutado em 2026-10-15**: `model:` é campo de skill, e cada skill do método declara o seu (achado `P-03` do plano `apply-plugin-review`; ver *Modelos*) |
 | 19 | Nome do plano | Mantém o nome ao sair do `_inbox` e **recebe prefixo numérico**; nunca vira `plano.md` |
 | 20 | Regra de nome | `<intenção>-<alvo>[-<qualificador>]`, kebab-case, sem repetir o caminho — idioma **revisado** pela decisão 32 |
 | 21 | Arquivo da unidade | `[nn]-[nome].md` — **revisa** "só o ID"; a estabilidade vem do `unit_id`, não do filename |
