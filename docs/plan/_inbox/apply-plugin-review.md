@@ -533,6 +533,69 @@ comprovado. Rodar `/fewer-permission-prompts` depois de algumas sessões para aj
 **Como verificar.** Uma sessão de `review` e uma de `implement` rodam sem prompt para os scripts da
 skill.
 
+**Implementado em 2026-10-15**, no commit
+[`cf3a15c`](https://github.com/futureridetoday/DecodeAndCode/commit/cf3a15c). Validado pelo humano
+em 2026-10-15, sobre o diff e a prova em sessão real, antes do PR. A edição foi feita por um agente
+`general-purpose` em Haiku e revisada pelo orquestrador, sem rodada de correção.
+
+**A recomendação acima não servia, por dois motivos medidos na documentação de permissões e de
+skills:**
+- As skills compõem os scripts por `python3 -c "import sys; sys.path.insert(...); …"`, e uma regra
+  por caminho de script nunca casa com essa forma.
+- Dentro de uma skill, o `allowed-tools: … Bash …` já pré-aprova o Bash no turno dela. O
+  `Bash(python3*)` do `settings.json` só valia fora das skills, e ali era liberação ampla.
+
+**O que mudou no `.claude/settings.json`, só no `permissions.allow`:**
+- Sai `Bash(python3*)`.
+- Sai `Bash(sed -n*)`, que casa `sed -n -i` e `sed -n 'e …'`.
+- Saem as regras que só repetiam o conjunto só-leitura embutido do Claude Code: `git status`,
+  `git log*`, `git diff*`, `find*`, `grep*`, `ls*`, `cat*`, `wc*` e `pwd`. Elas o ampliavam, porque
+  `git log`/`git diff` com `--output` gravam arquivo.
+- Entra `Bash(bash scripts/test-python.sh *)`, que é a forma do README e do CI.
+
+| Evidência (sessões `claude -p` no modo padrão, num clone, com o arquivo carregado por `--settings`, já que o `-p` ignora as regras `allow` de projeto não confiável) | Resultado |
+|---|---|
+| `python3 -c 'print(1)'` fora de skill, regras **antigas** | Rodou sem pedir |
+| O mesmo, regras **novas** | Recusado: "This command requires approval" |
+| `/review-plan` sobre um plano do `_inbox` | Opus, 12 comandos Bash (inclusive a composição `python3` com `nomenclatura`), nenhuma recusa |
+| `/implement 9999-99` | Subagent Sonnet; o `python3 -c` do gate rodou e recusou a unidade inexistente; nenhuma recusa |
+| `bash scripts/test-python.sh` | Rodou: 504 testes |
+| `sed -n`, `grep`, `ls`, `cat`, `find` nessas sessões | Sem recusa: a lista embutida cobre a forma só-leitura |
+
+**O que ficou de fora.** O `allowed-tools` das skills é o achado `P-14`, logo abaixo. `Read`, `Edit`
+e `Write` continuam liberados sem restrição de caminho neste repositório. Não fazem parte deste
+achado.
+
+#### P-14 · O `allowed-tools` das skills libera qualquer comando de shell
+
+*Achado acrescentado em 2026-10-15, durante o `P-09`. A revisão original não o pegou.*
+
+| | |
+|---|---|
+| **Onde** | `.claude/skills/{review-plan,derive,implement}/SKILL.md` — `allowed-tools: "Read Write Edit Bash Glob Grep"`; viaja no pacote |
+| **Critério** | Permissões explícitas; revisar o que se instala |
+
+**Evidência.**
+
+- Pela documentação de skills, `allowed-tools` "grants permission for the listed tools during the
+  turn that invokes the skill". `Bash` sem especificador libera qualquer comando de shell nesse
+  turno.
+- A mesma página alerta: "A skill can grant itself broad tool access, so review the
+  `allowed-tools` of skills checked into a repository before you run Claude Code there".
+- Medido no `P-09`: dentro de `/review-plan` e `/implement`, todo comando Bash rodou sem aprovação.
+  Ao contrário do `P-09`, isto vale para todo projeto que instala o plugin.
+
+**Solução recomendada (interpretação do revisor — depende de `D-05`).** Nenhuma correção é barata:
+
+| Opção | Efeito |
+|---|---|
+| A. `Bash(python3 -c *)` | Só troca o nome: continua liberando código arbitrário |
+| B. Tirar o `Bash` | Cada chamada de script pede aprovação, inclusive dentro do `implement` em fork |
+| C. **Recomendada.** Um ponto de entrada único, `scripts/dc.py <operação> <args>`, liberado por `Bash(python3 "${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/dc.py" *)` | É o padrão que a documentação mostra. Muda como as skills compõem os scripts. Argumentos longos, como a fila do `handoff`, precisam de arquivo ou stdin |
+
+**Como verificar.** Numa sessão real, dentro de uma skill, um comando fora do ponto de entrada pede
+aprovação, e as operações das três skills rodam sem pedir.
+
 ### Impacto baixo
 
 #### P-10 · Frontmatter fora da especificação no que viaja
@@ -651,6 +714,7 @@ As fases seguem a ordem de prioridade. Cada uma passa sozinha no teste de indepe
 | 05 | `ci-workflow` | Workflow de CI com Python 3.10 fixo: harness, build e validação em todo PR para `dev` | P-08 |
 | 06 | `narrow-permissions` | `settings.json` sem `Bash(python3*)` | P-09 |
 | 07 | `delegate-model` | `delegate.md` sem `model:`. Pular se `D-01` aprovar a Fase 3 antes | P-04 |
+| 18 | `skill-allowed-tools` | `allowed-tools` das skills sem `Bash` livre, conforme `D-05` | P-14 |
 
 ### Fase 2 — Enxugar o pacote
 
@@ -720,7 +784,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-02` e `D-03` esperam o humano.
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-02`, `D-03` e `D-05` esperam o humano.
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
@@ -728,6 +792,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | D-02 | **Quais hooks de anúncio continuam no pacote** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
 | D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
+| D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
 
 ## Lacunas
 
