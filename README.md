@@ -87,7 +87,7 @@ princípio, uma guideline, um guardrail.
 | skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
-| hooks | 4 hooks | Guardrail do projeto (`PreToolUse`) e anúncio de norma/guidelines/subagente — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
+| hooks | 4 hooks, 2 no pacote | Guardrail do projeto (`PreToolUse`) e log de norma/guidelines (`InstructionsLoaded`) viajam no plugin; `PostCompact` e `SubagentStart` ficam só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
 | guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
 | guia de uso | Criar um guardrail | Quando e como adicionar uma regra a `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |

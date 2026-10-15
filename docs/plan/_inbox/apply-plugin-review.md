@@ -366,6 +366,36 @@ achado se resolve com ela.
 - `test_empacotamento`: o pacote não contém os quatro scripts e o `hooks.json` só tem `PreToolUse`.
 - `test_guardrail`: projeto sem `guardrails.json` gera stdout e stderr vazios.
 
+**Implementado em 2026-10-15**, no commit
+[`597af95`](https://github.com/futureridetoday/DecodeAndCode/commit/597af95), com `D-02` = B.
+Validado pelo humano em 2026-10-15, sobre o diff e o CI verde no branch, antes do PR. Implementado
+por agente `general-purpose` em Sonnet, revisado pelo orquestrador, sem rodada de correção.
+
+**O que mudou.**
+- O pacote deixa de levar `empacotar.py`, `reconciliar.py`, `lint_skill.py` e `lint_agente.py`.
+  Com isso sai também a menção ao AmFlow.
+- O `hooks.json` do pacote fica só com `PreToolUse` e `InstructionsLoaded`, e `hooks/` só com os dois
+  scripts. A lista é uma só, `_EVENTOS_DO_PACOTE`, e os scripts copiados são derivados dos comandos.
+  `PostCompact` e `SubagentStart` continuam só neste repositório.
+- Sem `guardrails.json`, o `pre_tool_use.py` sai com código 0 e não escreve nada. Com o arquivo
+  malformado, continua avisando.
+
+| Evidência | Resultado |
+|---|---|
+| Hook num projeto vazio, **antes** | stderr `guardrail: falha aberta, liberando — FileNotFoundError` a cada chamada |
+| O mesmo, **depois** (fonte e pacote) | Código 0, stdout e stderr vazios. Com JSON malformado, o aviso continua |
+| Sessão real com o pacote, projeto vazio | `PreToolUse` terminou com status 0, sem "falha aberta" no log |
+| Imports | Um subprocesso isolado importa todo módulo e todo hook do pacote sem os quatro scripts |
+| Suíte em 3.10 | 613 testes OK (eram 602) |
+| Pacote | `verificar` e `validar --strict` vazios |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38817977191) | Verde |
+
+**O que ficou de fora.**
+- No pacote, o `instructions_loaded.py` ainda grava em `/tmp` um estado que só o `post_compact.py`
+  lia. Não é erro: a escrita apenas fica sem leitor.
+- O `P-12` (sinal falso do `post_compact`) deixa de afetar quem instala, mas continua valendo neste
+  repositório.
+
 #### P-06 · O `ai-builder` é grande, amplo e repete o que o Claude Code já faz
 
 | | |
@@ -815,12 +845,12 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` e `D-03` esperam o humano.
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`).
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
 | D-01 | **Adotar a topologia de três skills** (Fase 3) — **aprovada em 2026-10-15** | Sim | É decisão arquitetural (`CLAUDE.md`, *Autonomia*). A premissa que justificou agents e commands — "a troca não é declarável na skill" (norma, *Modelos*) — não confere com a documentação atual |
-| D-02 | **Quais hooks de anúncio continuam no pacote** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
+| D-02 | **Quais hooks de anúncio continuam no pacote** — **aprovada em 2026-10-15: só `InstructionsLoaded`** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
 | D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 | D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |

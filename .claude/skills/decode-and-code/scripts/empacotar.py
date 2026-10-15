@@ -11,6 +11,16 @@ por **exclusão de caminho** (`scripts/tests/`, `__pycache__`, `docs/`, `guardra
 dos quatro é fonte copiada); `verificar` decide por **busca de conteúdo** na árvore já construída —
 o par que fecha o invariante nos dois sentidos.
 
+**Pacote enxuto — `P-05` e `D-02` do plano `apply-plugin-review`.** O que só serve a quem
+desenvolve o método fica no repositório: `empacotar.py`, `reconciliar.py` (compara contra o
+AmFlow), `lint_skill.py` e `lint_agente.py` não são importados por script de runtime nem por hook,
+só pelos testes (`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam dois,
+`PreToolUse` e `InstructionsLoaded` (`_EVENTOS_DO_PACOTE`): `PostCompact`, `SubagentStart` e
+`InstructionsLoaded` são hooks de anúncio, e nenhum chega ao modelo; não há registro de projeto que
+instala o plugin usando o controle de três estados da norma (*Validar a ativação*). O
+`InstructionsLoaded` fica por ser o log desse controle, e os outros dois continuam no
+`settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail.
+
 `${CLAUDE_PLUGIN_ROOT}` é o que separa pacote de cópia: `hooks/hooks.json` reescreve a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks` do `settings.json` para `${CLAUDE_PLUGIN_ROOT}/hooks`.
 """
@@ -29,6 +39,16 @@ import lib
 
 _ANCORA_PROJETO = "${CLAUDE_PROJECT_DIR}/.claude/hooks"
 _ANCORA_PLUGIN = "${CLAUDE_PLUGIN_ROOT}/hooks"
+
+# Os hooks que viajam, por evento — a **única** lista (`D-02`, `P-05`). Os scripts de `hooks/` não
+# têm lista própria: saem dos comandos destes eventos (`_scripts_dos_hooks`), então um evento só
+# entra ou sai do pacote aqui.
+_EVENTOS_DO_PACOTE = ("PreToolUse", "InstructionsLoaded")
+
+# Só da pasta compartilhada, e só no pacote: nenhum runtime nem hook os importa (`P-05`).
+_SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py", "lint_agente.py")
+
+_SCRIPT_DO_HOOK_RE = re.compile(re.escape(_ANCORA_PROJETO) + r"/([\w.-]+\.py)")
 
 _PROJECT_RE = re.compile(r"(?m)^project:.*$")
 
@@ -75,6 +95,12 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
         if not caminho.exists():
             raise FileNotFoundError(f"fonte ausente para {nome!r}: {caminho}")
 
+    hooks = _hooks_do_pacote(fontes["settings"])
+    scripts_dos_hooks = _scripts_dos_hooks(hooks)
+    for nome in scripts_dos_hooks:
+        if not (fontes["hooks"] / nome).is_file():
+            raise FileNotFoundError(f"hook citado no settings.json sem fonte: {fontes['hooks'] / nome}")
+
     if destino.exists():
         shutil.rmtree(destino)
     destino.mkdir(parents=True)
@@ -86,8 +112,8 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     for nome in lib.SKILLS:
         escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino, nome_plugin))
     escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
-    escritos.extend(_copiar_hooks(fontes["hooks"], destino))
-    escritos.append(_escrever_hooks_json(fontes["settings"], destino))
+    escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))
+    escritos.append(_escrever_hooks_json(hooks, destino))
     escritos.extend(_copiar_agentes(fontes["agents"], destino))
     return escritos
 
@@ -103,7 +129,9 @@ def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
     """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
 
     Serve às três skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
-    o `SKILL.md` — que só as skills têm — passa por `_declarar_o_plugin`.
+    o `SKILL.md` — que só as skills têm — passa por `_declarar_o_plugin`. Só a pasta compartilhada
+    perde também `_SCRIPTS_DE_DESENVOLVIMENTO` (`P-05`): é onde `scripts/` mora, e uma skill não
+    deveria perder em silêncio um arquivo que por acaso tenha um desses nomes.
 
     `.DS_Store` entrou por medição, não por antecipação (`L-32`): a reconciliação da `0001-17`
     acusou um dentro da pasta da skill, e o pacote o levava — lixo do Finder da máquina que
@@ -112,9 +140,10 @@ def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
     fato (invariante 1). Lixo novo entra nesta lista quando for observado, nunca antes.
     """
     alvo = destino / "skills" / origem.name
-    shutil.copytree(
-        origem, alvo, ignore=shutil.ignore_patterns("__pycache__", "tests", ".DS_Store")
-    )
+    ignorar = ["__pycache__", "tests", ".DS_Store"]
+    if origem.name == _PASTA_COMPARTILHADA:
+        ignorar.extend(_SCRIPTS_DE_DESENVOLVIMENTO)
+    shutil.copytree(origem, alvo, ignore=shutil.ignore_patterns(*ignorar))
     if (alvo / "SKILL.md").is_file():
         _declarar_o_plugin(alvo / "SKILL.md", nome_plugin)
     return [p for p in sorted(alvo.rglob("*")) if p.is_file()]
@@ -153,13 +182,28 @@ def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
     return alvo
 
 
-def _copiar_hooks(origem: Path, destino: Path) -> list[Path]:
+def _hooks_do_pacote(settings: Path) -> dict:
+    """O bloco `hooks` de `settings.json` reduzido a `_EVENTOS_DO_PACOTE` — a fonte continua com os quatro."""
+    bloco = json.loads(settings.read_text(encoding="utf-8")).get("hooks", {})
+    return {evento: bloco[evento] for evento in _EVENTOS_DO_PACOTE if evento in bloco}
+
+
+def _scripts_dos_hooks(hooks: dict) -> list[str]:
+    """Nomes dos scripts citados nos comandos de `hooks` — o que `hooks/` leva sai daqui, sem lista própria."""
+    comandos = [
+        hook.get("command", "") for grupos in hooks.values() for grupo in grupos for hook in grupo["hooks"]
+    ]
+    return sorted({nome for comando in comandos for nome in _SCRIPT_DO_HOOK_RE.findall(comando)})
+
+
+def _copiar_hooks(origem: Path, destino: Path, scripts: list[str]) -> list[Path]:
+    """Copia para `hooks/` só os `scripts` citados pelos eventos que viajam (`P-05`), não `*.py`."""
     alvo = destino / "hooks"
     alvo.mkdir(parents=True, exist_ok=True)
     escritos = []
-    for hook in sorted(origem.glob("*.py")):
-        copia = alvo / hook.name
-        shutil.copy2(hook, copia)
+    for nome in scripts:
+        copia = alvo / nome
+        shutil.copy2(origem / nome, copia)
         escritos.append(copia)
     return escritos
 
@@ -180,11 +224,11 @@ def _copiar_agentes(origem: Path, destino: Path) -> list[Path]:
     return escritos
 
 
-def _escrever_hooks_json(settings: Path, destino: Path) -> Path:
-    """Gera `hooks/hooks.json` a partir do bloco `hooks` de `settings.json`, âncora trocada."""
-    dados = json.loads(settings.read_text(encoding="utf-8"))
-    bloco = {"hooks": dados.get("hooks", {})}
-    texto = json.dumps(bloco, ensure_ascii=False, indent=2).replace(_ANCORA_PROJETO, _ANCORA_PLUGIN)
+def _escrever_hooks_json(hooks: dict, destino: Path) -> Path:
+    """Gera `hooks/hooks.json` com o bloco `hooks` recebido (`_hooks_do_pacote`), âncora trocada."""
+    texto = json.dumps({"hooks": hooks}, ensure_ascii=False, indent=2).replace(
+        _ANCORA_PROJETO, _ANCORA_PLUGIN
+    )
 
     alvo = destino / "hooks" / "hooks.json"
     alvo.parent.mkdir(parents=True, exist_ok=True)
