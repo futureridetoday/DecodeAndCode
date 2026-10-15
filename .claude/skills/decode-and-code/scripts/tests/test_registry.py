@@ -3,9 +3,8 @@
 
 Duas frentes. `TestGateSintetico*` roda contra árvore em `tempfile.TemporaryDirectory()`, com
 `lib.repo_root` mockado — mesmo padrão de `test_scaffold.py` e `test_backlog.py`. `TestGuidelineReal`
-roda sem mock nenhum, contra `.claude/rules/scripts.md` de verdade, a guideline que a unidade `09`
-entregou — é o par do critério de aceite que exige desligar e religar a guideline real. A restauração
-em `addCleanup` garante que uma falha no meio do teste não deixe a guideline real fora do lugar.
+também roda em `tempfile`, mas com os bytes de `.claude/rules/scripts.md` de verdade, a guideline que
+a unidade `09` entregou — é o par do critério de aceite que exige desligar e religar a guideline real.
 """
 
 from __future__ import annotations
@@ -151,27 +150,44 @@ class TestDesligarLigar(_BaseComRulesSinteticas):
 
 
 class TestGuidelineReal(unittest.TestCase):
-    """Par do critério de aceite: desligar e religar `.claude/rules/scripts.md`, a guideline da `09`."""
+    """Par do critério de aceite: desligar e religar o conteúdo real de `.claude/rules/scripts.md`.
+
+    O conteúdo é o real; o lugar é temporário. Antes, o teste movia a guideline do repositório e a
+    suíte deixava `registry.json` modificado e `rules-off/` criado (`P-02` do plano
+    `apply-plugin-review`) — teste escreve só em `tempfile`.
+    """
 
     def setUp(self):
-        self.ligada = lib.repo_root() / ".claude" / "rules" / "scripts.md"
-        self.off = lib.repo_root() / ".claude" / "rules-off" / "scripts.md"
-        self.original = self.ligada.read_bytes()
-        self.addCleanup(self._restaurar)
+        # Lido antes do mock: depois dele, `lib.repo_root()` aponta para o tempdir.
+        origem = lib.repo_root() / ".claude" / "rules" / "scripts.md"
+        self.original = origem.read_bytes()
 
-    def _restaurar(self):
-        if self.off.is_file() and not self.ligada.is_file():
-            self.off.rename(self.ligada)
-        if self.ligada.is_file() and self.ligada.read_bytes() != self.original:
-            self.ligada.write_bytes(self.original)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.raiz = Path(self._tmp.name).resolve()
+
+        self.ligada = self.raiz / ".claude" / "rules" / "scripts.md"
+        self.off = self.raiz / ".claude" / "rules-off" / "scripts.md"
+        self.ligada.parent.mkdir(parents=True)
+        self.ligada.write_bytes(self.original)
+
+        # O `paths:` real é "**/*.py" e lint_guideline o casa contra o disco a partir de
+        # `repo_root` — o tempdir mockado não tem .py nenhum.
+        (self.raiz / "alvo.py").write_text("", encoding="utf-8")
+
+        patcher = mock.patch.object(lib, "repo_root", return_value=self.raiz)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_desligar_e_ligar_a_guideline_real_mantem_lint_limpo(self):
         destino_off = registry.desligar("scripts")
+        self.assertEqual(destino_off, self.off)
         self.assertTrue(destino_off.is_file())
         self.assertFalse(self.ligada.is_file())
         self.assertEqual(destino_off.read_bytes(), self.original)
 
         destino_ligada = registry.ligar("scripts")
+        self.assertEqual(destino_ligada, self.ligada)
         self.assertTrue(destino_ligada.is_file())
         self.assertFalse(destino_off.is_file())
         self.assertEqual(destino_ligada.read_bytes(), self.original)

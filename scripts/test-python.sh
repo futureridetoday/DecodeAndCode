@@ -58,6 +58,20 @@ failed=0
 ran=0
 total=0
 
+# Guarda contra suíte que suja o repositório: teste escreve só em diretório
+# temporário. Retrato do `git status` antes e depois do laço — comparar os dois
+# (e não exigir árvore limpa) deixa a guarda indiferente a mudança que já
+# existia antes da suíte. Fora de repositório git, não há o que comparar.
+retrato_arvore() {
+  git -C "$REPO_ROOT" status --porcelain --untracked-files=all
+}
+
+guardar_arvore=0
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  guardar_arvore=1
+  arvore_antes="$(retrato_arvore)"
+fi
+
 for dir in "${TEST_DIRS[@]}"; do
   target="$REPO_ROOT/$dir"
 
@@ -122,6 +136,16 @@ for dir in "${TEST_DIRS[@]}"; do
     failed=1
   fi
 done
+
+if [ "$guardar_arvore" -eq 1 ]; then
+  arvore_depois="$(retrato_arvore)"
+  if [ "$arvore_antes" != "$arvore_depois" ]; then
+    echo "" >&2
+    echo "erro: a suíte deixou mudança no repositório — teste deve escrever só em diretório temporário:" >&2
+    diff <(printf '%s\n' "$arvore_antes") <(printf '%s\n' "$arvore_depois") | grep -E '^[<>]' >&2
+    failed=1
+  fi
+fi
 
 echo ""
 if [ "$failed" -ne 0 ]; then
