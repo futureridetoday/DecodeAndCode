@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import empacotar
 import lib
+import lint_skill
 
 
 def _montar_fonte(raiz: Path) -> None:
@@ -304,6 +305,20 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             texto = (destino / "skills" / "decode-and-code" / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("project: decode-and-code", texto)
             self.assertNotIn(f"project: {lib.repo_root().name}", texto)
+
+    def test_skill_empacotada_cita_scripts_que_existem_no_pacote(self):
+        """`P-01` do plano `apply-plugin-review` — lint sobre a cópia empacotada, não sobre a fonte.
+
+        `lint_skill` resolve `${CLAUDE_SKILL_DIR}/scripts/` contra o diretório da skill que recebe,
+        então aqui prova que cada script citado viaja, e que nenhum caminho fixo sobrou.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            skill = destino / "skills" / "decode-and-code" / "SKILL.md"
+            self.assertIn("${CLAUDE_SKILL_DIR}/scripts/", skill.read_text(encoding="utf-8"))
+            self.assertEqual(lint_skill.lint(skill), [])
 
     def test_dois_agentes_presentes_no_pacote_real(self):
         """`D-27` — os dois agentes viajam, e o `planner` deixou de citar caminho deste projeto."""

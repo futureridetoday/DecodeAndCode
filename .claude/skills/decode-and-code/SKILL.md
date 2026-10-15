@@ -119,7 +119,7 @@ Os seis checks são os da norma (*Modo `review` — os seis checks*) — esta se
 5. **Lacunas** — cada uma nova entra como `L-XX`, sem tentar resolvê-la.
 6. **Relatório** — uma linha por achado: check, veredito (`bloqueante` | `aviso`) e origem (`comando` | `julgamento`). Sinalizar divisão não é reprovar — se o humano decide não dividir, o porquê fica registrado no plano, não neste relatório. Encerra sem aprovar — quem aprova é o humano.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/nomenclatura.py` e `.claude/skills/decode-and-code/scripts/numeracao.py`.
+Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/scripts`): `${CLAUDE_SKILL_DIR}/scripts/nomenclatura.py` e `${CLAUDE_SKILL_DIR}/scripts/numeracao.py`.
 
 ### `derive <plano>`
 
@@ -142,7 +142,7 @@ A Sequência é a da norma (*Fluxo completo*, etapas 4 a 7) — esta seção des
 
 > **Os passos 2 a 6 valem só para o grande** (norma, *Fluxo completo* e *O que cada porte carrega*, unidade 0001-14). **No pequeno, esta sequência não roda** — o passo 1 (`aprovar`) move o plano direto para `<core>/<NNNN>-<nome>.md`, sem subpasta, e para aí: sem `## Escopo`, sem unidade para decidir, numerar ou lintar. `backlog.projetar` ainda roda sobre esse arquivo, mas não escreve região nenhuma — só projeta a situação a partir de `status`, escrito pelo humano (fecha quando ele grava `status: done`). **No médio**, `aprovar` também move sem subpasta e os passos 2 a 5 seguem sem rodar — médio não deriva unidade —, mas o passo 6 projeta as caixas de `## Tarefas` em vez do backlog de unidades.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/scaffold.py`, `.claude/skills/decode-and-code/scripts/numeracao.py`, `.claude/skills/decode-and-code/scripts/lint_unidade.py`, `.claude/skills/decode-and-code/scripts/backlog.py` e `.claude/skills/decode-and-code/scripts/handoff.py`.
+Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/scripts`): `${CLAUDE_SKILL_DIR}/scripts/scaffold.py`, `${CLAUDE_SKILL_DIR}/scripts/numeracao.py`, `${CLAUDE_SKILL_DIR}/scripts/lint_unidade.py`, `${CLAUDE_SKILL_DIR}/scripts/backlog.py` e `${CLAUDE_SKILL_DIR}/scripts/handoff.py`.
 
 ### `implement <unidade>`
 
@@ -163,7 +163,7 @@ Os dois gates são os da norma (*Os dois gates*, decisão 15) — esta seção d
 > **O executor não commita.** O modo entrega arquivos e relatório; versionar é de quem orquestra, que
 > revisa a entrega antes de registrá-la.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/lint_unidade.py`, `.claude/skills/decode-and-code/scripts/verificacao.py` e `.claude/skills/decode-and-code/scripts/backlog.py`.
+Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/scripts`): `${CLAUDE_SKILL_DIR}/scripts/lint_unidade.py`, `${CLAUDE_SKILL_DIR}/scripts/verificacao.py` e `${CLAUDE_SKILL_DIR}/scripts/backlog.py`.
 
 ## Referências
 
@@ -186,4 +186,4 @@ cria o que falta, item a item e sem sobrescrever o que já existir:
 **Idempotente:** rodar de novo sobre um projeto que já tem parte disso não toca no que já está lá —
 inclusive a norma, se o projeto já a tiver editado.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `scripts/`): `.claude/skills/decode-and-code/scripts/bootstrap.py`.
+Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/scripts`): `${CLAUDE_SKILL_DIR}/scripts/bootstrap.py`.

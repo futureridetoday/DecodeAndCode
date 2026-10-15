@@ -14,7 +14,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -90,7 +89,7 @@ class TestScriptCitadoNaoExiste(unittest.TestCase):
     def test_script_inexistente_reprova(self):
         texto = SKILL_VALIDA.replace(
             "Corpo de teste para o lint, citando o modo review.",
-            "Corpo citando `.claude/skills/skill-sintetica/scripts/nao-existe.py`.",
+            "Corpo citando `${CLAUDE_SKILL_DIR}/scripts/nao-existe.py`.",
         )
         with tempfile.TemporaryDirectory() as tmp:
             pasta = Path(tmp) / "skill-sintetica"
@@ -102,36 +101,59 @@ class TestScriptCitadoNaoExiste(unittest.TestCase):
 
 
 class TestScriptSemPermissaoNemInterprete(unittest.TestCase):
-    """Script real sem +x sob `.claude/skills/<nome>/scripts/`, com `lib.repo_root` mockado.
+    """Script real sem +x sob `${CLAUDE_SKILL_DIR}/scripts/`.
 
     A versão anterior reaproveitava `backlog/scripts/create.py` do AmFlow — script real sem
     bit de execução, útil como fixture, mas ausente neste repositório (suposição de população
-    medida na unidade 0001-02). `_checar_scripts` resolve sempre contra `lib.repo_root()`, então
-    o script sem +x precisa existir de verdade — daqui a construção sintética com mock.
+    medida na unidade 0001-02). `_checar_scripts` resolve contra o diretório da própria skill,
+    então basta o script sem +x existir ao lado do `SKILL.md` sintético.
     """
+
+    def _skill_com_script(self, tmp: str, corpo: str) -> Path:
+        alvo = fixtures.skill(Path(tmp), nome="skill-sintetica", corpo=corpo)
+        pasta_scripts = alvo.parent / "scripts"
+        pasta_scripts.mkdir()
+        script = pasta_scripts / "create.py"
+        script.write_text("# sem bit de execução\n", encoding="utf-8")
+        script.chmod(0o644)
+        return alvo
 
     def test_reprova_sem_bit_de_execucao_e_sem_interpretador(self):
         with tempfile.TemporaryDirectory() as tmp:
-            raiz = Path(tmp).resolve()
-            pasta_scripts = raiz / ".claude" / "skills" / "skill-sintetica" / "scripts"
-            pasta_scripts.mkdir(parents=True)
-            script = pasta_scripts / "create.py"
-            script.write_text("# sem bit de execução\n", encoding="utf-8")
-            script.chmod(0o644)
-
-            alvo = fixtures.skill(
-                raiz / ".claude" / "skills",
-                nome="skill-sintetica",
-                corpo=(
-                    "Corpo citando `.claude/skills/skill-sintetica/scripts/create.py`"
-                    " direto, sem interpretador."
-                ),
+            alvo = self._skill_com_script(
+                tmp, "Corpo citando `${CLAUDE_SKILL_DIR}/scripts/create.py` direto, sem interpretador."
             )
-
-            with mock.patch.object(lib, "repo_root", return_value=raiz):
-                problemas = lint_skill.lint(alvo)
+            problemas = lint_skill.lint(alvo)
         self.assertTrue(
             any("create.py" in p and "interpretador" in p for p in problemas), problemas
+        )
+
+    def test_aprova_com_interpretador_explicito(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = self._skill_com_script(
+                tmp, "Composição via `python3`: `${CLAUDE_SKILL_DIR}/scripts/create.py`."
+            )
+            self.assertEqual(lint_skill.lint(alvo), [])
+
+
+class TestCaminhoFixo(unittest.TestCase):
+    """`P-01` do plano `apply-plugin-review` — o caminho fixo não existe no plugin instalado.
+
+    O script existe de verdade ao lado do `SKILL.md`: a recusa vem do prefixo, não da ausência.
+    """
+
+    def test_caminho_fixo_da_propria_skill_reprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = fixtures.skill(
+                Path(tmp),
+                nome="skill-sintetica",
+                corpo="Composição via `python3`: `.claude/skills/skill-sintetica/scripts/create.py`.",
+            )
+            (alvo.parent / "scripts").mkdir()
+            (alvo.parent / "scripts" / "create.py").write_text("", encoding="utf-8")
+            problemas = lint_skill.lint(alvo)
+        self.assertTrue(
+            any("caminho fixo" in p and "create.py" in p for p in problemas), problemas
         )
 
 
