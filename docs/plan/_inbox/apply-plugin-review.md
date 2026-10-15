@@ -182,6 +182,23 @@ mesmo padrão que `test_auditoria.py` já usa.
 **Como verificar.** `git status --porcelain` vazio antes e depois de rodar a suíte inteira. Esse
 teste pode virar um passo do próprio harness: falhar se a suíte deixar diff.
 
+**Implementado em 2026-10-15** — [PR #8](https://github.com/futureridetoday/DecodeAndCode/pull/8),
+commit [`e5bfdd2`](https://github.com/futureridetoday/DecodeAndCode/commit/e5bfdd2), mesclado em
+`dev` como [`5b52111`](https://github.com/futureridetoday/DecodeAndCode/commit/5b52111). Validado
+pelo humano com o merge. Implementado por agente `general-purpose` em Sonnet, revisado pelo
+orquestrador sem rodada de correção.
+
+| Evidência | Resultado |
+|---|---|
+| Suíte numa árvore limpa, **antes** | Deixava `.claude/rules/registry.json` modificado e `.claude/rules-off/` criado vazio — a pasta vazia o `git status` não mostra |
+| `test_registry.py`, classe `TestGuidelineReal` | Os bytes reais de `scripts.md` vão para um `tempfile`, com `lib.repo_root` mockado; mesmas asserções, mais duas que provam que `desligar`/`ligar` operam no `tempfile`. Um `alvo.py` vazio mantém o `lint_guideline` significativo, porque o `paths:` real (`**/*.py`) é casado contra o disco |
+| `scripts/test-python.sh` | Guarda nova: `git status --porcelain --untracked-files=all` antes e depois da suíte; diferença falha e lista o que mudou |
+| `scripts/test-python.sh` em Python 3.10.20, **depois**, duas vezes seguidas | 490 testes OK; árvore intocada; sem `rules-off/` |
+| Guarda contra o defeito original — `test_registry.py` antigo com o harness novo | Falha nomeando `M .claude/rules/registry.json` |
+
+**Limite conhecido.** A guarda compara status, não conteúdo: um arquivo já modificado antes da
+suíte e alterado de novo durante ela mantém o mesmo status e não dispara.
+
 ### Impacto médio
 
 #### P-03 · Primitivos sobrepostos para a mesma tarefa
