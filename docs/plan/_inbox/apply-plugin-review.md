@@ -475,6 +475,47 @@ próprio modo.
 - `claude plugin validate --strict` sobre o pacote: *Validation passed*, sem avisos.
 - O CI roda em todo PR para `dev`.
 
+**Implementado em 2026-10-15**, em dois commits:
+- [`8543bd7`](https://github.com/futureridetoday/DecodeAndCode/commit/8543bd7): a correção;
+- [`b91a403`](https://github.com/futureridetoday/DecodeAndCode/commit/b91a403): o gatilho do CI
+  em `claude/**`.
+
+`D-04` foi aprovada pelo humano antes da implementação. A solução foi validada pelo humano em
+2026-10-15, sobre o diff e o CI verde no branch, antes do PR. A implementação foi de um agente
+`general-purpose` em Sonnet, revisada pelo orquestrador, com duas rodadas de ajuste: a linha do
+README e o gatilho do CI.
+
+| Evidência | Resultado |
+|---|---|
+| `claude plugin validate --strict` sobre o pacote, **antes** | 4 avisos de `${CLAUDE_PLUGIN_ROOT}` sem aspas, um por hook, e exit 1. Sem `--strict`, exit 0: o `validar()` deixava passar |
+| Caracterização do `--strict` contra o binário real (2.1.300) | Aviso vira exit 1. A mensagem sai em stdout e o stderr fica vazio. Pacote limpo dá exit 0 com e sem a flag. O manifesto sem `description` ou sem `author` também reprova. Roda sem credencial (`env -i` com `HOME` vazio) |
+| O mesmo validate, **depois** | *Validation passed*, exit 0. `verificar` e `validar` devolvem `[]` |
+| Teste novo que executa o `claude` real | O pacote sem aspas reprova e o com aspas aprova. Sem o `--strict` em `validar()`, falha com `0 != 1 : []` |
+| Teste novo sobre o `hooks.json` gerado | Todo `${CLAUDE_PLUGIN_ROOT}` entre aspas. Com as aspas tiradas do `settings.json`, os 4 subtestes falham |
+| Hook com aspas numa sessão real com `--plugin-dir` | `PreToolUse` executou `python3 "<plugin>/hooks/pre_tool_use.py"` e terminou com status 0, em 48 ms |
+| `scripts/test-python.sh` em 3.10, duas vezes | 504 testes OK (eram 502). `git status` igual antes e depois |
+| Harness sem 3.10 (`python3` = 3.13) | Roda, com aviso em stderr de que a prova de compatibilidade é a do CI. Com `CI=true`, o teste de versão exata falha com mensagem clara |
+| Primeiro CI do repositório, [run 38793471971](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38793471971), push no branch | Verde. Python 3.10.22, `claude` 2.1.300, 504 testes, nenhum pulado. O teste do `claude` real rodou |
+
+**Diferenças em relação à solução recomendada.**
+- **As aspas foram postas no `.claude/settings.json`, e não no `_escrever_hooks_json`.** A troca de
+  âncora do build carrega as aspas para o pacote. Fica uma fonte só, e o hook deste repositório ganha
+  a mesma proteção.
+- **O CI também roda no push dos branches `claude/**`.** O `workflow_dispatch` devolve 404 enquanto
+  o workflow não está no branch default, e sem o push não havia como provar uma correção no CI antes
+  do PR. O custo é que, com PR aberto, cada push roda duas vezes.
+- **O CI instala o `claude` 2.1.300.** Sem ele, os testes pulam a validação real, e o CI passaria
+  verde sem rodá-la.
+- **Com `CI` definida, o teste de versão do harness exige 3.10 exato.** Localmente aceita qualquer
+  versão a partir de 3.10.
+
+**O que ficou de fora.**
+- As actions `checkout@v4`, `setup-python@v5` e `setup-node@v4` foram feitas para Node 20, que está
+  obsoleto. O runner já as força para Node 24, e funcionam. Subir de versão ficou para depois.
+- A versão do `claude` está fixa no workflow. Subi-la é uma decisão consciente, porque uma versão
+  nova pode trazer avisos novos ao `--strict`.
+- Não há `actionlint` no ambiente. O YAML foi validado por parsers, e a prova é a execução verde.
+
 #### P-09 · A permissão `Bash(python3*)` libera qualquer comando
 
 | | |
@@ -679,14 +720,14 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` foi aprovada em 2026-10-15, com os ajustes registrados no `P-03`. As outras três esperam o humano.
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-02` e `D-03` esperam o humano.
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
 | D-01 | **Adotar a topologia de três skills** (Fase 3) — **aprovada em 2026-10-15** | Sim | É decisão arquitetural (`CLAUDE.md`, *Autonomia*). A premissa que justificou agents e commands — "a troca não é declarável na skill" (norma, *Modelos*) — não confere com a documentação atual |
 | D-02 | **Quais hooks de anúncio continuam no pacote** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
 | D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
-| D-04 | **O harness local aceita ≥ 3.10** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
+| D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 
 ## Lacunas
 
@@ -695,7 +736,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | L-01 | **A resolução de `skills: [decode-and-code]` no namespace do plugin não foi medida** | A documentação não cobre plugin, e a falha é silenciosa — ver `P-13`. Medição prevista na unidade `02`. **Fechada em 2026-10-15**: o nome curto resolve (ver `P-13`) |
 | L-02 | **Não se sabe se o upload de plugin pelo claude.ai recusa campos de frontmatter fora da especificação** | A documentação afirma isso para skill avulsa (claude.ai e Skills API), não para plugin. O README oferece o upload como caminho de instalação |
 | L-03 | **O sinal do `post_compact.py` não foi medido** | Ver `P-12` |
-| L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork |
+| L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork. **Fechada em 2026-10-15**: o CI roda a suíte em 3.10 a cada push (ver `P-08`) |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
 | L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
 

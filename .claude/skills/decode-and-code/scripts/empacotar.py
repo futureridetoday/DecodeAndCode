@@ -283,13 +283,24 @@ def validar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     `stdout`, e `stderr` fica vazio nos três casos medidos (pacote válido, diretório sem manifesto,
     caminho inexistente).
 
+    **`--strict`, medido em 2026-10-15 (Claude Code 2.1.300).** Sem a flag, aviso não reprova: o
+    binário sai com `0` e "Validation passed with warnings", e como o sinal aqui é só o returncode,
+    os quatro avisos de `${CLAUDE_PLUGIN_ROOT}` sem aspas nos comandos de hook passaram calados.
+    Com `--strict` o aviso vira reprovação — exit `1`, última linha "Validation failed (--strict
+    treats warnings as errors)" —, a mensagem continua inteira em `stdout` e `stderr` segue vazio.
+    Pacote sem aviso sai com `0` com e sem a flag; caminho inexistente e JSON inválido saem com
+    `1` com e sem a flag, então a flag só muda o destino do aviso. O alcance é o pacote todo, não só
+    os hooks: manifesto sem `description` ou sem `author` também reprova. Roda sem credencial
+    (`env -i` com `HOME` vazio dá o mesmo resultado). O glifo do início da linha final muda com o
+    locale — comparar pelo texto, nunca pelo glifo.
+
     Binário ausente **não levanta**: devolve o problema dizendo isso. Quem instala o método pode
     não ter o `claude` no `PATH`, e um gate que estoura nessa condição vira gate que se desliga.
     """
     destino = _resolver_destino(destino)
     try:
         resultado = subprocess.run(
-            ["claude", "plugin", "validate", str(destino)], capture_output=True
+            ["claude", "plugin", "validate", "--strict", str(destino)], capture_output=True
         )
     except FileNotFoundError:
         return ["claude não encontrado no PATH — validação oficial não executada"]

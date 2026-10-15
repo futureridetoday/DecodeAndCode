@@ -15,11 +15,12 @@ e não repete.
 | Onde | Como |
 |---|---|
 | Artefato distribuído | Shebang `#!/usr/bin/env python3` — na VM do Cowork, `python3` **é** 3.10. O artefato permanece agnóstico |
-| Verificação local e CI | Roda em **3.10 explícito** — é o harness que fixa a versão, não o artefato |
+| Verificação local e CI | Local: o harness aceita **≥ 3.10**, prefere o 3.10 e avisa quando roda em outra versão. CI: **3.10 fixo** — é ele que comprova a compatibilidade com o Cowork |
 | macOS local | `/usr/bin/python3` é 3.9.6 e não se atualiza (system Python da Apple, sob SIP). Instalar ao lado: `brew install python@3.10`. **Não** trocar o `python3` global — afeta outros projetos |
 
-O harness (`scripts/test-python.sh`) **exige** 3.10 e falha com instrução se não o encontrar. Passar
-os testes em 3.10 é o que comprova compatibilidade com o Cowork.
+O harness (`scripts/test-python.sh`) procura `python3.10` primeiro e depois `python3`, se for
+≥ 3.10; abaixo disso falha com instrução. Fora do 3.10, avisa em stderr. Passar em versão mais nova
+não prova que o 3.10 do Cowork aceita a sintaxe: a prova é a do CI, que roda em 3.10 fixo.
 
 ## Dependências externas
 

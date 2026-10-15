@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py\""
           }
         ]
       }
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/instructions_loaded.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/instructions_loaded.py\""
           }
         ]
       }
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py\""
           }
         ]
       }
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent_start.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent_start.py\""
           }
         ]
       }
