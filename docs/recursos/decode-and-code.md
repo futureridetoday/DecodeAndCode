@@ -22,20 +22,25 @@ de cada unidade é projetado do teste, nunca escrito à mão.
 
 ## Como funciona
 
-Cada skill compõe scripts via `python3` (mesmo import dos testes, `sys.path` até
-`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts`):
+Cada skill chama os scripts por um ponto de entrada só, o `dc.py`
+(`python3 "${CLAUDE_SKILL_DIR}/dc.py" <subcomando> …`, do diretório do projeto), e o `allowed-tools`
+libera só ele — `Bash(python3 "${CLAUDE_SKILL_DIR}/dc.py" *)` e a grafia sem aspas, nunca `Bash`
+solto, que pré-aprovaria qualquer comando de shell no turno da skill. Esse `dc.py` é um atalho na
+pasta de cada skill que executa o da pasta compartilhada `decode-and-code/scripts/`: a liberação casa
+o texto do comando, e um caminho com `..` o modelo normaliza e deixa de casar. Saída em texto simples;
+código `0` ok, `1` problema ou reprovação, `2` erro de uso ou exceção:
 
 - **`review-plan <plano>`** (Opus) — roda os checks determinísticos primeiro (nome por
-  `nomenclatura`, concorrência na região `planos` de `_planos.md`, links do corpo), depois reserva
-  julgamento para erro conceitual, erro de arquitetura e adequação das fontes. Lacunas novas entram
-  como `L-XX`. Encerra **sem aprovar** — quem aprova é o humano.
-- **`derive <plano aprovado>`** (Opus) — `scaffold.aprovar` valida `core`, numera e move o plano do
+  `validar-nome`, concorrência na região `planos` de `_planos.md` por `concorrencia`, links do
+  corpo), depois reserva julgamento para erro conceitual, erro de arquitetura e adequação das
+  fontes. Lacunas novas entram como `L-XX`. Encerra **sem aprovar** — quem aprova é o humano.
+- **`derive <plano aprovado>`** (Opus) — `aprovar` valida `core`, numera e move o plano do
   `_inbox`. No porte grande, decide a fatia de cada unidade, escreve, linta, projeta o backlog e
   grava o `_handoff.md`. **Só por invocação explícita** (`disable-model-invocation: true`): cria
   estrutura e move arquivos, e o Skill tool recusa que o modelo o dispare.
-- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint_unidade`), lê a unidade inteira,
+- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint-unidade`), lê a unidade inteira,
   escreve o teste declarado e o código que o faz passar tocando só os arquivos que ela lista, gate
-  de saída (`verificacao.verificar`), projeta o backlog. **Não commita.**
+  de saída (`verificar`), projeta o backlog (`projetar-backlog`). **Não commita.**
 
 **O `implement` roda sempre em fork** (`context: fork`, `agent: general-purpose`): um subagent sem o
 histórico da conversa, em qualquer sessão, inclusive a de orquestração, sem gastar o contexto dela.
@@ -84,7 +89,7 @@ unidades executadas por Sonnet em sessões novas, sem uma pergunta sobre conteú
 
 Nenhuma além dos próprios `SKILL.md`. A norma é lida do projeto que instala, em
 `<plan_root>/system/modelo-dev-units.md` — `plan_root` vem do `config.json` da pasta compartilhada
-(`docs/plan` é só o default). `bootstrap.iniciar` cria a estrutura num projeto recém-instalado. O
+(`docs/plan` é só o default). `dc.py bootstrap` cria a estrutura num projeto recém-instalado. O
 `ai-builder` pré-carrega o `review-plan` e, por ele, acha os scripts fora do checkout.
 
 ## Limites

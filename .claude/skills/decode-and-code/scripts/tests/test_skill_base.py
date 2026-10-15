@@ -21,16 +21,38 @@ import regioes
 
 SKILLS = lib.repo_root() / ".claude" / "skills"
 
+# O `allowed-tools` das três (`P-14`, `D-05`): sem `Bash` solto, só o atalho `dc.py` da própria pasta da skill,
+# nas duas grafias — com aspas e sem. A liberação casa o texto do comando, e o modelo às vezes tira as aspas.
+# O valor é o texto do frontmatter como está — `ler_campo` não interpreta YAML, então a barra antes das
+# aspas internas fica.
+ALLOWED_TOOLS = (
+    '"Read Write Edit Glob Grep Bash(python3 \\"${CLAUDE_SKILL_DIR}/dc.py\\" *) '
+    'Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)"'
+)
+
 # Skill → modo que o corpo precisa citar. `model`, `disable-model-invocation` e `context` são o que
 # a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
 # `implement` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
 # não resolve numa skill de plugin e cai, sem aviso, no padrão (medido com Claude Code 2.1.300).
 TOPOLOGIA = {
-    "review-plan": {"modo": "review", "model": "opus", "disable-model-invocation": "false", "context": '""'},
-    "derive": {"modo": "derive", "model": "opus", "disable-model-invocation": "true", "context": '""'},
+    "review-plan": {
+        "modo": "review",
+        "model": "opus",
+        "disable-model-invocation": "false",
+        "context": '""',
+        "allowed-tools": ALLOWED_TOOLS,
+    },
+    "derive": {
+        "modo": "derive",
+        "model": "opus",
+        "disable-model-invocation": "true",
+        "context": '""',
+        "allowed-tools": ALLOWED_TOOLS,
+    },
     "implement": {
         "modo": "implement",
         "model": "sonnet",
+        "allowed-tools": ALLOWED_TOOLS,
         "disable-model-invocation": "false",
         "context": "fork",
         "agent": "general-purpose",
@@ -61,6 +83,15 @@ class TestSkillBase(unittest.TestCase):
         for nome in ("review-plan", "derive"):
             with self.subTest(skill=nome):
                 self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
+
+    def test_cada_skill_tem_o_atalho_dc_py(self):
+        """`${CLAUDE_SKILL_DIR}/dc.py` precisa existir em cada pasta — é o que a regra de permissão casa.
+
+        Que os três são idênticos e repassam argumentos e código de saída é de `test_dc.py`.
+        """
+        for nome in TOPOLOGIA:
+            with self.subTest(skill=nome):
+                self.assertTrue((SKILLS / nome / "dc.py").is_file())
 
     def test_pasta_compartilhada_nao_tem_skill_md(self):
         compartilhada = SKILLS / "decode-and-code"

@@ -933,6 +933,21 @@ unidade**: a correção volta para quem deriva, e vira lacuna `L-XX` no plano.
 Os scripts seguem a [norma de linguagem](language-policy.md): Python 3.10 (versão do Cowork), stdlib
 pura, verificados com `unittest` via `scripts/test-python.sh`.
 
+**As skills chegam aos scripts por um ponto de entrada só**, `dc.py` — um dispatcher fino com um
+subcomando por operação (`python3 "${CLAUDE_SKILL_DIR}/dc.py" <subcomando> …`, rodado do diretório do
+projeto). O `${CLAUDE_SKILL_DIR}/dc.py` é um atalho que cada skill traz na própria pasta e que só
+executa o `dc.py` da pasta compartilhada (`.claude/skills/decode-and-code/scripts/dc.py`): a liberação
+do `allowed-tools` casa o **texto** do comando, e o caminho direto até a pasta irmã leva um `..` que o
+modelo normaliza antes de rodar — medido em sessão real: 11 recusas nas três skills. O `allowed-tools`
+de cada skill libera só o atalho, nas duas grafias (com aspas e sem),
+`Bash(python3 "${CLAUDE_SKILL_DIR}/dc.py" *)` e `Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)`, nunca
+`Bash` solto: a skill pré-aprova o que lista durante o turno, e
+`Bash` solto pré-aprovaria qualquer comando de shell em todo projeto que instalasse o plugin
+(`P-14`, `D-05` do plano `apply-plugin-review`). `lint_skill` recusa `Bash` sem especificador, e `Bash(*)` também. Saída
+em texto simples, um item por linha; código `0` ok, `1` problema ou reprovação, `2` erro de uso ou
+exceção. Como o `dc.py` é o único caminho até o teste, o `verificar` fora de `verified` imprime a saída
+dele (as últimas 80 linhas, dizendo quando corta). A lógica continua nos módulos — o `dc.py` só despacha.
+
 Skill interpretando "verifique se está pronto" devolve a variância ao sistema. O que estabiliza é o
 oráculo determinístico, e oráculo é código — conforme *Código vs. Instruções em Markdown* no
 `CLAUDE.md`.

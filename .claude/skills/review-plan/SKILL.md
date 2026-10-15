@@ -15,7 +15,7 @@ description: |
 disable-model-invocation: false
 user-invocable: true
 
-allowed-tools: "Read Write Edit Bash Glob Grep"
+allowed-tools: "Read Write Edit Glob Grep Bash(python3 \"${CLAUDE_SKILL_DIR}/dc.py\" *) Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)"
 
 argument-hint: "<plano>"
 arguments: [target]
@@ -57,17 +57,17 @@ Esta skill executa o modo `review` da norma `<plan_root>/system/modelo-dev-units
 Os seis checks são os da norma (*Modo `review` — os seis checks*) — esta seção descreve só o **como**, para não duplicar o que já está lá (regra anti-drift, norma, seção *Camada normativa*).
 
 1. **Determinístico, roda primeiro:**
-   - **Nome** — `nomenclatura.validar_nome` sobre o stem do arquivo (`_inbox/<nome>.md` → `nome`).
-   - **Concorrência** — lê `core`/`module` do frontmatter do plano; varre a região `planos` de `_planos.md` (mesmo acesso de `numeracao.py`, via `regioes.ler_regiao`) por uma linha `em desenvolvimento` no mesmo core **ou** módulo (norma, *Avaliação de escopo*). Encontrada, a linha inteira é a evidência citada no achado.
+   - **Nome** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`, com o stem do arquivo (`_inbox/<nome>.md` → `nome`).
+   - **Concorrência** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" concorrencia <plano>` lê `core`/`module` do frontmatter do plano e varre a região `planos` de `_planos.md` por uma linha `em desenvolvimento` no mesmo core **ou** módulo (norma, *Avaliação de escopo*). Encontrada (código `1`), a linha inteira é a evidência citada no achado.
    - **Fontes citadas** — cada link relativo do corpo do plano resolve em disco.
-   - Plano sem `core` no frontmatter: achado bloqueante — a concorrência fica registrada como não verificável, a revisão **não aborta**.
+   - Plano sem `core` no frontmatter: achado bloqueante — o `concorrencia` responde "não verificável" (código `1`), a concorrência fica registrada assim, e a revisão **não aborta**.
 2. **Independência** — audita a seção `## Independência` do plano contra o teste da norma ("A e B passam isolados?"). Seção ausente é achado bloqueante, não silêncio.
 3. **Tamanho como contexto** — unidades previstas, cores e módulos tocados, lidos da seção `## Escopo`. Relatar, nunca reprovar (decisão 26).
 4. **Julgamento restante** — erros conceituais, erros de arquitetura, adequação das fontes ao escopo.
 5. **Lacunas** — cada uma nova entra como `L-XX`, sem tentar resolvê-la.
 6. **Relatório** — uma linha por achado: check, veredito (`bloqueante` | `aviso`) e origem (`comando` | `julgamento`). Sinalizar divisão não é reprovar — se o humano decide não dividir, o porquê fica registrado no plano, não neste relatório. Encerra sem aprovar — quem aprova é o humano.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts`): `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/nomenclatura.py` e `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/numeracao.py`.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `validar-nome` e `concorrencia`.
 
 ## Referências
 
@@ -77,8 +77,8 @@ Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_S
 ## Começando um projeto do zero
 
 Um projeto que acabou de instalar o plugin não tem estrutura nenhuma sob `plan_root` — nem
-`_planos.md`, nem `_inbox/`, nem a norma que as skills do método citam. `bootstrap.iniciar(projeto)`
-cria o que falta, item a item e sem sobrescrever o que já existir:
+`_planos.md`, nem `_inbox/`, nem a norma que as skills do método citam. `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap [<projeto>]`
+cria o que falta (o padrão é o diretório atual), item a item e sem sobrescrever o que já existir:
 
 | Cria | Onde |
 |---|---|
@@ -90,4 +90,4 @@ cria o que falta, item a item e sem sobrescrever o que já existir:
 **Idempotente:** rodar de novo sobre um projeto que já tem parte disso não toca no que já está lá —
 inclusive a norma, se o projeto já a tiver editado.
 
-Composição via `python3` (mesmo import dos testes, `sys.path` até `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts`): `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/bootstrap.py`.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto: `bootstrap`.

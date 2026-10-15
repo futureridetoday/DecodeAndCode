@@ -9,6 +9,11 @@ author_id e price), presença de modo pedido no corpo, e existência/permissão
 dos caminhos citados. Não verifica se a skill funciona bem — distinção
 deliberada.
 
+`allowed-tools` não pode liberar `Bash` sem especificador (`P-14`): a skill pré-aprova o que lista
+durante o turno, e `Bash` solto pré-aprova qualquer comando de shell — em todo projeto que instalar o
+plugin. `Bash(*)` vale o mesmo que `Bash` solto e é recusado igual. Passa `Bash(<comando> *)`, que é o
+que o `dc.py` pede.
+
 O passo 6 ignora bloco de código e code span ao varrer link relativo — mesma
 lição do scripts/move-md.py: documentação normativa cita caminho como
 exemplo, e tratá-lo como link real produz falso positivo.
@@ -59,8 +64,17 @@ _INTERPRETES_RE = re.compile(r"\b(python3|python|bash|sh|zsh|node|npx)\b")
 # skills do método compartilham os scripts de uma pasta irmã, e a âncora com `..` resolve nela tanto
 # no checkout quanto no pacote (`P-03` do plano `apply-plugin-review`). Um único `..`, para uma
 # pasta irmã nomeada — não se aceita subir mais, nem `../..`.
+#
+# Aceita também `${CLAUDE_SKILL_DIR}/x.py`, direto na pasta da skill: é o atalho `dc.py` de cada skill
+# (`P-14`), citado sem `..` porque a liberação de permissão casa o texto do comando.
 _SKILL_DIR = "${CLAUDE_SKILL_DIR}"
-_SCRIPT_RE = re.compile(re.escape(_SKILL_DIR) + r"/(?:\.\./\w[\w.-]*/)?scripts/[^\s`)\"'<>]+")
+_SCRIPT_RE = re.compile(
+    re.escape(_SKILL_DIR) + r"/(?:(?:\.\./\w[\w.-]*/)?scripts/[^\s`)\"'<>]+|\w[\w-]*\.py)"
+)
+
+# `Bash` livre: o nome inteiro, sem `(` nem parte de outro nome — ou com o especificador `*` e mais nada,
+# que casa qualquer comando e equivale a ele.
+_BASH_LIVRE_RE = re.compile(r"(?<![\w(])Bash(?:(?![\w(])|\(\s*\*\s*\))")
 
 # Abertura/fechamento de bloco de código — mesma marca do move-md.py.
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
@@ -81,6 +95,7 @@ def lint(skill: Path, modos: list[str] | None = None) -> list[str]:
     problemas: list[str] = []
     problemas.extend(_checar_frontmatter(skill))
     problemas.extend(_checar_nome_e_descricao(skill))
+    problemas.extend(_checar_bash_livre(skill))
     problemas.extend(_checar_modos(corpo, modos or []))
     problemas.extend(_checar_caminho_fixo(corpo))
     problemas.extend(_checar_scripts(skill, corpo))
@@ -133,6 +148,49 @@ def _checar_nome_e_descricao(skill: Path) -> list[str]:
         problemas.append("campo 'description' vazio")
 
     return problemas
+
+
+def _texto_de_allowed_tools(skill: Path) -> str:
+    """O que o frontmatter diz em `allowed-tools`, nos formatos string, lista em linha e lista em bloco.
+
+    String e lista em linha (`[a, b]`) vêm na própria linha do campo; na lista em bloco a linha vem
+    vazia e as ferramentas estão nos itens `- x` que a seguem. Vazio se o campo ou o frontmatter não
+    existe — `_checar_frontmatter` é quem reclama disso.
+    """
+    linhas = skill.read_text(encoding="utf-8").splitlines()
+    if not linhas or linhas[0].strip() != "---":
+        return ""
+    partes: list[str] = []
+    em_lista = False
+    for linha in linhas[1:]:
+        if linha.strip() == "---":
+            break
+        if em_lista:
+            if re.match(r"^\s+-\s", linha):
+                partes.append(linha)
+            elif linha.strip() and not linha.lstrip().startswith("#"):
+                break
+            continue
+        m = re.match(r"^allowed-tools:\s*(.*)$", linha)
+        if m:
+            partes.append(m.group(1))
+            em_lista = not m.group(1).strip()
+    return "\n".join(partes)
+
+
+def _checar_bash_livre(skill: Path) -> list[str]:
+    """Recusa `Bash` sem especificador no `allowed-tools` — `P-14`.
+
+    `Bash(...)` passa, com o comando que o especificador nomeia; só o nome solto e `Bash(*)` liberam
+    tudo. O padrão exige que `Bash` não seja seguido de `(` nem de letra — salvo o `(*)` —, então
+    `Bash(git *)` e `BashOutput` ficam de fora.
+    """
+    if _BASH_LIVRE_RE.search(_texto_de_allowed_tools(skill)):
+        return [
+            "allowed-tools libera 'Bash' sem especificador (ou só com '*') — qualquer comando de "
+            "shell passaria sem pedir; use Bash(<comando> *)"
+        ]
+    return []
 
 
 def _checar_modos(corpo: str, modos: list[str]) -> list[str]:

@@ -2,8 +2,9 @@
 """Teste do modo `implement` — unidade 0002-14.
 
 Cobre exatamente o que a própria unidade declara como gate: o modo está descrito no corpo — não mais
-placeholder — e os scripts que ele compõe existem, via `lint_skill.lint`, que já resolve existência e
-permissão de qualquer caminho `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/*.py` citado. A prova real do
+placeholder — e os subcomandos do `dc.py` que ele compõe estão citados, com o comando inteiro, e o `dc.py` existe —
+via `lint_skill.lint`, que já resolve existência e permissão de qualquer caminho
+`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/*.py` citado. A prova real do
 `implement` é empírica e vem depois — a primeira unidade executada em sessão nova com Sonnet, prevista
 para logo após a Fase 1 (unidade 0002-14, seção Verificação).
 """
@@ -18,11 +19,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import lib
 import lint_skill
+import regioes
 
 SKILL = lib.repo_root() / ".claude" / "skills" / "implement" / "SKILL.md"
 
-# Os três scripts que o modo `implement` compõe (unidade 0002-14, tabela Arquivos).
-SCRIPTS_COMPOSTOS = ("lint_unidade.py", "verificacao.py", "backlog.py")
+# O comando que a skill manda rodar — o atalho `dc.py` da pasta dela, que o `allowed-tools` casa (`P-14`).
+COMANDO = 'python3 "${CLAUDE_SKILL_DIR}/dc.py"'
+
+# As duas grafias que a liberação precisa cobrir: com aspas e sem — o modelo às vezes tira as aspas.
+REGRAS_DO_ATALHO = (
+    'Bash(python3 \\"${CLAUDE_SKILL_DIR}/dc.py\\" *)',
+    'Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)',
+)
+
+# Os subcomandos que o modo `implement` compõe: `lint-unidade` (era `lint_unidade.py`), `verificar`
+# (`verificacao.py`) e `projetar-backlog` (`backlog.py`).
+SUBCOMANDOS_COMPOSTOS = ("lint-unidade", "verificar", "projetar-backlog")
 
 
 def _secao_implement(corpo: str) -> str:
@@ -37,15 +49,28 @@ class TestModoImplement(unittest.TestCase):
     def test_skill_aprova_com_o_modo_implement(self):
         self.assertEqual(lint_skill.lint(SKILL, modos=["implement"]), [])
 
+    def test_libera_o_atalho_nas_duas_grafias(self):
+        permissao = regioes.ler_campo(SKILL, "allowed-tools")
+        for regra in REGRAS_DO_ATALHO:
+            with self.subTest(regra=regra):
+                self.assertIn(regra, permissao)
+
+    def test_o_atalho_citado_existe_na_pasta_da_skill(self):
+        self.assertTrue((SKILL.parent / "dc.py").is_file())
+
     def test_placeholder_removido(self):
         secao = _secao_implement(SKILL.read_text(encoding="utf-8"))
         self.assertNotIn("A implementar", secao)
 
-    def test_compoe_os_tres_scripts_que_o_modo_usa(self):
+    def test_cita_os_subcomandos_que_o_modo_usa(self):
         secao = _secao_implement(SKILL.read_text(encoding="utf-8"))
-        for script in SCRIPTS_COMPOSTOS:
-            with self.subTest(script=script):
-                self.assertIn(script, secao)
+        for subcomando in SUBCOMANDOS_COMPOSTOS:
+            with self.subTest(subcomando=subcomando):
+                self.assertIn(f"{COMANDO} {subcomando} ", secao)
+
+    def test_manda_rodar_o_teste_durante_o_trabalho_sem_gravar_estado(self):
+        secao = _secao_implement(SKILL.read_text(encoding="utf-8"))
+        self.assertIn(f"{COMANDO} verificar <unidade> --dry-run", secao)
 
 
 class TestCorpoComoPromptDeSubagent(unittest.TestCase):
