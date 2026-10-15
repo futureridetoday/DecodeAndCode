@@ -10,7 +10,7 @@ Versão 1.0.0 · hooks (4)
 
 ## O que é
 
-Quatro pontos de entrada em `hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
+Quatro pontos de entrada em `.claude/hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
 skill sem decidir nada por conta própria:
 
 | Hook | Evento | O que faz |
@@ -30,16 +30,26 @@ log e stderr.
 
 ## Como funciona
 
-`empacotar.construir()` copia `.claude/hooks/*.py` e gera o `hooks/hooks.json` do pacote, que
-casa cada evento (`matcher: "*"`) ao script correspondente via `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/<script>.py`.
+`empacotar.construir()` gera o `hooks/hooks.json` do pacote, que casa cada evento (`matcher: "*"`)
+ao script correspondente via `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/<script>.py"`, e copia para
+`hooks/` só os scripts que esse arquivo cita.
 Toda a decisão vive nos módulos da skill (`guardrail.decidir`, `activation_notice.*`); os arquivos
 em `hooks/` só ligam stdin/stdout ao mecanismo. Falham abertos e em silêncio: payload malformado
 devolve `None` e nada é escrito.
 
+## O que vai no pacote
+
+Dos quatro, **viajam dois**: `pre_tool_use` (o guardrail) e `instructions_loaded` (o log do controle
+de três estados da norma, seção *Validar a ativação*). `post_compact` e `subagent_start` ficam **só
+neste repositório**, no `settings.json` daqui (`D-02` e `P-05` do plano `apply-plugin-review`):
+anunciam por stderr, nada chega ao modelo, e não há registro de projeto que instala o plugin usando
+o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser os quatro
+os liga no próprio `settings.json`.
+
 ## Como usar
 
-Não se usa diretamente. Uma vez o plugin instalado e habilitado, os quatro disparam sozinhos. O
-que o usuário faz com a saída deles:
+Não se usa diretamente. Uma vez o plugin instalado e habilitado, os dois que viajam disparam
+sozinhos (neste repositório, os quatro). O que o usuário faz com a saída deles:
 
 - **Ler o log de ativação** — `"$TMPDIR"decode-and-code-activation-<session_id>.log` — para
   conferir que a norma e as guidelines certas carregaram. `activation_notice.relatorio(<log>)`
@@ -74,7 +84,8 @@ regras de guardrail vêm de `.claude/guardrails.json` do projeto que instala.
 ## Limites
 
 - **Não são invocáveis.** Rodam por evento, nunca por pedido.
-- **`pre_tool_use` sem `guardrails.json` não faz nada.** As regras são do projeto que instala.
+- **`pre_tool_use` sem `guardrails.json` não faz nada, e não diz nada.** Sai com 0, sem stdout nem
+  stderr; as regras são do projeto que instala. Com o arquivo presente e ilegível, avisa por stderr.
 - **Anúncio, não injeção.** `instructions_loaded`/`post_compact`/`subagent_start` observam o que o
   harness carregou; não colocam nada no contexto do modelo — skill nunca aparece no log de
   ativação, só memória e rules.

@@ -23,6 +23,12 @@ Bash") — mede outro processo. `lib.repo_root()` serve script que Claude chama 
 dispatcher do Claude Code invoca o processo diretamente —, e a doc oficial
 (`code.claude.com/docs/en/hooks`, *Exec form and shell form*) é explícita: hook, servidor
 MCP stdio e LSP de plugin recebem a variável no ambiente do processo; comando de Bash, não.
+
+Sem `.claude/guardrails.json` o hook sai com 0 e não escreve nada (`P-05` do plano
+`apply-plugin-review`). O hook viaja no plugin e roda em toda chamada de ferramenta (`matcher: "*"`),
+então num projeto que não declarou guardrail o aviso "falha aberta" saía a cada chamada, por um
+arquivo que ninguém tinha motivo de escrever. O aviso fica para o arquivo que existe e não se lê
+— JSON malformado, regra inválida, payload ilegível —, que é falha de quem declarou o guardrail.
 """
 
 from __future__ import annotations
@@ -39,7 +45,10 @@ REGRAS = Path(os.environ.get("CLAUDE_PROJECT_DIR", "")) / ".claude" / "guardrail
 
 
 def main() -> int:
-    decisao, aviso = guardrail.decidir(sys.stdin.read(), REGRAS)
+    payload = sys.stdin.read()
+    if not os.path.exists(REGRAS):
+        return 0
+    decisao, aviso = guardrail.decidir(payload, REGRAS)
     if aviso:
         print(aviso, file=sys.stderr)
     if decisao is not None:

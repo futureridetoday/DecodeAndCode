@@ -5,8 +5,9 @@ Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
 de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as três skills, a
-pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, quatro hooks e um
-`settings.json` com a âncora `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
+pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os quatro scripts de
+desenvolvimento (`P-05`), quatro hooks e um `settings.json` com os quatro eventos e a âncora
+`${CLAUDE_PROJECT_DIR}/.claude/hooks`.
 
 **Fonte real**, em `TestPacoteRealEstaLimpo`, para a **instância**: constrói deste repositório e
 exige `verificar() == []`. A primeira entrega tinha só a sintética, e ela respondia `[]` sobre uma
@@ -25,11 +26,17 @@ fixture: é exatamente o arquivo que faltava quando `scaffold` morria no import.
 destino próprios (`docs/plan/system/modelo-dev-units.md` → `reference/`, dentro da skill do
 pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacotar._fontes` agora
 declara.
+
+O `P-05` enxuga o pacote: os quatro scripts de desenvolvimento (`empacotar`, `reconciliar`,
+`lint_skill`, `lint_agente`) e os hooks `PostCompact` e `SubagentStart` ficam só neste repositório
+(`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o do **checkout**,
+porque o do pacote deixou de existir.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -47,6 +54,16 @@ import lint_skill
 
 
 NOMES_DAS_SKILLS = lib.SKILLS
+
+# Os quatro hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
+_HOOKS_DA_FONTE = {
+    "PreToolUse": "pre_tool_use.py",
+    "InstructionsLoaded": "instructions_loaded.py",
+    "PostCompact": "post_compact.py",
+    "SubagentStart": "subagent_start.py",
+}
+_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded"}
+_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py"}
 
 
 def _montar_fonte(raiz: Path) -> None:
@@ -73,6 +90,8 @@ def _montar_fonte(raiz: Path) -> None:
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "lib.py").write_text("# mecanismo\n", encoding="utf-8")
     (scripts / "move-md.py").write_text("# mecanismo — reescreve link markdown\n", encoding="utf-8")
+    for nome in empacotar._SCRIPTS_DE_DESENVOLVIMENTO:
+        (scripts / nome).write_text(f"# {nome} — só de quem desenvolve o método\n", encoding="utf-8")
 
     pycache = scripts / "__pycache__"
     pycache.mkdir(parents=True, exist_ok=True)
@@ -84,8 +103,7 @@ def _montar_fonte(raiz: Path) -> None:
 
     hooks = raiz / ".claude" / "hooks"
     hooks.mkdir(parents=True, exist_ok=True)
-    nomes_hooks = ("pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py")
-    for nome in nomes_hooks:
+    for nome in _HOOKS_DA_FONTE.values():
         (hooks / nome).write_text(f"# {nome}\n", encoding="utf-8")
 
     agents = raiz / ".claude" / "agents"
@@ -97,28 +115,18 @@ def _montar_fonte(raiz: Path) -> None:
         json.dumps(
             {
                 "hooks": {
-                    "PreToolUse": [
+                    evento: [
                         {
                             "matcher": "*",
                             "hooks": [
                                 {
                                     "type": "command",
-                                    "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py",
+                                    "command": f'python3 "${{CLAUDE_PROJECT_DIR}}/.claude/hooks/{nome}"',
                                 }
                             ],
                         }
-                    ],
-                    "PostCompact": [
-                        {
-                            "matcher": "*",
-                            "hooks": [
-                                {
-                                    "type": "command",
-                                    "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py",
-                                }
-                            ],
-                        }
-                    ],
+                    ]
+                    for evento, nome in _HOOKS_DA_FONTE.items()
                 }
             }
         ),
@@ -245,13 +253,35 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
         self.assertEqual([], [str(p) for p in self.destino.rglob(".DS_Store")])
 
-    def test_quatro_hooks_copiados(self):
+    def test_so_os_dois_hooks_que_viajam_sao_copiados(self):
+        """`P-05` — `hooks/` leva os scripts dos dois eventos que ficam, mais o `hooks.json`."""
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "hooks").glob("*.py")}
-        self.assertEqual(
-            copiados,
-            {"pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py"},
-        )
+        copiados = {p.name for p in (self.destino / "hooks").iterdir()}
+        self.assertEqual(copiados, {*_HOOKS_QUE_VIAJAM, "hooks.json"})
+
+    def test_scripts_de_desenvolvimento_nao_viajam_na_pasta_compartilhada(self):
+        """`P-05` — o `empacotar`, o `reconciliar` e os dois `lint_*` só servem a quem desenvolve."""
+        empacotar.construir(self.destino)
+        scripts = self.destino / "skills" / "decode-and-code" / "scripts"
+        for nome in empacotar._SCRIPTS_DE_DESENVOLVIMENTO:
+            with self.subTest(script=nome):
+                self.assertFalse((scripts / nome).exists())
+        self.assertEqual({p.name for p in scripts.iterdir()}, {"lib.py", "move-md.py"})
+
+    def test_a_exclusao_dos_scripts_de_desenvolvimento_e_so_da_pasta_compartilhada(self):
+        """Uma skill que tenha um arquivo com um desses nomes não o perde em silêncio."""
+        da_skill = self.raiz / ".claude" / "skills" / NOMES_DAS_SKILLS[0] / "lint_skill.py"
+        da_skill.write_text("# parte da skill, não da pasta compartilhada\n", encoding="utf-8")
+
+        empacotar.construir(self.destino)
+        self.assertTrue((self.destino / "skills" / NOMES_DAS_SKILLS[0] / "lint_skill.py").is_file())
+
+    def test_hook_citado_no_settings_sem_fonte_levanta_antes_de_escrever(self):
+        (self.raiz / ".claude" / "hooks" / "instructions_loaded.py").unlink()
+
+        with self.assertRaises(FileNotFoundError):
+            empacotar.construir(self.destino)
+        self.assertFalse(self.destino.exists())
 
     def test_so_o_ai_builder_copiado(self):
         empacotar.construir(self.destino)
@@ -263,17 +293,19 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
         self.assertFalse((self.destino / "commands").exists())
 
-    def test_hooks_json_mesmos_eventos_do_settings_e_ancora_trocada(self):
+    def test_hooks_json_so_os_dois_eventos_que_viajam_e_ancora_trocada(self):
         empacotar.construir(self.destino)
 
         eventos_settings = set(json.loads((self.raiz / ".claude" / "settings.json").read_text())["hooks"])
-        hooks_json = self.destino / "hooks" / "hooks.json"
-        conteudo = hooks_json.read_text(encoding="utf-8")
+        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
+
+        conteudo = (self.destino / "hooks" / "hooks.json").read_text(encoding="utf-8")
         eventos_gerados = set(json.loads(conteudo)["hooks"])
 
-        self.assertEqual(eventos_gerados, eventos_settings)
+        self.assertEqual(eventos_gerados, _EVENTOS_QUE_VIAJAM)
         self.assertNotIn("CLAUDE_PROJECT_DIR", conteudo)
         self.assertIn("${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use.py", conteudo)
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/hooks/instructions_loaded.py", conteudo)
 
     def test_sempre_do_zero_remove_o_que_ja_estava_no_destino(self):
         self.destino.mkdir(parents=True)
@@ -457,6 +489,90 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
 
             self.assertFalse((destino / "commands").exists())
             self.assertEqual(empacotar.verificar(destino), [])
+
+
+class TestPacoteEnxuto(unittest.TestCase):
+    """`P-05` e `D-02` — o que o pacote **real** não leva, e a prova de que nada faz falta.
+
+    O sintético (`TestConstruir`) prova o mecanismo; só o repositório real diz que os quatro
+    scripts de desenvolvimento e os dois hooks de anúncio podem sair (`L-31`).
+    """
+
+    def test_pacote_real_sem_os_quatro_scripts_de_desenvolvimento(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            scripts = destino / "skills" / "decode-and-code" / "scripts"
+            for nome in ("empacotar.py", "reconciliar.py", "lint_skill.py", "lint_agente.py"):
+                with self.subTest(script=nome):
+                    self.assertFalse((scripts / nome).exists())
+            self.assertTrue((scripts / "dc.py").is_file())
+            self.assertEqual(empacotar.verificar(destino), [])
+
+    def test_hooks_json_real_tem_so_os_dois_eventos_e_hooks_so_os_dois_scripts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            fonte = json.loads((lib.repo_root() / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
+
+            hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            self.assertEqual(set(hooks_json), _EVENTOS_QUE_VIAJAM)
+            self.assertEqual({p.name for p in (destino / "hooks").glob("*.py")}, _HOOKS_QUE_VIAJAM)
+            self.assertEqual(
+                {p.name for p in (destino / "hooks").iterdir()}, {*_HOOKS_QUE_VIAJAM, "hooks.json"}
+            )
+
+    def test_cada_comando_do_hooks_json_aponta_para_um_script_do_pacote(self):
+        """Uma fonte só: o `hooks/` do pacote sai dos comandos do `hooks.json`, nunca de lista à parte."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            citados = set()
+            for grupos in hooks_json.values():
+                for grupo in grupos:
+                    for hook in grupo["hooks"]:
+                        citados.update(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/hooks/([\w.-]+\.py)", hook["command"]))
+            self.assertEqual(citados, {p.name for p in (destino / "hooks").glob("*.py")})
+
+    def test_todo_script_e_hook_do_pacote_importa_sem_os_quatro(self):
+        """Nenhum runtime nem hook importa o que saiu — executado de verdade, não lido por `grep`.
+
+        Subprocesso novo, `-I` e `cwd` sem projeto: `import` aqui devolveria o módulo já carregado
+        da fonte, que tem os quatro ao lado. Os hooks entram por caminho, porque `hooks/` não está
+        no `sys.path` — e o `sys.path.insert` de cada um aponta para o pacote, não para a fonte.
+        """
+        codigo = (
+            "import importlib, importlib.util, sys\n"
+            "from pathlib import Path\n"
+            "pacote = Path(sys.argv[1])\n"
+            "scripts = pacote / 'skills' / 'decode-and-code' / 'scripts'\n"
+            "sys.path.insert(0, str(scripts))\n"
+            "for arquivo in sorted(scripts.glob('*.py')):\n"
+            "    if '-' not in arquivo.stem:\n"
+            "        importlib.import_module(arquivo.stem)\n"
+            "for arquivo in sorted((pacote / 'hooks').glob('*.py')):\n"
+            "    spec = importlib.util.spec_from_file_location('hook_' + arquivo.stem, arquivo)\n"
+            "    spec.loader.exec_module(importlib.util.module_from_spec(spec))\n"
+            "print('importou')\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp_pacote, tempfile.TemporaryDirectory() as tmp_cwd:
+            destino = Path(tmp_pacote) / "pkg"
+            empacotar.construir(destino)
+
+            resultado = subprocess.run(
+                [sys.executable, "-I", "-c", codigo, str(destino)],
+                cwd=Path(tmp_cwd).resolve(),
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
+            self.assertIn("importou", resultado.stdout)
 
 
 class TestEmpacotarZip(unittest.TestCase):

@@ -290,16 +290,23 @@ si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e vers�
 (`lib.SKILLS`: `review-plan`, `derive`, `implement`) e a pasta compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
-cada projeto, não), os hooks com `hooks/hooks.json` gerado a partir do bloco `hooks` do
-`settings.json` — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para `${CLAUDE_PLUGIN_ROOT}`, porque é
-essa variável que separa pacote de cópia —, e o agente `ai-builder` (`agents/ai-builder.md`),
-copiado no mesmo formato dos hooks.
+cada projeto, não), **dois hooks** — `PreToolUse` (o guardrail) e `InstructionsLoaded` (o log do
+controle de três estados) — com `hooks/hooks.json` gerado a partir do bloco `hooks` do
+`settings.json` reduzido a esses dois eventos (`_EVENTOS_DO_PACOTE`, a única lista; os scripts de
+`hooks/` saem dos comandos deles) — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para
+`${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —, e o agente
+`ai-builder` (`agents/ai-builder.md`), copiado no mesmo formato.
 
 **Não viaja:** `.claude/rules/*` (guideline é instância — parágrafo acima), `.claude/guardrails.json`
 (idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
-deste repositório, não componente do método) e `docs/` (plano e norma são registro daqui — inclusive
-`docs/plan/system/huddle.md`, que carrega a conversa deste projeto e é instância pura —; a
-norma é citada, nunca copiada para dentro da skill). `empacotar.verificar(destino)` audita a árvore já
+deste repositório, não componente do método), os **quatro scripts de desenvolvimento**
+(`empacotar.py`, `reconciliar.py`, `lint_skill.py` e `lint_agente.py` — nenhum runtime nem hook os
+importa, só os testes), os **dois hooks de anúncio restantes**
+(`PostCompact` e `SubagentStart` — não chegam ao modelo, e não há registro de projeto que instala o
+plugin usando o controle de três estados; continuam no `settings.json` daqui) e `docs/` (plano e
+norma são registro daqui — inclusive `docs/plan/system/huddle.md`, que carrega a conversa deste
+projeto e é instância pura —; a norma é citada, nunca copiada para dentro da skill).
+`empacotar.verificar(destino)` audita a árvore já
 construída por **busca de conteúdo** — o **nome do repositório de origem** em qualquer arquivo, e a
 âncora `CLAUDE_PROJECT_DIR` **dentro de `hooks/`** —, como par de `construir`, que decide por
 **exclusão de caminho**: o mesmo invariante fechado nos dois sentidos.
