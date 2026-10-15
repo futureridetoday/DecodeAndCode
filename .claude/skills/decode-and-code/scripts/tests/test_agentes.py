@@ -2,9 +2,9 @@
 """Testes do lint de agente — unidade 0001-19.
 
 O par do critério de aceite dá o essencial: os quatro invariantes reprovam isoladamente, um por
-vez, contra um agente sintético mínimo que sozinho já aprova; e o `planner.md` real aprova sem
-ressalva — com `model`, `skills` (existência em disco incluída) e a declaração de escopo no corpo
-conferidos em nome de caso próprio.
+vez, contra um agente sintético mínimo que sozinho já aprova; e o `ai-builder.md` real — o único
+agent que sobrou, depois que o ciclo `review` / `derive` / `implement` virou skill (`P-03`) — aprova
+sem ressalva, com `model` e as fronteiras do corpo conferidos em nome de caso próprio.
 """
 
 from __future__ import annotations
@@ -25,62 +25,12 @@ name: agente-sintetico
 description: Agente de teste para o lint.
 tools: Read, Grep
 model: sonnet
-skills: [decode-and-code]
+skills: [review-plan]
 color: blue
 ---
 
 Corpo de teste para o lint de agente.
 """
-
-
-class TestPlannerReal(unittest.TestCase):
-    """O caso contra o artefato real — sem ele, o lint prova só o mecanismo (L-31)."""
-
-    def setUp(self):
-        self.alvo = lib.repo_root() / ".claude" / "agents" / "planner.md"
-        self.texto = self.alvo.read_text(encoding="utf-8")
-
-    def test_planner_aprova_no_lint(self):
-        self.assertEqual(lint_agente.lint(self.alvo), [])
-
-    def test_planner_declara_model_opus(self):
-        self.assertRegex(self.texto, r"(?m)^model:\s*opus\s*$")
-
-    def test_planner_declara_skill_existente_em_disco(self):
-        self.assertRegex(self.texto, r"(?m)^skills:.*decode-and-code")
-        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "decode-and-code").is_dir())
-
-    def test_escopo_no_corpo_e_declaracao_nao_imposicao_por_tools(self):
-        """`tools:` não tem granularidade de caminho (L-34) — o corpo declara, nunca impõe."""
-        self.assertIn("docs/plan/**", self.texto)
-
-
-class TestDeveloperReal(unittest.TestCase):
-    """O caso contra o artefato real — sem ele, o lint prova só o mecanismo (L-31)."""
-
-    def setUp(self):
-        self.alvo = lib.repo_root() / ".claude" / "agents" / "developer.md"
-        self.texto = self.alvo.read_text(encoding="utf-8")
-
-    def test_developer_aprova_no_lint(self):
-        self.assertEqual(lint_agente.lint(self.alvo), [])
-
-    def test_developer_declara_model_sonnet(self):
-        self.assertRegex(self.texto, r"(?m)^model:\s*sonnet\s*$")
-
-    def test_developer_declara_skill_existente_em_disco(self):
-        self.assertRegex(self.texto, r"(?m)^skills:.*decode-and-code")
-        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "decode-and-code").is_dir())
-
-    def test_developer_nao_declara_memory(self):
-        """A ausência é o invariante (D-06) — sozinha não prova a recusa (ver TestGateEstrutural)."""
-        self.assertNotRegex(self.texto, r"(?m)^memory:")
-
-    def test_developer_declara_contrato_nao_commita(self):
-        self.assertIn("não commita", self.texto)
-
-    def test_developer_declara_contrato_unidade_insuficiente_volta_a_quem_deriva(self):
-        self.assertIn("volta para quem deriva", self.texto)
 
 
 class TestAiBuilderReal(unittest.TestCase):
@@ -97,23 +47,38 @@ class TestAiBuilderReal(unittest.TestCase):
         self.assertRegex(self.texto, r"(?m)^model:\s*opus\s*$")
 
     def test_ai_builder_declara_skill_existente_em_disco(self):
-        """Passa a depender da skill: grava esboço reaproveitando numeracao/nomenclatura/lint_plano
-        — diferente da versão anterior, que só recomendava abrir plano e nunca escrevia."""
-        self.assertRegex(self.texto, r"(?m)^skills:.*decode-and-code")
-        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "decode-and-code").is_dir())
+        """O `skills:` fica, e é o que faz o agent achar os scripts fora do checkout.
+
+        Medido em 2026-10-15 com `--plugin-dir`: o debug log mostra `Preloaded skill` para o
+        ai-builder, que recebe o corpo da skill com `${CLAUDE_SKILL_DIR}` já expandido para o
+        caminho absoluto dos scripts no plugin — é por ele que o passo de numerar, validar o nome e
+        rodar `lint_plano` acha `numeracao.py`, `nomenclatura.py` e `lint_plano.py`. Sem o campo, o
+        agent perde o caminho, e `skills: [review-plan]` entrega
+        `.../skills/review-plan/../decode-and-code/scripts/...`.
+        """
+        self.assertRegex(self.texto, r"(?m)^skills:.*review-plan")
+        self.assertTrue((lib.repo_root() / ".claude" / "skills" / "review-plan" / "SKILL.md").is_file())
+
+    def test_ai_builder_cita_as_skills_do_ciclo_e_elas_existem_em_disco(self):
+        """`review-plan` é o próximo passo que ele recomenda; `derive` e `implement` são as
+        fronteiras que ele declara não serem dele — os três nomes têm de existir."""
+        for nome in lib.SKILLS:
+            with self.subTest(skill=nome):
+                self.assertIn(f"`{nome}", self.texto)
+                self.assertTrue((lib.repo_root() / ".claude" / "skills" / nome / "SKILL.md").is_file())
 
     def test_ai_builder_declara_webfetch(self):
         """Confirmar schema oficial em docs.claude.com precisa de ferramenta que alcance."""
         self.assertRegex(self.texto, r"(?m)^tools:.*WebFetch")
 
-    def test_ai_builder_declara_contrato_recomenda_planner_review(self):
-        self.assertIn("planner review", self.texto)
+    def test_ai_builder_declara_contrato_recomenda_review_plan(self):
+        self.assertIn("`review-plan <caminho>`", self.texto)
 
-    def test_ai_builder_declara_fronteira_com_planner(self):
-        self.assertIn("isso é do agente `planner`", self.texto)
+    def test_ai_builder_declara_fronteira_com_derive(self):
+        self.assertIn("isso é da skill `derive`", self.texto)
 
-    def test_ai_builder_declara_fronteira_com_developer(self):
-        self.assertIn("isso é do agente `developer`", self.texto)
+    def test_ai_builder_declara_fronteira_com_implement(self):
+        self.assertIn("isso é da skill `implement`", self.texto)
 
     def test_ai_builder_aplica_gates_do_principles(self):
         """Defesa contra esboço inflado: reaproveita Clarificar/Evitar/Reduzir + Gates A/B de
@@ -176,7 +141,7 @@ class TestGateEstrutural(unittest.TestCase):
 
     def test_skill_inexistente_em_disco_reprova(self):
         texto = AGENTE_VALIDO.replace(
-            "skills: [decode-and-code]", "skills: [skill-que-nao-existe]"
+            "skills: [review-plan]", "skills: [skill-que-nao-existe]"
         )
         alvo = self._escreve(texto)
         problemas = lint_agente.lint(alvo)
@@ -189,8 +154,8 @@ class TestGateEstrutural(unittest.TestCase):
         self.assertTrue(any("tools" in p and "ausente" in p for p in problemas), problemas)
 
     def test_memory_declarado_reprova(self):
-        """O caso contrário do `TestDeveloperReal`: sem este, a recusa podia nunca ter sido
-        implementada e a ausência em `developer.md` passaria do mesmo jeito (D-06)."""
+        """A recusa de `memory` provada pelo caso contrário: sem este, ela podia nunca ter sido
+        implementada e a ausência do campo em `ai-builder.md` passaria do mesmo jeito (D-06)."""
         texto = AGENTE_VALIDO.replace("color: blue\n", "color: blue\nmemory: sessao-anterior\n")
         alvo = self._escreve(texto)
         problemas = lint_agente.lint(alvo)

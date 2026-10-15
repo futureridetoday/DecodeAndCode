@@ -156,6 +156,77 @@ class TestCaminhoFixo(unittest.TestCase):
             any("caminho fixo" in p and "create.py" in p for p in problemas), problemas
         )
 
+    def test_caminho_fixo_de_outra_skill_reprova(self):
+        """`P-03` — os scripts moram numa pasta irmã, e o caminho fixo dela é a mesma armadilha.
+
+        O script existe de verdade na pasta irmã: a recusa vem do prefixo, não da ausência.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = fixtures.skill(
+                Path(tmp),
+                nome="skill-sintetica",
+                corpo="Composição via `python3`: `.claude/skills/outra/scripts/x.py`.",
+            )
+            (Path(tmp) / "outra" / "scripts").mkdir(parents=True)
+            (Path(tmp) / "outra" / "scripts" / "x.py").write_text("", encoding="utf-8")
+            problemas = lint_skill.lint(alvo)
+        self.assertTrue(any("caminho fixo" in p and "outra/scripts/x.py" in p for p in problemas), problemas)
+
+
+class TestScriptEmPastaIrma(unittest.TestCase):
+    """`P-03` — as três skills citam os scripts da pasta irmã por `${CLAUDE_SKILL_DIR}/../<pasta>/`."""
+
+    def _skill_citando(self, tmp: str, cita: str) -> Path:
+        return fixtures.skill(
+            Path(tmp), nome="skill-sintetica", corpo=f"Composição via `python3`: `{cita}`."
+        )
+
+    def test_script_existente_na_pasta_irma_aprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "compartilhada" / "scripts").mkdir(parents=True)
+            (Path(tmp) / "compartilhada" / "scripts" / "x.py").write_text("", encoding="utf-8")
+            alvo = self._skill_citando(tmp, "${CLAUDE_SKILL_DIR}/../compartilhada/scripts/x.py")
+            self.assertEqual(lint_skill.lint(alvo), [])
+
+    def test_script_inexistente_na_pasta_irma_reprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "compartilhada" / "scripts").mkdir(parents=True)
+            alvo = self._skill_citando(tmp, "${CLAUDE_SKILL_DIR}/../compartilhada/scripts/x.py")
+            problemas = lint_skill.lint(alvo)
+        self.assertTrue(
+            any("script citado não existe" in p and "compartilhada/scripts/x.py" in p for p in problemas),
+            problemas,
+        )
+
+    def test_pasta_irma_inexistente_reprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            alvo = self._skill_citando(tmp, "${CLAUDE_SKILL_DIR}/../nao-existe/scripts/x.py")
+            problemas = lint_skill.lint(alvo)
+        self.assertTrue(any("script citado não existe" in p for p in problemas), problemas)
+
+    def test_script_da_pasta_irma_sem_interpretador_nem_bit_reprova(self):
+        """O mesmo passo 5 vale para a irmã: resolver o `..` não afrouxa a checagem de execução."""
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "compartilhada" / "scripts" / "x.py"
+            script.parent.mkdir(parents=True)
+            script.write_text("", encoding="utf-8")
+            script.chmod(0o644)
+            alvo = fixtures.skill(
+                Path(tmp),
+                nome="skill-sintetica",
+                corpo="Corpo citando `${CLAUDE_SKILL_DIR}/../compartilhada/scripts/x.py` direto.",
+            )
+            problemas = lint_skill.lint(alvo)
+        self.assertTrue(any("x.py" in p and "interpretador" in p for p in problemas), problemas)
+
+    def test_subir_mais_de_um_nivel_nao_conta_como_citacao(self):
+        """Só `../<pasta>/` — `../../` não é reconhecido, então o lint não o resolve nem o aprova."""
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "scripts").mkdir()
+            (Path(tmp) / "scripts" / "x.py").write_text("", encoding="utf-8")
+            alvo = self._skill_citando(tmp, "${CLAUDE_SKILL_DIR}/../../scripts/x.py")
+            self.assertEqual(lint_skill._caminhos_de_scripts(alvo.read_text(encoding="utf-8")), {})
+
 
 class TestGateEstrutural(unittest.TestCase):
     """Contra uma skill sintética mínima que aprova — cada teste quebra uma dimensão por vez."""

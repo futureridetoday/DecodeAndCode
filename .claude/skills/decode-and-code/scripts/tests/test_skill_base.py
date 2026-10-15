@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Teste da base da skill dev-units — unidade 0002-11.
+"""Teste da base das skills do método — unidades 0002-11 e `P-03`.
 
-Cobre só o que `lint_skill.lint()` já verifica: frontmatter completo e os
-três modos declarados no corpo. Comportamento de cada modo não é testado
-aqui — chega com as unidades 12-14.
+Cobre o que `lint_skill.lint()` já verifica — frontmatter completo e o modo declarado no corpo — e
+o que ele não vê: a topologia de `D-01`. São três skills, uma por modo, cada uma com o modelo e a
+invocação que o modo pede; e `decode-and-code/` ficou só com o que as três compartilham, sem
+`SKILL.md`. Comportamento de cada modo não é testado aqui — vive em `test_modo_*`.
 """
 
 from __future__ import annotations
@@ -16,14 +17,56 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import lib
 import lint_skill
+import regioes
 
-MODOS = ["review", "derive", "implement"]
+SKILLS = lib.repo_root() / ".claude" / "skills"
+
+# Skill → modo que o corpo precisa citar. `model`, `disable-model-invocation` e `context` são o que
+# a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
+# `implement` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
+# não resolve numa skill de plugin e cai, sem aviso, no padrão (medido com Claude Code 2.1.300).
+TOPOLOGIA = {
+    "review-plan": {"modo": "review", "model": "opus", "disable-model-invocation": "false", "context": '""'},
+    "derive": {"modo": "derive", "model": "opus", "disable-model-invocation": "true", "context": '""'},
+    "implement": {
+        "modo": "implement",
+        "model": "sonnet",
+        "disable-model-invocation": "false",
+        "context": "fork",
+        "agent": "general-purpose",
+        "background": "false",
+    },
+}
 
 
 class TestSkillBase(unittest.TestCase):
-    def test_skill_aprova_com_os_tres_modos(self):
-        skill = lib.repo_root() / ".claude" / "skills" / "decode-and-code" / "SKILL.md"
-        self.assertEqual(lint_skill.lint(skill, modos=MODOS), [])
+    def test_topologia_cobre_exatamente_as_skills_de_lib(self):
+        """`TOPOLOGIA` é a especificação do D-01; `lib.SKILLS` é a lista de produção. Têm de coincidir."""
+        self.assertEqual(set(TOPOLOGIA), set(lib.SKILLS))
+
+    def test_cada_skill_aprova_com_o_proprio_modo(self):
+        for nome, esperado in TOPOLOGIA.items():
+            with self.subTest(skill=nome):
+                self.assertEqual(lint_skill.lint(SKILLS / nome / "SKILL.md", modos=[esperado["modo"]]), [])
+
+    def test_frontmatter_de_topologia(self):
+        for nome, esperado in TOPOLOGIA.items():
+            for campo, valor in esperado.items():
+                if campo == "modo":
+                    continue
+                with self.subTest(skill=nome, campo=campo):
+                    self.assertEqual(regioes.ler_campo(SKILLS / nome / "SKILL.md", campo), valor)
+
+    def test_so_o_implement_declara_agent(self):
+        for nome in ("review-plan", "derive"):
+            with self.subTest(skill=nome):
+                self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
+
+    def test_pasta_compartilhada_nao_tem_skill_md(self):
+        compartilhada = SKILLS / "decode-and-code"
+        self.assertFalse((compartilhada / "SKILL.md").exists())
+        self.assertTrue((compartilhada / "scripts").is_dir())
+        self.assertTrue((compartilhada / "config.json").is_file())
 
 
 if __name__ == "__main__":

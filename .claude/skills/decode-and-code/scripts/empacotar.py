@@ -36,6 +36,12 @@ _DESTINO_DEFAULT = "dist/decode-and-code"
 
 _MANIFESTO_RELATIVO = Path(".claude-plugin") / "plugin.json"
 
+# As skills que viajam são as de `lib.SKILLS` — lista explícita, nunca `.claude/skills/*`: uma skill
+# de desenvolvimento deste repositório não pode vazar para quem instala (`P-03`, `D-01`). A pasta
+# compartilhada não é skill (não tem `SKILL.md`): guarda `scripts/`, `config.json` e, no pacote,
+# `reference/`, e as três a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
+_PASTA_COMPARTILHADA = "decode-and-code"
+
 
 def _resolver_destino(destino: Path | str) -> Path:
     """Relativo resolve contra a raiz do repositório; absoluto passa direto."""
@@ -45,14 +51,15 @@ def _resolver_destino(destino: Path | str) -> Path:
 
 def _fontes() -> dict[str, Path]:
     raiz = lib.repo_root()
+    skills = raiz / ".claude" / "skills"
     return {
         "manifesto": raiz / ".claude" / "plugin.json",
-        "skill": raiz / ".claude" / "skills" / "decode-and-code",
+        "compartilhada": skills / _PASTA_COMPARTILHADA,
+        **{f"skill {nome}": skills / nome for nome in lib.SKILLS},
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
         "agents": raiz / ".claude" / "agents",
         "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
-        "commands": raiz / ".claude" / "commands",
     }
 
 
@@ -75,12 +82,13 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     nome_plugin = json.loads(fontes["manifesto"].read_text(encoding="utf-8"))["name"]
 
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
-    escritos.extend(_copiar_skill(fontes["skill"], destino, nome_plugin))
+    escritos.extend(_copiar_skill(fontes["compartilhada"], destino, nome_plugin))
+    for nome in lib.SKILLS:
+        escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino, nome_plugin))
     escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino))
     escritos.append(_escrever_hooks_json(fontes["settings"], destino))
     escritos.extend(_copiar_agentes(fontes["agents"], destino))
-    escritos.extend(_copiar_comandos(fontes["commands"], destino, nome_plugin))
     return escritos
 
 
@@ -92,7 +100,10 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
 
 
 def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
-    """Copia a skill inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
+    """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
+
+    Serve às três skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
+    o `SKILL.md` — que só as skills têm — passa por `_declarar_o_plugin`.
 
     `.DS_Store` entrou por medição, não por antecipação (`L-32`): a reconciliação da `0001-17`
     acusou um dentro da pasta da skill, e o pacote o levava — lixo do Finder da máquina que
@@ -100,11 +111,12 @@ def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
     A exclusão vive **só aqui**: ensinar `verificar` a recusar lixo criaria duas listas do mesmo
     fato (invariante 1). Lixo novo entra nesta lista quando for observado, nunca antes.
     """
-    alvo = destino / "skills" / "decode-and-code"
+    alvo = destino / "skills" / origem.name
     shutil.copytree(
         origem, alvo, ignore=shutil.ignore_patterns("__pycache__", "tests", ".DS_Store")
     )
-    _declarar_o_plugin(alvo / "SKILL.md", nome_plugin)
+    if (alvo / "SKILL.md").is_file():
+        _declarar_o_plugin(alvo / "SKILL.md", nome_plugin)
     return [p for p in sorted(alvo.rglob("*")) if p.is_file()]
 
 
@@ -123,13 +135,13 @@ def _declarar_o_plugin(skill_md: Path, nome_plugin: str) -> None:
 def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
     """Leva a norma-mecanismo para `reference/`, ao lado da skill — unidade `0004-04`.
 
-    `bootstrap.iniciar` materializa de lá quando o método roda de um pacote instalado (a skill já
-    cita `<plan_root>/system/modelo-dev-units.md`, e sem isto o projeto que instala não tem a fonte
-    que os três modos citam — `L-31` do plano `0001`). Fica fora de `docs/`, que `construir` nunca
+    `bootstrap.iniciar` materializa de lá quando o método roda de um pacote instalado (as skills já
+    citam `<plan_root>/system/modelo-dev-units.md`, e sem isto o projeto que instala não tem a fonte
+    que elas citam — `L-31` do plano `0001`). Fica fora de `docs/`, que `construir` nunca
     copia (invariante 2): é **um** arquivo nomeado, o operativo que a `0004-03` já separou do
     registro deste projeto, não a árvore inteira de `docs/plan`.
 
-    `project:` do frontmatter passa pela mesma reescrita que `SKILL.md` já recebe
+    `project:` do frontmatter passa pela mesma reescrita que os `SKILL.md` já recebem
     (`_declarar_o_plugin`) — sem ela, a cópia distribuída declara no próprio frontmatter o nome do
     repositório que a produziu, e `verificar` acusa: a mesma classe de vazamento da `L-31`, medida
     nesta unidade num arquivo que ainda não existia quando aquela lacuna foi escrita.
@@ -153,33 +165,17 @@ def _copiar_hooks(origem: Path, destino: Path) -> list[Path]:
 
 
 def _copiar_agentes(origem: Path, destino: Path) -> list[Path]:
-    """Copia `.claude/agents/*.md` para `agents/` do pacote — mesmo formato de `_copiar_hooks` (`D-27`)."""
+    """Copia `.claude/agents/*.md` para `agents/` do pacote — mesmo formato de `_copiar_hooks` (`D-27`).
+
+    Hoje só o `ai-builder`: o ciclo `review` / `derive` / `implement` vive nas três skills, não em
+    agents (`P-03`, `D-01`).
+    """
     alvo = destino / "agents"
     alvo.mkdir(parents=True, exist_ok=True)
     escritos = []
     for agente in sorted(origem.glob("*.md")):
         copia = alvo / agente.name
         shutil.copy2(agente, copia)
-        escritos.append(copia)
-    return escritos
-
-
-def _copiar_comandos(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
-    """Copia `.claude/commands/*.md` para `commands/` do pacote — unidade `0004-06`.
-
-    `/implement` e `/delegate` são mecanismo puro (validados contra unidades reais deste plano,
-    2026-08-28): disparam a skill ou o agent `developer` em cold-start, sem citar nada deste
-    repositório na prosa. O que precisa de reescrita é o **frontmatter** — `project:` vazaria o
-    nome do repositório de origem como a `04` já corrigiu para a norma e o `SKILL.md`, mesma classe
-    de defeito, mesma correção (`_declarar_o_plugin`).
-    """
-    alvo = destino / "commands"
-    alvo.mkdir(parents=True, exist_ok=True)
-    escritos = []
-    for comando in sorted(origem.glob("*.md")):
-        copia = alvo / comando.name
-        shutil.copy2(comando, copia)
-        _declarar_o_plugin(copia, nome_plugin)
         escritos.append(copia)
     return escritos
 
@@ -253,8 +249,8 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     método — texto fixo e autoral, correto em qualquer checkout —, e por isso carrega o nome do
     repositório de origem sempre que o diretório local se chamar como o repositório real (o caso
     comum: quem clona não costuma renomear). Não é o vazamento que o marcador persegue — esse é a
-    cópia de `SKILL.md`/comandos/norma citando o checkout que os construiu, e `_copiar_manifesto`
-    nunca passa pela reescrita que os outros três recebem (`_declarar_o_plugin`): o manifesto é
+    cópia dos `SKILL.md`/norma citando o checkout que os construiu, e `_copiar_manifesto`
+    nunca passa pela reescrita que eles recebem (`_declarar_o_plugin`): o manifesto é
     copiado verbatim porque sua função é justamente declarar essa identidade, e ela não muda com o
     nome do diretório de quem constrói.
     """
@@ -324,7 +320,7 @@ def empacotar_zip(staging: Path | str | None = None) -> tuple[Path, str]:
     layout aqui, não noutro lugar.
 
     **`date_time` fixo, não o mtime do disco.** `_declarar_o_plugin` reescreve alguns arquivos a
-    cada `construir` (`SKILL.md`, a norma copiada, os dois comandos), o que muda o mtime a cada
+    cada `construir` (os três `SKILL.md`, a norma copiada), o que muda o mtime a cada
     build mesmo com o conteúdo idêntico. Um zip que varia byte a byte entre duas construções da
     mesma fonte não serve de artefato reprodutível — por isso todo `ZipInfo` nasce com a mesma
     data, e só o conteúdo decide o hash.
