@@ -747,6 +747,33 @@ ou apagar. Se ficar, medir antes de manter.
 **Como verificar.** Sessão com uma guideline ativa, compactação manual e leitura do arquivo coberto:
 comparar o anúncio com o log de `InstructionsLoaded` com `load_reason: compact`.
 
+**Implementado em 2026-10-16**, no commit
+[`4c63876`](https://github.com/futureridetoday/DecodeAndCode/commit/4c63876). Aprovado pelo humano
+sobre a validação local, antes do PR. Implementado por um agente `general-purpose` em Sonnet e
+revisado pelo orquestrador, que cortou de `hooks.md` um parágrafo que repetia este registro.
+
+**A medição controlada não foi feita; a documentação a substituiu.**
+- A página de memória diz que as rules com `paths:` "load again on demand" depois da compactação. A
+  de hooks define `load_reason: compact` como a recarga depois de uma compactação.
+- Nesta sessão, depois de uma compactação, o hook anunciou `scripts.md` como não voltada, e ela
+  voltou no próximo acesso a um `.py`.
+- O aviso não era falso: descrevia o intervalo até o próximo acesso, que o Claude Code resolve
+  sozinho. Custava contexto a cada compactação sem mudar comportamento.
+
+**O que mudou.**
+- Saíram o `post_compact.py` e sua entrada no `settings.json`.
+- Do `activation_notice.py` saíram `anunciar_post_compact` e as quatro funções que só ele usava.
+- O `instructions_loaded.py` não grava mais estado em `/tmp`, porque o único leitor era o
+  `post_compact.py`. Isso resolve a sobra registrada no `P-05`.
+- README, `docs/recursos/hooks.md` e a norma deixam de citar o hook.
+
+| Evidência | Resultado |
+|---|---|
+| Suíte | 590 OK (eram 604) |
+| Pacote | `verificar` e `validar --strict` vazios |
+| `instructions_loaded.py` com payload de `scripts.md` | Código 0, log gravado, nenhum arquivo de estado novo |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38838390194) | Verde |
+
 #### P-13 · Resolução de `skills:` dentro do namespace do plugin não está confirmada
 
 | | |
@@ -890,7 +917,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 |---|---|---|
 | L-01 | **A resolução de `skills: [decode-and-code]` no namespace do plugin não foi medida** | A documentação não cobre plugin, e a falha é silenciosa — ver `P-13`. Medição prevista na unidade `02`. **Fechada em 2026-10-15**: o nome curto resolve (ver `P-13`) |
 | L-02 | **Não se sabe se o upload de plugin pelo claude.ai recusa campos de frontmatter fora da especificação** | A documentação afirma isso para skill avulsa (claude.ai e Skills API), não para plugin. O README oferece o upload como caminho de instalação |
-| L-03 | **O sinal do `post_compact.py` não foi medido** | Ver `P-12` |
+| L-03 | **O sinal do `post_compact.py` não foi medido** | Ver `P-12`. **Fechada em 2026-10-16** pela documentação, sem a medição controlada: o hook saiu (ver `P-12`) |
 | L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork. **Fechada em 2026-10-15**: o CI roda a suíte em 3.10 a cada push (ver `P-08`) |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
 | L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
