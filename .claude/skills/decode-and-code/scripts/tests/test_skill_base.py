@@ -51,19 +51,20 @@ LIMITE_DESCRIPTION_INTAKE = 600
 # a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
 # `implement` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
 # não resolve numa skill de plugin e cai, sem aviso, no padrão (medido com Claude Code 2.1.300).
+# `None` é campo ausente: `context` só existe onde há fork (`P-10`, campo vazio não se declara).
 TOPOLOGIA = {
     "review-plan": {
         "modo": "review",
         "model": "opus",
         "disable-model-invocation": "false",
-        "context": '""',
+        "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
     "derive": {
         "modo": "derive",
         "model": "opus",
         "disable-model-invocation": "true",
-        "context": '""',
+        "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
     "implement": {
