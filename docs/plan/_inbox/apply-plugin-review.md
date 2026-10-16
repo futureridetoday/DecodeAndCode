@@ -534,7 +534,27 @@ sobre a validação local, antes do PR.
 - O `implement` quase não abre as normas que a unidade cita. Não é contexto, é fidelidade — ver
   `L-08`.
 
-A etapa 3 segue a `D-07`.
+**Etapa 3 — a opção A da `D-07`, medida e descartada em 2026-10-16.** O `review-plan` ganhou uma
+tabela que nomeava, por check, as seções da norma a ler com Grep e `Read` por trecho. Duas versões,
+3 rodadas cada, sobre o mesmo plano e com as mesmas regras das rodadas de base:
+
+| Versão | Norma no contexto | Bloqueantes por rodada |
+|---|---|---|
+| Base, lendo a norma inteira | 61% a 100% | 3 a 4 |
+| Tabela v1: os checks de nome, escopo, independência e tamanho | 20% a 23% | 1 a 3 |
+| Tabela v2: v1 mais *Guardrail fundador* e "as seções do que o plano muda" | 22% | 2 a 3 |
+
+- O teto de 50% foi cumprido. O critério de não perder bloqueante, não.
+- Dois bloqueantes das bases sumiram ou viraram aviso nas 6 rodadas com tabela: "Bash solto / sem
+  subcomando no `dc.py`" (*Fronteira skill / script*) e "Empacotamento não prevê comandos"
+  (*Empacotamento*). Nenhuma rodada abriu essas seções.
+- O plano usado trata do próprio método. Para ele, a norma inteira é "padrões do projeto", e um
+  recorte fixo deixa algo de fora. Dividir a norma (opção B) não resolveria, porque a falha está em
+  escolher o que abrir, não no tamanho do arquivo.
+- O ganho medido foi de cerca de 25 mil tokens por revisão. Não paga uma revisão pior.
+
+**Decisão:** a leitura integral continua. O `P-07` fecha com a etapa 1. Não medido: o mesmo recorte
+num plano de projeto consumidor, onde a norma pesa menos como padrão.
 
 #### P-08 · A verificação do repositório tem lacunas
 
@@ -979,7 +999,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`). `D-06` foi aprovada em 2026-10-16 (opção C, ver `L-07`). `D-07` foi aprovada em 2026-10-16 (opção A, ver `P-07`).
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`). `D-06` foi aprovada em 2026-10-16 (opção C, ver `L-07`). `D-07` escolheu a opção A em 2026-10-16, e a medição a descartou: a leitura integral continua (ver `P-07`).
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
@@ -989,7 +1009,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 | D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
 | D-06 | **Como os gates A e B chegam ao projeto que instala** (`L-07`) — **aprovada em 2026-10-16** | Opção C: o fluxo de decodificação e os gates passam de `principles.md` para a norma, que já viaja; `principles.md` fica com os três princípios e o protocolo de exceção | O `intake` empacotado citava uma regra que não viaja. A e B, alternativas descartadas, levavam `principles.md` inteiro no pacote (mecanismo novo, e instância do projeto viajando) ou duplicavam os gates no `SKILL.md` |
-| D-07 | **Como reduzir o que o `review-plan` lê da norma** (`P-07`) — **aprovada em 2026-10-16** | Opção A: cada check nomeia a seção da norma que usa, e a skill lê só essas. Critério: no máximo 50% da norma em 3 rodadas; se não bastar, dividir a norma por tema (B) | A medição do `P-07` pôs o custo no `review-plan` (cerca de 32 mil tokens por rodada). Enxugar a norma (C) foi descartado por risco de perder conteúdo |
+| D-07 | **Como reduzir o que o `review-plan` lê da norma** (`P-07`) — **opção A medida e descartada em 2026-10-16: a leitura integral continua** | Opção A: cada check nomeia a seção da norma que usa, e a skill lê só essas. Critério: no máximo 50% da norma em 3 rodadas; se não bastar, dividir a norma por tema (B) | A medição do `P-07` pôs o custo no `review-plan` (cerca de 32 mil tokens por rodada). Enxugar a norma (C) foi descartado por risco de perder conteúdo |
 
 ## Lacunas
 
