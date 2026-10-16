@@ -19,8 +19,8 @@ created: 2026-10-16
 status: draft
 version: 1.0.0
 updated: ""
-approved_by: ""
-approved_at: ""
+approved_by: bortolirafael
+approved_at: 2026-10-16
 
 # system
 scope: project
