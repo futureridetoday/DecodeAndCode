@@ -13,7 +13,7 @@ repositório — a suíte escreveria nele. A partir do pacote o `__file__` não 
 
 Cada skill tem um `dc.py` próprio (`skills/<skill>/dc.py`), atalho que executa o compartilhado: é o
 comando que a liberação de permissão casa, e o caminho dele não leva `..` que o modelo normalize.
-`TestAtalhoDeSkill` confere que os três são idênticos e que repassam argumentos, stdin e código de
+`TestAtalhoDeSkill` confere que os quatro são idênticos e que repassam argumentos, stdin e código de
 saída — sempre a partir do pacote.
 
 `scaffold.concorrentes` tem a classe própria `TestConcorrentes`, chamada direto com `plan_root`
@@ -48,6 +48,7 @@ SUBCOMANDOS = (
     "aprovar",
     "proxima-unidade",
     "lint-unidade",
+    "lint-plano",
     "projetar-backlog",
     "handoff",
     "verificar",
@@ -217,7 +218,7 @@ class TestAtalhoDeSkill(_ProjetoCase):
             cwd or self.projeto, *args, entrada=entrada, script=self._atalhos_do_pacote()[skill]
         )
 
-    def test_os_tres_da_fonte_sao_identicos(self):
+    def test_os_quatro_da_fonte_sao_identicos(self):
         fonte = lib.repo_root() / ".claude" / "skills"
         textos = {nome: (fonte / nome / "dc.py").read_bytes() for nome in lib.SKILLS}
         self.assertEqual(len(set(textos.values())), 1, "os atalhos divergem entre as skills")
@@ -433,6 +434,55 @@ class TestLintUnidade(_ProjetoCase):
 
     def test_arquivo_inexistente_e_codigo_2_sem_traceback(self):
         r = self.dc("lint-unidade", str(self.projeto / "nao-existe.md"))
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("nao-existe.md", r.stderr)
+        self.assertSemTraceback(r)
+
+
+class TestLintPlano(_ProjetoCase):
+    """`lint-plano` — o que o `intake` roda sobre o esboço que grava no `_inbox` (`P-06`)."""
+
+    def _plano(self, nome: str = "plano-bom", **kwargs) -> Path:
+        """Plano sintético em `docs/plan/<core>/` — `pequeno` e sem backlog é o formato que aprova."""
+        kwargs.setdefault("plan_size", "pequeno")
+        kwargs.setdefault("com_backlog", False)
+        return fixtures.plano(self.raiz_planos, nome=nome, com_diretorio=False, **kwargs)
+
+    def test_plano_bem_formado_e_codigo_0_com_o_arquivo_na_linha(self):
+        plano = self._plano()
+        r = self.dc("lint-plano", str(plano))
+        self.assertEqual((r.returncode, r.stdout), (0, f"{plano}: ok\n"), r.stderr)
+
+    def test_plano_com_problema_e_codigo_1_com_o_arquivo_em_cada_linha(self):
+        # `grande` sem `## Independência`: o lint recusa, e o motivo vem na saída.
+        ruim = self._plano("plano-ruim", plan_size="grande", previstas=1, com_backlog=True)
+        r = self.dc("lint-plano", str(ruim))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        linhas = r.stdout.splitlines()
+        self.assertTrue(linhas, r.stdout)
+        for linha in linhas:
+            self.assertTrue(linha.startswith(f"{ruim}: "), linha)
+        self.assertTrue(any("Independência" in linha for linha in linhas), linhas)
+
+    def test_varios_arquivos_reportam_cada_um_e_o_pior_decide_o_codigo(self):
+        boa = self._plano("plano-bom")
+        ruim = self._plano("plano-ruim", plan_size="médio", tarefas=False, com_backlog=True)
+        r = self.dc("lint-plano", str(boa), str(ruim))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        linhas = r.stdout.splitlines()
+        self.assertIn(f"{boa}: ok", linhas)
+        self.assertTrue(any(linha.startswith(f"{ruim}: ") and linha != f"{ruim}: ok" for linha in linhas), linhas)
+
+    def test_esboco_no_inbox_sem_numero_e_lido_pelo_mesmo_comando(self):
+        """O destino real do `intake`: `_inbox/<nome>.md`, que ainda não tem número."""
+        self.bootstrap()
+        esboco = self.plano_no_inbox()  # `grande` sem `## Independência` nem backlog
+        r = self.dc("lint-plano", str(esboco.relative_to(self.projeto)))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn(f"{esboco.relative_to(self.projeto)}: ", r.stdout)
+
+    def test_arquivo_inexistente_e_codigo_2_sem_traceback(self):
+        r = self.dc("lint-plano", str(self.projeto / "nao-existe.md"))
         self.assertEqual(r.returncode, 2)
         self.assertIn("nao-existe.md", r.stderr)
         self.assertSemTraceback(r)

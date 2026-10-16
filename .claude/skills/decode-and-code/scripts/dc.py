@@ -109,6 +109,21 @@ def _lint_unidade(args: argparse.Namespace) -> int:
     return status
 
 
+def _lint_plano(args: argparse.Namespace) -> int:
+    import lint_plano
+
+    status = OK
+    for arquivo in args.arquivos:
+        problemas = lint_plano.lint(Path(arquivo))
+        for problema in problemas:
+            print(f"{arquivo}: {problema}")
+        if problemas:
+            status = REPROVADO
+        else:
+            print(f"{arquivo}: ok")
+    return status
+
+
 def _projetar_backlog(args: argparse.Namespace) -> int:
     import backlog
 
@@ -217,6 +232,9 @@ def _parser() -> argparse.ArgumentParser:
 
     p = comando("lint-unidade", "gate de entrada de unidade(s) (1 se alguma tem problema)", _lint_unidade)
     p.add_argument("arquivos", nargs="+", metavar="arquivo")
+
+    p = comando("lint-plano", "formato de plano(s) pelo porte que declaram (1 se algum tem problema)", _lint_plano)
+    p.add_argument("arquivos", nargs="+", metavar="plano")
 
     p = comando("projetar-backlog", "projeta o backlog do plano e a situação em _planos.md", _projetar_backlog)
     p.add_argument("alvo", help="diretório ou arquivo do plano")

@@ -89,8 +89,8 @@ unidades executadas por Sonnet em sessões novas, sem uma pergunta sobre conteú
 
 Nenhuma além dos próprios `SKILL.md`. A norma é lida do projeto que instala, em
 `<plan_root>/system/modelo-dev-units.md` — `plan_root` vem do `config.json` da pasta compartilhada
-(`docs/plan` é só o default). `dc.py bootstrap` cria a estrutura num projeto recém-instalado. O
-`ai-builder` pré-carrega o `review-plan` e, por ele, acha os scripts fora do checkout.
+(`docs/plan` é só o default). `dc.py bootstrap` cria a estrutura num projeto recém-instalado. A
+skill [`intake`](intake.md), que antecede o ciclo, tem documento próprio.
 
 ## Limites
 

@@ -286,21 +286,22 @@ silêncio.
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
-si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as três skills
-(`lib.SKILLS`: `review-plan`, `derive`, `implement`) e a pasta compartilhada `decode-and-code/` —
+si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as quatro skills
+(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` — e o `intake`) e a pasta
+compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
 cada projeto, não), **dois hooks** — `PreToolUse` (o guardrail) e `InstructionsLoaded` (o log do
 controle de três estados) — com `hooks/hooks.json` gerado a partir do bloco `hooks` do
 `settings.json` reduzido a esses dois eventos (`_EVENTOS_DO_PACOTE`, a única lista; os scripts de
 `hooks/` saem dos comandos deles) — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para
-`${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —, e o agente
-`ai-builder` (`agents/ai-builder.md`), copiado no mesmo formato.
+`${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —; o pacote não tem
+`agents/`.
 
 **Não viaja:** `.claude/rules/*` (guideline é instância — parágrafo acima), `.claude/guardrails.json`
 (idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
-deste repositório, não componente do método), os **quatro scripts de desenvolvimento**
-(`empacotar.py`, `reconciliar.py`, `lint_skill.py` e `lint_agente.py` — nenhum runtime nem hook os
+deste repositório, não componente do método), os **três scripts de desenvolvimento**
+(`empacotar.py`, `reconciliar.py` e `lint_skill.py` — nenhum runtime nem hook os
 importa, só os testes), os **dois hooks de anúncio restantes**
 (`PostCompact` e `SubagentStart` — não chegam ao modelo, e não há registro de projeto que instala o
 plugin usando o controle de três estados; continuam no `settings.json` daqui) e `docs/` (plano e
@@ -865,7 +866,9 @@ saber qual é o próximo livre no módulo.
 
 ## Camada de execução
 
-Operado por **três skills, uma por modo**, que delegam todo determinismo a scripts.
+Operado por **três skills, uma por modo**, que delegam todo determinismo a scripts. Uma quarta, o
+`intake`, antecede o ciclo e não é modo: decide o menor mecanismo antes de o plano nascer e grava o
+esboço em `_inbox/`.
 
 ### Skills `review-plan`, `derive` e `implement` — substituem `plan-dev-units`
 
@@ -916,7 +919,7 @@ foi zelo, foi medir em vez de reler.
 | Regra | Por quê |
 |---|---|
 | **Rode a suíte inteira você mesmo, e some as duas linhas `Ran`** | O relatório dá a contagem do diretório da skill como se fosse o total. Escorregou em **treze de treze** entregas |
-| **Rode os lints contra os artefatos reais**, nunca só contra fixture | `lint_unidade` em cada unidade, `lint_plano` no plano, `lint_agente` em cada agente, o lint do artefato que a unidade entregou |
+| **Rode os lints contra os artefatos reais**, nunca só contra fixture | `lint_unidade` em cada unidade, `lint_plano` no plano, o lint do artefato que a unidade entregou |
 | **Pegue uma afirmação do relatório e meça-a por outro caminho** | *"Nenhum chamador muda de saída"* caiu comparando saídas contra o commit anterior; *"nenhum teste executa git"* caiu com um shim no `PATH`; *"os quatro casos falham no texto antigo"* confirmou-se aplicando as asserções ao texto de `HEAD` |
 | **Verde não é evidência** quando o teste e o critério saíram da mesma cabeça no mesmo momento | Se um teste existe para gatear uma decisão, **desligue o código e rode o teste**: ele tem de falhar. Duas vezes o caso continuava verde sem o que devia provar |
 | **Mock prova o parsing da saída, nunca o comando montado** | Ver *Comando externo* em `.claude/rules/scripts.md`, e o caso que a originou |
@@ -962,8 +965,8 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 ### Modelos
 
 **Sonnet é o padrão no `implement`.** O `review` e o `derive` pedem julgamento denso — Opus. **Cada
-skill declara o seu no `model:` do frontmatter:** `review-plan` e `derive` em `opus`, `implement` em
-`sonnet`.
+skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive` e `intake` em `opus`,
+`implement` em `sonnet`.
 
 Medido em 2026-10-15 (Claude Code 2.1.300, pacote carregado com `claude -p --plugin-dir`): sem
 fork, `model:` troca o modelo do turno — `/decode-and-code:review-plan` numa sessão Sonnet rodou em
@@ -978,39 +981,20 @@ campos de skill.
 **O gate de agent abriu, e o ciclo voltou a viver em skills.** A skill existe desde **2026-07-26**,
 e o requisito de troca automática por modo — não mais conveniência — foi declarado pelo humano em
 **2026-08-22**, a partir de uso diário; o agent deixou de estar fora de escopo. Com a troca
-declarada na skill, o ciclo não precisa de agent, e o único é o `ai-builder` (intake, antes de o
-plano nascer). O que um agent é aqui: **papel e processo, nunca a norma** — ele **declara** a skill
-em `skills:`, que é a ponte para a norma chegar sem ser reescrita dentro do próprio prompt; quem
-decide `model:` e `tools:` é quem o instancia.
+declarada na skill, o ciclo não precisa de agent, e o intake (antes de o plano nascer) também não:
+a skill `intake` isola o contexto com `context: fork`, como um agent faria (`D-03` do plano
+`apply-plugin-review`), e o método fica sem agent. O que um agent é aqui:
+**papel e processo, nunca a norma** — ele **declara** a skill em `skills:`, que é a ponte para a
+norma chegar sem ser reescrita dentro do próprio prompt; quem decide `model:` e `tools:` é quem o
+instancia.
 
 > **A ponte foi medida em 2026-10-15, e é assimétrica.** Num agent de plugin, `skills:` com nome
-> curto **resolve**: o debug log mostra `Preloaded skill`, e o `ai-builder` recebe o corpo do
-> `review-plan` com o caminho absoluto dos scripts — é assim que acha `numeracao.py`,
-> `nomenclatura.py` e `lint_plano.py` fora do checkout. Numa skill de plugin, o inverso: `agent:` com
-> nome curto de agent do próprio plugin **não resolve** — cai no padrão, sem aviso —, e só o nome com
-> namespace (`plugin:agent`) resolve; por isso as skills com `context: fork` declaram
-> `general-purpose`. O lint alcança só que a skill nomeada **existe em disco**; que ela carregue é
-> comportamento de sessão, e só a medição o mostra.
-
-### Agente — o que o lint exige
-
-`lint_agente.lint(caminho)` dá a esta camada o mesmo oráculo estrutural que `lint_unidade`,
-`lint_plano` e `lint_skill` já dão às suas: verifica o artefato, nunca a qualidade do julgamento
-que ele carrega. Quatro invariantes, todos sobre o frontmatter:
-
-| Invariante | Exige |
-|---|---|
-| Campos nativos | Só `name`, `description`, `tools`, `model`, `skills`, `color` — nenhum bookkeeping de projeto (`type`, `project`, `author`...) entra no frontmatter de agente |
-| `model` | Presente, e dentro de `sonnet`, `opus`, `haiku`, `inherit`. **Três foram medidos em uso** nos 34 agentes instalados em 2026-08-26 — `inherit` em 14, `sonnet` em 8, `opus` em 4; `haiku` está na lista por completar a família de modelos, **não por medição**: nenhum agente do acervo o declara |
-| `skills` | Cada nome citado existe como diretório em `.claude/skills/` — não que ele carregue (parágrafo acima) |
-| `tools` | Presente e não vazio — ausente concede o conjunto inteiro por default, o oposto de escopo declarado |
-
-**`tools:` não tem granularidade de caminho**, e o lint não finge o contrário: é lista de nomes de
-ferramenta, sem qualquer expressão de path. Escopo de escrita é declaração no corpo do agente,
-nunca imposição pelo frontmatter. Impor de verdade é guardrail do projeto que instala, não deste
-mecanismo.
-
-Referência viva: `.claude/agents/ai-builder.md` — a instância que este lint aprova.
+> curto **resolve**: o debug log mostra `Preloaded skill`, e o agent recebe o corpo da skill com o
+> caminho absoluto dos scripts, fora do checkout. Numa skill de plugin, o inverso: `agent:` com nome
+> curto de agent do próprio plugin **não resolve** — cai no padrão, sem aviso —, e só o nome com
+> namespace (`plugin:agent`) resolve; por isso as skills com `context: fork` (`implement` e
+> `intake`) declaram `general-purpose`. Que a skill carregue, ou o nome resolva, é comportamento de
+> sessão, e só a medição o mostra.
 
 ---
 

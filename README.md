@@ -76,7 +76,7 @@ claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/do
 
 ## Como usar o Decode And Code
 
-Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, agent, hooks)
+Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, hooks)
 no formato *o que é · problema · como funciona · como usar · exemplos · fundamentação · base de
 conhecimento · limites*, e um **guia de uso** por camada normativa — quando e como criar um
 princípio, uma guideline, um guardrail.
@@ -86,7 +86,7 @@ princípio, uma guideline, um guardrail.
 | skill | `review-plan` | Revisa um plano antes da aprovação — os seis checks, parte por script, parte por julgamento (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
+| skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
 | hooks | 4 hooks, 2 no pacote | Guardrail do projeto (`PreToolUse`) e log de norma/guidelines (`InstructionsLoaded`) viajam no plugin; `PostCompact` e `SubagentStart` ficam só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
 | guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
@@ -189,8 +189,8 @@ Formato completo, os cinco gatilhos de escrita e a regra de despejo:
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — as três skills e a pasta compartilhada `decode-and-code/` (scripts), os
-hooks, o agente e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
+`.claude/` é a **fonte** — as quatro skills e a pasta compartilhada `decode-and-code/` (scripts), os
+hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
 **gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
 que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,
 publicado como asset de um GitHub Release e referenciado por `source: archive` (`url` + `sha256`) no

@@ -443,6 +443,35 @@ por agente `general-purpose` em Sonnet, revisado pelo orquestrador, sem rodada d
 Hoje o agent declara `skills: [review-plan]`. O item 3 da solução vale só para a persona, e só tira o
 `skills:` se outra via der o caminho dos scripts.
 
+**Implementado em 2026-10-16**, no commit
+[`dde5960`](https://github.com/futureridetoday/DecodeAndCode/commit/dde5960), com `D-03` = B.
+Validado pelo humano sobre o diff e o CI verde no branch, antes do PR. Implementado por um agente
+`general-purpose` em Sonnet e revisado pelo orquestrador, sem rodada de correção.
+
+**O que mudou.**
+- O agent `ai-builder`, de 14 KB, virou a skill `intake`, de 4,0 KB, com descrição de 520
+  caracteres. A skill roda em fork, com Opus. O `allowed-tools` dela libera só o atalho `dc.py` e,
+  no `WebFetch`, só o domínio `code.claude.com`. Saíram a persona e o `skills:`.
+- O `dc.py` ganhou o subcomando `lint-plano`. O `proximo-plano` não entrou: pela norma, o esboço no
+  `_inbox` não leva número, e o `ai-builder` contradizia isso ao numerar.
+- `lib.MODOS` lista os três modos citados pelo handoff. `lib.SKILLS` é `MODOS + intake` e define o
+  que vai no pacote.
+- Saíram o agent, `lint_agente.py`, `test_agentes.py` e a seção *Agente* da norma. O pacote não leva
+  mais `agents/`, e o método fica com quatro skills e nenhum agent.
+
+| Evidência | Resultado |
+|---|---|
+| Sessão real num clone deste repositório, com um pedido concreto (CI sem `timeout-minutes`) | Gravou `_inbox/ci-job-timeout.md`, que passa no `lint-plano`. `validar-nome` e `lint-plano` rodaram pelo `dc.py` sem recusa. As 6 recusas foram tentativas do modelo de medir por fora (`gh run list` e a suíte com `time`); como estavam fora do `allowed-tools`, viraram pedido de aprovação, que é o comportamento certo |
+| Sessão real num projeto vazio, com um pedido vago | Parou e listou o que faltava, sem gravar nada |
+| Suíte em 3.10 | 604 OK: os 613 de antes, menos os 18 do `test_agentes` e mais 9 novos |
+| Pacote | Quatro skills e nenhum `agents/`; `verificar` e `validar --strict` vazios |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38826418265) | Verde |
+
+**O que ficou de fora.**
+- O `intake` cita os gates de `.claude/rules/principles.md`, e esse arquivo não viaja no pacote. Ver
+  `L-07`.
+- Na prova, a resposta final do `intake` saiu em inglês.
+
 #### P-07 · O contexto injetado é pesado e carrega histórico
 
 | | |
@@ -851,7 +880,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 |---|---|---|---|
 | D-01 | **Adotar a topologia de três skills** (Fase 3) — **aprovada em 2026-10-15** | Sim | É decisão arquitetural (`CLAUDE.md`, *Autonomia*). A premissa que justificou agents e commands — "a troca não é declarável na skill" (norma, *Modelos*) — não confere com a documentação atual |
 | D-02 | **Quais hooks de anúncio continuam no pacote** — **aprovada em 2026-10-15: só `InstructionsLoaded`** | Nenhum, salvo evidência de uso do controle de três estados num projeto consumidor; com evidência, só `InstructionsLoaded` | Os três rodam em todo projeto que instala e nenhum chega ao modelo |
-| D-03 | **O `ai-builder` continua como agent** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
+| D-03 | **O `ai-builder` continua como agent** — **decidida em 2026-10-15: vira a skill `intake` (ver `P-06`)** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 | D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
 
@@ -865,6 +894,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork. **Fechada em 2026-10-15**: o CI roda a suíte em 3.10 a cada push (ver `P-08`) |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
 | L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
+| L-07 | **Os princípios não viajam no pacote** | O `intake` aplica os gates A e B de `.claude/rules/principles.md`, que é regra do projeto e não vai no plugin. Num projeto que instalou só o plugin, os gates não estão onde a skill os cita. O `ai-builder` já tinha o mesmo problema. É preciso decidir se os princípios viajam com a norma em `reference/` ou se o `intake` os resume |
 
 ## Backlog
 

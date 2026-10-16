@@ -46,8 +46,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 ## Arquitetura
 
 - `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
-  determinismo) e `config.json`. Ao lado dela, as três skills, uma por modo: `review-plan/`,
-  `derive/` e `implement/`
+  determinismo) e `config.json`. Ao lado dela, as quatro skills: uma por modo — `review-plan/`,
+  `derive/` e `implement/` — e `intake/`, que antecede o ciclo. O método não tem agent
 - `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
   [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
   subtração antes de adição, evidência acima de opinião, fluxo de decodificação e protocolo de
@@ -71,6 +71,7 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 | `review-plan` | skill | Revisa um plano antes da aprovação, com os seis checks da norma — parte por script, parte por julgamento. Opus |
 | `derive` | skill | Deriva a estrutura e as unidades de um plano aprovado. Só por invocação explícita. Opus |
 | `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
+| `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
 
 ## Restrições
 

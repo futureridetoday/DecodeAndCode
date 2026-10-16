@@ -49,9 +49,12 @@ ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 # vocabulário é da norma.
 PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
-# As skills do método, uma por modo — a fonte única de quem viaja no pacote (`empacotar`) e de quem o
-# prompt de orquestração cita (`handoff`). Acrescentar skill é editar só aqui.
-SKILLS = ("review-plan", "derive", "implement")
+# Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
+MODOS = ("review-plan", "derive", "implement")
+
+# As skills que viajam no pacote (`empacotar`): os três modos mais o `intake`, que antecede o ciclo e
+# não é modo da norma. Acrescentar skill é editar só aqui.
+SKILLS = MODOS + ("intake",)
 
 _config_cache: dict | None = None
 

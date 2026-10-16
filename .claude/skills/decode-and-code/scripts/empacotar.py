@@ -13,8 +13,8 @@ o par que fecha o invariante nos dois sentidos.
 
 **Pacote enxuto — `P-05` e `D-02` do plano `apply-plugin-review`.** O que só serve a quem
 desenvolve o método fica no repositório: `empacotar.py`, `reconciliar.py` (compara contra o
-AmFlow), `lint_skill.py` e `lint_agente.py` não são importados por script de runtime nem por hook,
-só pelos testes (`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam dois,
+AmFlow) e `lint_skill.py` não são importados por script de runtime nem por hook, só pelos testes
+(`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam dois,
 `PreToolUse` e `InstructionsLoaded` (`_EVENTOS_DO_PACOTE`): `PostCompact`, `SubagentStart` e
 `InstructionsLoaded` são hooks de anúncio, e nenhum chega ao modelo; não há registro de projeto que
 instala o plugin usando o controle de três estados da norma (*Validar a ativação*). O
@@ -46,7 +46,7 @@ _ANCORA_PLUGIN = "${CLAUDE_PLUGIN_ROOT}/hooks"
 _EVENTOS_DO_PACOTE = ("PreToolUse", "InstructionsLoaded")
 
 # Só da pasta compartilhada, e só no pacote: nenhum runtime nem hook os importa (`P-05`).
-_SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py", "lint_agente.py")
+_SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py")
 
 _SCRIPT_DO_HOOK_RE = re.compile(re.escape(_ANCORA_PROJETO) + r"/([\w.-]+\.py)")
 
@@ -59,7 +59,7 @@ _MANIFESTO_RELATIVO = Path(".claude-plugin") / "plugin.json"
 # As skills que viajam são as de `lib.SKILLS` — lista explícita, nunca `.claude/skills/*`: uma skill
 # de desenvolvimento deste repositório não pode vazar para quem instala (`P-03`, `D-01`). A pasta
 # compartilhada não é skill (não tem `SKILL.md`): guarda `scripts/`, `config.json` e, no pacote,
-# `reference/`, e as três a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
+# `reference/`, e as quatro a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
 _PASTA_COMPARTILHADA = "decode-and-code"
 
 
@@ -78,7 +78,6 @@ def _fontes() -> dict[str, Path]:
         **{f"skill {nome}": skills / nome for nome in lib.SKILLS},
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
-        "agents": raiz / ".claude" / "agents",
         "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
     }
 
@@ -114,7 +113,6 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))
     escritos.append(_escrever_hooks_json(hooks, destino))
-    escritos.extend(_copiar_agentes(fontes["agents"], destino))
     return escritos
 
 
@@ -128,7 +126,7 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
 def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
     """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
 
-    Serve às três skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
+    Serve às quatro skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
     o `SKILL.md` — que só as skills têm — passa por `_declarar_o_plugin`. Só a pasta compartilhada
     perde também `_SCRIPTS_DE_DESENVOLVIMENTO` (`P-05`): é onde `scripts/` mora, e uma skill não
     deveria perder em silêncio um arquivo que por acaso tenha um desses nomes.
@@ -204,22 +202,6 @@ def _copiar_hooks(origem: Path, destino: Path, scripts: list[str]) -> list[Path]
     for nome in scripts:
         copia = alvo / nome
         shutil.copy2(origem / nome, copia)
-        escritos.append(copia)
-    return escritos
-
-
-def _copiar_agentes(origem: Path, destino: Path) -> list[Path]:
-    """Copia `.claude/agents/*.md` para `agents/` do pacote — mesmo formato de `_copiar_hooks` (`D-27`).
-
-    Hoje só o `ai-builder`: o ciclo `review` / `derive` / `implement` vive nas três skills, não em
-    agents (`P-03`, `D-01`).
-    """
-    alvo = destino / "agents"
-    alvo.mkdir(parents=True, exist_ok=True)
-    escritos = []
-    for agente in sorted(origem.glob("*.md")):
-        copia = alvo / agente.name
-        shutil.copy2(agente, copia)
         escritos.append(copia)
     return escritos
 
@@ -375,7 +357,7 @@ def empacotar_zip(staging: Path | str | None = None) -> tuple[Path, str]:
     layout aqui, não noutro lugar.
 
     **`date_time` fixo, não o mtime do disco.** `_declarar_o_plugin` reescreve alguns arquivos a
-    cada `construir` (os três `SKILL.md`, a norma copiada), o que muda o mtime a cada
+    cada `construir` (os `SKILL.md`, a norma copiada), o que muda o mtime a cada
     build mesmo com o conteúdo idêntico. Um zip que varia byte a byte entre duas construções da
     mesma fonte não serve de artefato reprodutível — por isso todo `ZipInfo` nasce com a mesma
     data, e só o conteúdo decide o hash.

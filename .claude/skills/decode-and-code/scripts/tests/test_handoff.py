@@ -92,10 +92,18 @@ class TestEsqueleto(_BaseComPlanoSintetico):
     def test_onde_ler_aponta_para_as_tres_skills_e_nao_para_o_skill_md_unico(self):
         texto = self._gerar().read_text(encoding="utf-8")
 
-        for nome in lib.SKILLS:
+        for nome in lib.MODOS:
             with self.subTest(skill=nome):
                 self.assertIn(f"{nome}/SKILL.md", texto)
         self.assertNotIn("decode-and-code/SKILL.md", texto)
+
+    def test_cita_so_os_tres_modos_e_nao_o_intake(self):
+        """`P-06` — o `intake` viaja no pacote, mas não é modo da norma, e o handoff cita por modo."""
+        texto = self._gerar().read_text(encoding="utf-8")
+
+        self.assertIn("intake", lib.SKILLS)
+        self.assertNotIn("intake", lib.MODOS)
+        self.assertNotIn("intake", texto)
 
     def test_cita_a_norma_em_vez_de_copiar_a_disciplina(self):
         texto = self._gerar().read_text(encoding="utf-8")
@@ -167,7 +175,7 @@ class TestContraOPlanoReal(unittest.TestCase):
 
             texto = handoff.gerar(copia, **_JULGAMENTO).read_text(encoding="utf-8")
 
-        for nome in lib.SKILLS:
+        for nome in lib.MODOS:
             with self.subTest(skill=nome):
                 caminho = f".claude/skills/{nome}/SKILL.md"
                 self.assertIn(f"`{caminho}`", texto)
