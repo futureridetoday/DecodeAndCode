@@ -730,6 +730,26 @@ que `nomenclatura.py` é citado. Isso protege texto, não comportamento, e quebr
 
 **Como verificar.** A suíte continua verde depois da reescrita de `P-07`, sem tocar teste.
 
+**Implementado em 2026-10-16**, no commit
+[`5e4d441`](https://github.com/futureridetoday/DecodeAndCode/commit/5e4d441). Aprovado pelo humano
+sobre a validação local, antes do PR. Implementado por um agente `general-purpose` em Sonnet e
+revisado pelo orquestrador, que cortou um teste que repetia `test_frontmatter_de_topologia`.
+
+**O que mudou.**
+- Saíram `test_modo_review.py`, `test_modo_derive.py` e `test_modo_implement.py`: 22 testes, a
+  maioria conferindo palavra no markdown.
+- O que eles tinham de contrato já estava coberto: lint e atalho `dc.py` em `test_skill_base`,
+  `allowed-tools` por igualdade em `TOPOLOGIA`, e subcomandos citados em `test_dc`.
+- Fica um teste de contrato, em `test_handoff.py`: o `SKILL.md` do `derive` cita cada título que o
+  `dc.py` lê do stdin (`_SECOES_HANDOFF`).
+
+| Evidência | Resultado |
+|---|---|
+| Suíte | 583 OK (eram 604: saíram 22, entrou 1) |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38838480053) | Verde |
+
+**O que ficou de fora.** A prova do *Como verificar* só acontece na reescrita do `P-07`.
+
 #### P-12 · Possível sinal falso no `post_compact.py`
 
 | | |
