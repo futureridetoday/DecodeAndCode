@@ -18,12 +18,14 @@ Contrato de saída: texto simples em stdout, um item por linha. Código `0` quan
 `1` quando há problema ou reprovação (lint com problemas, nome inválido, `verificar` fora de
 `verified`, `concorrencia` com conflito ou não verificável); `2` para erro de uso ou exceção, com a
 mensagem em stderr e sem traceback. Fora de `verified`, `verificar` acrescenta o motivo: a saída do
-teste, cortada nas últimas 80 linhas (e dizendo que cortou).
+teste, cortada nas últimas 80 linhas (e dizendo que cortou). `normas` sai `0` mesmo com linhas não
+resolvidas: elas vão na saída, sob `Não resolvidas:`, para o executor relatar.
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -192,6 +194,28 @@ def _verificar(args: argparse.Namespace) -> int:
     return REPROVADO
 
 
+def _normas(args: argparse.Namespace) -> int:
+    import normas
+
+    resolvidas, nao_resolvidas = normas.resolver(Path(args.unidade))
+    if not (resolvidas or nao_resolvidas):
+        print("nenhuma norma citada")
+    vistas: set[tuple[Path, str]] = set()
+    for entrada in resolvidas:
+        # Linhas diferentes da tabela podem citar a mesma seção; o conteúdo vem uma vez só.
+        if (entrada.arquivo, entrada.secao) in vistas:
+            continue
+        vistas.add((entrada.arquivo, entrada.secao))
+        print(f"### {os.path.relpath(entrada.arquivo)} § {entrada.secao}")
+        print(entrada.trecho)
+        print()
+    if nao_resolvidas:
+        print("Não resolvidas:")
+        for item in nao_resolvidas:
+            print(f"{item.linha} — {item.motivo}")
+    return OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -250,6 +274,14 @@ def _parser() -> argparse.ArgumentParser:
     p = comando("verificar", "roda o teste da unidade e projeta state/verified_at (1 se não verified, mostrando a saída do teste)", _verificar)
     p.add_argument("unidade")
     p.add_argument("--dry-run", action="store_true", help="roda o teste sem gravar estado")
+
+    p = comando(
+        "normas",
+        "imprime o conteúdo das seções que a unidade cita em 'Normas aplicáveis' e lista, sob "
+        "'Não resolvidas:', as linhas que não resolveu (0 sempre que a unidade tem a seção)",
+        _normas,
+    )
+    p.add_argument("unidade")
 
     return parser
 

@@ -38,7 +38,8 @@ código `0` ok, `1` problema ou reprovação, `2` erro de uso ou exceção:
   `_inbox`. No porte grande, decide a fatia de cada unidade, escreve, linta, projeta o backlog e
   grava o `_handoff.md`. **Só por invocação explícita** (`disable-model-invocation: true`): cria
   estrutura e move arquivos, e o Skill tool recusa que o modelo o dispare.
-- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint-unidade`), lê a unidade inteira,
+- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint-unidade`), lê a unidade inteira e as seções
+  que ela cita (`normas`),
   escreve o teste declarado e o código que o faz passar tocando só os arquivos que ela lista, gate
   de saída (`verificar`), projeta o backlog (`projetar-backlog`). **Não commita.**
 
