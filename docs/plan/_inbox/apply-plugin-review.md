@@ -503,6 +503,39 @@ próprio modo.
 - Teste de pacote: nenhum `L-[0-9]` nem `unidade 0` dentro de `skills/`, `agents/` ou `commands/`.
 - Teste de tamanho: `SKILL.md` ≤ 6 KB.
 
+**Etapa 1 implementada em 2026-10-16**, no commit
+[`9761781`](https://github.com/futureridetoday/DecodeAndCode/commit/9761781). Aprovada pelo humano
+sobre a validação local, antes do PR.
+
+- Depois do `P-03`, os quatro `SKILL.md` já estavam abaixo de 6 KB (o maior, `derive`, tem 5,7 KB),
+  e o `skills:` dos agents saiu com eles. Faltavam as referências.
+- Saíram do corpo cinco referências que não resolvem no pacote: "decisão 15" (três vezes, em
+  `derive` e `implement`), "decisão 26" (`review-plan`) e "unidade 0001-14" (`derive`). O porquê está
+  na norma, na seção que cada trecho já cita.
+- Teste de pacote novo: o corpo dos `SKILL.md` empacotados não tem `L-NN`, decisão numerada nem
+  unidade. O exemplo de uso na `description` fica. O teste falha no `dev` anterior, nas três skills.
+- Suíte com 573 OK; `verificar` e `validar --strict` vazios;
+  [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38911348318) verde.
+
+**Etapa 2 — medição, em 2026-10-16.** Sessões reais com `--plugin-dir`, num projeto vazio com
+`bootstrap`. Norma materializada com 1.222 linhas e 67.795 B.
+
+| Skill | Rodadas | Norma no contexto |
+|---|---|---|
+| `review-plan` (Opus), sobre `huddle-command.md` | 3 | 100%, 61%, 100% — cerca de 32 mil tokens, mais de um terço do pico de contexto (81 a 92 mil) |
+| `derive` (Opus), plano pequeno escrito à mão | 1 | 45%, por offset e `sed -n` nas seções que cada passo nomeia |
+| `implement` (Sonnet), unidade sintética e unidade que cita 3 seções | 4 | 0% a 1,9% — no máximo um `grep` de 23 linhas |
+
+- Um `Read` sem offset devolveu 929 linhas, sem aviso, e o modelo completou com `offset=930`: abrir
+  a norma inteira custa duas leituras.
+- A estimativa de 18 mil tokens acima estava baixa: a norma inteira custa cerca de 32 mil.
+- O peso está no `review-plan`. O `derive`, que nomeia uma seção por passo, já lê por partes.
+- Não medido: plano maior que médio no `review-plan`, e mais de uma rodada do `derive`.
+- O `implement` quase não abre as normas que a unidade cita. Não é contexto, é fidelidade — ver
+  `L-08`.
+
+A etapa 3 segue a `D-07`.
+
 #### P-08 · A verificação do repositório tem lacunas
 
 | | |
@@ -946,7 +979,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`). `D-06` foi aprovada em 2026-10-16 (opção C, ver `L-07`).
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`). `D-06` foi aprovada em 2026-10-16 (opção C, ver `L-07`). `D-07` foi aprovada em 2026-10-16 (opção A, ver `P-07`).
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
@@ -956,6 +989,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 | D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
 | D-06 | **Como os gates A e B chegam ao projeto que instala** (`L-07`) — **aprovada em 2026-10-16** | Opção C: o fluxo de decodificação e os gates passam de `principles.md` para a norma, que já viaja; `principles.md` fica com os três princípios e o protocolo de exceção | O `intake` empacotado citava uma regra que não viaja. A e B, alternativas descartadas, levavam `principles.md` inteiro no pacote (mecanismo novo, e instância do projeto viajando) ou duplicavam os gates no `SKILL.md` |
+| D-07 | **Como reduzir o que o `review-plan` lê da norma** (`P-07`) — **aprovada em 2026-10-16** | Opção A: cada check nomeia a seção da norma que usa, e a skill lê só essas. Critério: no máximo 50% da norma em 3 rodadas; se não bastar, dividir a norma por tema (B) | A medição do `P-07` pôs o custo no `review-plan` (cerca de 32 mil tokens por rodada). Enxugar a norma (C) foi descartado por risco de perder conteúdo |
 
 ## Lacunas
 
@@ -968,6 +1002,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
 | L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
 | L-07 | **Os princípios não viajam no pacote** | O `intake` aplica os gates A e B de `.claude/rules/principles.md`, que é regra do projeto e não vai no plugin. Num projeto que instalou só o plugin, os gates não estão onde a skill os cita. O `ai-builder` já tinha o mesmo problema. É preciso decidir se os princípios viajam com a norma em `reference/` ou se o `intake` os resume **Fechada em 2026-10-16** pela `D-06`: o fluxo e os gates moram na norma, seção *Antes do plano — fluxo de decodificação*, e o `intake` cita a norma. Neste repositório os gates deixam de carregar em toda sessão |
+| L-08 | **O `implement` quase não abre as normas que a unidade cita** | Medido no `P-07`: numa unidade que citava 3 seções, o subagent abriu 0 em uma rodada e um trecho de 23 linhas nas outras duas. Passou porque a unidade era simples. A skill manda abrir as normas citadas, e a instrução não basta |
 
 ## Backlog
 
