@@ -52,6 +52,7 @@ SUBCOMANDOS = (
     "projetar-backlog",
     "handoff",
     "verificar",
+    "normas",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -661,6 +662,104 @@ class TestVerificar(_ProjetoCase):
         r = self.dc("verificar", str(unidade))
         self.assertEqual(r.returncode, 2)
         self.assertIn("test", r.stderr)
+        self.assertSemTraceback(r)
+
+
+class TestNormas(_ProjetoCase):
+    """`normas` — o que o `implement` roda para receber o conteúdo das normas que a unidade cita (`L-08`)."""
+
+    def _documento(self) -> Path:
+        alvo = self.projeto / "docs" / "norma.md"
+        alvo.parent.mkdir(parents=True)
+        alvo.write_text(
+            "# Norma\n\n## Alfa\n\nTexto de alfa.\n\n### Alfa filho\n\nTexto do filho.\n\n"
+            "## Beta\n\nTexto de beta.\n",
+            encoding="utf-8",
+        )
+        return alvo
+
+    def _unidade(self, *linhas: str) -> Path:
+        self._documento()
+        texto = fixtures.UNIDADE_VALIDA.replace("| Exemplo | em algum lugar |", "\n".join(linhas))
+        alvo = self.projeto / "docs" / "plan" / "01-unidade.md"
+        alvo.parent.mkdir(parents=True)
+        alvo.write_text(texto, encoding="utf-8")
+        return alvo
+
+    def test_imprime_cabecalho_relativo_ao_projeto_e_o_trecho(self):
+        unidade = self._unidade("| Alfa | [`norma.md`](../norma.md), seção *Alfa* |")
+        r = self.dc("normas", str(unidade))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(
+            r.stdout.splitlines(),
+            ["### docs/norma.md § Alfa", "## Alfa", "", "Texto de alfa.", "", "### Alfa filho", "",
+             "Texto do filho.", ""],
+        )
+
+    def test_nao_resolvidas_vao_no_fim_com_a_linha_e_o_motivo_e_o_codigo_continua_0(self):
+        unidade = self._unidade(
+            "| Alfa | [`norma.md`](../norma.md), seção *Alfa* |",
+            "| Simplicidade | `.claude/CLAUDE.md`, invariante 2 |",
+            "| Omega | [`norma.md`](../norma.md), seção *Omega* |",
+        )
+        r = self.dc("normas", str(unidade))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        linhas = r.stdout.splitlines()
+        i = linhas.index("Não resolvidas:")
+        self.assertEqual(
+            linhas[i + 1 :],
+            [
+                "| Simplicidade | `.claude/CLAUDE.md`, invariante 2 | — sem link para o arquivo",
+                "| Omega | [`norma.md`](../norma.md), seção *Omega* | — seção não encontrada: Omega",
+            ],
+        )
+        self.assertEqual(linhas[0], "### docs/norma.md § Alfa")
+
+    def test_todas_resolvidas_nao_imprime_o_rotulo_de_nao_resolvidas(self):
+        unidade = self._unidade("| Beta | [`norma.md`](../norma.md), seção de mesmo nome |")
+        r = self.dc("normas", str(unidade))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("Não resolvidas", r.stdout)
+        self.assertIn("Texto de beta.", r.stdout)
+
+    def test_secao_citada_por_duas_linhas_sai_uma_vez(self):
+        unidade = self._unidade(
+            "| Alfa | [`norma.md`](../norma.md), seção *Alfa* |",
+            "| Outra razão | mesma seção |",
+        )
+        r = self.dc("normas", str(unidade))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.count("### docs/norma.md § Alfa"), 1)
+        self.assertEqual(r.stdout.count("Texto de alfa."), 1)
+
+    def test_tabela_sem_linhas_diz_que_nao_ha_norma_citada(self):
+        unidade = self._unidade()
+        r = self.dc("normas", str(unidade))
+        self.assertEqual((r.returncode, r.stdout), (0, "nenhuma norma citada\n"), r.stderr)
+
+    def test_o_atalho_da_skill_implement_repassa_o_comando(self):
+        unidade = self._unidade("| Alfa | [`norma.md`](../norma.md), seção *Alfa* |")
+        r = _executar(
+            self.projeto, "normas", str(unidade), script=_PACOTE / "skills" / "implement" / "dc.py"
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("### docs/norma.md § Alfa", r.stdout)
+
+    def test_unidade_inexistente_e_codigo_2_sem_traceback(self):
+        r = self.dc("normas", str(self.projeto / "nao-existe.md"))
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("nao-existe.md", r.stderr)
+        self.assertSemTraceback(r)
+
+    def test_unidade_sem_a_secao_e_codigo_2_sem_traceback(self):
+        unidade = fixtures.unidade(self.projeto)
+        unidade.write_text(
+            unidade.read_text(encoding="utf-8").replace("## Normas aplicáveis", "## Outra coisa"),
+            encoding="utf-8",
+        )
+        r = self.dc("normas", str(unidade))
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("Normas aplicáveis", r.stderr)
         self.assertSemTraceback(r)
 
 
