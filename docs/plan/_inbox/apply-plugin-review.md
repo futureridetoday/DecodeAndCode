@@ -946,7 +946,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 
 ## Decisões
 
-`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`).
+`D-01` e `D-04` foram aprovadas em 2026-10-15, com os ajustes registrados no `P-03` e no `P-08`. `D-05` foi aprovada em 2026-10-15 (opção C, ver `P-14`). `D-02` foi aprovada em 2026-10-15 (opção B, ver `P-05`). `D-03` foi decidida em 2026-10-15: o `ai-builder` vira skill de intake (ver `P-06`). `D-06` foi aprovada em 2026-10-16 (opção C, ver `L-07`).
 
 | # | Decisão pendente | Recomendação | Por que importa |
 |---|---|---|---|
@@ -955,6 +955,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | D-03 | **O `ai-builder` continua como agent** — **decidida em 2026-10-15: vira a skill `intake` (ver `P-06`)** | Enxugar primeiro e medir; só depois decidir entre agent e skill | Agent isola contexto, e o intake pesquisa muitos arquivos — o isolamento pode pagar o custo. Sem medição, a escolha é opinião |
 | D-04 | **O harness local aceita ≥ 3.10** — **aprovada em 2026-10-15** | Sim, com o CI fixando 3.10 como prova de compatibilidade | Muda a guideline `scripts.md`, que hoje exige 3.10 no harness |
 | D-05 | **Como restringir o `allowed-tools` das skills** (`P-14`) — **aprovada em 2026-10-15** | Opção C: ponto de entrada único `dc.py` | Muda como as skills compõem os scripts; A não restringe nada, e B troca segurança por um pedido de aprovação a cada chamada |
+| D-06 | **Como os gates A e B chegam ao projeto que instala** (`L-07`) — **aprovada em 2026-10-16** | Opção C: o fluxo de decodificação e os gates passam de `principles.md` para a norma, que já viaja; `principles.md` fica com os três princípios e o protocolo de exceção | O `intake` empacotado citava uma regra que não viaja. A e B, alternativas descartadas, levavam `principles.md` inteiro no pacote (mecanismo novo, e instância do projeto viajando) ou duplicavam os gates no `SKILL.md` |
 
 ## Lacunas
 
@@ -966,7 +967,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork. **Fechada em 2026-10-15**: o CI roda a suíte em 3.10 a cada push (ver `P-08`) |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |
 | L-06 | **Não houve sessão real com o plugin instalado** | Todos os achados sobre comportamento instalado vêm de leitura de código, da documentação e do pacote construído — nenhum de uma sessão com `--plugin-dir`. As unidades `02` e `13` fecham isso. **Parcialmente fechada em 2026-10-15**: `implement`, `review-plan` e `derive` rodaram em sessão real com `--plugin-dir` (ver `P-03`); o `bootstrap` e um `review` ponta a ponta continuam com a unidade `02` |
-| L-07 | **Os princípios não viajam no pacote** | O `intake` aplica os gates A e B de `.claude/rules/principles.md`, que é regra do projeto e não vai no plugin. Num projeto que instalou só o plugin, os gates não estão onde a skill os cita. O `ai-builder` já tinha o mesmo problema. É preciso decidir se os princípios viajam com a norma em `reference/` ou se o `intake` os resume |
+| L-07 | **Os princípios não viajam no pacote** | O `intake` aplica os gates A e B de `.claude/rules/principles.md`, que é regra do projeto e não vai no plugin. Num projeto que instalou só o plugin, os gates não estão onde a skill os cita. O `ai-builder` já tinha o mesmo problema. É preciso decidir se os princípios viajam com a norma em `reference/` ou se o `intake` os resume **Fechada em 2026-10-16** pela `D-06`: o fluxo e os gates moram na norma, seção *Antes do plano — fluxo de decodificação*, e o `intake` cita a norma. Neste repositório os gates deixam de carregar em toda sessão |
 
 ## Backlog
 

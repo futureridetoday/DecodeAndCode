@@ -50,8 +50,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
   `derive/` e `implement/` — e `intake/`, que antecede o ciclo. O método não tem agent
 - `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
   [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
-  subtração antes de adição, evidência acima de opinião, fluxo de decodificação e protocolo de
-  exceção
+  subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
+  decodificação e os gates A e B moram na norma, que viaja com o plugin
 - `docs/plan/` — planos e unidades, destino de todo trabalho novo
 - `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
 - `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
