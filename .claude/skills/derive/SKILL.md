@@ -21,8 +21,6 @@ argument-hint: "<plano>"
 arguments: [target]
 
 model: opus
-effort: ""
-context: ""
 shell: bash
 
 # ── amflow — rastreabilidade ───────────────────────────────────────────────────

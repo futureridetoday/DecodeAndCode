@@ -2,7 +2,7 @@
 """Lint de completude estrutural de um SKILL.md — unidade 0002-10.
 
 Dá oráculo determinístico às cinco unidades da Fase 2 (11-15), que entregam
-markdown, não código. Verifica só o que é objetivamente verificável: os 21
+markdown, não código. Verifica só o que é objetivamente verificável: os 19
 campos de frontmatter que as 11 skills do repositório já compartilham
 (decisão D-02, não a tabela de recurso publicável do CLAUDE.md, que inclui
 author_id e price), presença de modo pedido no corpo, e existência/permissão
@@ -29,15 +29,14 @@ import regioes
 
 # O conjunto presente em 11 de 11 skills do repositório (decisão D-02) — não
 # a tabela de recurso publicável do CLAUDE.md, que inclui author_id e price
-# e não é o que as skills reais declaram.
+# e não é o que as skills reais declaram. `effort` e `context` ficaram de fora (`P-10`): vazios não
+# dizem nada, e `context: fork` é escolha da skill que o declara, não campo obrigatório.
 CAMPOS_FRONTMATTER = (
     "name",
     "description",
     "disable-model-invocation",
     "user-invocable",
     "allowed-tools",
-    "effort",
-    "context",
     "shell",
     "type",
     "project",
@@ -115,7 +114,7 @@ def _corpo(texto: str) -> str:
 
 
 def _checar_frontmatter(skill: Path) -> list[str]:
-    """Exige a presença dos 21 campos — vazio ou não é o passo 2, não este."""
+    """Exige a presença dos 19 campos — vazio ou não é o passo 2, não este."""
     try:
         valores = {chave: regioes.ler_campo(skill, chave) for chave in CAMPOS_FRONTMATTER}
     except ValueError:
