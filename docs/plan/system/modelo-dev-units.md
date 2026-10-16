@@ -302,9 +302,9 @@ controle de três estados) — com `hooks/hooks.json` gerado a partir do bloco `
 (idem: a regra é do projeto que instala, só o mecanismo do hook viaja), `scripts/tests/` (prova
 deste repositório, não componente do método), os **três scripts de desenvolvimento**
 (`empacotar.py`, `reconciliar.py` e `lint_skill.py` — nenhum runtime nem hook os
-importa, só os testes), os **dois hooks de anúncio restantes**
-(`PostCompact` e `SubagentStart` — não chegam ao modelo, e não há registro de projeto que instala o
-plugin usando o controle de três estados; continuam no `settings.json` daqui) e `docs/` (plano e
+importa, só os testes), o **hook de anúncio restante**
+(`SubagentStart` — não chega ao modelo, e não há registro de projeto que instala o
+plugin usando o controle de três estados; continua no `settings.json` daqui) e `docs/` (plano e
 norma são registro daqui — inclusive `docs/plan/system/huddle.md`, que carrega a conversa deste
 projeto e é instância pura —; a norma é citada, nunca copiada para dentro da skill).
 `empacotar.verificar(destino)` audita a árvore já

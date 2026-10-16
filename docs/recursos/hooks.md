@@ -1,29 +1,28 @@
 # hooks
 
-Versão 1.0.0 · hooks (4)
+Versão 1.0.0 · hooks (3)
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
-> A norma de descrição de recurso do AmFlow não cobre `hook` — este documento descreve os quatro
+> A norma de descrição de recurso do AmFlow não cobre `hook` — este documento descreve os três
 > a partir dos próprios arquivos, para completar o inventário. Não há nada para o usuário invocar
 > aqui: os hooks rodam sozinhos, no harness, **sem custo de contexto do modelo**.
 
 ## O que é
 
-Quatro pontos de entrada em `.claude/hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
+Três pontos de entrada em `.claude/hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
 skill sem decidir nada por conta própria:
 
 | Hook | Evento | O que faz |
 |---|---|---|
 | `pre_tool_use` | `PreToolUse` | Aplica o guardrail do projeto que instala — lê `.claude/guardrails.json` e pode **negar** uma chamada de ferramenta, com a regra e a mensagem no motivo |
-| `instructions_loaded` | `InstructionsLoaded` | Registra, num log por sessão fora do repositório, qual instrução carregou e o `load_reason`; guarda o estado das rules com `paths:` |
-| `post_compact` | `PostCompact` | Depois de uma compactação, nomeia por stderr as rules com `paths:` que estavam ativas e não voltaram |
+| `instructions_loaded` | `InstructionsLoaded` | Registra, num log por sessão fora do repositório, qual instrução carregou e o `load_reason` |
 | `subagent_start` | `SubagentStart` | Anuncia por stderr, no transcript do próprio subagente, o `agent_type` e o `agent_id` que iniciaram |
 
 ## Problema que resolve
 
 Duas coisas que o método precisa e que o modelo não vê sozinho: **a norma e as guidelines ativas
-carregaram mesmo?** (e continuaram depois de compactar?), e **uma chamada de ferramenta violou um
+carregaram mesmo?**, e **uma chamada de ferramenta violou um
 guardrail do projeto?**. Os hooks tornam isso observável e, no caso do guardrail, exigível — sem
 gastar contexto, porque o Claude Code descarta o `systemMessage` desses eventos e o canal real é
 log e stderr.
@@ -39,17 +38,17 @@ devolve `None` e nada é escrito.
 
 ## O que vai no pacote
 
-Dos quatro, **viajam dois**: `pre_tool_use` (o guardrail) e `instructions_loaded` (o log do controle
-de três estados da norma, seção *Validar a ativação*). `post_compact` e `subagent_start` ficam **só
+Dos três, **viajam dois**: `pre_tool_use` (o guardrail) e `instructions_loaded` (o log do controle
+de três estados da norma, seção *Validar a ativação*). `subagent_start` fica **só
 neste repositório**, no `settings.json` daqui (`D-02` e `P-05` do plano `apply-plugin-review`):
-anunciam por stderr, nada chega ao modelo, e não há registro de projeto que instala o plugin usando
-o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser os quatro
-os liga no próprio `settings.json`.
+anuncia por stderr, nada chega ao modelo, e não há registro de projeto que instala o plugin usando
+o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser o terceiro
+o liga no próprio `settings.json`.
 
 ## Como usar
 
 Não se usa diretamente. Uma vez o plugin instalado e habilitado, os dois que viajam disparam
-sozinhos (neste repositório, os quatro). O que o usuário faz com a saída deles:
+sozinhos (neste repositório, os três). O que o usuário faz com a saída deles:
 
 - **Ler o log de ativação** — `"$TMPDIR"decode-and-code-activation-<session_id>.log` — para
   conferir que a norma e as guidelines certas carregaram. `activation_notice.relatorio(<log>)`
@@ -70,11 +69,11 @@ subagente; combinado com uma sonda comportamental (pedir ao subagente conteúdo 
 
 ## Fundamentação
 
-Unidade `0001-05` do plano `0001` (os três hooks de anúncio) e `0001-04` (o `pre_tool_use`). O
+Unidade `0001-05` do plano `0001` (os hooks de anúncio) e `0001-04` (o `pre_tool_use`). O
 canal de cada evento — log, stderr, silêncio — foi medido contra `code.claude.com/docs/en/hooks`
-em 2026-08-24: `InstructionsLoaded` e `PostCompact` descartam `systemMessage`, então o uso é
-"audit logging, compliance tracking, or observability"; `SubagentStart` e `PostCompact` só exibem
-stderr, sem afetar criação de subagente nem resultado da compactação.
+em 2026-08-24: `InstructionsLoaded` descarta `systemMessage`, então o uso é
+"audit logging, compliance tracking, or observability"; `SubagentStart` só exibe
+stderr, sem afetar a criação do subagente.
 
 ## Base de conhecimento
 
@@ -86,7 +85,7 @@ regras de guardrail vêm de `.claude/guardrails.json` do projeto que instala.
 - **Não são invocáveis.** Rodam por evento, nunca por pedido.
 - **`pre_tool_use` sem `guardrails.json` não faz nada, e não diz nada.** Sai com 0, sem stdout nem
   stderr; as regras são do projeto que instala. Com o arquivo presente e ilegível, avisa por stderr.
-- **Anúncio, não injeção.** `instructions_loaded`/`post_compact`/`subagent_start` observam o que o
+- **Anúncio, não injeção.** `instructions_loaded`/`subagent_start` observam o que o
   harness carregou; não colocam nada no contexto do modelo — skill nunca aparece no log de
   ativação, só memória e rules.
 - **Falha em silêncio.** Payload fora do esperado devolve `None` e nada é escrito — por

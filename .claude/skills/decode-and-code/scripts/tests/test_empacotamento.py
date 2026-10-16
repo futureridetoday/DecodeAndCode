@@ -6,7 +6,7 @@ Duas naturezas, e as duas são necessárias (`L-31`).
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
 de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as quatro skills, a
 pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os três scripts de
-desenvolvimento (`P-05`), quatro hooks e um `settings.json` com os quatro eventos e a âncora
+desenvolvimento (`P-05`), três hooks e um `settings.json` com os três eventos e a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
 
 **Fonte real**, em `TestPacoteRealEstaLimpo`, para a **instância**: constrói deste repositório e
@@ -29,9 +29,9 @@ pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacot
 declara.
 
 O `P-05` enxuga o pacote: os scripts de desenvolvimento (`empacotar`, `reconciliar` e `lint_skill`;
-o lint de agent saiu com o agent, no `P-06`) e os hooks `PostCompact` e `SubagentStart` ficam só
-neste repositório (`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o
-do **checkout**, porque o do pacote deixou de existir.
+o lint de agent saiu com o agent, no `P-06`) e o hook `SubagentStart` ficam só neste repositório
+(`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o do **checkout**,
+porque o do pacote deixou de existir.
 """
 
 from __future__ import annotations
@@ -56,11 +56,10 @@ import lint_skill
 
 NOMES_DAS_SKILLS = lib.SKILLS
 
-# Os quatro hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
+# Os três hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
 _HOOKS_DA_FONTE = {
     "PreToolUse": "pre_tool_use.py",
     "InstructionsLoaded": "instructions_loaded.py",
-    "PostCompact": "post_compact.py",
     "SubagentStart": "subagent_start.py",
 }
 _EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded"}
@@ -299,7 +298,7 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
 
         eventos_settings = set(json.loads((self.raiz / ".claude" / "settings.json").read_text())["hooks"])
-        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
+        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os três")
 
         conteudo = (self.destino / "hooks" / "hooks.json").read_text(encoding="utf-8")
         eventos_gerados = set(json.loads(conteudo)["hooks"])
@@ -500,7 +499,7 @@ class TestPacoteEnxuto(unittest.TestCase):
     """`P-05` e `D-02` — o que o pacote **real** não leva, e a prova de que nada faz falta.
 
     O sintético (`TestConstruir`) prova o mecanismo; só o repositório real diz que os três
-    scripts de desenvolvimento e os dois hooks de anúncio podem sair (`L-31`).
+    scripts de desenvolvimento e o hook de anúncio `SubagentStart` podem sair (`L-31`).
     """
 
     def test_pacote_real_sem_os_tres_scripts_de_desenvolvimento(self):
@@ -521,7 +520,7 @@ class TestPacoteEnxuto(unittest.TestCase):
             empacotar.construir(destino)
 
             fonte = json.loads((lib.repo_root() / ".claude" / "settings.json").read_text(encoding="utf-8"))
-            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
+            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os três")
 
             hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
             self.assertEqual(set(hooks_json), _EVENTOS_QUE_VIAJAM)
