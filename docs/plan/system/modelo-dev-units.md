@@ -557,6 +557,30 @@ começar uma unidade nova sem quebrar o ciclo.
 
 ---
 
+## Antes do plano — fluxo de decodificação
+
+Todo trabalho novo passa por três estágios antes de virar plano, cada um com pergunta obrigatória
+e saída esperada. É o que o `intake` executa, e o esboço que chega ao `_inbox` responde aos três:
+
+| Estágio | Perguntas obrigatórias | Saída esperada |
+|---|---|---|
+| **Clarificar** | Problema + métrica + beneficiário em 1 frase | Frase clara e mensurável |
+| **Evitar** | Posso resolver sem código — config, processo, doc ou reuso? | Lista de alternativas |
+| **Reduzir** | Qual é a menor versão que resolve 80% agora? | Escopo mínimo viável |
+
+Dois gates, que barram avanço — não confundir com os gates de entrada e saída da *Camada de
+execução*:
+
+| Gate | Critério |
+|---|---|
+| **A — necessidade real** | Há impacto mensurável **agora**? |
+| **B — mínimo viável** | Há como reduzir linhas, arquivos ou dependências? |
+
+> **Gate é critério, não posição no tempo.** A e B são as duas perguntas que barram avanço; não são
+> "antes de escrever" e "antes de entregar".
+
+---
+
 ## Formato do plano
 
 ### Alvo — declarado no frontmatter

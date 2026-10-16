@@ -1,6 +1,6 @@
 ---
 name: principles
-description: Os três princípios inegociáveis do decode-and-code — código é custo, subtração antes de adição, evidência acima de opinião — e o fluxo de decodificação que os aplica a uma decisão concreta. Carrega sempre, em toda sessão.
+description: Os três princípios inegociáveis do decode-and-code — código é custo, subtração antes de adição, evidência acima de opinião — e o protocolo de exceção. Carrega sempre, em toda sessão.
 ---
 
 # Princípios
@@ -39,23 +39,10 @@ estética.
 
 ## Fluxo de decodificação
 
-Três estágios, cada um com pergunta obrigatória e saída esperada:
-
-| Estágio | Perguntas obrigatórias | Saída esperada |
-|---|---|---|
-| **Clarificar** | Problema + métrica + beneficiário em 1 frase | Frase clara e mensurável |
-| **Evitar** | Posso resolver sem código — config, processo, doc ou reuso? | Lista de alternativas |
-| **Reduzir** | Qual é a menor versão que resolve 80% agora? | Escopo mínimo viável |
-
-Dois gates, que barram avanço:
-
-| Gate | Critério |
-|---|---|
-| **A — necessidade real** | Há impacto mensurável **agora**? |
-| **B — mínimo viável** | Há como reduzir linhas, arquivos ou dependências? |
-
-> **Gate é critério, não posição no tempo.** A e B são as duas perguntas que barram avanço; não são
-> "antes de escrever" e "antes de entregar".
+Os três estágios (Clarificar, Evitar, Reduzir) e os gates A e B que aplicam estes princípios a uma
+decisão concreta estão na norma, seção *Antes do plano — fluxo de decodificação*
+([`modelo-dev-units.md`](../../docs/plan/system/modelo-dev-units.md)): são mecanismo do método e
+viajam com o plugin.
 
 ## Protocolo de exceção
 

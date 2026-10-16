@@ -32,7 +32,7 @@ instrução, hook, skill ou command, agent —, parando no primeiro degrau que r
 tipo pedido. Entrega o recurso ou a recomendação.
 
 Para **plano, feature ou problema**: lê os arquivos relacionados e aplica Clarificar → Evitar →
-Reduzir e os gates A e B de `principles.md`. Faltando informação, para numa única rodada e lista o
+Reduzir e os gates A e B da norma (*Antes do plano — fluxo de decodificação*). Faltando informação, para numa única rodada e lista o
 que falta. Com os gates respondidos, grava o esboço em `<plan_root>/_inbox/<nome>.md`, valida o nome
 (`validar-nome`) e roda `lint-plano` pelo `dc.py`, e recomenda `review-plan <caminho>`. O nome do
 esboço não leva número: ele vem na aprovação (norma, seção *Nomenclatura*).
@@ -62,7 +62,7 @@ resolve agora, registra o que cortou no esboço e só então grava.
 
 ## Fundamentação
 
-A escada de menor intervenção e o Fluxo de decodificação operam o mesmo princípio de
+A escada de menor intervenção e o fluxo de decodificação da norma operam o mesmo princípio de
 [`.claude/rules/principles.md`](../../.claude/rules/principles.md): *código é custo*, *subtração
 antes de adição* (`remover > reduzir > reaproveitar > criar`). A skill o aplica duas vezes — a qual
 mecanismo construir, e a que tamanho de plano propor.

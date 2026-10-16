@@ -124,10 +124,11 @@ O `CLAUDE.md` é a camada de **processo**; `<core>/system/` cobre o **domínio**
 
 **Princípio ou guideline? O teste.** *Uma equipe competente pode rejeitar isto e ainda estar
 fazendo trabalho bom?* Se **não**, é princípio — os deste repositório (*código é custo*, *subtração
-antes de adição*, *evidência acima de opinião*, mais o fluxo de decodificação e o protocolo de
-exceção) estão em [`principles.md`](.claude/rules/principles.md), com a proveniência em
+antes de adição*, *evidência acima de opinião*, mais o protocolo de exceção) estão em
+[`principles.md`](.claude/rules/principles.md), com a proveniência em
 [`03-principles-rule.md`](docs/plan/model/0001-decode-and-code-foundation/03-principles-rule.md). Se
-**sim**, é guideline. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
+**sim**, é guideline. O fluxo de decodificação que os aplica é mecanismo do método e mora na
+norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
 `paths:` e carrega por escopo.
 
 **Guideline ou skill?** Skill é **invocada** — alguém pede, e ela responde *como fazer X*. Guideline
