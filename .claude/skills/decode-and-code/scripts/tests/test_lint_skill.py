@@ -31,8 +31,6 @@ user-invocable: true
 
 allowed-tools: "Read"
 
-effort: low
-context: ""
 shell: bash
 
 type: skill

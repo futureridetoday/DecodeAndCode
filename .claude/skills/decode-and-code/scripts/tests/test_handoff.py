@@ -17,6 +17,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import dc
 import fixtures
 import handoff
 import lib
@@ -198,6 +199,16 @@ class TestContraOPlanoReal(unittest.TestCase):
             self.assertIn(f"| Unidades derivadas | {len(unidades)} |", texto)
             self.assertIn(f"| Verificadas | {verificadas} |", texto)
             self.assertIn(f"| Próximo número livre | {numeracao.proxima_unidade(copia)} |", texto)
+
+
+class TestContratoComOSkillDoDerive(unittest.TestCase):
+    """O `derive` manda o `handoff` ler três seções do stdin; o `dc.py` as lê pelos títulos de `_SECOES_HANDOFF`."""
+
+    def test_skill_do_derive_cita_cada_titulo_que_o_dc_le(self):
+        corpo = (lib.repo_root() / ".claude" / "skills" / "derive" / "SKILL.md").read_text(encoding="utf-8")
+        for titulo in dc._SECOES_HANDOFF:
+            with self.subTest(titulo=titulo):
+                self.assertIn(f"`{titulo}`", corpo)
 
 
 if __name__ == "__main__":

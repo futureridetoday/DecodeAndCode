@@ -32,6 +32,10 @@ O `P-05` enxuga o pacote: os scripts de desenvolvimento (`empacotar`, `reconcili
 o lint de agent saiu com o agent, no `P-06`) e o hook `SubagentStart` ficam só neste repositório
 (`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o do **checkout**,
 porque o do pacote deixou de existir.
+
+O `P-10` tira do `SKILL.md` empacotado todo campo de frontmatter fora da documentação oficial
+(`empacotar._so_campos_oficiais`): o mecanismo, em `TestSoCamposOficiais`, com texto sintético; a
+instância, em `TestPacoteRealEstaLimpo`, contra as quatro skills reais.
 """
 
 from __future__ import annotations
@@ -77,9 +81,11 @@ def _montar_fonte(raiz: Path) -> None:
     skills = raiz / ".claude" / "skills"
     for nome in NOMES_DAS_SKILLS:
         (skills / nome).mkdir(parents=True, exist_ok=True)
-        # `project:` com o nome do repositório de origem: é o que o build precisa reescrever.
+        # Um campo oficial e o bloco de rastreabilidade com o nome do repositório de origem: o build
+        # precisa manter o primeiro e tirar o segundo (`P-10`).
         (skills / nome / "SKILL.md").write_text(
-            f"---\nproject: {raiz.name}\n---\n# {nome} sintético\n", encoding="utf-8"
+            f"---\n# ── nativos ──\nname: {nome}\n\n# ── amflow ──\nproject: {raiz.name}\n---\n# {nome} sintético\n",
+            encoding="utf-8",
         )
 
     skill = skills / "decode-and-code"
@@ -135,6 +141,17 @@ def _montar_fonte(raiz: Path) -> None:
     docs = raiz / "docs" / "plan" / "system"
     docs.mkdir(parents=True, exist_ok=True)
     (docs / "modelo-dev-units.md").write_text("# norma — mecanismo sintético\n", encoding="utf-8")
+
+
+def _chaves_de_topo(skill_md: str) -> set[str]:
+    """As chaves de topo do frontmatter de `skill_md` — oráculo próprio, não o de `empacotar`.
+
+    Uma linha a cada vez, só as que começam em coluna zero com `chave:`; o que está indentado é
+    continuação de um bloco, e o corpo depois do segundo `---` não entra.
+    """
+    linhas = skill_md.splitlines()
+    fim = linhas.index("---", 1)
+    return {m.group(1) for linha in linhas[1:fim] if (m := re.match(r"([\w-]+):", linha))}
 
 
 def _escrever_pacote_minimo(raiz: Path, comando: str) -> None:
@@ -204,14 +221,14 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertTrue((compartilhada / "scripts" / "lib.py").is_file())
         self.assertTrue((compartilhada / "config.json").is_file())
 
-    def test_skills_com_project_reescrito_para_o_plugin(self):
-        """`project:` declara o plugin, nunca o repositório que o produziu."""
+    def test_skills_perdem_o_bloco_de_rastreabilidade_e_o_nome_do_repositorio(self):
+        """`P-10` — o `SKILL.md` empacotado fica com o campo oficial e sem o que a fonte guarda para si."""
         empacotar.construir(self.destino)
         for nome in NOMES_DAS_SKILLS:
             with self.subTest(skill=nome):
                 texto = (self.destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
-                self.assertIn("project: exemplo", texto)
-                self.assertNotIn(f"project: {self.raiz.name}", texto)
+                self.assertEqual(texto, f"---\n# ── nativos ──\nname: {nome}\n---\n# {nome} sintético\n")
+                self.assertNotIn(self.raiz.name, texto)
 
     def test_so_as_quatro_skills_e_a_compartilhada_viajam(self):
         """Uma skill de desenvolvimento do repositório não vaza: a lista é explícita, não `skills/*`."""
@@ -347,6 +364,72 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertFalse(self.destino.exists())
 
 
+class TestSoCamposOficiais(unittest.TestCase):
+    """`P-10` — o mecanismo que tira do frontmatter o que a documentação oficial não lista."""
+
+    ENTRADA = (
+        "---\n"
+        "# ── claude code — campos nativos ──\n"
+        "name: exemplo\n"
+        "description: |\n"
+        "  Primeiro parágrafo.\n"
+        "\n"
+        "  type: dentro do bloco, indentado — não é campo.\n"
+        "\n"
+        "model: opus\n"
+        "allowed-tools: \"Read\"\n"
+        "\n"
+        "# ── amflow — rastreabilidade ──\n"
+        "type: skill\n"
+        "project: Exemplo\n"
+        "tags: [a, b]\n"
+        "dependencies:\n"
+        "  - um\n"
+        "  - dois\n"
+        "scope:\n"
+        "- tres\n"
+        "\n"
+        "hub_id: \"\"\n"
+        "source: local\n"
+        "---\n"
+        "\n"
+        "# Corpo\n"
+        "\n"
+        "type: no corpo, intocado\n"
+        "---\n"
+    )
+
+    def test_tira_chave_continuacao_e_comentario_do_bloco_nao_oficial(self):
+        esperado = (
+            "---\n"
+            "# ── claude code — campos nativos ──\n"
+            "name: exemplo\n"
+            "description: |\n"
+            "  Primeiro parágrafo.\n"
+            "\n"
+            "  type: dentro do bloco, indentado — não é campo.\n"
+            "\n"
+            "model: opus\n"
+            "allowed-tools: \"Read\"\n"
+            "---\n"
+            "\n"
+            "# Corpo\n"
+            "\n"
+            "type: no corpo, intocado\n"
+            "---\n"
+        )
+        self.assertEqual(empacotar._so_campos_oficiais(self.ENTRADA), esperado)
+
+    def test_campo_oficial_vazio_ou_nao_continua_onde_esta(self):
+        entrada = '---\nname: a\neffort: ""\ncontext: fork\n---\ncorpo\n'
+        self.assertEqual(empacotar._so_campos_oficiais(entrada), entrada)
+
+    def test_sem_frontmatter_fechado_volta_igual(self):
+        for texto in ("", "# só corpo\n", "---\ntype: skill\n", "type: skill\n---\n"):
+            with self.subTest(texto=texto):
+                self.assertEqual(empacotar._so_campos_oficiais(texto), texto)
+
+
 class TestVerificar(_BaseComFonteSintetica):
     def test_arvore_recem_construida_esta_limpa(self):
         empacotar.construir(self.destino)
@@ -388,24 +471,43 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             empacotar.construir(destino)
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_as_quatro_skills_empacotadas_declaram_o_plugin_e_nao_o_repositorio(self):
+    def test_as_quatro_skills_empacotadas_so_declaram_campos_oficiais(self):
+        """`P-10` — as chaves do `SKILL.md` empacotado são as da fonte que a lista oficial reconhece.
+
+        Nem a mais (o bloco de rastreabilidade não viaja), nem a menos (nada oficial se perde). O corpo
+        depois do frontmatter sai idêntico.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
             for nome in NOMES_DAS_SKILLS:
                 with self.subTest(skill=nome):
-                    texto = (destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
-                    self.assertIn("project: decode-and-code", texto)
-                    self.assertNotIn(f"project: {lib.repo_root().name}", texto)
+                    fonte = (lib.repo_root() / ".claude" / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+                    empacotado = (destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+
+                    chaves_da_fonte = _chaves_de_topo(fonte)
+                    chaves = _chaves_de_topo(empacotado)
+                    self.assertLessEqual(chaves, empacotar._CAMPOS_OFICIAIS)
+                    self.assertEqual(chaves, chaves_da_fonte & empacotar._CAMPOS_OFICIAIS)
+                    # Contra um erro na própria lista: o que toda skill do método declara tem de sobreviver.
+                    self.assertLessEqual({"name", "description", "model", "allowed-tools"}, chaves)
+                    self.assertEqual(lint_skill._corpo(empacotado), lint_skill._corpo(fonte))
 
     def test_skills_empacotadas_citam_scripts_que_existem_no_pacote(self):
         """`P-01` e `P-03` — lint sobre a cópia empacotada, não sobre a fonte.
 
         `lint_skill` resolve `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/` contra o diretório da
         skill que recebe, então aqui prova que cada script citado viaja na pasta irmã, que o `..`
-        resolve dentro do pacote, e que nenhum caminho fixo sobrou.
+        resolve dentro do pacote, e que nenhum caminho fixo sobrou. O que o lint pode acusar é só a
+        falta do bloco de rastreabilidade, que o pacote não leva (`P-10`): campo oficial ausente ainda
+        reprova.
         """
+        ausentes_do_pacote = {
+            f"campo obrigatório ausente no frontmatter: {campo}"
+            for campo in lint_skill.CAMPOS_FRONTMATTER
+            if campo not in empacotar._CAMPOS_OFICIAIS
+        }
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
@@ -416,7 +518,7 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
                     self.assertIn(
                         "${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/", skill.read_text(encoding="utf-8")
                     )
-                    self.assertEqual(lint_skill.lint(skill), [])
+                    self.assertEqual([p for p in lint_skill.lint(skill) if p not in ausentes_do_pacote], [])
 
     def test_pasta_compartilhada_do_pacote_real_nao_tem_skill_md(self):
         with tempfile.TemporaryDirectory() as tmp:

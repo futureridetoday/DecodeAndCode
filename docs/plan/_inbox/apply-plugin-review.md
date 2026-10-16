@@ -714,6 +714,31 @@ por agente `general-purpose` em Sonnet, revisado pelo orquestrador, com duas rod
 **Como verificar.** Teste de pacote: o frontmatter do `SKILL.md` construído só contém campos da
 tabela oficial.
 
+**Implementado em 2026-10-16**, no commit
+[`2ff6ea9`](https://github.com/futureridetoday/DecodeAndCode/commit/2ff6ea9). Aprovado pelo humano
+sobre a validação local, antes do PR. Implementado por um agente `general-purpose` em Sonnet e
+revisado pelo orquestrador, que cortou três testes e um assert além do pedido.
+
+**O que mudou.**
+- `empacotar._so_campos_oficiais` tira do `SKILL.md` empacotado todo campo de topo fora de
+  `_CAMPOS_OFICIAIS`, com as linhas de continuação e o comentário que o antecede. A lista é a da
+  documentação de skills, conferida em 2026-10-16: 20 campos, numa única constante.
+- `_declarar_o_plugin` passa a valer só para a norma. O `SKILL.md` perde o bloco inteiro,
+  `project:` incluído.
+- A fonte perdeu `effort: ""` nas quatro skills e `context: ""` em `review-plan` e `derive`. O
+  `lint_skill` deixou de exigir os dois.
+
+| Evidência | Resultado |
+|---|---|
+| Frontmatter do `review-plan` empacotado | `name description disable-model-invocation user-invocable allowed-tools argument-hint arguments model shell` |
+| Teste de pacote novo | Nas quatro skills, as chaves empacotadas são as da fonte que a lista oficial reconhece, e o corpo sai idêntico |
+| Suíte | 607 OK (eram 604) |
+| Pacote | `verificar` e `validar --strict` vazios |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38838477036) | Verde |
+
+**O que ficou de fora.** O upload de plugin pelo claude.ai continua sem medição (`L-02`), mas deixa
+de importar: o pacote só leva campos oficiais.
+
 #### P-11 · Testes que conferem texto do `SKILL.md`
 
 | | |
@@ -729,6 +754,26 @@ que `nomenclatura.py` é citado. Isso protege texto, não comportamento, e quebr
 `${CLAUDE_SKILL_DIR}/scripts/` — e pelo `lint_skill`. Apagar o resto.
 
 **Como verificar.** A suíte continua verde depois da reescrita de `P-07`, sem tocar teste.
+
+**Implementado em 2026-10-16**, no commit
+[`5e4d441`](https://github.com/futureridetoday/DecodeAndCode/commit/5e4d441). Aprovado pelo humano
+sobre a validação local, antes do PR. Implementado por um agente `general-purpose` em Sonnet e
+revisado pelo orquestrador, que cortou um teste que repetia `test_frontmatter_de_topologia`.
+
+**O que mudou.**
+- Saíram `test_modo_review.py`, `test_modo_derive.py` e `test_modo_implement.py`: 22 testes, a
+  maioria conferindo palavra no markdown.
+- O que eles tinham de contrato já estava coberto: lint e atalho `dc.py` em `test_skill_base`,
+  `allowed-tools` por igualdade em `TOPOLOGIA`, e subcomandos citados em `test_dc`.
+- Fica um teste de contrato, em `test_handoff.py`: o `SKILL.md` do `derive` cita cada título que o
+  `dc.py` lê do stdin (`_SECOES_HANDOFF`).
+
+| Evidência | Resultado |
+|---|---|
+| Suíte | 583 OK (eram 604: saíram 22, entrou 1) |
+| [CI no branch](https://github.com/futureridetoday/DecodeAndCode/actions/runs/38838480053) | Verde |
+
+**O que ficou de fora.** A prova do *Como verificar* só acontece na reescrita do `P-07`.
 
 #### P-12 · Possível sinal falso no `post_compact.py`
 
@@ -916,7 +961,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
 | # | Lacuna | Por que fica registrada |
 |---|---|---|
 | L-01 | **A resolução de `skills: [decode-and-code]` no namespace do plugin não foi medida** | A documentação não cobre plugin, e a falha é silenciosa — ver `P-13`. Medição prevista na unidade `02`. **Fechada em 2026-10-15**: o nome curto resolve (ver `P-13`) |
-| L-02 | **Não se sabe se o upload de plugin pelo claude.ai recusa campos de frontmatter fora da especificação** | A documentação afirma isso para skill avulsa (claude.ai e Skills API), não para plugin. O README oferece o upload como caminho de instalação |
+| L-02 | **Não se sabe se o upload de plugin pelo claude.ai recusa campos de frontmatter fora da especificação** | A documentação afirma isso para skill avulsa (claude.ai e Skills API), não para plugin. O README oferece o upload como caminho de instalação. **Mitigada em 2026-10-16**: o pacote só leva campos da tabela oficial (ver `P-10`); o upload continua sem medição |
 | L-03 | **O sinal do `post_compact.py` não foi medido** | Ver `P-12`. **Fechada em 2026-10-16** pela documentação, sem a medição controlada: o hook saiu (ver `P-12`) |
 | L-04 | **A suíte não rodou em 3.10 nesta revisão** | O ambiente tinha 3.11 a 3.13. Os 482 testes passam em 3.13, o que não prova compatibilidade com o Cowork. **Fechada em 2026-10-15**: o CI roda a suíte em 3.10 a cada push (ver `P-08`) |
 | L-05 | **A latência do hook foi medida num só ambiente** | 35 ms de mediana num container Linux. Em macOS ou no Cowork o número pode ser outro; a recomendação de `P-05` não depende dele, mas o custo absoluto sim |

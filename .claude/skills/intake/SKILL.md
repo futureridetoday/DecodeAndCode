@@ -20,7 +20,6 @@ allowed-tools: "Read Write Edit Glob Grep WebFetch(domain:code.claude.com) Bash(
 argument-hint: "<pedido>"
 
 model: opus
-effort: ""
 context: fork
 agent: general-purpose
 background: false

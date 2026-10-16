@@ -4,8 +4,8 @@
 Cobre o que `lint_skill.lint()` já verifica — frontmatter completo e o modo declarado no corpo — e
 o que ele não vê: a topologia de `D-01`. São quatro skills — uma por modo e o `intake`, que antecede
 o ciclo —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
-elas compartilham, sem `SKILL.md`. Comportamento de cada modo não é testado aqui — vive em
-`test_modo_*`.
+elas compartilham, sem `SKILL.md`. O texto do corpo de cada modo não é testado: palavra no markdown
+protege redação, não comportamento, e o que o corpo cita do `dc.py` é conferido por `test_dc.py`.
 
 O `intake` (`P-06`, `D-03`) é o prompt de um subagent sem histórico, e o que ele carrega é caro:
 a skill tem teto de tamanho, e a `description` também — ela entra em contexto em toda sessão.
@@ -51,19 +51,20 @@ LIMITE_DESCRIPTION_INTAKE = 600
 # a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
 # `implement` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
 # não resolve numa skill de plugin e cai, sem aviso, no padrão (medido com Claude Code 2.1.300).
+# `None` é campo ausente: `context` só existe onde há fork (`P-10`, campo vazio não se declara).
 TOPOLOGIA = {
     "review-plan": {
         "modo": "review",
         "model": "opus",
         "disable-model-invocation": "false",
-        "context": '""',
+        "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
     "derive": {
         "modo": "derive",
         "model": "opus",
         "disable-model-invocation": "true",
-        "context": '""',
+        "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
     "implement": {

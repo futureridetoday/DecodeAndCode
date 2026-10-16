@@ -21,6 +21,10 @@ instala o plugin usando o controle de três estados da norma (*Validar a ativaç
 `InstructionsLoaded` fica por ser o log desse controle, e o `SubagentStart` continua no
 `settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail.
 
+**Frontmatter do `SKILL.md` — `P-10`.** O bloco "amflow — rastreabilidade" e o que mais a fonte
+declare fora da documentação oficial de skills (`_CAMPOS_OFICIAIS`) ficam só na fonte: fora do Claude
+Code (claude.ai, Skills API), campo desconhecido é erro duro, não é ignorado.
+
 `${CLAUDE_PLUGIN_ROOT}` é o que separa pacote de cópia: `hooks/hooks.json` reescreve a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks` do `settings.json` para `${CLAUDE_PLUGIN_ROOT}/hooks`.
 """
@@ -51,6 +55,35 @@ _SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py"
 _SCRIPT_DO_HOOK_RE = re.compile(re.escape(_ANCORA_PROJETO) + r"/([\w.-]+\.py)")
 
 _PROJECT_RE = re.compile(r"(?m)^project:.*$")
+
+# Os campos de frontmatter de skill que a documentação oficial lista (`code.claude.com/docs/en/skills`,
+# conferida em 2026-10-16) — a **única** lista (`P-10`). O que a fonte declara fora dela não viaja.
+_CAMPOS_OFICIAIS = frozenset(
+    (
+        "name",
+        "description",
+        "when_to_use",
+        "argument-hint",
+        "arguments",
+        "disable-model-invocation",
+        "user-invocable",
+        "allowed-tools",
+        "disallowed-tools",
+        "model",
+        "effort",
+        "context",
+        "agent",
+        "background",
+        "hooks",
+        "paths",
+        "shell",
+        "metadata",
+        "license",
+        "compatibility",
+    )
+)
+
+_CHAVE_DE_TOPO_RE = re.compile(r"^([\w-]+):")
 
 _DESTINO_DEFAULT = "dist/decode-and-code"
 
@@ -107,9 +140,9 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
     nome_plugin = json.loads(fontes["manifesto"].read_text(encoding="utf-8"))["name"]
 
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
-    escritos.extend(_copiar_skill(fontes["compartilhada"], destino, nome_plugin))
+    escritos.extend(_copiar_skill(fontes["compartilhada"], destino))
     for nome in lib.SKILLS:
-        escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino, nome_plugin))
+        escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino))
     escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))
     escritos.append(_escrever_hooks_json(hooks, destino))
@@ -123,11 +156,11 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
     return alvo
 
 
-def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
+def _copiar_skill(origem: Path, destino: Path) -> list[Path]:
     """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
 
     Serve às quatro skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
-    o `SKILL.md` — que só as skills têm — passa por `_declarar_o_plugin`. Só a pasta compartilhada
+    o `SKILL.md` — que só as skills têm — passa por `_so_campos_oficiais`. Só a pasta compartilhada
     perde também `_SCRIPTS_DE_DESENVOLVIMENTO` (`P-05`): é onde `scripts/` mora, e uma skill não
     deveria perder em silêncio um arquivo que por acaso tenha um desses nomes.
 
@@ -142,21 +175,57 @@ def _copiar_skill(origem: Path, destino: Path, nome_plugin: str) -> list[Path]:
     if origem.name == _PASTA_COMPARTILHADA:
         ignorar.extend(_SCRIPTS_DE_DESENVOLVIMENTO)
     shutil.copytree(origem, alvo, ignore=shutil.ignore_patterns(*ignorar))
-    if (alvo / "SKILL.md").is_file():
-        _declarar_o_plugin(alvo / "SKILL.md", nome_plugin)
+    skill_md = alvo / "SKILL.md"
+    if skill_md.is_file():
+        skill_md.write_text(_so_campos_oficiais(skill_md.read_text(encoding="utf-8")), encoding="utf-8")
     return [p for p in sorted(alvo.rglob("*")) if p.is_file()]
 
 
-def _declarar_o_plugin(skill_md: Path, nome_plugin: str) -> None:
-    """`project:` do frontmatter passa a declarar o **plugin**, não o repositório que o produziu.
+def _so_campos_oficiais(texto: str) -> str:
+    """O `texto` de um `SKILL.md` sem os campos de topo do frontmatter fora de `_CAMPOS_OFICIAIS` (`P-10`).
+
+    O campo sai com as linhas de continuação (indentadas, `- item` ou em branco no meio de um bloco) e
+    com o comentário e as linhas em branco que o antecedem: o cabeçalho "amflow — rastreabilidade"
+    pertence ao primeiro campo que o segue. O corpo depois do `---` de fechamento não é tocado, e
+    texto sem frontmatter fechado volta igual.
+    """
+    linhas = texto.splitlines(keepends=True)
+    if not linhas or linhas[0].rstrip("\r\n") != "---":
+        return texto
+    fim = next((i for i in range(1, len(linhas)) if linhas[i].rstrip("\r\n") == "---"), None)
+    if fim is None:
+        return texto
+
+    saida = [linhas[0]]
+    anteriores: list[str] = []  # comentário e linha em branco, até saber de que campo são
+    manter = True
+    for linha in linhas[1:fim]:
+        chave = _CHAVE_DE_TOPO_RE.match(linha)
+        if not chave and (not linha.strip() or linha.startswith("#")):
+            anteriores.append(linha)
+            continue
+        if chave:
+            manter = chave.group(1) in _CAMPOS_OFICIAIS
+        if manter:
+            saida.extend(anteriores)
+            saida.append(linha)
+        anteriores = []
+    saida.extend(anteriores)
+    saida.extend(linhas[fim:])
+    return "".join(saida)
+
+
+def _declarar_o_plugin(arquivo: Path, nome_plugin: str) -> None:
+    """`project:` do frontmatter da norma passa a declarar o **plugin**, não o repositório que o produziu.
 
     A fonte continua declarando o repositório que a produziu, que é o correto para um artefato
     deste projeto (padrão de frontmatter, `CLAUDE.md` global). O que não pode é a cópia distribuída
     chegar em outro projeto declarando o nosso — é o defeito que o `huddle.md` teve, e a reescrita
-    aqui é a mesma classe da âncora de hook: derivado se corrige no build, fonte permanece honesta.
+    aqui é a mesma classe da âncora de hook: derivado se corrige no build, fonte permanece honesta. Os
+    `SKILL.md` não passam por aqui desde o `P-10`: perdem o bloco inteiro, `project:` incluído.
     """
-    texto = skill_md.read_text(encoding="utf-8")
-    skill_md.write_text(_PROJECT_RE.sub(f"project: {nome_plugin}", texto, count=1), encoding="utf-8")
+    texto = arquivo.read_text(encoding="utf-8")
+    arquivo.write_text(_PROJECT_RE.sub(f"project: {nome_plugin}", texto, count=1), encoding="utf-8")
 
 
 def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
@@ -168,10 +237,10 @@ def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
     copia (invariante 2): é **um** arquivo nomeado, o operativo que a `0004-03` já separou do
     registro deste projeto, não a árvore inteira de `docs/plan`.
 
-    `project:` do frontmatter passa pela mesma reescrita que os `SKILL.md` já recebem
-    (`_declarar_o_plugin`) — sem ela, a cópia distribuída declara no próprio frontmatter o nome do
-    repositório que a produziu, e `verificar` acusa: a mesma classe de vazamento da `L-31`, medida
-    nesta unidade num arquivo que ainda não existia quando aquela lacuna foi escrita.
+    `project:` do frontmatter passa por `_declarar_o_plugin` — sem essa reescrita, a cópia distribuída
+    declara no próprio frontmatter o nome do repositório que a produziu, e `verificar` acusa: a mesma
+    classe de vazamento da `L-31`, medida nesta unidade num arquivo que ainda não existia quando
+    aquela lacuna foi escrita.
     """
     alvo = destino / "skills" / "decode-and-code" / "reference" / origem.name
     alvo.parent.mkdir(parents=True, exist_ok=True)
@@ -276,9 +345,9 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     repositório de origem sempre que o diretório local se chamar como o repositório real (o caso
     comum: quem clona não costuma renomear). Não é o vazamento que o marcador persegue — esse é a
     cópia dos `SKILL.md`/norma citando o checkout que os construiu, e `_copiar_manifesto`
-    nunca passa pela reescrita que eles recebem (`_declarar_o_plugin`): o manifesto é
-    copiado verbatim porque sua função é justamente declarar essa identidade, e ela não muda com o
-    nome do diretório de quem constrói.
+    nunca passa pela reescrita que eles recebem (`_so_campos_oficiais`, `_declarar_o_plugin`): o
+    manifesto é copiado verbatim porque sua função é justamente declarar essa identidade, e ela não
+    muda com o nome do diretório de quem constrói.
     """
     destino = _resolver_destino(destino)
     marcadores = _marcadores_instancia()
@@ -356,8 +425,8 @@ def empacotar_zip(staging: Path | str | None = None) -> tuple[Path, str]:
     contra um asset real de Release é ato humano; se recusar, o conserto é trocar para o segundo
     layout aqui, não noutro lugar.
 
-    **`date_time` fixo, não o mtime do disco.** `_declarar_o_plugin` reescreve alguns arquivos a
-    cada `construir` (os `SKILL.md`, a norma copiada), o que muda o mtime a cada
+    **`date_time` fixo, não o mtime do disco.** `_so_campos_oficiais` e `_declarar_o_plugin` reescrevem
+    alguns arquivos a cada `construir` (os `SKILL.md`, a norma copiada), o que muda o mtime a cada
     build mesmo com o conteúdo idêntico. Um zip que varia byte a byte entre duas construções da
     mesma fonte não serve de artefato reprodutível — por isso todo `ZipInfo` nasce com a mesma
     data, e só o conteúdo decide o hash.

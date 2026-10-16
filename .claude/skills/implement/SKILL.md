@@ -21,7 +21,6 @@ argument-hint: "<unidade>"
 arguments: [target]
 
 model: sonnet
-effort: ""
 context: fork
 agent: general-purpose
 background: false
