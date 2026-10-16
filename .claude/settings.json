@@ -26,17 +26,6 @@
         ]
       }
     ],
-    "PostCompact": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py\""
-          }
-        ]
-      }
-    ],
     "SubagentStart": [
       {
         "matcher": "*",

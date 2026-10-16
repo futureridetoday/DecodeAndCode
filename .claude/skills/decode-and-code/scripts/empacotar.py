@@ -14,11 +14,11 @@ o par que fecha o invariante nos dois sentidos.
 **Pacote enxuto — `P-05` e `D-02` do plano `apply-plugin-review`.** O que só serve a quem
 desenvolve o método fica no repositório: `empacotar.py`, `reconciliar.py` (compara contra o
 AmFlow) e `lint_skill.py` não são importados por script de runtime nem por hook, só pelos testes
-(`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam dois,
-`PreToolUse` e `InstructionsLoaded` (`_EVENTOS_DO_PACOTE`): `PostCompact`, `SubagentStart` e
+(`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos três hooks do `settings.json` viajam dois,
+`PreToolUse` e `InstructionsLoaded` (`_EVENTOS_DO_PACOTE`): `SubagentStart` e
 `InstructionsLoaded` são hooks de anúncio, e nenhum chega ao modelo; não há registro de projeto que
 instala o plugin usando o controle de três estados da norma (*Validar a ativação*). O
-`InstructionsLoaded` fica por ser o log desse controle, e os outros dois continuam no
+`InstructionsLoaded` fica por ser o log desse controle, e o `SubagentStart` continua no
 `settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail.
 
 **Frontmatter do `SKILL.md` — `P-10`.** O bloco "amflow — rastreabilidade" e o que mais a fonte
