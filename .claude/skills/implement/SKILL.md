@@ -55,12 +55,12 @@ Implemente a unidade `$target` do método decode-and-code, em cold-start. Você 
 
 ### `implement <unidade>`
 
-Os dois gates são os da norma (*Os dois gates*, decisão 15) — esta seção descreve só o **como**, para não duplicar o que já está lá.
+Os dois gates são os da norma (*Os dois gates*) — esta seção descreve só o **como**, para não duplicar o que já está lá.
 
 1. **Gate de entrada** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <unidade>`; qualquer problema recusa e encerra sem escrever nada, e a correção volta ao `derive`.
 2. **Ler a unidade inteira** — contrato, sequência, arquivos, normas referenciadas e critério de aceite.
 3. **Abrir as normas citadas** na tabela — são referências, o conteúdo delas não está copiado na unidade.
-4. **Escrever o teste declarado**, cobrindo o critério de aceite — teste e código são entregáveis da mesma unidade (decisão 15); exigir teste preexistente tornaria impossível começar unidade nova.
+4. **Escrever o teste declarado**, cobrindo o critério de aceite — teste e código são entregáveis da mesma unidade; exigir teste preexistente tornaria impossível começar unidade nova.
 5. **Escrever o código** que faz o teste passar, tocando apenas os arquivos que a unidade declara.
 6. **Gate de saída** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" verificar <unidade>`; teste falhando, a unidade não transiciona para `verified`.
 7. **Projetar o backlog** do plano com `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`.

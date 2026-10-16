@@ -471,6 +471,21 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             empacotar.construir(destino)
             self.assertEqual(empacotar.verificar(destino), [])
 
+    def test_corpo_das_skills_empacotadas_nao_cita_registro_que_nao_viaja(self):
+        """`P-07` — `L-NN`, decisão numerada e unidade deste repositório apontam para planos fora do pacote.
+
+        Só o corpo: o exemplo de uso na `description` cita uma unidade de propósito.
+        """
+        historico = re.compile(r"\bL-\d{2}\b|decisão \d+|unidade \d{4}-\d{2}")
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    corpo = lint_skill._corpo((destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8"))
+                    self.assertEqual(historico.findall(corpo), [])
+
     def test_as_quatro_skills_empacotadas_so_declaram_campos_oficiais(self):
         """`P-10` — as chaves do `SKILL.md` empacotado são as da fonte que a lista oficial reconhece.
 
