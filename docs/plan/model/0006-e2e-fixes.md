@@ -112,7 +112,7 @@ estão `verified` e não passam mais pelo gate; se algum teste as lintar, ajusta
 - [x] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
-- [ ] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
+- [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
 - [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
 T2 e T3 não tocam os mesmos arquivos e podem rodar em paralelo. T4 a T6 tocam `SKILL.md`
@@ -146,10 +146,10 @@ só abre com aprovação do humano.
 - [x] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
-- [ ] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
+- [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
 - [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
-5 de 7 tarefas concluídas · atualizado em 2026-10-17
+6 de 7 tarefas concluídas · atualizado em 2026-10-17
 <!-- backlog:end -->
 
 ## Fonte
