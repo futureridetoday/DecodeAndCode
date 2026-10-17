@@ -680,7 +680,7 @@ class TestNormas(_ProjetoCase):
 
     def _unidade(self, *linhas: str) -> Path:
         self._documento()
-        texto = fixtures.UNIDADE_VALIDA.replace("| Exemplo | em algum lugar |", "\n".join(linhas))
+        texto = fixtures.UNIDADE_VALIDA.replace("| Norma | Onde |\n|---|---|", "\n".join(("| Norma | Onde |", "|---|---|", *linhas)))
         alvo = self.projeto / "docs" / "plan" / "01-unidade.md"
         alvo.parent.mkdir(parents=True)
         alvo.write_text(texto, encoding="utf-8")

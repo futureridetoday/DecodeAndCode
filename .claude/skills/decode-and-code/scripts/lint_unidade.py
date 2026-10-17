@@ -62,6 +62,7 @@ def lint(unidade: Path) -> list[str]:
     problemas.extend(_checar_criterio_aceite(corpo))
     problemas.extend(_checar_arquivos(corpo))
     problemas.extend(_checar_ultimo_resultado(corpo))
+    problemas.extend(_checar_normas(unidade, corpo))
     return problemas
 
 
@@ -195,6 +196,20 @@ def _checar_criterio_aceite(corpo: str) -> list[str]:
     if not secao.strip():
         return ["Critério de aceite sem conteúdo"]
     return []
+
+
+def _checar_normas(unidade: Path, corpo: str) -> list[str]:
+    """Um problema por citação de *Normas aplicáveis* que `normas.resolver` não resolve.
+
+    O gate de entrada não pode aprovar norma que não chega ao executor. Seção ausente já é
+    reportada por `_checar_blocos`. Import local: `normas` importa este módulo.
+    """
+    if _secao(corpo, "Normas aplicáveis") is None:
+        return []
+    import normas
+
+    _, nao_resolvidas = normas.resolver(unidade)
+    return [f"norma aplicável não resolve ({n.motivo}): {n.linha}" for n in nao_resolvidas]
 
 
 def _checar_arquivos(corpo: str) -> list[str]:

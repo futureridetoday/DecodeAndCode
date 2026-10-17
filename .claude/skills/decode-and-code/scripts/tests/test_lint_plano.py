@@ -230,12 +230,19 @@ class TestLintUnidadeAceitaTipoNorma(unittest.TestCase):
             self.assertTrue(any("Último resultado" in p for p in problemas), problemas)
 
     def test_onze_unidades_reais_aprovam_depois_da_remocao(self):
-        """Prova que a linha saiu de todas as onze — não uma contagem."""
+        """Prova que a linha saiu de todas as onze — não uma contagem.
+
+        Citação de norma fica fora: as unidades `verified` do plano `0001` anteciparam o formato
+        que resolve (plano `0006`, D5) e não se reescrevem — `test_lint_unidade` cobre essa checagem.
+        """
         for numero in range(1, 12):
             candidatos = list(DIR_UNIDADES_REAIS.glob(f"{numero:02d}-*.md"))
             with self.subTest(unidade=numero):
                 self.assertEqual(len(candidatos), 1, candidatos)
-                self.assertEqual(lint_unidade.lint(candidatos[0]), [])
+                problemas = [
+                    p for p in lint_unidade.lint(candidatos[0]) if not p.startswith("norma aplicável")
+                ]
+                self.assertEqual(problemas, [])
 
 
 class TestVerificarUnidadeNorma(unittest.TestCase):

@@ -122,7 +122,6 @@ Nenhuma.
 
 | Norma | Onde |
 |---|---|
-| Exemplo | em algum lugar |
 
 ## Critério de aceite
 

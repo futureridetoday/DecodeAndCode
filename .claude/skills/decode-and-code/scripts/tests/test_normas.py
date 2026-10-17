@@ -73,7 +73,7 @@ Texto do filho.
 
 Texto do neto."""
 
-_LINHA_PADRAO = "| Exemplo | em algum lugar |"
+_LINHA_PADRAO = "| Norma | Onde |\n|---|---|"
 _LINK = "[`regras.md`](../system/regras.md)"
 
 
@@ -94,7 +94,7 @@ class _SinteticoCase(unittest.TestCase):
         self.assertIn(_LINHA_PADRAO, texto)
         alvo = self.raiz / "plano" / "01-sintetica.md"
         alvo.parent.mkdir(exist_ok=True)
-        alvo.write_text(texto.replace(_LINHA_PADRAO, "\n".join(linhas)), encoding="utf-8")
+        alvo.write_text(texto.replace(_LINHA_PADRAO, "\n".join((_LINHA_PADRAO, *linhas))), encoding="utf-8")
         return alvo
 
     def resolver(self, *linhas: str):
