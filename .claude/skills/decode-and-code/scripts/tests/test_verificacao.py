@@ -168,6 +168,25 @@ class TestRunnerAusenteNoProjeto(unittest.TestCase):
         self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
         self.assertIn("Ran 1 test", resultado.stdout + resultado.stderr)
 
+    def test_py_sem_runner_roda_tests_sem_init(self):
+        (self.raiz / "modulo.py").write_text("VALOR = 7\n", encoding="utf-8")
+        tests = self.raiz / "tests"
+        tests.mkdir()
+        (tests / "test_x.py").write_text(
+            "import unittest\n"
+            "import modulo\n\n"
+            "class T(unittest.TestCase):\n"
+            "    def test_valor(self):\n"
+            "        self.assertEqual(modulo.VALOR, 7)\n",
+            encoding="utf-8",
+        )
+
+        comando, cwd = verificacao._comando(tests / "test_x.py", self.raiz)
+        resultado = subprocess.run(comando, cwd=cwd, capture_output=True, text=True)
+
+        self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
+        self.assertIn("Ran 1 test", resultado.stdout + resultado.stderr)
+
     def test_runner_do_projeto_tem_precedencia(self):
         (self.raiz / "scripts").mkdir()
         (self.raiz / "scripts" / "test-python.sh").write_text("#!/bin/sh\n", encoding="utf-8")
