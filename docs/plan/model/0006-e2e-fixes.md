@@ -131,6 +131,7 @@ fora deste plano.
 |---|---|---|
 | L-01 | **O runner `.py` do pacote usa `python3 -m unittest <caminho>`, que exige o teste importável a partir da raiz** | Pode falhar com teste fora de pacote ou layout `src/`. O comportamento do `scripts/test-python.sh` deste repositório não foi comparado — T2 confere antes de escolher a forma |
 | L-02 | **Não está decidido quem executa as caixas de `## Tarefas` no porte médio** | Mesma pergunta de D4, num porte que o teste não exercitou. Fica fora deste plano |
+| L-03 | **`lib.repo_root` resolve a raiz pelo `__file__` antes do `cwd`: pacote carregado por `--plugin-dir` de dentro de um checkout com `.claude/` e `docs/` grava nesse checkout, não no projeto aberto** | Achado na prova da T6 — o `aprovar` moveu o plano de teste para o worktree. Instalação real fica em `~/.claude/plugins/`, e a home é excluída da busca, então o usuário não é afetado; quem testa o plugin assim é. A T7 roda com o pacote copiado para fora de qualquer repositório |
 
 ## Execução
 
