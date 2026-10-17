@@ -112,7 +112,7 @@ estão `verified` e não passam mais pelo gate; se algum teste as lintar, ajusta
 - [x] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
-- [ ] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
+- [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
 - [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
 T2 e T3 não tocam os mesmos arquivos e podem rodar em paralelo. T4 a T6 tocam `SKILL.md`
@@ -131,6 +131,7 @@ fora deste plano.
 |---|---|---|
 | L-01 | **O runner `.py` do pacote usa `python3 -m unittest <caminho>`, que exige o teste importável a partir da raiz** | Pode falhar com teste fora de pacote ou layout `src/`. O comportamento do `scripts/test-python.sh` deste repositório não foi comparado — T2 confere antes de escolher a forma |
 | L-02 | **Não está decidido quem executa as caixas de `## Tarefas` no porte médio** | Mesma pergunta de D4, num porte que o teste não exercitou. Fica fora deste plano |
+| L-03 | **`lib.repo_root` resolve a raiz pelo `__file__` antes do `cwd`: pacote carregado por `--plugin-dir` de dentro de um checkout com `.claude/` e `docs/` grava nesse checkout, não no projeto aberto** | Achado na prova da T6 — o `aprovar` moveu o plano de teste para o worktree. Instalação real fica em `~/.claude/plugins/`, e a home é excluída da busca, então o usuário não é afetado; quem testa o plugin assim é. A T7 roda com o pacote copiado para fora de qualquer repositório |
 
 ## Execução
 
@@ -146,10 +147,10 @@ só abre com aprovação do humano.
 - [x] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
-- [ ] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
+- [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
 - [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
-5 de 7 tarefas concluídas · atualizado em 2026-10-17
+6 de 7 tarefas concluídas · atualizado em 2026-10-17
 <!-- backlog:end -->
 
 ## Fonte

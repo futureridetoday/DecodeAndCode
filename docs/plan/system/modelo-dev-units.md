@@ -1175,8 +1175,10 @@ lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem pr
 > **As etapas 5 a 9 ramificam por porte.** No **pequeno**, `derive` **não roda**:
 > `aprovar` move direto para `<core>/<NNNN>-<nome>.md`, sem subpasta (sem etapa 5) e sem unidade
 > nenhuma para decidir, numerar ou derivar (sem etapa 6). A etapa 7 ainda roda, mas não escreve
-> região de backlog — não existe o que projetar; a situação vem de `status`, e a etapa 9 fecha
-> quando o **humano** grava `status: done`, nunca um script. No **médio**, `aprovar` também move
+> região de backlog — não existe o que projetar; a situação vem de `status`. A etapa 8 também não
+> usa `implement`, que exige unidade: a sessão que orquestra executa o plano direto, com o critério
+> de saída do plano como verificação. A etapa 9 fecha quando o **humano** grava `status: done`,
+> nunca um script. No **médio**, `aprovar` também move
 > sem subpasta, mas a etapa 7 projeta as caixas de `## Tarefas` em vez de unidades — a etapa 6
 > continua sem rodar, porque médio não deriva unidade. No **grande**, as nove etapas seguem
 > exatamente como na tabela. O formato completo de cada porte está em *O que cada porte carrega*,

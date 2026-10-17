@@ -59,7 +59,7 @@ Os seis checks são os da norma (*Modo `review` — os seis checks*) — esta se
    - **Concorrência** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" concorrencia <plano>` lê `core`/`module` do frontmatter do plano e varre a região `planos` de `_planos.md` por uma linha `em desenvolvimento` no mesmo core **ou** módulo (norma, *Avaliação de escopo*). Encontrada (código `1`), a linha inteira é a evidência citada no achado.
    - **Fontes citadas** — cada link relativo do corpo do plano resolve em disco.
    - Plano sem `core` no frontmatter: achado bloqueante — o `concorrencia` responde "não verificável" (código `1`), a concorrência fica registrada assim, e a revisão **não aborta**.
-2. **Independência** — audita a seção `## Independência` do plano contra o teste da norma ("A e B passam isolados?"). Seção ausente é achado bloqueante, não silêncio.
+2. **Independência** — audita a seção `## Independência` do plano contra o teste da norma ("A e B passam isolados?"). A presença por porte é do `lint-plano` (norma, *O que cada porte carrega*: exigida no grande, dispensada no médio, recusada no pequeno); aqui se audita o conteúdo quando a seção existe.
 3. **Tamanho como contexto** — unidades previstas, cores e módulos tocados, lidos da seção `## Escopo`. Relatar, nunca reprovar.
 4. **Julgamento restante** — erros conceituais, erros de arquitetura, adequação das fontes ao escopo.
 5. **Lacunas** — cada uma nova entra como `L-XX`, sem tentar resolvê-la.

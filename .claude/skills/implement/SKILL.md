@@ -57,7 +57,7 @@ Implemente a unidade `$target` do método decode-and-code, em cold-start. Você 
 
 Os dois gates são os da norma (*Os dois gates*) — esta seção descreve só o **como**, para não duplicar o que já está lá.
 
-1. **Gate de entrada** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <unidade>`; qualquer problema recusa e encerra sem escrever nada, e a correção volta ao `derive`.
+1. **Gate de entrada** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <unidade>`; qualquer problema recusa e encerra sem escrever nada, e a correção volta ao `derive`. Plano de porte pequeno não tem unidade: recuse e aponte a norma (*Fluxo completo*) — quem executa é a sessão que orquestra.
 2. **Ler a unidade inteira** — contrato, sequência, arquivos, normas referenciadas e critério de aceite.
 3. **Trazer as normas citadas** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" normas <unidade>`; a unidade só referencia as normas, e o conteúdo das seções que a tabela cita vem na saída. Cada linha sob `Não resolvidas:` é norma que não chegou: vai para o relatório (passo 8) como insuficiência da unidade, que volta para quem deriva.
 4. **Escrever o teste declarado**, cobrindo o critério de aceite — teste e código são entregáveis da mesma unidade; exigir teste preexistente tornaria impossível começar unidade nova.
