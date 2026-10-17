@@ -588,9 +588,11 @@ execução*:
 O plano declara onde suas unidades vão viver, com os mesmos campos da unidade:
 
 ```yaml
+plan_id: ""      # vazio no rascunho; a aprovação o preenche
 core: <core>
 module: <module>
 block: ""        # vazio quando o plano não cria bloco
+status: draft    # a aprovação troca por approved
 ```
 
 O modo `derive` lê esses campos para criar a estrutura e mover o arquivo do `_inbox`. Declarar no
