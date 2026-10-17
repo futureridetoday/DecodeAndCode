@@ -116,6 +116,7 @@ class TestRepoRoot(unittest.TestCase):
             mensagem = str(ctx.exception)
             self.assertIn(str(fora), mensagem)
             self.assertIn(str(sem_marcas), mensagem)
+            self.assertIn("dc.py bootstrap", mensagem)
 
     def test_home_com_as_marcas_nunca_vence_o_projeto_aberto_no_cwd(self):
         # `L-03`, medida em 2026-08-28: plugin instalado mora sob `~/.claude/`,

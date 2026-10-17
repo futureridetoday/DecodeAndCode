@@ -143,7 +143,8 @@ def repo_root() -> Path:
         f"raiz do repositório não localizada — nem a partir do código "
         f"({origem_arquivo}), nem do diretório de trabalho ({origem_cwd}) "
         f"há um diretório acima que contenha {marcas} "
-        f"(a home, {_home()}, é excluída por construção)."
+        f"(a home, {_home()}, é excluída por construção). "
+        f"Num projeto novo, rode `dc.py bootstrap` no diretório do projeto."
     )
 
 
