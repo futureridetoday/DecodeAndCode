@@ -7,7 +7,7 @@ description: Correções dos oito defeitos que o teste ponta a ponta do plugin e
 tags: [decode-and-code, plugin, e2e, release]
 
 # alvo
-plan_id: ""
+plan_id: "0006"
 plan_size: médio
 core: model
 module: e2e-fixes
@@ -16,7 +16,7 @@ block: ""
 # history
 author: Claude
 created: 2026-10-16
-status: draft
+status: approved
 version: 1.0.0
 updated: ""
 approved_by: bortolirafael
@@ -107,7 +107,7 @@ estão `verified` e não passam mais pelo gate; se algum teste as lintar, ajusta
 
 ## Tarefas
 
-- [ ] T1 — uma linha em `apply-plugin-review.md` apontando para este plano como continuação — os defeitos ficam só aqui (uma fonte por fato)
+- [x] T1 — uma linha em `apply-plugin-review.md` apontando para este plano como continuação — os defeitos ficam só aqui (uma fonte por fato)
 - [ ] T2 — D1: runner `.py` no pacote e resolução projeto → pacote em `verificacao` (PR próprio)
 - [ ] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
 - [ ] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
@@ -141,6 +141,15 @@ só abre com aprovação do humano.
 ## Backlog
 
 <!-- backlog:start -->
+- [x] T1 — uma linha em `apply-plugin-review.md` apontando para este plano como continuação — os defeitos ficam só aqui (uma fonte por fato)
+- [ ] T2 — D1: runner `.py` no pacote e resolução projeto → pacote em `verificacao` (PR próprio)
+- [ ] T3 — D2: `lint-plano` exige `plan_id` e `status`; `aprovar` confere antes de mover (PR próprio)
+- [ ] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
+- [ ] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
+- [ ] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
+- [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
+
+1 de 7 tarefa concluída · atualizado em 2026-10-17
 <!-- backlog:end -->
 
 ## Fonte
@@ -148,4 +157,4 @@ só abre com aprovação do humano.
 - Teste ponta a ponta de 2026-10-16, sobre `dev` em `9e47e50`
 - Norma: [`modelo-dev-units.md`](../system/modelo-dev-units.md), seções *O que cada porte carrega*,
   *Aprovação — três campos declarados pelo humano* e *Os dois gates*
-- Plano de origem dos achados: [`apply-plugin-review.md`](apply-plugin-review.md)
+- Plano de origem dos achados: [`apply-plugin-review.md`](../_inbox/apply-plugin-review.md)
