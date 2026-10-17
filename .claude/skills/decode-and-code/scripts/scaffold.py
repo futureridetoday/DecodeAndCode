@@ -171,7 +171,9 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
 
     Levanta `ValueError` se o plano não declara `core`, `plan_size` (ou declara fora do
     vocabulário `lib.PLAN_SIZES_VALIDOS`), `approved_by`, `approved_at` (ou declara algo que não é
-    data ISO), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
+    data ISO), se falta no frontmatter qualquer campo que a aprovação escreve (`plan_id`, `status`
+    — a linha tem de existir, ainda que vazia; conferido antes de mover, para não deixar o plano
+    meio aprovado), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
     Levanta `FileExistsError` se o alvo já existe. Em qualquer um dos casos — inclusive em
     `dry_run` — nada é escrito.
     """
@@ -219,13 +221,18 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if alvo.exists():
         raise FileExistsError(f"alvo já existe — {alvo}")
 
+    campos = {"plan_id": f'"{numero}"', "status": "approved"}
+    for campo in campos:
+        if regioes.ler_campo(plano, campo) is None:
+            raise ValueError(f"plano não declara '{campo}' no frontmatter — {plano}")
+
     if dry_run:
         return alvo
 
     _mover(plano, alvo)
     if plan_size in ("médio", "grande"):
         _garantir_secao_backlog(alvo)
-    regioes.escrever_campos(alvo, {"plan_id": f'"{numero}"', "status": "approved"})
+    regioes.escrever_campos(alvo, campos)
     _registrar_planos_md(numero, nome, core, module, alvo, approved_at)
 
     return alvo
