@@ -34,6 +34,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -204,9 +205,17 @@ def _comando(caminho_teste: Path, raiz: Path) -> tuple[list[str], Path]:
     `ValueError` se a extensão não tiver runner declarado. O runner sempre
     roda a partir da raiz do repositório, com o caminho do teste relativo a
     ela — um único mecanismo para qualquer extensão que o config declarar.
+
+    Runner declarado mas ausente na raiz é o projeto recém-instalado: `.py`
+    cai no `runner_python.py` do pacote; outra extensão não tem fallback e
+    `ValueError` nomeia o runner que falta.
     """
     runner = lib.config()["runners"].get(caminho_teste.suffix)
     if runner is None:
         raise ValueError(f"extensão de teste sem runner declarado — {caminho_teste}")
-    comando = [str(raiz / runner), str(caminho_teste.relative_to(raiz))]
-    return comando, raiz
+    relativo = str(caminho_teste.relative_to(raiz))
+    if (raiz / runner).exists():
+        return [str(raiz / runner), relativo], raiz
+    if caminho_teste.suffix == ".py":
+        return [sys.executable, str(Path(__file__).resolve().parent / "runner_python.py"), relativo], raiz
+    raise ValueError(f"runner ausente no projeto — {runner} (necessário para {caminho_teste.suffix})")

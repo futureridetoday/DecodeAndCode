@@ -21,6 +21,7 @@ do `subprocess` do Python mata só o filho direto, não a árvore inteira que
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -136,6 +137,56 @@ class TestExtensaoSemRunner(unittest.TestCase):
                     verificacao.verificar(unidade)
 
 
+class TestRunnerAusenteNoProjeto(unittest.TestCase):
+    """Projeto recém-instalado não tem `scripts/test-python.sh` — D1 do plano 0006."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.raiz = Path(self._tmp.name).resolve()
+
+    def test_py_sem_runner_no_projeto_roda_pelo_runner_do_pacote(self):
+        (self.raiz / "modulo.py").write_text("VALOR = 7\n", encoding="utf-8")
+        tests = self.raiz / "tests"
+        tests.mkdir()
+        (tests / "__init__.py").write_text("", encoding="utf-8")
+        (tests / "test_x.py").write_text(
+            "import unittest\n"
+            "import modulo\n\n"
+            "class T(unittest.TestCase):\n"
+            "    def test_valor(self):\n"
+            "        self.assertEqual(modulo.VALOR, 7)\n",
+            encoding="utf-8",
+        )
+
+        comando, cwd = verificacao._comando(tests / "test_x.py", self.raiz)
+
+        self.assertEqual(comando[0], sys.executable)
+        self.assertEqual(Path(comando[1]).name, "runner_python.py")
+        self.assertEqual(comando[2], "tests/test_x.py")
+        resultado = subprocess.run(comando, cwd=cwd, capture_output=True, text=True)
+        self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
+        self.assertIn("Ran 1 test", resultado.stdout + resultado.stderr)
+
+    def test_runner_do_projeto_tem_precedencia(self):
+        (self.raiz / "scripts").mkdir()
+        (self.raiz / "scripts" / "test-python.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+        (self.raiz / "test_x.py").write_text("# vazio\n", encoding="utf-8")
+
+        comando, cwd = verificacao._comando(self.raiz / "test_x.py", self.raiz)
+
+        self.assertEqual(comando, [str(self.raiz / "scripts" / "test-python.sh"), "test_x.py"])
+        self.assertEqual(cwd, self.raiz)
+
+    def test_ts_sem_runner_levanta_value_error_nomeando_o_runner(self):
+        (self.raiz / "x.test.ts").write_text("// ts\n", encoding="utf-8")
+
+        with self.assertRaises(ValueError) as ctx:
+            verificacao._comando(self.raiz / "x.test.ts", self.raiz)
+
+        self.assertIn("scripts/test-ts.sh", str(ctx.exception))
+
+
 class TestRegressaoVerdeParaVermelho(unittest.TestCase):
     """O critério de aceite da unidade: teste que passa a falhar rebaixa o estado."""
 
@@ -149,6 +200,9 @@ class TestRegressaoVerdeParaVermelho(unittest.TestCase):
         (pacote_tests / "test_controlavel.py").write_text(
             "# resultado controlado pelo mock de subprocess.run no teste\n", encoding="utf-8"
         )
+
+        (self.raiz / "scripts").mkdir()
+        (self.raiz / "scripts" / "test-python.sh").write_text("#!/bin/sh\n", encoding="utf-8")
 
         self.unidade = self.raiz / "unidade.md"
         _escreve_unidade(self.unidade, test="pacote/tests/test_controlavel.py")
@@ -208,6 +262,9 @@ class TestExecucaoIncompleta(unittest.TestCase):
         (pacote_tests / "test_controlavel.py").write_text(
             "# resultado controlado pelo mock de subprocess.run no teste\n", encoding="utf-8"
         )
+
+        (self.raiz / "scripts").mkdir()
+        (self.raiz / "scripts" / "test-python.sh").write_text("#!/bin/sh\n", encoding="utf-8")
 
         self.unidade = self.raiz / "unidade.md"
         _escreve_unidade(self.unidade, test="pacote/tests/test_controlavel.py")
