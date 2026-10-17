@@ -350,6 +350,26 @@ class TestAprovarErros(unittest.TestCase):
         self.assertTrue(self.plano.exists())
         self.assertEqual(self.planos_md.read_text(encoding="utf-8"), self.planos_original)
 
+    def _recusa_sem_campo(self, linha: str, campo: str, dry_run: bool):
+        texto = self.plano.read_text(encoding="utf-8").replace(linha, "")
+        self.plano.write_text(texto, encoding="utf-8")
+
+        with self.assertRaisesRegex(ValueError, campo):
+            scaffold.aprovar(self.plano, dry_run=dry_run)
+
+        self.assertEqual(self.plano.read_text(encoding="utf-8"), texto)
+        self.assertEqual(list(self.raiz.glob("builder/**/*.md")), [])
+        self.assertEqual(self.planos_md.read_text(encoding="utf-8"), self.planos_original)
+
+    def test_plan_id_ausente_levanta_value_error_sem_mover(self):
+        self._recusa_sem_campo('plan_id: ""\n', "plan_id", dry_run=False)
+
+    def test_status_ausente_levanta_value_error_sem_mover(self):
+        self._recusa_sem_campo("status: draft\n", "status", dry_run=False)
+
+    def test_campo_ausente_levanta_tambem_em_dry_run(self):
+        self._recusa_sem_campo('plan_id: ""\n', "plan_id", dry_run=True)
+
 
 if __name__ == "__main__":
     unittest.main()

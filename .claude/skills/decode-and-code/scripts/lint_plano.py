@@ -27,6 +27,8 @@ def lint(plano: Path) -> list[str]:
 
     `plan_size` ausente, vazio ou fora do vocabulário encerra a checagem ali: sem porte não há
     schema contra o qual conferir os demais blocos, e o problema devolvido nomeia exatamente isso.
+    `plan_id` e `status` têm de existir no frontmatter (`plan_id: ""` vale num rascunho): é o que
+    `scaffold.aprovar` escreve, e ele não cria campo.
     """
     try:
         plan_size = regioes.ler_campo(plano, "plan_size")
@@ -40,8 +42,13 @@ def lint(plano: Path) -> list[str]:
     if plan_size not in lib.PLAN_SIZES_VALIDOS:
         return [f"plan_size fora do vocabulário {lib.PLAN_SIZES_VALIDOS}: {plan_size!r}"]
 
+    problemas: list[str] = [
+        f"campo obrigatório ausente no frontmatter: {campo}"
+        for campo in ("plan_id", "status")
+        if regioes.ler_campo(plano, campo) is None
+    ]
+
     corpo = _corpo(plano.read_text(encoding="utf-8"))
-    problemas: list[str] = []
     problemas.extend(_checar_independencia(corpo, plan_size))
     problemas.extend(_checar_decomposicao(corpo, plan_size))
     problemas.extend(_checar_backlog(plano, plan_size))

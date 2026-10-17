@@ -142,6 +142,31 @@ class TestPlanSizeAusenteOuInvalido(unittest.TestCase):
             problemas = lint_plano.lint(_arquivo(dir_plano))
             self.assertTrue(any("plan_size" in p for p in problemas), problemas)
 
+    def _sem_linha(self, linha: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="pequeno", com_backlog=False)
+            arquivo = _arquivo(dir_plano)
+            texto = arquivo.read_text(encoding="utf-8")
+            self.assertIn(linha, texto)
+            arquivo.write_text(texto.replace(linha, ""), encoding="utf-8")
+            return lint_plano.lint(arquivo)
+
+    def test_plan_id_ausente_entra_como_problema(self):
+        problemas = self._sem_linha('plan_id: "0009"\n')
+        self.assertEqual(problemas, ["campo obrigatório ausente no frontmatter: plan_id"])
+
+    def test_status_ausente_entra_como_problema(self):
+        problemas = self._sem_linha("status: approved\n")
+        self.assertEqual(problemas, ["campo obrigatório ausente no frontmatter: status"])
+
+    def test_plan_id_vazio_e_valido_em_rascunho(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="pequeno", com_backlog=False)
+            arquivo = _arquivo(dir_plano)
+            texto = arquivo.read_text(encoding="utf-8").replace('plan_id: "0009"', 'plan_id: ""')
+            arquivo.write_text(texto, encoding="utf-8")
+            self.assertEqual(lint_plano.lint(arquivo), [])
+
 
 class TestPlanoRealDoRepositorio(unittest.TestCase):
     def test_plano_0001_grande_aprova(self):
