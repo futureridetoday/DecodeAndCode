@@ -454,7 +454,7 @@ próximo item a definir.
 | Sequência | Passos numerados, **teto de 8** |
 | Arquivos | Caminhos concretos com `arquivo:linha` — exigência do cold-start |
 | Dependências | O que precisa existir antes |
-| Normas aplicáveis | Tabela de **referências**, nunca cópia |
+| Normas aplicáveis | Tabela de **referências**, nunca cópia. Cada linha cita na coluna *Onde* um link markdown com caminho relativo ao arquivo da unidade, seguido de vírgula e "seção *X*" (`seção` é opcional); citação sem link ou sem seção, ou que não acha o arquivo ou a seção, não resolve — o `lint-unidade` a recusa |
 | Critério de aceite | Uma frase verificável |
 | Verificação | O comando que roda o teste declarado no frontmatter — e mais nada |
 | Fonte | De onde veio a spec |
