@@ -16,7 +16,7 @@ block: ""
 # history
 author: Claude
 created: 2026-10-16
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: bortolirafael
@@ -113,7 +113,7 @@ estão `verified` e não passam mais pelo gate; se algum teste as lintar, ajusta
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
 - [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
-- [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
+- [x] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
 T2 e T3 não tocam os mesmos arquivos e podem rodar em paralelo. T4 a T6 tocam `SKILL.md`
 diferentes, mas T5 e T6 dividem o `derive` — em sequência.
@@ -132,6 +132,7 @@ fora deste plano.
 | L-01 | **O runner `.py` do pacote usa `python3 -m unittest <caminho>`, que exige o teste importável a partir da raiz** | Pode falhar com teste fora de pacote ou layout `src/`. O comportamento do `scripts/test-python.sh` deste repositório não foi comparado — T2 confere antes de escolher a forma |
 | L-02 | **Não está decidido quem executa as caixas de `## Tarefas` no porte médio** | Mesma pergunta de D4, num porte que o teste não exercitou. Fica fora deste plano |
 | L-03 | **`lib.repo_root` resolve a raiz pelo `__file__` antes do `cwd`: pacote carregado por `--plugin-dir` de dentro de um checkout com `.claude/` e `docs/` grava nesse checkout, não no projeto aberto** | Achado na prova da T6 — o `aprovar` moveu o plano de teste para o worktree. Instalação real fica em `~/.claude/plugins/`, e a home é excluída da busca, então o usuário não é afetado; quem testa o plugin assim é. A T7 roda com o pacote copiado para fora de qualquer repositório |
+| L-04 | **A norma não diz quando usar cada porte: o `intake` grava `plan_size: pequeno` "para o lint passar" e o humano descobre na aprovação que outro porte exige reestruturar o plano** | Achado na T7 (rodada 2). Não bloqueia — a reestruturação passou pelo fluxo normal de revisão —, mas tira do humano a recomendação de porte que ele deveria receber. Candidato a plano próprio |
 
 ## Execução
 
@@ -148,10 +149,26 @@ só abre com aprovação do humano.
 - [x] T4 — D3 e D6: `intake` roda `bootstrap` no primeiro passo; a mensagem de raiz não localizada nomeia `dc.py bootstrap`; prova em sessão real (PR próprio)
 - [x] T5 — D5: `lint-unidade` resolve as normas citadas; `derive` nomeia o formato (PR próprio)
 - [x] T6 — D4, D7 e D8: regra do pequeno em *Fluxo completo* da norma; ajustes de texto em `derive`, `implement`, `review-plan` e `intake` (PR próprio, ou três, a critério do humano)
-- [ ] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
+- [x] T7 — repetir o teste ponta a ponta, sem nenhuma intervenção manual
 
-6 de 7 tarefas concluídas · atualizado em 2026-10-17
+7 de 7 tarefas concluídas · atualizado em 2026-10-17
 <!-- backlog:end -->
+
+## Resultado da T7
+
+Rodado em 2026-10-17 sobre `dev` em `eb1d685`, pacote copiado para fora de qualquer repositório
+(`L-03`), projeto git novo com `calc.py`, `tests/` sem `__init__.py` e `CLAUDE.md` — sem `.claude/`,
+`docs/` nem `scripts/`. Cada etapa numa sessão `claude -p` nova. US$ 6,12 no total.
+
+| Rodada | Ciclo | Resultado |
+|---|---|---|
+| 1 — pequeno (divisão + CLI) | `intake` → `review-plan` (1 bloqueante: a suíte do projeto não roda) → decisões do humano aplicadas por sessão → aprovação → `derive` (só `aprovar`) → execução pela sessão que orquestra → `status: done` | `0001` `concluído`; 6 testes OK |
+| 2 — grande (histórico em JSON Lines + subcomando) | `intake` (gate A reprovou duas vezes até o humano responder) → `review-plan` (2 bloqueantes) → decisões e porte grande aplicados por sessão → aprovação → `derive` (2 unidades, lint verde, normas resolvidas) → `implement` 01 e 02 | `0002` `concluído`; as duas unidades `verified` pelo gate de saída com o runner do pacote; 17 testes OK |
+
+Nenhuma intervenção manual contornou defeito e nenhum script falhou. O que o humano fez foi
+decidir: respostas aos gates, decisões da revisão, porte e os três campos de aprovação — que o
+esboço não traz, e o humano acrescenta (norma, *Aprovação*). As recusas de permissão vistas nas
+sessões vêm de comandos compostos que o `-p` não libera; os modelos contornaram todas sozinhos.
 
 ## Fonte
 
