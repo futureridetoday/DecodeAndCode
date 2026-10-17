@@ -75,6 +75,9 @@ plugin `1.1.2`):
 3. Há peças demais em volta do núcleo, e elas vão para todo usuário. Isso pesa contra a configuração
    mínima e contra o princípio de que código é custo.
 
+> **Continuação.** Os defeitos que o teste ponta a ponta encontrou depois destes achados estão em
+> [`0006-e2e-fixes.md`](../model/0006-e2e-fixes.md) — só lá.
+
 ## Como as correções são executadas
 
 Acordado com o humano em 2026-10-15 e revisto no mesmo dia. Vale para cada `P-XX`, um por vez:
