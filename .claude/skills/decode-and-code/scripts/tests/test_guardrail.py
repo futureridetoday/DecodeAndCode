@@ -29,6 +29,13 @@ produz. `_avaliar` junta os valores por posição no payload, e a âncora `\A` d
 o DDL ficava fora do alcance, e a regra que existe por causa do incidente `notifications_hub_id_fkey`
 não pegava a chamada real desse mesmo incidente. Trocado por `^` (o detector já roda com a flag
 `m`, que `\A` ignora por definição — `^` não).
+
+`TestHookSemGuardrailsJson` é o `P-05` do plano `apply-plugin-review`: o hook viaja no plugin e roda
+em toda chamada de ferramenta, então num projeto sem `.claude/guardrails.json` ele sai com 0 e **não
+escreve nada**, nem em stdout nem em stderr — antes escrevia "falha aberta" a cada chamada. O
+silêncio é decisão do hook (`pre_tool_use.py`); `guardrail.decidir` continua devolvendo o aviso para
+arquivo ausente (`TestFalhaAberta`), e o hook continua repassando-o quando o arquivo **existe** e
+não se lê. Rodado como subprocesso, o hook de verdade, porque o que se afirma é a saída do processo.
 """
 
 from __future__ import annotations
@@ -209,6 +216,14 @@ class TestHookInstalado(unittest.TestCase):
             "regra-do-teste-de-instalacao: veio do guardrails.json do projeto, não do pacote",
         )
 
+    def test_hook_empacotado_em_projeto_sem_guardrails_json_e_silencioso(self):
+        """`P-05` — o hook que viaja é o que roda em projeto que não declarou guardrail."""
+        (self.projeto / ".claude" / "guardrails.json").unlink()
+
+        resultado = self._rodar({"CLAUDE_PROJECT_DIR": str(self.projeto)})
+
+        self.assertEqual((resultado.returncode, resultado.stdout, resultado.stderr), (0, "", ""))
+
     def test_sem_claude_project_dir_libera_em_vez_de_travar(self):
         """Documenta o fallback: sem a variável, `Path("") / ...` some no cwd — falha aberta,
         não trava o hook. Não é o caso normal (a doc oficial diz a variável sempre chega a um
@@ -217,6 +232,63 @@ class TestHookInstalado(unittest.TestCase):
         resultado = self._rodar(None)
         self.assertEqual(resultado.returncode, 0)
         self.assertEqual(resultado.stdout.strip(), "")
+
+
+class TestHookSemGuardrailsJson(unittest.TestCase):
+    """Sem o arquivo, silêncio; com o arquivo malformado, o aviso de sempre."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.hook = lib.repo_root() / ".claude" / "hooks" / "pre_tool_use.py"
+        if not cls.hook.is_file():
+            raise unittest.SkipTest(f"hook não encontrado: {cls.hook}")
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.projeto = Path(self._tmp.name).resolve()
+
+    def _rodar(self, hook: Path | None = None) -> subprocess.CompletedProcess:
+        payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": "echo oi"}})
+        ambiente = {**os.environ, "CLAUDE_PROJECT_DIR": str(self.projeto)}
+        return subprocess.run(
+            [sys.executable, str(hook or self.hook)],
+            input=payload,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=ambiente,
+        )
+
+    def test_projeto_sem_guardrails_json_sai_com_zero_e_nao_escreve_nada(self):
+        self.assertFalse((self.projeto / ".claude").exists())
+
+        resultado = self._rodar()
+
+        self.assertEqual(resultado.returncode, 0)
+        self.assertEqual(resultado.stdout, "")
+        self.assertEqual(resultado.stderr, "")
+
+    def test_guardrails_json_malformado_continua_avisando(self):
+        regras = self.projeto / ".claude" / "guardrails.json"
+        regras.parent.mkdir()
+        regras.write_text("{ isto não é json", encoding="utf-8")
+
+        resultado = self._rodar()
+
+        self.assertEqual(resultado.returncode, 0)
+        self.assertEqual(resultado.stdout, "")
+        self.assertIn("guardrail: falha aberta, liberando", resultado.stderr)
+
+    def test_guardrails_json_valido_sem_regra_casada_tambem_e_silencioso(self):
+        """O braço contrário: o silêncio não vem de o hook ter parado de ler o arquivo."""
+        regras = self.projeto / ".claude" / "guardrails.json"
+        regras.parent.mkdir()
+        regras.write_text(json.dumps({"regras": []}), encoding="utf-8")
+
+        resultado = self._rodar()
+
+        self.assertEqual((resultado.returncode, resultado.stdout, resultado.stderr), (0, "", ""))
 
 
 class TestFalhaAberta(unittest.TestCase):

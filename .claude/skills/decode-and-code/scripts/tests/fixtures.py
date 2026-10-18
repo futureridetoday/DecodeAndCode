@@ -122,7 +122,6 @@ Nenhuma.
 
 | Norma | Onde |
 |---|---|
-| Exemplo | em algum lugar |
 
 ## Critério de aceite
 
@@ -222,8 +221,6 @@ user-invocable: true
 
 allowed-tools: "Read"
 
-effort: low
-context: ""
 shell: bash
 
 type: skill

@@ -34,3 +34,4 @@ dependencies: []
 | [0003-derive-handoff-prompt](../model/0003-derive-handoff-prompt.md) | médio | 6 | não declarado | — | 2026-08-27 |
 | [0004-installable-method](../model/0004-installable-method/0004-installable-method.md) | grande | 6 | 21 | 1426 | 2026-09-01 |
 | [0005-plugin-release-distribution](../model/0005-plugin-release-distribution.md) | médio | 9 | não declarado | — | 2026-09-02 |
+| [0006-e2e-fixes](../model/0006-e2e-fixes.md) | médio | 7 | não declarado | — | 2026-10-17 |

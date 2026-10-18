@@ -49,6 +49,13 @@ ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 # vocabulário é da norma.
 PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
+# Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
+MODOS = ("review-plan", "derive", "implement")
+
+# As skills que viajam no pacote (`empacotar`): os três modos mais o `intake`, que antecede o ciclo e
+# não é modo da norma. Acrescentar skill é editar só aqui.
+SKILLS = MODOS + ("intake",)
+
 _config_cache: dict | None = None
 
 
@@ -136,7 +143,8 @@ def repo_root() -> Path:
         f"raiz do repositório não localizada — nem a partir do código "
         f"({origem_arquivo}), nem do diretório de trabalho ({origem_cwd}) "
         f"há um diretório acima que contenha {marcas} "
-        f"(a home, {_home()}, é excluída por construção)."
+        f"(a home, {_home()}, é excluída por construção). "
+        f"Num projeto novo, rode `dc.py bootstrap` no diretório do projeto."
     )
 
 

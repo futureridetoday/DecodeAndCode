@@ -22,6 +22,11 @@ tem `test` — o campo é exigido **vazio** — então o oráculo não pode ser 
 (`approved_by`/`approved_at`), sem executar `subprocess` nenhum, e copia `approved_at` para
 `verified_at`: o fato verificado é a aprovação, e rodar o gate de novo amanhã não pode mover a data
 de um fato que não mudou.
+
+`verificar_com_saida` devolve, além do estado, o **motivo** em texto — a saída do teste, ou a falta
+dele. Existe porque o executor do `implement` só chega ao teste pelo `dc.py` (`P-14`): sem o motivo,
+`spec` é um veredito sem diagnóstico. `verificar` segue com o retorno de sempre, `(estado, escreveu)`,
+para todos os chamadores que já existem.
 """
 
 from __future__ import annotations
@@ -29,6 +34,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -50,7 +56,20 @@ SENTINELA_REENTRANCIA = "DECODE_AND_CODE_VERIFICACAO_EM_CURSO"
 
 
 def verificar(unidade: Path, dry_run: bool = False) -> tuple[str, bool]:
-    """Deriva o estado de `unidade` a partir do teste que ela declara.
+    """Deriva o estado de `unidade` a partir do teste que ela declara — `(estado, escreveu)`.
+
+    É `verificar_com_saida` sem o motivo; a regra inteira está lá.
+    """
+    estado, escreveu, _ = verificar_com_saida(unidade, dry_run)
+    return estado, escreveu
+
+
+def verificar_com_saida(unidade: Path, dry_run: bool = False) -> tuple[str, bool, str]:
+    """Deriva o estado de `unidade` a partir do teste que ela declara — `(estado, escreveu, saida)`.
+
+    `saida` é o motivo em texto: stdout+stderr do teste quando ele rodou; o problema do lint, em
+    `unit_type: norma`; a ausência do arquivo, quando o teste declarado não existe no disco. Vazio
+    só quando o próprio teste não imprimiu nada.
 
     `unit_type: norma` desvia para `_verificar_norma` antes da checagem de `test` abaixo — norma
     exige `test` vazio, então a regra "sem test declarado, levanta" não se aplica a ela.
@@ -76,19 +95,20 @@ def verificar(unidade: Path, dry_run: bool = False) -> tuple[str, bool]:
         codigo, saida = _executar(caminho_teste, raiz)
         estado = "verified" if codigo == 0 and not _execucao_incompleta(saida) else "spec"
     else:
+        saida = f"teste declarado não existe no disco — {caminho_teste}"
         estado = "spec"
 
     if dry_run:
-        return estado, False
+        return estado, False, saida
 
     verified_at = date.today().isoformat() if estado == "verified" else '""'
     escreveu = regioes.escrever_campos(
         unidade, {"state": estado, "verified_at": verified_at}
     )
-    return estado, escreveu
+    return estado, escreveu, saida
 
 
-def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool]:
+def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool, str]:
     """Oráculo de `unit_type: norma` — estrutura válida somada a aprovação humana, sem rodar nada.
 
     `lint_unidade.lint` já cobre a aprovação: uma `norma` sem `approved_by`/`approved_at`
@@ -96,20 +116,22 @@ def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool]:
     nunca duas checagens independentes. `verified_at` copia `approved_at` — nunca `date.today()` —
     porque o fato verificado é a aprovação do humano, não a data em que o script rodou.
     """
-    estado = "verified" if not lint_unidade.lint(unidade) else "spec"
+    problemas = lint_unidade.lint(unidade)
+    estado = "verified" if not problemas else "spec"
+    saida = "\n".join(problemas)
 
     if dry_run:
-        return estado, False
+        return estado, False, saida
 
     verified_at = regioes.ler_campo(unidade, "approved_at") if estado == "verified" else '""'
     escreveu = regioes.escrever_campos(
         unidade, {"state": estado, "verified_at": verified_at}
     )
-    return estado, escreveu
+    return estado, escreveu, saida
 
 
 def _executar(caminho_teste: Path, raiz: Path) -> tuple[int, str]:
-    """Código de saída e texto (stdout+stderr) do teste — timeout devolve falha e texto vazio.
+    """Código de saída e texto (stdout+stderr) do teste — timeout devolve falha e a causa em texto.
 
     Recusa executar se já houver verificação em curso: é aqui que a recursão
     nasceria, e não em `verificar()`. A distinção importa — checar antes faria
@@ -143,7 +165,7 @@ def _executar(caminho_teste: Path, raiz: Path) -> tuple[int, str]:
             env=ambiente,
         )
     except subprocess.TimeoutExpired:
-        return 1, ""
+        return 1, f"timeout após {TIMEOUT_SEGUNDOS}s — o teste não terminou"
     saida = resultado.stdout.decode("utf-8", errors="replace") + resultado.stderr.decode(
         "utf-8", errors="replace"
     )
@@ -183,9 +205,17 @@ def _comando(caminho_teste: Path, raiz: Path) -> tuple[list[str], Path]:
     `ValueError` se a extensão não tiver runner declarado. O runner sempre
     roda a partir da raiz do repositório, com o caminho do teste relativo a
     ela — um único mecanismo para qualquer extensão que o config declarar.
+
+    Runner declarado mas ausente na raiz é o projeto recém-instalado: `.py`
+    cai no `runner_python.py` do pacote; outra extensão não tem fallback e
+    `ValueError` nomeia o runner que falta.
     """
     runner = lib.config()["runners"].get(caminho_teste.suffix)
     if runner is None:
         raise ValueError(f"extensão de teste sem runner declarado — {caminho_teste}")
-    comando = [str(raiz / runner), str(caminho_teste.relative_to(raiz))]
-    return comando, raiz
+    relativo = str(caminho_teste.relative_to(raiz))
+    if (raiz / runner).exists():
+        return [str(raiz / runner), relativo], raiz
+    if caminho_teste.suffix == ".py":
+        return [sys.executable, str(Path(__file__).resolve().parent / "runner_python.py"), relativo], raiz
+    raise ValueError(f"runner ausente no projeto — {runner} (necessário para {caminho_teste.suffix})")

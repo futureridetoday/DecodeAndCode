@@ -45,11 +45,13 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 
 ## Arquitetura
 
-- `.claude/skills/decode-and-code/` — a skill e seus scripts, todo determinismo
+- `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
+  determinismo) e `config.json`. Ao lado dela, as quatro skills: uma por modo — `review-plan/`,
+  `derive/` e `implement/` — e `intake/`, que antecede o ciclo. O método não tem agent
 - `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
   [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
-  subtração antes de adição, evidência acima de opinião, fluxo de decodificação e protocolo de
-  exceção
+  subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
+  decodificação e os gates A e B moram na norma, que viaja com o plugin
 - `docs/plan/` — planos e unidades, destino de todo trabalho novo
 - `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
 - `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
@@ -66,7 +68,10 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 
 | Recurso | Tipo | Descrição |
 |---|---|---|
-| `decode-and-code` | skill | Executa a norma de Unidades de Desenvolvimento em três modos — revisa um plano, deriva estrutura e unidades, ou implementa uma unidade em cold-start. Delega todo determinismo aos scripts em `scripts/` |
+| `review-plan` | skill | Revisa um plano antes da aprovação, com os seis checks da norma — parte por script, parte por julgamento. Opus |
+| `derive` | skill | Deriva a estrutura e as unidades de um plano aprovado. Só por invocação explícita. Opus |
+| `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
+| `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
 
 ## Restrições
 

@@ -38,7 +38,7 @@ como branch default; o segundo instala o plugin a partir dele.
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-1.1.2.zip`).
+(`decode-and-code-2.0.0.zip`).
 
 ### Atualização
 
@@ -71,25 +71,23 @@ claude --plugin-dir dist/decode-and-code
 Ou direto do asset publicado, sem build local:
 
 ```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v1.1.2/decode-and-code-1.1.2.zip
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.0.0/decode-and-code-2.0.0.zip
 ```
 
 ## Como usar o Decode And Code
 
-Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skill, agent, comando, hooks)
+Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, hooks)
 no formato *o que é · problema · como funciona · como usar · exemplos · fundamentação · base de
 conhecimento · limites*, e um **guia de uso** por camada normativa — quando e como criar um
 princípio, uma guideline, um guardrail.
 
 | Tipo | Recurso | O que faz | Doc |
 |---|---|---|---|
-| skill | `decode-and-code` | Os três modos — `review` um plano, `derive` estrutura e unidades, `implement` uma unidade em cold-start | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| agent | `ai-builder` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para o `planner` revisar (Opus) | [ai-builder.md](docs/recursos/ai-builder.md) |
-| agent | `planner` | Revisa um plano antes da aprovação, e deriva as unidades de um plano aprovado (Opus) | [planner.md](docs/recursos/planner.md) |
-| agent | `developer` | Implementa uma unidade já derivada, em cold-start isolado (Sonnet) | [developer.md](docs/recursos/developer.md) |
-| command | `/decode-and-code:implement` | Roda o modo `implement` na sessão atual — pensado para sessão nova | [implement.md](docs/recursos/implement.md) |
-| command | `/decode-and-code:delegate` | Delega a unidade ao agent `developer` sem sair da sessão de orquestração | [delegate.md](docs/recursos/delegate.md) |
-| hooks | 4 hooks | Guardrail do projeto (`PreToolUse`) e anúncio de norma/guidelines/subagente — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
+| skill | `review-plan` | Revisa um plano antes da aprovação — os seis checks, parte por script, parte por julgamento (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
+| hooks | 3 hooks, 2 no pacote | Guardrail do projeto (`PreToolUse`) e log de norma/guidelines (`InstructionsLoaded`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
 | guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
 | guia de uso | Criar um guardrail | Quando e como adicionar uma regra a `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
@@ -102,10 +100,10 @@ materializa lá, e nunca viaja com os deste repositório.
 | # | Etapa | Onde |
 |---|---|---|
 | 1 | O plano nasce | `docs/plan/_inbox/` |
-| 2 | Revisão | modo `review` |
+| 2 | Revisão | skill `review-plan` |
 | 3 | **Aprovação** | humano |
-| 4 | Derivação em unidades | modo `derive` |
-| 5 | Implementação, uma unidade por vez | modo `implement`, em cold-start |
+| 4 | Derivação em unidades | skill `derive` |
+| 5 | Implementação, uma unidade por vez | skill `implement`, em cold-start |
 
 Quem executa uma unidade entrega arquivos e relatório, e não commita. O estado de cada unidade
 (`spec` → `wip` → `verified`) é **projetado a partir do teste**, nunca editado à mão.
@@ -126,10 +124,11 @@ O `CLAUDE.md` é a camada de **processo**; `<core>/system/` cobre o **domínio**
 
 **Princípio ou guideline? O teste.** *Uma equipe competente pode rejeitar isto e ainda estar
 fazendo trabalho bom?* Se **não**, é princípio — os deste repositório (*código é custo*, *subtração
-antes de adição*, *evidência acima de opinião*, mais o fluxo de decodificação e o protocolo de
-exceção) estão em [`principles.md`](.claude/rules/principles.md), com a proveniência em
+antes de adição*, *evidência acima de opinião*, mais o protocolo de exceção) estão em
+[`principles.md`](.claude/rules/principles.md), com a proveniência em
 [`03-principles-rule.md`](docs/plan/model/0001-decode-and-code-foundation/03-principles-rule.md). Se
-**sim**, é guideline. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
+**sim**, é guideline. O fluxo de decodificação que os aplica é mecanismo do método e mora na
+norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
 `paths:` e carrega por escopo.
 
 **Guideline ou skill?** Skill é **invocada** — alguém pede, e ela responde *como fazer X*. Guideline
@@ -191,11 +190,12 @@ Formato completo, os cinco gatilhos de escrita e a regra de despejo:
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — a skill, os hooks, os agentes, os comandos e o manifesto
-(`.claude/plugin.json`). `dist/decode-and-code/` é staging **gitignorado**: `empacotar.construir()`
-o escreve do zero a cada build, e nada dali é commitado. O que se distribui é o **zip** que
-`empacotar.empacotar_zip()` produz a partir dessa mesma árvore, publicado como asset de um GitHub
-Release e referenciado por `source: archive` (`url` + `sha256`) no `marketplace.json`.
+`.claude/` é a **fonte** — as quatro skills e a pasta compartilhada `decode-and-code/` (scripts), os
+hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
+**gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
+que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,
+publicado como asset de um GitHub Release e referenciado por `source: archive` (`url` + `sha256`) no
+`marketplace.json`.
 
 ```bash
 python3 -c "import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scripts'); import empacotar; empacotar.construir()"
@@ -224,7 +224,9 @@ devolve `404` para qualquer cliente sem token.
 bash scripts/test-python.sh
 ```
 
-Exige Python 3.10 explícito — ver [`language-policy.md`](docs/plan/system/language-policy.md) para
-a medição de ambientes que fixou o alvo.
+O harness aceita Python ≥ 3.10, prefere o 3.10 e avisa quando roda em outra versão; o CI roda em
+3.10 fixo e é a prova de compatibilidade com o Cowork. Ver
+[`language-policy.md`](docs/plan/system/language-policy.md) para a medição de ambientes que fixou o
+alvo.
 
 A norma completa fica em [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md).

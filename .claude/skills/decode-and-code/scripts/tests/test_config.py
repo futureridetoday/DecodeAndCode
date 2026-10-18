@@ -147,6 +147,8 @@ class TestRunnersAcompanhaConfig(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             raiz = Path(tmp).resolve()
             (raiz / "test_algo.rb").write_text("# ruby\n", encoding="utf-8")
+            (raiz / "scripts").mkdir()
+            (raiz / "scripts" / "test-ruby.sh").write_text("#!/bin/sh\n", encoding="utf-8")
 
             caminho_config = raiz / "config.json"
             caminho_config.write_text(
@@ -187,6 +189,8 @@ class TestRunnersDeclaraTsPorDefault(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             raiz = Path(tmp).resolve()
             caminho_inexistente = raiz / "config.json"
+            (raiz / "scripts").mkdir()
+            (raiz / "scripts" / "test-ts.sh").write_text("#!/bin/sh\n", encoding="utf-8")
             with mock.patch.object(lib, "_config_path", return_value=caminho_inexistente):
                 comando, cwd = verificacao._comando(raiz / "hub" / "test" / "algo.test.ts", raiz)
 

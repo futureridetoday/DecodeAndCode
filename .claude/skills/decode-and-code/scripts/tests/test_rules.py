@@ -60,7 +60,8 @@ class TestPrinciplesReal(unittest.TestCase):
         self.assertNotIn("solução mínima", corpo)
 
     def test_fluxo_tem_tres_estagios_e_dois_gates(self):
-        corpo = self.caminho.read_text(encoding="utf-8")
+        # O fluxo mora na norma desde a L-07 do plano apply-plugin-review: é mecanismo e viaja com o plugin.
+        corpo = (lib.repo_root() / "docs" / "plan" / "system" / "modelo-dev-units.md").read_text(encoding="utf-8")
         for estagio in ("Clarificar", "Evitar", "Reduzir"):
             with self.subTest(estagio=estagio):
                 self.assertIn(estagio, corpo)

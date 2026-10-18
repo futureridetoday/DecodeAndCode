@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Read", "Edit", "Write", "Bash(git status)", "Bash(git log*)", "Bash(git diff*)", "Bash(git add*)", "Bash(find*)", "Bash(grep*)", "Bash(ls*)", "Bash(cat*)", "Bash(wc*)", "Bash(sed -n*)", "Bash(mkdir*)", "Bash(chmod*)", "Bash(pwd)", "Bash(python3*)", "Bash(./scripts/test-python.sh*)"],
+    "allow": ["Read", "Edit", "Write", "Bash(git add*)", "Bash(mkdir*)", "Bash(chmod*)", "Bash(./scripts/test-python.sh*)", "Bash(bash scripts/test-python.sh *)"],
     "deny": ["Bash(rm -rf*)", "Bash(git reset --hard*)", "Bash(git checkout -- *)"]
   },
   "hooks": {
@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py\""
           }
         ]
       }
@@ -21,18 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/instructions_loaded.py"
-          }
-        ]
-      }
-    ],
-    "PostCompact": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/instructions_loaded.py\""
           }
         ]
       }
@@ -43,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent_start.py"
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent_start.py\""
           }
         ]
       }

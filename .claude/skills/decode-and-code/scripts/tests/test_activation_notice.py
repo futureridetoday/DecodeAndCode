@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Testes de `activation_notice` e dos três hooks de `.claude/hooks/` — unidade 0001-05.
+"""Testes de `activation_notice` e dos dois hooks de anúncio de `.claude/hooks/` — unidade 0001-05.
 
-Quatro classes cobrem o mecanismo puro (`TestAnunciar*`, `TestEstado`), uma cobre a ausência de
-instância no módulo (mesmo padrão de `test_guardrail.py`), e `TestHooksReais` roda os três pontos
-de entrada de verdade, via subprocesso com stdin/stdout/stderr — o oráculo que a norma pede: "o
-hook recusa o caso proibido e deixa passar o permitido" vale aqui como "o hook anuncia o que deve
-e cala o que não deve". Cada teste de hook real usa um `session_id` próprio (`uuid4`) para não
-colidir com nenhuma sessão real nem com outro teste, e limpa os arquivos de estado/log que criar.
+Duas classes cobrem o mecanismo puro (`TestAnunciar*`), uma cobre a ausência de instância no
+módulo (mesmo padrão de `test_guardrail.py`), e `TestHooksReais` roda os dois pontos de entrada de
+verdade, via subprocesso com stdin/stdout/stderr — o oráculo que a norma pede: "o hook recusa o
+caso proibido e deixa passar o permitido" vale aqui como "o hook anuncia o que deve e cala o que
+não deve". Cada teste de hook real usa um `session_id` próprio (`uuid4`) para não colidir com
+nenhuma sessão real nem com outro teste, e limpa o arquivo de log que criar.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 import unittest
 import uuid
 from pathlib import Path
@@ -58,47 +57,6 @@ class TestAnunciarInstructionsLoaded(unittest.TestCase):
         self.assertIsNone(anuncio)
 
 
-class TestRuleComPaths(unittest.TestCase):
-    def test_globs_presente_devolve_file_path(self):
-        caminho = activation_notice.rule_com_paths(
-            {
-                "file_path": "/repo/.claude/rules/hub-front.md",
-                "load_reason": "path_glob_match",
-                "globs": ["hub/app/**"],
-            }
-        )
-        self.assertEqual(caminho, "/repo/.claude/rules/hub-front.md")
-
-    def test_sem_globs_devolve_none(self):
-        self.assertIsNone(
-            activation_notice.rule_com_paths({"file_path": "/repo/CLAUDE.md", "load_reason": "session_start"})
-        )
-
-    def test_globs_vazia_devolve_none(self):
-        self.assertIsNone(
-            activation_notice.rule_com_paths(
-                {"file_path": "/repo/.claude/rules/x.md", "load_reason": "path_glob_match", "globs": []}
-            )
-        )
-
-
-class TestAnunciarPostCompact(unittest.TestCase):
-    def test_nomeia_o_que_nao_voltou(self):
-        anuncio = activation_notice.anunciar_post_compact(
-            ativas_antes=["a.md", "b.md"], voltaram=["a.md"]
-        )
-        self.assertIn("b.md", anuncio)
-        self.assertNotIn("a.md", anuncio)
-
-    def test_silencio_quando_todas_voltaram(self):
-        self.assertIsNone(
-            activation_notice.anunciar_post_compact(ativas_antes=["a.md"], voltaram=["a.md"])
-        )
-
-    def test_silencio_quando_nao_havia_nenhuma_ativa(self):
-        self.assertIsNone(activation_notice.anunciar_post_compact(ativas_antes=[], voltaram=[]))
-
-
 class TestAnunciarSubagentStart(unittest.TestCase):
     def test_payload_completo_nomeia_tipo_e_id(self):
         anuncio = activation_notice.anunciar_subagent_start(
@@ -114,31 +72,6 @@ class TestAnunciarSubagentStart(unittest.TestCase):
         self.assertIsNone(activation_notice.anunciar_subagent_start({"agent_type": "Explore"}))
 
 
-class TestEstado(unittest.TestCase):
-    def setUp(self):
-        self._tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self._tmp.cleanup)
-        self.estado = Path(self._tmp.name) / "rules-ativas.json"
-
-    def test_ler_estado_inexistente_devolve_lista_vazia(self):
-        self.assertEqual(activation_notice.ler_estado(self.estado), [])
-
-    def test_registrar_acrescenta_sem_duplicar(self):
-        activation_notice.registrar_estado(self.estado, "a.md")
-        activation_notice.registrar_estado(self.estado, "b.md")
-        activation_notice.registrar_estado(self.estado, "a.md")
-        self.assertEqual(activation_notice.ler_estado(self.estado), ["a.md", "b.md"])
-
-    def test_limpar_reseta_para_lista_vazia(self):
-        activation_notice.registrar_estado(self.estado, "a.md")
-        activation_notice.limpar_estado(self.estado)
-        self.assertEqual(activation_notice.ler_estado(self.estado), [])
-
-    def test_ler_estado_corrompido_devolve_lista_vazia(self):
-        self.estado.write_text("isto não é json", encoding="utf-8")
-        self.assertEqual(activation_notice.ler_estado(self.estado), [])
-
-
 class TestSemInstancia(unittest.TestCase):
     """`activation_notice.py` é mecanismo do plugin — não conhece nome de projeto nenhum."""
 
@@ -150,21 +83,19 @@ class TestSemInstancia(unittest.TestCase):
 
 
 class TestHooksReais(unittest.TestCase):
-    """Os três pontos de entrada de `.claude/hooks/`, rodados como o Claude Code os roda."""
+    """Os dois pontos de entrada de `.claude/hooks/`, rodados como o Claude Code os roda."""
 
     @classmethod
     def setUpClass(cls):
         cls.hooks = lib.repo_root() / ".claude" / "hooks"
-        for nome in ("instructions_loaded.py", "post_compact.py", "subagent_start.py"):
+        for nome in ("instructions_loaded.py", "subagent_start.py"):
             if not (cls.hooks / nome).is_file():
                 raise unittest.SkipTest(f"hook não encontrado: {cls.hooks / nome}")
 
     def setUp(self):
         self._sessao = f"teste-{uuid.uuid4().hex}"
         self._log = Path(gettempdir()) / f"decode-and-code-activation-{self._sessao}.log"
-        self._estado = Path(gettempdir()) / f"decode-and-code-rules-ativas-{self._sessao}.json"
         self.addCleanup(self._log.unlink, missing_ok=True)
-        self.addCleanup(self._estado.unlink, missing_ok=True)
 
     def _rodar(self, script: str, payload: dict) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -191,22 +122,6 @@ class TestHooksReais(unittest.TestCase):
         self.assertEqual(resultado.stdout, "")
         self.assertIn("/repo/CLAUDE.md", self._log.read_text(encoding="utf-8"))
 
-    def test_instructions_loaded_com_globs_registra_estado(self):
-        resultado = self._rodar(
-            "instructions_loaded.py",
-            {
-                "session_id": self._sessao,
-                "hook_event_name": "InstructionsLoaded",
-                "file_path": "/repo/.claude/rules/hub-front.md",
-                "load_reason": "path_glob_match",
-                "globs": ["hub/app/**"],
-            },
-        )
-        self.assertEqual(resultado.returncode, 0)
-        self.assertEqual(
-            activation_notice.ler_estado(self._estado), ["/repo/.claude/rules/hub-front.md"]
-        )
-
     def test_instructions_loaded_fora_do_escopo_nao_cria_log(self):
         resultado = self._rodar(
             "instructions_loaded.py",
@@ -225,40 +140,6 @@ class TestHooksReais(unittest.TestCase):
         )
         self.assertEqual(resultado.returncode, 0)
         self.assertEqual(resultado.stdout, "")
-
-    # -- post_compact.py ----------------------------------------------------------
-
-    def test_post_compact_nomeia_o_que_nao_voltou_e_limpa_o_estado(self):
-        activation_notice.registrar_estado(self._estado, "/repo/.claude/rules/hub-front.md")
-        activation_notice.registrar_estado(self._estado, "/repo/.claude/rules/data-arch.md")
-
-        resultado = self._rodar(
-            "post_compact.py",
-            {"session_id": self._sessao, "hook_event_name": "PostCompact", "trigger": "auto"},
-        )
-
-        self.assertEqual(resultado.returncode, 2)
-        self.assertIn("hub-front.md", resultado.stderr)
-        self.assertIn("data-arch.md", resultado.stderr)
-        self.assertEqual(activation_notice.ler_estado(self._estado), [])
-
-    def test_post_compact_sem_estado_produz_silencio(self):
-        resultado = self._rodar(
-            "post_compact.py",
-            {"session_id": self._sessao, "hook_event_name": "PostCompact", "trigger": "manual"},
-        )
-        self.assertEqual(resultado.returncode, 0)
-        self.assertEqual(resultado.stderr, "")
-
-    def test_post_compact_payload_malformado_nao_quebra(self):
-        resultado = subprocess.run(
-            [sys.executable, str(self.hooks / "post_compact.py")],
-            input="isto não é json",
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        self.assertEqual(resultado.returncode, 0)
 
     # -- subagent_start.py ---------------------------------------------------------
 

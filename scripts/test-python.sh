@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Roda os testes Python do DecodeAndCode com unittest (stdlib).
 #
-# Exige Python 3.10 — a versão do Cowork. Passar aqui é o que comprova que a
-# sintaxe usada roda na VM. Ver .claude/CLAUDE.md, seção Linguagem.
+# Aceita Python >= 3.10 e prefere o 3.10, a versão do Cowork: procura python3.10
+# primeiro e, se não achar, usa python3 desde que seja >= 3.10. Rodando em outra
+# versão, avisa em stderr — a prova de que a sintaxe roda na VM do Cowork é a do
+# CI, que fixa 3.10. Abaixo de 3.10 falha com instrução. Ver .claude/CLAUDE.md,
+# seção Linguagem, e .claude/rules/scripts.md.
 #
 # Uso:
 #   ./scripts/test-python.sh            todos os diretórios declarados
@@ -24,11 +27,11 @@ TEST_DIRS=(
 readonly REQUIRED_MINOR=10
 
 find_python() {
-  # Preferir o interpretador versionado; aceitar python3 apenas se for 3.10.
+  # Preferir o interpretador versionado; aceitar python3 se for >= 3.10.
   for candidate in python3.10 python3; do
     local bin
     bin="$(command -v "$candidate" 2>/dev/null)" || continue
-    if "$bin" -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, $REQUIRED_MINOR) else 1)" 2>/dev/null; then
+    if "$bin" -c "import sys; sys.exit(0 if sys.version_info[:2] >= (3, $REQUIRED_MINOR) else 1)" 2>/dev/null; then
       echo "$bin"
       return 0
     fi
@@ -37,9 +40,9 @@ find_python() {
 }
 
 if ! PYTHON="$(find_python)"; then
-  echo "erro: Python 3.$REQUIRED_MINOR não encontrado." >&2
+  echo "erro: Python >= 3.$REQUIRED_MINOR não encontrado." >&2
   echo "" >&2
-  echo "Verificamos em 3.$REQUIRED_MINOR porque é a versão do Cowork (3.10.12)." >&2
+  echo "O mínimo é 3.$REQUIRED_MINOR porque é a versão do Cowork (3.10.12)." >&2
   echo "No macOS o python3 do sistema é 3.9 e não se atualiza — instale ao lado:" >&2
   echo "" >&2
   echo "  brew install python@3.$REQUIRED_MINOR" >&2
@@ -50,6 +53,14 @@ fi
 
 echo "interpretador: $PYTHON ($("$PYTHON" --version 2>&1))"
 
+# Fora do 3.10, a suíte verde não prova a compatibilidade com o Cowork — o aviso
+# diz de quem é essa prova. Stderr, para não poluir o que se lê da saída padrão.
+versao="$("$PYTHON" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+if [ "$versao" != "3.$REQUIRED_MINOR" ]; then
+  echo "aviso: rodando em Python $versao, não em 3.$REQUIRED_MINOR." >&2
+  echo "       A prova de compatibilidade com o Cowork (3.$REQUIRED_MINOR) é a do CI." >&2
+fi
+
 if [ $# -gt 0 ]; then
   TEST_DIRS=("$@")
 fi
@@ -57,6 +68,20 @@ fi
 failed=0
 ran=0
 total=0
+
+# Guarda contra suíte que suja o repositório: teste escreve só em diretório
+# temporário. Retrato do `git status` antes e depois do laço — comparar os dois
+# (e não exigir árvore limpa) deixa a guarda indiferente a mudança que já
+# existia antes da suíte. Fora de repositório git, não há o que comparar.
+retrato_arvore() {
+  git -C "$REPO_ROOT" status --porcelain --untracked-files=all
+}
+
+guardar_arvore=0
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  guardar_arvore=1
+  arvore_antes="$(retrato_arvore)"
+fi
 
 for dir in "${TEST_DIRS[@]}"; do
   target="$REPO_ROOT/$dir"
@@ -122,6 +147,16 @@ for dir in "${TEST_DIRS[@]}"; do
     failed=1
   fi
 done
+
+if [ "$guardar_arvore" -eq 1 ]; then
+  arvore_depois="$(retrato_arvore)"
+  if [ "$arvore_antes" != "$arvore_depois" ]; then
+    echo "" >&2
+    echo "erro: a suíte deixou mudança no repositório — teste deve escrever só em diretório temporário:" >&2
+    diff <(printf '%s\n' "$arvore_antes") <(printf '%s\n' "$arvore_depois") | grep -E '^[<>]' >&2
+    failed=1
+  fi
+fi
 
 echo ""
 if [ "$failed" -ne 0 ]; then

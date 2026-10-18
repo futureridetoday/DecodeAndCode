@@ -1,103 +1,104 @@
 # decode-and-code
 
-Versão 1.0.0 · skill
+Versão 1.0.0 · skills (3)
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
 ## O que é
 
-A skill que executa a norma de Unidades de Desenvolvimento
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)) em três modos: `review` (revisar um
-plano antes da aprovação), `derive` (derivar a estrutura e as unidades de um plano aprovado) e
+As três skills que executam a norma de Unidades de Desenvolvimento
+([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)), uma por modo: `review-plan` (revisar
+um plano antes da aprovação), `derive` (derivar a estrutura e as unidades de um plano aprovado) e
 `implement` (implementar uma unidade já derivada, em cold-start). Todo determinismo — gates,
-contagem, projeção de estado, validação de nome e colisão — fica nos scripts em `scripts/`; a skill
-cuida do que exige julgamento.
+contagem, projeção de estado, validação de nome e colisão — fica nos scripts da pasta compartilhada
+`decode-and-code/scripts/`; as skills cuidam do que exige julgamento.
 
 ## Problema que resolve
 
 Uma sessão nova não sabe o que a anterior sabia. Sem um método que force o plano a carregar essa
-diferença, cada retomada re-deriva o que já existe ou executa fora do que foi desenhado. A skill dá
-o procedimento único: o modo é sempre explícito, os gates barram avanço com teste empírico, e o
-estado de cada unidade é projetado do teste, nunca escrito à mão.
+diferença, cada retomada re-deriva o que já existe ou executa fora do que foi desenhado. As skills
+dão o procedimento: o modo é o nome da skill, os gates barram avanço com teste empírico, e o estado
+de cada unidade é projetado do teste, nunca escrito à mão.
 
 ## Como funciona
 
-O primeiro argumento é o modo — nunca inferido do texto livre. Cada modo compõe scripts via
-`python3` (mesmo import dos testes, `sys.path` até `scripts/`):
+Cada skill chama os scripts por um ponto de entrada só, o `dc.py`
+(`python3 "${CLAUDE_SKILL_DIR}/dc.py" <subcomando> …`, do diretório do projeto), e o `allowed-tools`
+libera só ele — `Bash(python3 "${CLAUDE_SKILL_DIR}/dc.py" *)` e a grafia sem aspas, nunca `Bash`
+solto, que pré-aprovaria qualquer comando de shell no turno da skill. Esse `dc.py` é um atalho na
+pasta de cada skill que executa o da pasta compartilhada `decode-and-code/scripts/`: a liberação casa
+o texto do comando, e um caminho com `..` o modelo normaliza e deixa de casar. Saída em texto simples;
+código `0` ok, `1` problema ou reprovação, `2` erro de uso ou exceção:
 
-- `review <plano>` — roda os checks determinísticos primeiro (nome por `nomenclatura`, concorrência
-  na região `planos` de `_planos.md`, links do corpo resolvem em disco), depois reserva julgamento
-  para erro conceitual, erro de arquitetura e adequação das fontes. Lacunas novas entram como
-  `L-XX`, sem tentar resolvê-las. Encerra **sem aprovar** — quem aprova é o humano.
-- `derive <plano aprovado>` — `scaffold.aprovar` valida `core`, atribui o número, move o plano do
-  `_inbox` e registra a linha em `_planos.md`. No porte grande, decide a fatia de cada unidade
-  (contrato, sequência, arquivos que toca), numera com `numeracao`, escreve, linta com
-  `lint_unidade`, projeta o backlog e grava o `_handoff.md`.
-- `implement <unidade>` — gate de entrada (`lint_unidade`), lê a unidade inteira, escreve o teste
-  declarado cobrindo o critério de aceite e o código que o faz passar tocando só os arquivos que a
-  unidade lista, gate de saída (`verificacao.verificar`), projeta o backlog. O executor **não
-  commita**.
+- **`review-plan <plano>`** (Opus) — roda os checks determinísticos primeiro (nome por
+  `validar-nome`, concorrência na região `planos` de `_planos.md` por `concorrencia`, links do
+  corpo), depois reserva julgamento para erro conceitual, erro de arquitetura e adequação das
+  fontes. Lacunas novas entram como `L-XX`. Encerra **sem aprovar** — quem aprova é o humano.
+- **`derive <plano aprovado>`** (Opus) — `aprovar` valida `core`, numera e move o plano do
+  `_inbox`. No porte grande, decide a fatia de cada unidade, escreve, linta, projeta o backlog e
+  grava o `_handoff.md`. **Só por invocação explícita** (`disable-model-invocation: true`): cria
+  estrutura e move arquivos, e o Skill tool recusa que o modelo o dispare.
+- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint-unidade`), lê a unidade inteira e as seções
+  que ela cita (`normas`),
+  escreve o teste declarado e o código que o faz passar tocando só os arquivos que ela lista, gate
+  de saída (`verificar`), projeta o backlog (`projetar-backlog`). **Não commita.**
+
+**O `implement` roda sempre em fork** (`context: fork`, `agent: general-purpose`): um subagent sem o
+histórico da conversa, em qualquer sessão, inclusive a de orquestração, sem gastar o contexto dela.
+Substitui o par de commands `/implement` e `/delegate` das versões anteriores. Daí duas
+consequências de desenho: não é interativo — *se o executor precisou perguntar, a unidade falhou* —,
+e o resultado volta como uma mensagem, que quem orquestra revisa antes de versionar.
+
+**O modelo é declarado em cada skill** (`model:`), não herdado da sessão: `review-plan` numa sessão
+Sonnet roda em Opus, e `implement` numa sessão Opus roda só em Sonnet (norma, seção *Modelos*).
 
 ## Como usar
 
-Sempre com o modo explícito no primeiro argumento:
+| Plugin instalado | Checkout deste repositório |
+|---|---|
+| `/decode-and-code:review-plan <plano>` | `/review-plan <plano>` |
+| `/decode-and-code:derive <plano>` | `/derive <plano>` |
+| `/decode-and-code:implement <unidade>` | `/implement <unidade>` |
 
-> revise o plano docs/plan/_inbox/catalogo.md → modo `review`
+> /decode-and-code:review-plan docs/plan/_inbox/catalogo.md
 
-> derive o plano docs/plan/_inbox/catalogo.md → modo `derive`
-
-> implemente a unidade 0001-03 → modo `implement`
-
-Sem modo, ou com modo fora dos três, a skill recusa e lista as opções — não escolhe por conta
-própria.
-
-`review` e `derive` pedem julgamento denso e rodam melhor em Opus; `implement` roda por padrão em
-Sonnet, com override do usuário conforme o escopo. A skill **herda o modelo de quem a invoca** — a
-troca por modo não é declarável nela.
-
-Para rodar `implement` numa sessão limpa sem gastar o contexto da conversa atual, use o comando
-[`/decode-and-code:implement`](implement.md) (sessão nova) ou
-[`/decode-and-code:delegate`](delegate.md) (delega ao agent `developer`). Para `review`/`derive`
-isolados, invoque o agent [`@decode-and-code:planner`](planner.md).
+O modelo também invoca `review-plan` e `implement` por pedido em linguagem natural; o `derive`,
+só o usuário, pelo comando. O nome `review` ficou de fora porque `/review` é alias do
+`/code-review` embutido.
 
 ## Exemplos de uso
 
-**Revisar antes de aprovar.** Um plano novo está no `_inbox/`. `review` roda os seis checks, separa
-o que o script decidiu do que é julgamento, registra lacunas como `L-XX` sem resolvê-las, e devolve
-uma linha por achado — check, veredito (`bloqueante` | `aviso`), origem (`comando` | `julgamento`).
+**Revisar antes de aprovar.** Um plano novo está no `_inbox/`. `review-plan` roda os seis checks,
+separa o que o script decidiu do que é julgamento, e devolve uma linha por achado — check, veredito
+(`bloqueante` | `aviso`), origem (`comando` | `julgamento`).
 
-**Derivar um plano grande.** Plano aprovado, ainda sem unidades. `derive` cria
-`<core>/<NNNN>-<nome>/`, gera um arquivo por unidade prevista no `## Escopo`, linta cada um, projeta
-o backlog e escreve o `_handoff.md` para a sessão de execução.
+**Derivar um plano grande.** Plano aprovado, ainda sem unidades. `derive` cria `<core>/<NNNN>-<nome>/`,
+gera um arquivo por unidade do `## Escopo`, linta cada um e escreve o `_handoff.md` para a sessão de
+execução.
 
-**Implementar uma unidade.** Unidade `0004-06` derivada. `implement` roda o gate de entrada,
-escreve o teste do critério de aceite e o código, roda o gate de saída — e se o teste não passa, a
-unidade não transiciona para `verified`.
+**Implementar uma unidade.** Unidade `0004-06` derivada. `implement` roda o gate de entrada, escreve
+o teste e o código, roda o gate de saída — e se o teste não passa, a unidade não vira `verified`.
 
 ## Fundamentação
 
-A norma [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md) — os três modos, os dois gates,
-o fluxo completo, o formato do arquivo de unidade — é a fonte. A skill descreve só o **como** de
-cada modo, para não duplicar o que a norma já diz (regra anti-drift). Origem medida: a skill
-`dev-units` do AmFlow — 15 de 15 unidades executadas por Sonnet em sessões novas, sem uma pergunta
-sobre conteúdo de unidade.
+A norma [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md) — os modos, os dois gates, o
+fluxo completo, o formato da unidade — é a fonte; as skills descrevem só o **como**, para não
+duplicar o que ela diz (regra anti-drift). Origem medida: a skill `dev-units` do AmFlow — 15 de 15
+unidades executadas por Sonnet em sessões novas, sem uma pergunta sobre conteúdo de unidade.
 
 ## Base de conhecimento
 
-Nenhuma embutida além do próprio `SKILL.md`. A norma é lida do projeto que instala, em
-`<plan_root>/system/modelo-dev-units.md` — `plan_root` resolvido pelo `config.json` da skill
-(`docs/plan` é só o default). Os scripts em `scripts/` carregam toda a lógica determinística;
-`bootstrap.iniciar` cria a estrutura (`_planos.md`, `_inbox/`, a norma) num projeto que acabou de
-instalar o plugin.
+Nenhuma além dos próprios `SKILL.md`. A norma é lida do projeto que instala, em
+`<plan_root>/system/modelo-dev-units.md` — `plan_root` vem do `config.json` da pasta compartilhada
+(`docs/plan` é só o default). `dc.py bootstrap` cria a estrutura num projeto recém-instalado. A
+skill [`intake`](intake.md), que antecede o ciclo, tem documento próprio.
 
 ## Limites
 
-- **Não infere o modo.** Sem modo explícito, recusa e lista as opções.
-- **Não aprova plano.** `review` encerra com achados; a aprovação é ato humano.
+- **Não aprova plano.** `review-plan` encerra com achados; a aprovação é ato humano.
 - **`derive` completo só no porte grande.** Pequeno e médio movem o plano sem subpasta e não
-  derivam unidade — médio projeta as caixas de `## Tarefas`, pequeno fecha quando o humano grava
-  `status: done`.
-- **`implement` não commita.** Entrega arquivos e relatório; versionar é de quem orquestra.
-- **Não resolve unidade insuficiente.** Se o executor precisou perguntar, a unidade falhou — a
-  correção volta para quem deriva, como lacuna.
-- **Nada específico de projeto viaja na skill.** Guardrail e guideline são do projeto que instala.
+  derivam unidade.
+- **`implement` não commita e não pergunta.** Entrega arquivos e relatório; versionar é de quem
+  orquestra.
+- **Não resolve unidade insuficiente.** A correção volta para quem deriva, como lacuna.
+- **Nada específico de projeto viaja nas skills.** Guardrail e guideline são do projeto que instala.

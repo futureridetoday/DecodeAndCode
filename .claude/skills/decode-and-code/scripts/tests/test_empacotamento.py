@@ -4,15 +4,21 @@
 Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
-de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, skill com
-`scripts/tests/` e `__pycache__` para provar a exclusão, quatro hooks e um `settings.json` com a
-âncora `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
+de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as quatro skills, a
+pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os três scripts de
+desenvolvimento (`P-05`), três hooks e um `settings.json` com os três eventos e a âncora
+`${CLAUDE_PROJECT_DIR}/.claude/hooks`.
 
 **Fonte real**, em `TestPacoteRealEstaLimpo`, para a **instância**: constrói deste repositório e
 exige `verificar() == []`. A primeira entrega tinha só a sintética, e ela respondia `[]` sobre uma
 árvore montada para não conter marcador nenhum — enquanto o pacote real saía com o nome do projeto
 no `SKILL.md` e dentro do `_CONTEUDO_INICIAL` de `porte.py`. Fixture prova o mecanismo, nunca a
 instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza a regra.
+
+O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`) mais a pasta
+compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; os comandos saem do
+pacote. O `P-06` converte o único agent na skill `intake` (`D-03`): o pacote passa a ter quatro
+skills e nenhum `agents/`.
 
 A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
 de graça — mora dentro da skill desde a `0004-04`, e `_copiar_skill` já copia a árvore inteira —,
@@ -21,11 +27,21 @@ fixture: é exatamente o arquivo que faltava quando `scaffold` morria no import.
 destino próprios (`docs/plan/system/modelo-dev-units.md` → `reference/`, dentro da skill do
 pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacotar._fontes` agora
 declara.
+
+O `P-05` enxuga o pacote: os scripts de desenvolvimento (`empacotar`, `reconciliar` e `lint_skill`;
+o lint de agent saiu com o agent, no `P-06`) e o hook `SubagentStart` ficam só neste repositório
+(`D-02`: `InstructionsLoaded` viaja). Os testes que usam `lint_skill` importam o do **checkout**,
+porque o do pacote deixou de existir.
+
+O `P-10` tira do `SKILL.md` empacotado todo campo de frontmatter fora da documentação oficial
+(`empacotar._so_campos_oficiais`): o mecanismo, em `TestSoCamposOficiais`, com texto sintético; a
+instância, em `TestPacoteRealEstaLimpo`, contra as quatro skills reais.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -39,6 +55,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import empacotar
 import lib
+import lint_skill
+
+
+NOMES_DAS_SKILLS = lib.SKILLS
+
+# Os três hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
+_HOOKS_DA_FONTE = {
+    "PreToolUse": "pre_tool_use.py",
+    "InstructionsLoaded": "instructions_loaded.py",
+    "SubagentStart": "subagent_start.py",
+}
+_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded"}
+_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py"}
 
 
 def _montar_fonte(raiz: Path) -> None:
@@ -49,14 +78,26 @@ def _montar_fonte(raiz: Path) -> None:
         json.dumps({"name": "exemplo", "version": "1.0.0"}, ensure_ascii=False), encoding="utf-8"
     )
 
-    skill = raiz / ".claude" / "skills" / "decode-and-code"
+    skills = raiz / ".claude" / "skills"
+    for nome in NOMES_DAS_SKILLS:
+        (skills / nome).mkdir(parents=True, exist_ok=True)
+        # Um campo oficial e o bloco de rastreabilidade com o nome do repositório de origem: o build
+        # precisa manter o primeiro e tirar o segundo (`P-10`).
+        (skills / nome / "SKILL.md").write_text(
+            f"---\n# ── nativos ──\nname: {nome}\n\n# ── amflow ──\nproject: {raiz.name}\n---\n# {nome} sintético\n",
+            encoding="utf-8",
+        )
+
+    skill = skills / "decode-and-code"
     skill.mkdir(parents=True, exist_ok=True)
-    (skill / "SKILL.md").write_text("# skill sintética\n", encoding="utf-8")
+    (skill / "config.json").write_text("{}\n", encoding="utf-8")
 
     scripts = skill / "scripts"
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "lib.py").write_text("# mecanismo\n", encoding="utf-8")
     (scripts / "move-md.py").write_text("# mecanismo — reescreve link markdown\n", encoding="utf-8")
+    for nome in empacotar._SCRIPTS_DE_DESENVOLVIMENTO:
+        (scripts / nome).write_text(f"# {nome} — só de quem desenvolve o método\n", encoding="utf-8")
 
     pycache = scripts / "__pycache__"
     pycache.mkdir(parents=True, exist_ok=True)
@@ -68,51 +109,26 @@ def _montar_fonte(raiz: Path) -> None:
 
     hooks = raiz / ".claude" / "hooks"
     hooks.mkdir(parents=True, exist_ok=True)
-    nomes_hooks = ("pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py")
-    for nome in nomes_hooks:
+    for nome in _HOOKS_DA_FONTE.values():
         (hooks / nome).write_text(f"# {nome}\n", encoding="utf-8")
-
-    agents = raiz / ".claude" / "agents"
-    agents.mkdir(parents=True, exist_ok=True)
-    (agents / "planner.md").write_text("# planner sintético\n", encoding="utf-8")
-    (agents / "developer.md").write_text("# developer sintético\n", encoding="utf-8")
-
-    commands = raiz / ".claude" / "commands"
-    commands.mkdir(parents=True, exist_ok=True)
-    (commands / "implement.md").write_text(
-        "---\nproject: exemplo\n---\n# implement sintético\n", encoding="utf-8"
-    )
-    (commands / "delegate.md").write_text(
-        "---\nproject: exemplo\n---\n# delegate sintético\n", encoding="utf-8"
-    )
 
     settings = raiz / ".claude" / "settings.json"
     settings.write_text(
         json.dumps(
             {
                 "hooks": {
-                    "PreToolUse": [
+                    evento: [
                         {
                             "matcher": "*",
                             "hooks": [
                                 {
                                     "type": "command",
-                                    "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_tool_use.py",
+                                    "command": f'python3 "${{CLAUDE_PROJECT_DIR}}/.claude/hooks/{nome}"',
                                 }
                             ],
                         }
-                    ],
-                    "PostCompact": [
-                        {
-                            "matcher": "*",
-                            "hooks": [
-                                {
-                                    "type": "command",
-                                    "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/post_compact.py",
-                                }
-                            ],
-                        }
-                    ],
+                    ]
+                    for evento, nome in _HOOKS_DA_FONTE.items()
                 }
             }
         ),
@@ -125,6 +141,47 @@ def _montar_fonte(raiz: Path) -> None:
     docs = raiz / "docs" / "plan" / "system"
     docs.mkdir(parents=True, exist_ok=True)
     (docs / "modelo-dev-units.md").write_text("# norma — mecanismo sintético\n", encoding="utf-8")
+
+
+def _chaves_de_topo(skill_md: str) -> set[str]:
+    """As chaves de topo do frontmatter de `skill_md` — oráculo próprio, não o de `empacotar`.
+
+    Uma linha a cada vez, só as que começam em coluna zero com `chave:`; o que está indentado é
+    continuação de um bloco, e o corpo depois do segundo `---` não entra.
+    """
+    linhas = skill_md.splitlines()
+    fim = linhas.index("---", 1)
+    return {m.group(1) for linha in linhas[1:fim] if (m := re.match(r"([\w-]+):", linha))}
+
+
+def _escrever_pacote_minimo(raiz: Path, comando: str) -> None:
+    """Pacote de plugin mínimo que o validador oficial aceita sem aviso próprio — `P-08`.
+
+    Manifesto com `description` e `author` (sem eles o `--strict` reprova pelo manifesto) e um
+    `hooks/hooks.json` com um único comando, o que o teste varia.
+    """
+    manifesto = raiz / ".claude-plugin" / "plugin.json"
+    manifesto.parent.mkdir(parents=True)
+    manifesto.write_text(
+        json.dumps(
+            {
+                "name": "minimo",
+                "version": "1.0.0",
+                "description": "pacote sintético para o teste do validador",
+                "author": {"name": "teste"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    hooks = raiz / "hooks"
+    hooks.mkdir()
+    (hooks / "hooks.json").write_text(
+        json.dumps(
+            {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": comando}]}]}}
+        ),
+        encoding="utf-8",
+    )
 
 
 class _BaseComFonteSintetica(unittest.TestCase):
@@ -150,11 +207,46 @@ class TestConstruir(_BaseComFonteSintetica):
         for caminho in escritos:
             self.assertTrue(caminho.is_file(), f"não escrito: {caminho}")
 
-    def test_manifesto_e_skill_md_presentes(self):
+    def test_manifesto_e_as_quatro_skills_presentes(self):
         empacotar.construir(self.destino)
         self.assertTrue((self.destino / ".claude-plugin" / "plugin.json").is_file())
-        self.assertTrue((self.destino / "skills" / "decode-and-code" / "SKILL.md").is_file())
-        self.assertTrue((self.destino / "skills" / "decode-and-code" / "scripts" / "lib.py").is_file())
+        for nome in NOMES_DAS_SKILLS:
+            with self.subTest(skill=nome):
+                self.assertTrue((self.destino / "skills" / nome / "SKILL.md").is_file())
+
+    def test_pasta_compartilhada_tem_scripts_e_config_e_nao_tem_skill_md(self):
+        empacotar.construir(self.destino)
+        compartilhada = self.destino / "skills" / "decode-and-code"
+        self.assertFalse((compartilhada / "SKILL.md").exists())
+        self.assertTrue((compartilhada / "scripts" / "lib.py").is_file())
+        self.assertTrue((compartilhada / "config.json").is_file())
+
+    def test_skills_perdem_o_bloco_de_rastreabilidade_e_o_nome_do_repositorio(self):
+        """`P-10` — o `SKILL.md` empacotado fica com o campo oficial e sem o que a fonte guarda para si."""
+        empacotar.construir(self.destino)
+        for nome in NOMES_DAS_SKILLS:
+            with self.subTest(skill=nome):
+                texto = (self.destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+                self.assertEqual(texto, f"---\n# ── nativos ──\nname: {nome}\n---\n# {nome} sintético\n")
+                self.assertNotIn(self.raiz.name, texto)
+
+    def test_so_as_quatro_skills_e_a_compartilhada_viajam(self):
+        """Uma skill de desenvolvimento do repositório não vaza: a lista é explícita, não `skills/*`."""
+        so_de_desenvolvimento = self.raiz / ".claude" / "skills" / "so-de-desenvolvimento"
+        so_de_desenvolvimento.mkdir()
+        (so_de_desenvolvimento / "SKILL.md").write_text("# fica de fora\n", encoding="utf-8")
+
+        empacotar.construir(self.destino)
+        viajaram = {p.name for p in (self.destino / "skills").iterdir()}
+        self.assertEqual(viajaram, {"decode-and-code", *NOMES_DAS_SKILLS})
+
+    def test_fonte_de_skill_ausente_levanta_antes_de_escrever(self):
+        (self.raiz / ".claude" / "skills" / "derive" / "SKILL.md").unlink()
+        (self.raiz / ".claude" / "skills" / "derive").rmdir()
+
+        with self.assertRaises(FileNotFoundError):
+            empacotar.construir(self.destino)
+        self.assertFalse(self.destino.exists())
 
     def test_sem_scripts_tests_sem_pycache_sem_guardrails_sem_docs(self):
         empacotar.construir(self.destino)
@@ -174,47 +266,64 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
         self.assertEqual([], [str(p) for p in self.destino.rglob(".DS_Store")])
 
-    def test_quatro_hooks_copiados(self):
+    def test_so_os_dois_hooks_que_viajam_sao_copiados(self):
+        """`P-05` — `hooks/` leva os scripts dos dois eventos que ficam, mais o `hooks.json`."""
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "hooks").glob("*.py")}
-        self.assertEqual(
-            copiados,
-            {"pre_tool_use.py", "instructions_loaded.py", "post_compact.py", "subagent_start.py"},
-        )
+        copiados = {p.name for p in (self.destino / "hooks").iterdir()}
+        self.assertEqual(copiados, {*_HOOKS_QUE_VIAJAM, "hooks.json"})
 
-    def test_dois_agentes_copiados(self):
+    def test_scripts_de_desenvolvimento_nao_viajam_na_pasta_compartilhada(self):
+        """`P-05` — o `empacotar`, o `reconciliar` e o `lint_skill` só servem a quem desenvolve."""
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "agents").glob("*.md")}
-        self.assertEqual(copiados, {"planner.md", "developer.md"})
+        scripts = self.destino / "skills" / "decode-and-code" / "scripts"
+        for nome in empacotar._SCRIPTS_DE_DESENVOLVIMENTO:
+            with self.subTest(script=nome):
+                self.assertFalse((scripts / nome).exists())
+        self.assertEqual({p.name for p in scripts.iterdir()}, {"lib.py", "move-md.py"})
 
-    def test_dois_comandos_copiados_com_project_reescrito(self):
-        """`0004-06` — `/implement` e `/delegate` viajam, e `project:` declara o plugin."""
+    def test_a_exclusao_dos_scripts_de_desenvolvimento_e_so_da_pasta_compartilhada(self):
+        """Uma skill que tenha um arquivo com um desses nomes não o perde em silêncio."""
+        da_skill = self.raiz / ".claude" / "skills" / NOMES_DAS_SKILLS[0] / "lint_skill.py"
+        da_skill.write_text("# parte da skill, não da pasta compartilhada\n", encoding="utf-8")
+
         empacotar.construir(self.destino)
-        copiados = {p.name for p in (self.destino / "commands").glob("*.md")}
-        self.assertEqual(copiados, {"implement.md", "delegate.md"})
+        self.assertTrue((self.destino / "skills" / NOMES_DAS_SKILLS[0] / "lint_skill.py").is_file())
 
-        texto = (self.destino / "commands" / "implement.md").read_text(encoding="utf-8")
-        self.assertIn("project: exemplo", texto)
-        self.assertNotIn(f"project: {self.raiz.name}", texto)
-
-    def test_fonte_comandos_ausente_levanta_antes_de_escrever(self):
-        shutil.rmtree(self.raiz / ".claude" / "commands")
+    def test_hook_citado_no_settings_sem_fonte_levanta_antes_de_escrever(self):
+        (self.raiz / ".claude" / "hooks" / "instructions_loaded.py").unlink()
 
         with self.assertRaises(FileNotFoundError):
             empacotar.construir(self.destino)
         self.assertFalse(self.destino.exists())
 
-    def test_hooks_json_mesmos_eventos_do_settings_e_ancora_trocada(self):
+    def test_pacote_nao_tem_agents_nem_quando_a_fonte_tem(self):
+        """`P-06` — o único agent virou a skill `intake`; o pacote não copia agent de lugar nenhum."""
+        agents = self.raiz / ".claude" / "agents"
+        agents.mkdir()
+        (agents / "qualquer.md").write_text("# agent que não viaja\n", encoding="utf-8")
+
+        empacotar.construir(self.destino)
+        self.assertFalse((self.destino / "agents").exists())
+        self.assertEqual([], [str(p) for p in self.destino.rglob("qualquer.md")])
+
+    def test_pacote_nao_tem_commands(self):
+        """`P-03` — os comandos viraram skills, e `commands/` deixou de ser fonte e de ser destino."""
+        empacotar.construir(self.destino)
+        self.assertFalse((self.destino / "commands").exists())
+
+    def test_hooks_json_so_os_dois_eventos_que_viajam_e_ancora_trocada(self):
         empacotar.construir(self.destino)
 
         eventos_settings = set(json.loads((self.raiz / ".claude" / "settings.json").read_text())["hooks"])
-        hooks_json = self.destino / "hooks" / "hooks.json"
-        conteudo = hooks_json.read_text(encoding="utf-8")
+        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+
+        conteudo = (self.destino / "hooks" / "hooks.json").read_text(encoding="utf-8")
         eventos_gerados = set(json.loads(conteudo)["hooks"])
 
-        self.assertEqual(eventos_gerados, eventos_settings)
+        self.assertEqual(eventos_gerados, _EVENTOS_QUE_VIAJAM)
         self.assertNotIn("CLAUDE_PROJECT_DIR", conteudo)
         self.assertIn("${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use.py", conteudo)
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/hooks/instructions_loaded.py", conteudo)
 
     def test_sempre_do_zero_remove_o_que_ja_estava_no_destino(self):
         self.destino.mkdir(parents=True)
@@ -253,6 +362,72 @@ class TestConstruir(_BaseComFonteSintetica):
         with self.assertRaises(FileNotFoundError):
             empacotar.construir(self.destino)
         self.assertFalse(self.destino.exists())
+
+
+class TestSoCamposOficiais(unittest.TestCase):
+    """`P-10` — o mecanismo que tira do frontmatter o que a documentação oficial não lista."""
+
+    ENTRADA = (
+        "---\n"
+        "# ── claude code — campos nativos ──\n"
+        "name: exemplo\n"
+        "description: |\n"
+        "  Primeiro parágrafo.\n"
+        "\n"
+        "  type: dentro do bloco, indentado — não é campo.\n"
+        "\n"
+        "model: opus\n"
+        "allowed-tools: \"Read\"\n"
+        "\n"
+        "# ── amflow — rastreabilidade ──\n"
+        "type: skill\n"
+        "project: Exemplo\n"
+        "tags: [a, b]\n"
+        "dependencies:\n"
+        "  - um\n"
+        "  - dois\n"
+        "scope:\n"
+        "- tres\n"
+        "\n"
+        "hub_id: \"\"\n"
+        "source: local\n"
+        "---\n"
+        "\n"
+        "# Corpo\n"
+        "\n"
+        "type: no corpo, intocado\n"
+        "---\n"
+    )
+
+    def test_tira_chave_continuacao_e_comentario_do_bloco_nao_oficial(self):
+        esperado = (
+            "---\n"
+            "# ── claude code — campos nativos ──\n"
+            "name: exemplo\n"
+            "description: |\n"
+            "  Primeiro parágrafo.\n"
+            "\n"
+            "  type: dentro do bloco, indentado — não é campo.\n"
+            "\n"
+            "model: opus\n"
+            "allowed-tools: \"Read\"\n"
+            "---\n"
+            "\n"
+            "# Corpo\n"
+            "\n"
+            "type: no corpo, intocado\n"
+            "---\n"
+        )
+        self.assertEqual(empacotar._so_campos_oficiais(self.ENTRADA), esperado)
+
+    def test_campo_oficial_vazio_ou_nao_continua_onde_esta(self):
+        entrada = '---\nname: a\neffort: ""\ncontext: fork\n---\ncorpo\n'
+        self.assertEqual(empacotar._so_campos_oficiais(entrada), entrada)
+
+    def test_sem_frontmatter_fechado_volta_igual(self):
+        for texto in ("", "# só corpo\n", "---\ntype: skill\n", "type: skill\n---\n"):
+            with self.subTest(texto=texto):
+                self.assertEqual(empacotar._so_campos_oficiais(texto), texto)
 
 
 class TestVerificar(_BaseComFonteSintetica):
@@ -296,23 +471,93 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             empacotar.construir(destino)
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_skill_empacotada_declara_o_plugin_e_nao_o_repositorio(self):
+    def test_corpo_das_skills_empacotadas_nao_cita_registro_que_nao_viaja(self):
+        """`P-07` — `L-NN`, decisão numerada e unidade deste repositório apontam para planos fora do pacote.
+
+        Só o corpo: o exemplo de uso na `description` cita uma unidade de propósito.
+        """
+        historico = re.compile(r"\bL-\d{2}\b|decisão \d+|unidade \d{4}-\d{2}")
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            texto = (destino / "skills" / "decode-and-code" / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("project: decode-and-code", texto)
-            self.assertNotIn(f"project: {lib.repo_root().name}", texto)
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    corpo = lint_skill._corpo((destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8"))
+                    self.assertEqual(historico.findall(corpo), [])
 
-    def test_dois_agentes_presentes_no_pacote_real(self):
-        """`D-27` — os dois agentes viajam, e o `planner` deixou de citar caminho deste projeto."""
+    def test_as_quatro_skills_empacotadas_so_declaram_campos_oficiais(self):
+        """`P-10` — as chaves do `SKILL.md` empacotado são as da fonte que a lista oficial reconhece.
+
+        Nem a mais (o bloco de rastreabilidade não viaja), nem a menos (nada oficial se perde). O corpo
+        depois do frontmatter sai idêntico.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            self.assertTrue((destino / "agents" / "planner.md").is_file())
-            self.assertTrue((destino / "agents" / "developer.md").is_file())
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    fonte = (lib.repo_root() / ".claude" / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+                    empacotado = (destino / "skills" / nome / "SKILL.md").read_text(encoding="utf-8")
+
+                    chaves_da_fonte = _chaves_de_topo(fonte)
+                    chaves = _chaves_de_topo(empacotado)
+                    self.assertLessEqual(chaves, empacotar._CAMPOS_OFICIAIS)
+                    self.assertEqual(chaves, chaves_da_fonte & empacotar._CAMPOS_OFICIAIS)
+                    # Contra um erro na própria lista: o que toda skill do método declara tem de sobreviver.
+                    self.assertLessEqual({"name", "description", "model", "allowed-tools"}, chaves)
+                    self.assertEqual(lint_skill._corpo(empacotado), lint_skill._corpo(fonte))
+
+    def test_skills_empacotadas_citam_scripts_que_existem_no_pacote(self):
+        """`P-01` e `P-03` — lint sobre a cópia empacotada, não sobre a fonte.
+
+        `lint_skill` resolve `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/` contra o diretório da
+        skill que recebe, então aqui prova que cada script citado viaja na pasta irmã, que o `..`
+        resolve dentro do pacote, e que nenhum caminho fixo sobrou. O que o lint pode acusar é só a
+        falta do bloco de rastreabilidade, que o pacote não leva (`P-10`): campo oficial ausente ainda
+        reprova.
+        """
+        ausentes_do_pacote = {
+            f"campo obrigatório ausente no frontmatter: {campo}"
+            for campo in lint_skill.CAMPOS_FRONTMATTER
+            if campo not in empacotar._CAMPOS_OFICIAIS
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            for nome in NOMES_DAS_SKILLS:
+                with self.subTest(skill=nome):
+                    skill = destino / "skills" / nome / "SKILL.md"
+                    self.assertIn(
+                        "${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/", skill.read_text(encoding="utf-8")
+                    )
+                    self.assertEqual([p for p in lint_skill.lint(skill) if p not in ausentes_do_pacote], [])
+
+    def test_pasta_compartilhada_do_pacote_real_nao_tem_skill_md(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            compartilhada = destino / "skills" / "decode-and-code"
+            self.assertFalse((compartilhada / "SKILL.md").exists())
+            self.assertTrue((compartilhada / "scripts").is_dir())
+            self.assertTrue((compartilhada / "config.json").is_file())
+            self.assertEqual(
+                {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *NOMES_DAS_SKILLS}
+            )
+
+    def test_pacote_real_tem_o_intake_e_nenhum_agent(self):
+        """`P-06` e `D-03` — o `intake` viaja como skill, com o atalho `dc.py`; não há `agents/`."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            self.assertTrue((destino / "skills" / "intake" / "SKILL.md").is_file())
+            self.assertTrue((destino / "skills" / "intake" / "dc.py").is_file())
+            self.assertFalse((destino / "agents").exists())
+            self.assertEqual(empacotar.verificar(destino), [])
 
     def test_norma_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
         """Critério de aceite da `0004-04` — contra o repositório real, não fixture (`L-31`)."""
@@ -327,19 +572,128 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_comandos_presentes_no_pacote_real_e_verificar_continua_limpo(self):
-        """Critério de aceite da `0004-06` — contra o repositório real, não fixture (`L-31`)."""
+    def test_hooks_json_gerado_cita_o_plugin_root_entre_aspas(self):
+        """`P-08` — contra o `settings.json` real (`L-31`), sem precisar do `claude`.
+
+        O validador acusa `${CLAUDE_PLUGIN_ROOT}` sem aspas, e o aviso nasce na fonte: o build só
+        troca a âncora (`_escrever_hooks_json`), então as aspas do `settings.json` atravessam
+        intactas. Este caso prende o que `validar` só pega quando o `claude` está instalado — e o
+        teste vizinho de `TestValidarPelaFerramentaOficial` pula sem ele.
+        """
+        placeholder = "${CLAUDE_PLUGIN_ROOT}"
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            implement = destino / "commands" / "implement.md"
-            delegate = destino / "commands" / "delegate.md"
-            self.assertTrue(implement.is_file())
-            self.assertTrue(delegate.is_file())
-            self.assertIn("project: decode-and-code", implement.read_text(encoding="utf-8"))
-            self.assertNotIn(f"project: {lib.repo_root().name}", implement.read_text(encoding="utf-8"))
+            eventos = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            comandos = [
+                hook["command"] for grupos in eventos.values() for grupo in grupos for hook in grupo["hooks"]
+            ]
+
+            ocorrencias = 0
+            for comando in comandos:
+                posicao = comando.find(placeholder)
+                while posicao != -1:
+                    ocorrencias += 1
+                    with self.subTest(comando=comando):
+                        # Entre aspas duplas: número ímpar de `"` antes, e uma que fecha depois.
+                        self.assertEqual(comando[:posicao].count('"') % 2, 1, comando)
+                        self.assertIn('"', comando[posicao + len(placeholder) :], comando)
+                    posicao = comando.find(placeholder, posicao + 1)
+            self.assertGreater(ocorrencias, 0, "nenhum comando cita o placeholder — o caso ficaria vácuo")
+
+    def test_pacote_real_sem_commands_e_verificar_continua_limpo(self):
+        """`P-03` — contra o repositório real, não fixture (`L-31`): nenhum `commands/` no pacote."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            self.assertFalse((destino / "commands").exists())
             self.assertEqual(empacotar.verificar(destino), [])
+
+
+class TestPacoteEnxuto(unittest.TestCase):
+    """`P-05` e `D-02` — o que o pacote **real** não leva, e a prova de que nada faz falta.
+
+    O sintético (`TestConstruir`) prova o mecanismo; só o repositório real diz que os três
+    scripts de desenvolvimento e o hook de anúncio `SubagentStart` podem sair (`L-31`).
+    """
+
+    def test_pacote_real_sem_os_tres_scripts_de_desenvolvimento(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            scripts = destino / "skills" / "decode-and-code" / "scripts"
+            for nome in ("empacotar.py", "reconciliar.py", "lint_skill.py"):
+                with self.subTest(script=nome):
+                    self.assertFalse((scripts / nome).exists())
+            self.assertTrue((scripts / "dc.py").is_file())
+            self.assertEqual(empacotar.verificar(destino), [])
+
+    def test_hooks_json_real_tem_so_os_dois_eventos_e_hooks_so_os_dois_scripts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            fonte = json.loads((lib.repo_root() / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+
+            hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            self.assertEqual(set(hooks_json), _EVENTOS_QUE_VIAJAM)
+            self.assertEqual({p.name for p in (destino / "hooks").glob("*.py")}, _HOOKS_QUE_VIAJAM)
+            self.assertEqual(
+                {p.name for p in (destino / "hooks").iterdir()}, {*_HOOKS_QUE_VIAJAM, "hooks.json"}
+            )
+
+    def test_cada_comando_do_hooks_json_aponta_para_um_script_do_pacote(self):
+        """Uma fonte só: o `hooks/` do pacote sai dos comandos do `hooks.json`, nunca de lista à parte."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+            citados = set()
+            for grupos in hooks_json.values():
+                for grupo in grupos:
+                    for hook in grupo["hooks"]:
+                        citados.update(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/hooks/([\w.-]+\.py)", hook["command"]))
+            self.assertEqual(citados, {p.name for p in (destino / "hooks").glob("*.py")})
+
+    def test_todo_script_e_hook_do_pacote_importa_sem_os_tres(self):
+        """Nenhum runtime nem hook importa o que saiu — executado de verdade, não lido por `grep`.
+
+        Subprocesso novo, `-I` e `cwd` sem projeto: `import` aqui devolveria o módulo já carregado
+        da fonte, que tem os três ao lado. Os hooks entram por caminho, porque `hooks/` não está
+        no `sys.path` — e o `sys.path.insert` de cada um aponta para o pacote, não para a fonte.
+        """
+        codigo = (
+            "import importlib, importlib.util, sys\n"
+            "from pathlib import Path\n"
+            "pacote = Path(sys.argv[1])\n"
+            "scripts = pacote / 'skills' / 'decode-and-code' / 'scripts'\n"
+            "sys.path.insert(0, str(scripts))\n"
+            "for arquivo in sorted(scripts.glob('*.py')):\n"
+            "    if '-' not in arquivo.stem:\n"
+            "        importlib.import_module(arquivo.stem)\n"
+            "for arquivo in sorted((pacote / 'hooks').glob('*.py')):\n"
+            "    spec = importlib.util.spec_from_file_location('hook_' + arquivo.stem, arquivo)\n"
+            "    spec.loader.exec_module(importlib.util.module_from_spec(spec))\n"
+            "print('importou')\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp_pacote, tempfile.TemporaryDirectory() as tmp_cwd:
+            destino = Path(tmp_pacote) / "pkg"
+            empacotar.construir(destino)
+
+            resultado = subprocess.run(
+                [sys.executable, "-I", "-c", codigo, str(destino)],
+                cwd=Path(tmp_cwd).resolve(),
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
+            self.assertIn("importou", resultado.stdout)
 
 
 class TestEmpacotarZip(unittest.TestCase):
@@ -474,7 +828,7 @@ class TestValidarPelaFerramentaOficial(unittest.TestCase):
 
         Sem os dois o gate seria vácuo: a primeira tentativa de quebrar o pacote foi apagar o
         manifesto, e ele **continuou válido** — a doc diz que plugin precisa de manifesto **ou** de
-        componentes, e o nosso tem `skills/`, `agents/` e `hooks/`. `name` ausente reprova de
+        componentes, e o nosso tem `skills/` e `hooks/`. `name` ausente reprova de
         verdade, medido em 2026-08-27.
 
         Sem `claude` no `PATH`, afirma a degradação declarada. As duas pontas são comportamento
@@ -497,6 +851,31 @@ class TestValidarPelaFerramentaOficial(unittest.TestCase):
                 json.dumps({"description": "sem name"}), encoding="utf-8"
             )
             self.assertTrue(empacotar.validar(destino), "manifesto sem 'name' devia reprovar")
+
+    @unittest.skipUnless(shutil.which("claude"), "claude ausente do PATH — a validação real não roda")
+    def test_aviso_de_plugin_root_sem_aspas_reprova_pela_ferramenta_de_verdade(self):
+        """`P-08` — o **comando** montado, não a saída: só a ferramenta real responde à flag.
+
+        Sem `--strict` o binário sai com `0` sobre aviso ("Validation passed with warnings") e
+        `validar` devolvia `[]` — os quatro avisos de `${CLAUDE_PLUGIN_ROOT}` sem aspas passaram
+        calados até 2026-10-15 (`scripts.md`, *Comando externo*). Mock de `subprocess.run` não pega
+        isso: devolveria o que mandassem, com a flag ou sem ela.
+
+        O pacote é mínimo e **o manifesto leva `description` e `author`** — medido: sem eles o
+        `--strict` já reprova pelo manifesto, e o braço das aspas deixaria de provar que a única
+        diferença entre os dois pacotes é a aspa. É o braço contrário que impede o gate vácuo.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            sem_aspas = Path(tmp) / "sem-aspas"
+            com_aspas = Path(tmp) / "com-aspas"
+            _escrever_pacote_minimo(sem_aspas, "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/x.py")
+            _escrever_pacote_minimo(com_aspas, 'python3 "${CLAUDE_PLUGIN_ROOT}/hooks/x.py"')
+
+            problemas = empacotar.validar(sem_aspas)
+            self.assertEqual(len(problemas), 1, problemas)
+            self.assertIn("${CLAUDE_PLUGIN_ROOT} without quotes", problemas[0])
+
+            self.assertEqual(empacotar.validar(com_aspas), [])
 
     def test_returncode_um_vira_problema_com_a_saida(self):
         saida = b"Validating...\n\xe2\x9c\x98 Found 1 error:\n  no manifest"

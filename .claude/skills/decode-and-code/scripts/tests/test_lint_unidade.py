@@ -169,5 +169,39 @@ class TestGateDeEntrada(unittest.TestCase):
         self.assertEqual(len(problemas), 3, problemas)
 
 
+class TestNormasAplicaveis(unittest.TestCase):
+    """O gate recusa citação que `normas.resolver` não resolve — o executor não receberia a norma."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.dir = Path(self._tmp.name)
+        (self.dir / "norma.md").write_text("# Norma\n\n## Alfa\n\nTexto de alfa.\n", encoding="utf-8")
+
+    def _lint(self, *linhas: str) -> list[str]:
+        cabecalho = "| Norma | Onde |\n|---|---|"
+        texto = UNIDADE_VALIDA.replace(cabecalho, "\n".join((cabecalho, *linhas)))
+        alvo = self.dir / "unidade.md"
+        alvo.write_text(texto, encoding="utf-8")
+        return lint_unidade.lint(alvo)
+
+    def test_citacao_sem_link_e_reportada_com_a_linha(self):
+        problemas = self._lint("| Alfa | norma.md, seção *Alfa* |")
+        self.assertEqual(len(problemas), 1, problemas)
+        self.assertIn("norma aplicável não resolve", problemas[0])
+        self.assertIn("| Alfa | norma.md, seção *Alfa* |", problemas[0])
+
+    def test_um_problema_por_citacao_que_nao_resolve(self):
+        problemas = self._lint(
+            "| Alfa | [`norma.md`](norma.md), seção *Alfa* |",
+            "| Beta | em algum lugar |",
+            "| Gama | [`norma.md`](norma.md), seção *Inexistente* |",
+        )
+        self.assertEqual(len(problemas), 2, problemas)
+
+    def test_citacao_que_resolve_nao_gera_problema(self):
+        self.assertEqual(self._lint("| Alfa | [`norma.md`](norma.md), seção *Alfa* |"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

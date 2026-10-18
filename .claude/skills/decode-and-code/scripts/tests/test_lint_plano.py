@@ -142,6 +142,31 @@ class TestPlanSizeAusenteOuInvalido(unittest.TestCase):
             problemas = lint_plano.lint(_arquivo(dir_plano))
             self.assertTrue(any("plan_size" in p for p in problemas), problemas)
 
+    def _sem_linha(self, linha: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="pequeno", com_backlog=False)
+            arquivo = _arquivo(dir_plano)
+            texto = arquivo.read_text(encoding="utf-8")
+            self.assertIn(linha, texto)
+            arquivo.write_text(texto.replace(linha, ""), encoding="utf-8")
+            return lint_plano.lint(arquivo)
+
+    def test_plan_id_ausente_entra_como_problema(self):
+        problemas = self._sem_linha('plan_id: "0009"\n')
+        self.assertEqual(problemas, ["campo obrigatório ausente no frontmatter: plan_id"])
+
+    def test_status_ausente_entra_como_problema(self):
+        problemas = self._sem_linha("status: approved\n")
+        self.assertEqual(problemas, ["campo obrigatório ausente no frontmatter: status"])
+
+    def test_plan_id_vazio_e_valido_em_rascunho(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="pequeno", com_backlog=False)
+            arquivo = _arquivo(dir_plano)
+            texto = arquivo.read_text(encoding="utf-8").replace('plan_id: "0009"', 'plan_id: ""')
+            arquivo.write_text(texto, encoding="utf-8")
+            self.assertEqual(lint_plano.lint(arquivo), [])
+
 
 class TestPlanoRealDoRepositorio(unittest.TestCase):
     def test_plano_0001_grande_aprova(self):
@@ -205,12 +230,19 @@ class TestLintUnidadeAceitaTipoNorma(unittest.TestCase):
             self.assertTrue(any("Último resultado" in p for p in problemas), problemas)
 
     def test_onze_unidades_reais_aprovam_depois_da_remocao(self):
-        """Prova que a linha saiu de todas as onze — não uma contagem."""
+        """Prova que a linha saiu de todas as onze — não uma contagem.
+
+        Citação de norma fica fora: as unidades `verified` do plano `0001` anteciparam o formato
+        que resolve (plano `0006`, D5) e não se reescrevem — `test_lint_unidade` cobre essa checagem.
+        """
         for numero in range(1, 12):
             candidatos = list(DIR_UNIDADES_REAIS.glob(f"{numero:02d}-*.md"))
             with self.subTest(unidade=numero):
                 self.assertEqual(len(candidatos), 1, candidatos)
-                self.assertEqual(lint_unidade.lint(candidatos[0]), [])
+                problemas = [
+                    p for p in lint_unidade.lint(candidatos[0]) if not p.startswith("norma aplicável")
+                ]
+                self.assertEqual(problemas, [])
 
 
 class TestVerificarUnidadeNorma(unittest.TestCase):

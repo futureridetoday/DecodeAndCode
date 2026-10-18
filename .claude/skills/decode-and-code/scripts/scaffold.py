@@ -36,6 +36,11 @@ ela nunca ganharia companhia, porque o porte não decompõe nada. Só o grande r
 `<core>/<NNNN>-<nome>/<NNNN>-<nome>.md`, como sempre foi. `move_md.mover` já garante o diretório
 pai com `mkdir(parents=True, exist_ok=True)` — nenhum `mkdir` extra é necessário para o caso
 sem subpasta.
+
+`concorrentes` é a leitura da mesma tabela que `_linha_planos_md` escreve, usada pelo modo `review`
+antes da aprovação (`dc.py concorrencia`). Mora aqui porque o formato da linha e a coluna de
+situação são decididos neste módulo — ler e escrever a tabela em arquivos diferentes é o que
+faria os dois divergirem em silêncio.
 """
 
 from __future__ import annotations
@@ -110,6 +115,49 @@ def _registrar_planos_md(
     regioes.escrever_regiao(caminho, "planos", (miolo or "") + linha)
 
 
+_SITUACAO_ATIVA = "em desenvolvimento"
+
+
+def concorrentes(plano: Path) -> list[str] | None:
+    """Linhas de `_planos.md` em desenvolvimento no mesmo core **ou** no mesmo módulo de `plano`.
+
+    Lê `core`/`module` do frontmatter do plano e varre a região `planos` — a mesma que `numeracao`
+    lê — por linha de dado cuja coluna *Situação* é `em desenvolvimento` e cuja coluna *Core* ou
+    *Módulo* coincide (norma, *Avaliação de escopo*). Devolve a linha inteira, como está na tabela:
+    é a evidência que o achado cita. Lista vazia quando nada colide.
+
+    **`None` quando o plano não declara `core`**: sem ele a concorrência é *não verificável*, que
+    não é o mesmo que *sem conflito* — `[]` e `None` não se confundem. Módulo ausente só desliga o
+    critério de módulo; o de core continua valendo.
+
+    Levanta `ValueError` se a região `planos` não existe em `_planos.md`.
+    """
+    core = regioes.ler_campo(plano, "core")
+    if _campo_vazio(core):
+        return None
+    core = core.strip(" \t\"'")
+    module = regioes.ler_campo(plano, "module")
+    module = "" if _campo_vazio(module) else module.strip(" \t\"'")
+
+    caminho = lib.planos_md()
+    miolo = regioes.ler_regiao(caminho, "planos")
+    if miolo is None:
+        raise ValueError(f"região 'planos' ausente em {caminho}")
+
+    achadas = []
+    for linha in miolo.splitlines():
+        linha = linha.strip()
+        if not numeracao.PADRAO_PRIMEIRA_COLUNA.match(linha):
+            continue
+        # # | Plano | Core | Módulo | Origem | Situação | Aprovado
+        colunas = [c.strip() for c in linha.strip("|").split("|")]
+        if len(colunas) < 6 or colunas[5] != _SITUACAO_ATIVA:
+            continue
+        if colunas[2] == core or (module and colunas[3] == module):
+            achadas.append(linha)
+    return achadas
+
+
 def aprovar(plano: Path, dry_run: bool = False) -> Path:
     """Aprova um plano do `_inbox` — devolve o caminho final, movido ou só calculado em dry-run.
 
@@ -123,7 +171,9 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
 
     Levanta `ValueError` se o plano não declara `core`, `plan_size` (ou declara fora do
     vocabulário `lib.PLAN_SIZES_VALIDOS`), `approved_by`, `approved_at` (ou declara algo que não é
-    data ISO), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
+    data ISO), se falta no frontmatter qualquer campo que a aprovação escreve (`plan_id`, `status`
+    — a linha tem de existir, ainda que vazia; conferido antes de mover, para não deixar o plano
+    meio aprovado), ou se o nome do arquivo falha a validação sintática (`nomenclatura.validar_nome`).
     Levanta `FileExistsError` se o alvo já existe. Em qualquer um dos casos — inclusive em
     `dry_run` — nada é escrito.
     """
@@ -171,13 +221,18 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if alvo.exists():
         raise FileExistsError(f"alvo já existe — {alvo}")
 
+    campos = {"plan_id": f'"{numero}"', "status": "approved"}
+    for campo in campos:
+        if regioes.ler_campo(plano, campo) is None:
+            raise ValueError(f"plano não declara '{campo}' no frontmatter — {plano}")
+
     if dry_run:
         return alvo
 
     _mover(plano, alvo)
     if plan_size in ("médio", "grande"):
         _garantir_secao_backlog(alvo)
-    regioes.escrever_campos(alvo, {"plan_id": f'"{numero}"', "status": "approved"})
+    regioes.escrever_campos(alvo, campos)
     _registrar_planos_md(numero, nome, core, module, alvo, approved_at)
 
     return alvo
