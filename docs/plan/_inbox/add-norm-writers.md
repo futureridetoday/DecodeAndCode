@@ -85,9 +85,14 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
       sem nenhum arquivo. É o subconjunto em que lint e Claude Code concordam (`D-02`). Grava num
       arquivo temporário, roda `lint_guideline` contra `raiz` e só então move para `rules/`;
       reprovado, nada fica no disco. `lint_guideline` ganha um parâmetro opcional `raiz`, com o padrão
-      atual (`lib.repo_root()`), para o casamento de `paths`. Casos de teste: `description` com `: ` e
-      `#`; `**/*.tsx`; chave recusada; `docs/**` recusado e `docs/**/*` aceito; nome existente em
-      `rules-off/`; nome com acento ou maiúscula; reprovação sem resíduo.
+      atual (`lib.repo_root()`), para o casamento de `paths`. **Caminho que ainda não existe**
+      (`D-08`): com `aguardando=True`, `criar_guideline` grava também `paths_pending: true` no
+      frontmatter — campo que o Claude Code ignora, como todo campo que não é `paths` —, e
+      `lint_guideline` passa a aceitar `paths` sem casamento no disco quando esse campo está
+      presente; as demais checagens continuam. Casos de teste: `description` com `: ` e `#`;
+      `**/*.tsx`; chave recusada; `docs/**` recusado e `docs/**/*` aceito; nome existente em
+      `rules-off/`; nome com acento ou maiúscula; reprovação sem resíduo; caminho inexistente recusado
+      sem `aguardando` e aceito com ele.
 - [ ] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
       `_reprojetar(raiz / ".claude" / "rules", nome)`. `_e_guideline` passa a tratar `.md` sem
       frontmatter como "não é guideline", em vez de levantar. O motivo não é que o arquivo esteja
@@ -121,7 +126,7 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 
 | Alvo | Como se sabe que funcionou |
 |---|---|
-| Frontmatter | O arquivo gravado por T1 passa em `lint_guideline`, e o valor de cada campo do frontmatter (`name`, `description`, `paths`) passa em `json.loads` — todo JSON é YAML válido, e a stdlib não tem parser de YAML. Controle que precisa falhar no mesmo teste: o frontmatter com `paths: [**/*.md]` sem aspas |
+| Frontmatter | O arquivo gravado por T1 passa em `lint_guideline`, e o valor de cada campo do frontmatter (`name`, `description`, `paths` e, quando houver, `paths_pending`) passa em `json.loads` — todo JSON é YAML válido, e a stdlib não tem parser de YAML. Controle que precisa falhar no mesmo teste: o frontmatter com `paths: [**/*.md]` sem aspas |
 | Sem resíduo | Toda reprovação de T1 deixa `rules/` e `registry.json` como estavam |
 | Registro | Depois de T1, `registry.listar()` traz o nome como `ligada`, sem `divergente`; com um `.md` sem frontmatter no mesmo diretório, também |
 | Guardrail | Avaliada sozinha, a regra nova nega o `proibido` com `regra == nome` e libera o `permitido`; uma regra cujo `detector` não casa o `proibido` é recusada, mesmo que outra regra do arquivo já o negue (`D-03`). Depois de T4, `decidir` sobre o `guardrails.json` gravado continua negando o `proibido` — pela regra nova ou por uma anterior, já que vale a primeira que casa |
@@ -138,6 +143,7 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 | D-05 | **Um plano, não dois.** A parte de guideline (T1, T2) e a de guardrail (T3, T4) passam sozinhas no teste de independência. Ficam juntas porque os dois consumidores — a promoção no huddle e o setup — usam as duas, a superfície no `dc.py` é a mesma, e separar criaria dois planos pequenos com a mesma dependência a jusante (norma, *O que a avaliação não faz*: o plano registra o porquê) | Recomendação |
 | D-06 | **Subcomandos planos em kebab-case** (`criar-guideline`, `adicionar-guardrail`, `lint-guardrails`), como todos os do `dc.py` hoje; o teste de drift das skills lê um token só depois de `dc.py"` (`tests/test_dc.py:197-202`). O `wire-huddle-cycle` segue a mesma forma | Recomendação |
 | D-07 | **A raiz do projeto é parâmetro explícito** das funções novas, e o `dc.py` a resolve por `lib.repo_root()`, como os outros subcomandos | Recomendação |
+| D-08 | **Guideline para caminho que ainda não existe é gravada já**, marcada com `paths_pending: true` no próprio frontmatter, e vale desde o primeiro arquivo criado no escopo. A marca fica na rule, não no `setup.md` do `onboard-new-project`, para este plano não depender daquele | Decidida pelo humano em 2026-11-15 |
 
 ## Lacunas
 
@@ -146,7 +152,8 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 | L-01 | **O lint de `paths` diverge da doc oficial** | Divide padrões com chaves na vírgula interna, trata `*.md` como só da raiz e recusa lista YAML em bloco; e a norma diz que o modelo lê a `description` da rule, o que a [doc](https://code.claude.com/docs/en/memory) nega ("`paths` is the only field Claude Code reads"). Anterior a este plano; `D-02` só evita o problema na escrita |
 | L-02 | **"Invariante já respeitado" não é verificável por script** | O guia de guardrail exige que o trabalho já respeite o invariante. O par proibido/permitido prova o detector, não o histórico do projeto |
 | L-03 | **O projeto é resolvido por `lib.repo_root()`** | Herda a `L-03` do `0006`: com o pacote dentro de um checkout, `lib.repo_root()` acha o checkout primeiro |
-| L-04 | **Guideline para caminho que ainda não existe é recusada** | `lint_guideline` exige que `paths` case ao menos um arquivo no disco. Num projeto novo, uma guideline para `components/**/*.tsx` seria recusada antes da pasta existir — o que atinge diretamente o setup do `onboard-new-project`. Revisão de 2026-11-15; não resolvida aqui |
+| L-04 | **Guideline para caminho que ainda não existe é recusada** | `lint_guideline` exige que `paths` case ao menos um arquivo no disco. Num projeto novo, uma guideline para `components/**/*.tsx` seria recusada antes da pasta existir — o que atinge diretamente o setup do `onboard-new-project`. **Fechada em 2026-11-15** pela `D-08` |
+| L-05 | **Glob errado com `paths_pending` não é pego** | Com a marca, o lint deixa de exigir casamento, então um erro de digitação no caminho só aparece quando alguém nota que a rule nunca carrega. A marca também não sai sozinha depois que a pasta existe |
 
 ## Backlog
 
