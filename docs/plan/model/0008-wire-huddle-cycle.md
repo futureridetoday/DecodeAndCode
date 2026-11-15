@@ -7,7 +7,7 @@ description: O huddle deixa de depender de alguém lembrar dele — um arquivo p
 tags: [decode-and-code, huddle, hook, skill, plugin]
 
 # alvo
-plan_id: ""
+plan_id: "0008"
 plan_size: médio
 core: model
 module: wire-huddle-cycle
@@ -16,11 +16,11 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: draft
+status: approved
 version: 1.0.0
 updated: "2026-11-15"
-approved_by: ""
-approved_at: ""
+approved_by: Bortoli
+approved_at: 2026-11-15
 
 # system
 scope: project
@@ -206,18 +206,18 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
 |---|---|---|
 | D-01 | **Três planos:** `add-norm-writers`, este, e `onboard-new-project` — que estende o mesmo `session_start.py` e usa estes comandos | Decidida pelo humano em 2026-11-10 |
 | D-02 | **Um arquivo por pessoa, versionado e filtrado.** Cada pessoa vê, no fluxo e no aviso, só as suas entradas; o arquivo dos outros continua no git, e a promoção fica rastreada. A norma de hoje diz "um arquivo por projeto" — muda em T8 | Decidida pelo humano em 2026-11-10 |
-| D-03 | **Lembrete ao abrir a sessão, com a frequência no arquivo da pessoa** (`reminder_days`, 0 desliga). Atende *A rotina fica de fora do plugin*, do `0001`: "quem instalar decide se quer, e com que frequência" | Lembrete decidido pelo humano em 2026-11-10; o campo é recomendação |
+| D-03 | **Lembrete ao abrir a sessão, com a frequência no arquivo da pessoa** (`reminder_days`, 0 desliga). Atende *A rotina fica de fora do plugin*, do `0001`: "quem instalar decide se quer, e com que frequência" | Lembrete decidido pelo humano em 2026-11-10; o campo, em 2026-11-15 |
 | D-04 | **O fecho é conferido por gate do `dc.py` rodado pela skill, não por hook.** Mais fraco — depende de a skill rodar o passo —, e é o padrão de todos os outros gates do método | Decidida pelo humano em 2026-11-10 |
 | D-05 | **O `intake` é enxugado para caber no teto de 4096 bytes**, em vez de subir o teto | Decidida pelo humano em 2026-11-10 |
 | D-06 | **Os dois registram, cada um no próprio arquivo.** O modelo, por gatilho de evento, no arquivo da pessoa em cuja sessão o trabalho aconteceu; a pessoa, por `/decode-and-code:huddle registrar` — o tipo mais valioso que só ela escreve é a retrospectiva (`0001`, *A rotina fica de fora do plugin*). A peneira continua na saída | Decidida pelo humano em 2026-11-10 |
 | D-07 | **Promoção simples:** fechar com destino e gravar pelo comando de `add-norm-writers`, com aprovação na conversa. Mecanismo mais elaborado fica para depois | Decidida pelo humano em 2026-11-10 |
-| D-08 | **A data do último huddle é campo gravado (`last_huddle`)**, não derivada de `## Fechadas` | Recomendação |
-| D-09 | **O esqueleto continua sem *Prompt de continuidade* e sem *Como conversamos*** — como já é hoje (`huddle.py:94-131`). A `pauta` substitui o prompt; *Como conversamos* fica para cada pessoa, se quiser, fora do mecanismo | Recomendação |
-| D-10 | **Subcomando em pt-BR (`huddle-pauta`, `huddle-fecho`) é aceitável:** a `D-09` do `0001` vale para o nome do conceito e do arquivo, e os subcomandos do `dc.py` já são pt-BR. A forma é plana, com o prefixo `huddle-`, pela `D-06` do `add-norm-writers` | Recomendação |
-| D-11 | **Um plano só.** T1-T4 são a base de T5-T7; separar o par fecho (T3, T5) do par lembrete e skill (T6, T7) deixaria dois planos editando `huddle.py` ao mesmo tempo | Recomendação |
-| D-12 | **Aprovar só com o `add-norm-writers` em `concluído` em `_planos.md`**, rodando `dc.py concorrencia` de novo na aprovação: T7 chama os comandos dele, e nenhum script lê `dependencies:` do frontmatter | Recomendação |
-| D-13 | **`huddle-migrar` acrescenta campos ao frontmatter**, exceção declarada ao princípio de `regioes.escrever_campos` ("acrescentar campo é decisão humana"): os três campos são do mecanismo, e a migração só roda quando o humano a chama | Recomendação |
-| D-14 | **Porte: médio declarado, com cerca de 20 arquivos tocados** — `huddle.py`, `dc.py`, cinco `SKILL.md`, o hook novo, `settings.json`, `empacotar.py`, quatro testes, norma, README, `.claude/CLAUDE.md` e `docs/recursos`. Médio roda sem unidades, na sessão da aprovação; grande decompõe em unidades com cold-start. A escolha do porte é do humano na aprovação | Pendente — decisão humana |
+| D-08 | **A data do último huddle é campo gravado (`last_huddle`)**, não derivada de `## Fechadas` | Decidida pelo humano em 2026-11-15 |
+| D-09 | **O esqueleto continua sem *Prompt de continuidade* e sem *Como conversamos*** — como já é hoje (`huddle.py:94-131`). A `pauta` substitui o prompt; *Como conversamos* fica para cada pessoa, se quiser, fora do mecanismo | Decidida pelo humano em 2026-11-15 |
+| D-10 | **Subcomando em pt-BR (`huddle-pauta`, `huddle-fecho`) é aceitável:** a `D-09` do `0001` vale para o nome do conceito e do arquivo, e os subcomandos do `dc.py` já são pt-BR. A forma é plana, com o prefixo `huddle-`, pela `D-06` do `add-norm-writers` | Decidida pelo humano em 2026-11-15 |
+| D-11 | **Um plano só.** T1-T4 são a base de T5-T7; separar o par fecho (T3, T5) do par lembrete e skill (T6, T7) deixaria dois planos editando `huddle.py` ao mesmo tempo | Decidida pelo humano em 2026-11-15 |
+| D-12 | **Aprovar só com o `add-norm-writers` em `concluído` em `_planos.md`**, rodando `dc.py concorrencia` de novo na aprovação: T7 chama os comandos dele, e nenhum script lê `dependencies:` do frontmatter | Decidida pelo humano em 2026-11-15 |
+| D-13 | **`huddle-migrar` acrescenta campos ao frontmatter**, exceção declarada ao princípio de `regioes.escrever_campos` ("acrescentar campo é decisão humana"): os três campos são do mecanismo, e a migração só roda quando o humano a chama | Decidida pelo humano em 2026-11-15 |
+| D-14 | **Porte: médio declarado, com cerca de 20 arquivos tocados** — `huddle.py`, `dc.py`, cinco `SKILL.md`, o hook novo, `settings.json`, `empacotar.py`, quatro testes, norma, README, `.claude/CLAUDE.md` e `docs/recursos`. Médio roda sem unidades, na sessão da aprovação; grande decompõe em unidades com cold-start. A escolha do porte é do humano na aprovação | Decidida pelo humano em 2026-11-15: médio |
 
 ## Lacunas
 
@@ -235,6 +235,18 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
 ## Backlog
 
 <!-- backlog:start -->
+- [ ] **T1 — identidade e caminho.** `huddle.usuario(projeto) -> str`: `git config user.name` do
+- [ ] **T2 — operações no `huddle.py`.** Compatíveis com o contrato da `0001-21`: `iniciar(destino)`
+- [ ] **T3 — linha de fecho com ids.** `lint_relatorio(texto, arquivo=None)`: sem `arquivo`, o
+- [ ] **T4 — subcomandos planos no `dc.py`**, na forma da `D-06` do `add-norm-writers`:
+- [ ] **T5 — as quatro skills** (`intake`, `review-plan`, `derive`, `implement`): o passo final roda
+- [ ] **T6 — `SessionStart` no pacote.** `session_start.py`, matcher `startup`, resolve o projeto por
+- [ ] **T7 — skill `huddle`.** Linha da `TOPOLOGIA`: `modo: huddle`, `model: opus`,
+- [ ] **T8 — documentação.** Norma, seção *Huddle*: um arquivo por pessoa, identidade, comandos,
+- [ ] **T9 — migração desta instância e saída do rascunho antigo.** `dc.py huddle-migrar` move
+- [ ] **T10 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+
+0 de 10 tarefas concluídas · atualizado em 2026-11-15
 <!-- backlog:end -->
 
 ## Fonte
@@ -242,13 +254,13 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
 - [`modelo-dev-units.md`](../system/modelo-dev-units.md) — seções *Huddle*, *Bootstrap*,
   *Empacotamento*, *Camada de execução* e *Modelos*
 - [`huddle.md`](../system/huddle.md) — a instância e a evidência de uso
-- [`0001-decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
+- [`0001-decode-and-code-foundation`](0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
   — `D-08`, `D-09`, `D-28`, `L-08`; *O huddle é fila, não fonte*, *Gatilho de escrita*, *Momento* e
   *A rotina fica de fora do plugin*
-- [`21-huddle-log`](../model/0001-decode-and-code-foundation/21-huddle-log.md) — o contrato atual de
+- [`21-huddle-log`](0001-decode-and-code-foundation/21-huddle-log.md) — o contrato atual de
   `huddle.py`, mantido
-- [`add-norm-writers.md`](../model/0007-add-norm-writers.md) — os comandos que a promoção usa
-- [`apply-plugin-review.md`](apply-plugin-review.md) — `D-05`, `D-06`, `D-08` e `P-07`
+- [`add-norm-writers.md`](0007-add-norm-writers.md) — os comandos que a promoção usa
+- [`apply-plugin-review.md`](../_inbox/apply-plugin-review.md) — `D-05`, `D-06`, `D-08` e `P-07`
 - `huddle-command.md`, rascunho de 2026-09-02 que este plano substitui (T9)
 - Documentação oficial do Claude Code, lida em 2026-11-10:
   [hooks](https://code.claude.com/docs/en/hooks),
