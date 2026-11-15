@@ -22,6 +22,7 @@ trocado por mock — como `test_scaffold.py`.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -53,6 +54,9 @@ SUBCOMANDOS = (
     "handoff",
     "verificar",
     "normas",
+    "criar-guideline",
+    "adicionar-guardrail",
+    "lint-guardrails",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -572,6 +576,108 @@ class TestHandoff(_ProjetoCase):
     def test_plano_inexistente_e_codigo_2(self):
         self.bootstrap()
         r = self.dc("handoff", str(self.raiz_planos / "builder" / "0001-nao-existe"), entrada=self.STDIN)
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestCriarGuideline(_ProjetoCase):
+    """Plano 0007, T5 — `{nome, descricao, paths, corpo}` pelo stdin, raiz pelo `cwd`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        (self.projeto / "src").mkdir()
+        (self.projeto / "src" / "botao.tsx").write_text("x", encoding="utf-8")
+
+    def entrada(self, **kw) -> str:
+        dados = {"nome": "design-system", "descricao": "Use shadcn.", "paths": ["src/**/*"],
+                 "corpo": "Componentes de src/ui."}
+        dados.update(kw)
+        return json.dumps(dados)
+
+    def test_grava_e_registra_na_raiz_do_projeto(self):
+        r = self.dc("criar-guideline", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        alvo = self.projeto / ".claude" / "rules" / "design-system.md"
+        self.assertEqual(Path(r.stdout.strip()).resolve(), alvo)
+        self.assertTrue((self.projeto / ".claude" / "rules" / "registry.json").is_file())
+
+    def test_aguardando_grava_paths_pending(self):
+        r = self.dc("criar-guideline", entrada=self.entrada(paths=["app/**/*"], aguardando=True))
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_reprovada_e_codigo_1_sem_arquivo(self):
+        r = self.dc("criar-guideline", entrada=self.entrada(paths=["app/**/*"]))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertTrue(r.stdout.strip())
+        self.assertFalse((self.projeto / ".claude" / "rules" / "design-system.md").exists())
+
+    def test_stdin_vazio_e_codigo_2(self):
+        r = self.dc("criar-guideline", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_json_sem_campo_e_codigo_2(self):
+        r = self.dc("criar-guideline", entrada=json.dumps({"nome": "x"}))
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestAdicionarGuardrail(_ProjetoCase):
+    """Plano 0007, T5 — `{regra, proibido, permitido}` pelo stdin."""
+
+    REGRA = {"nome": "sem-classname", "ferramenta": "^Write$", "detector": "className=",
+             "mensagem": "Estilo vai no .styles.ts."}
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+
+    def entrada(self, **regra) -> str:
+        return json.dumps({
+            "regra": {**self.REGRA, **regra},
+            "proibido": {"tool_name": "Write", "tool_input": {"content": '<a className="x"/>'}},
+            "permitido": {"tool_name": "Write", "tool_input": {"content": "<A/>"}},
+        })
+
+    def test_grava_no_guardrails_do_projeto(self):
+        r = self.dc("adicionar-guardrail", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        arquivo = self.projeto / ".claude" / "guardrails.json"
+        self.assertEqual(json.loads(arquivo.read_text(encoding="utf-8"))["regras"][0]["nome"], "sem-classname")
+
+    def test_regra_que_nao_prova_e_codigo_1(self):
+        r = self.dc("adicionar-guardrail", entrada=self.entrada(detector="nunca-casa"))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertFalse((self.projeto / ".claude" / "guardrails.json").exists())
+
+    def test_stdin_vazio_e_codigo_2(self):
+        r = self.dc("adicionar-guardrail", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestLintGuardrails(_ProjetoCase):
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.arquivo = self.projeto / ".claude" / "guardrails.json"
+        self.arquivo.parent.mkdir(parents=True, exist_ok=True)
+
+    def test_arquivo_valido_e_ok(self):
+        self.arquivo.write_text('{"regras": []}', encoding="utf-8")
+        r = self.dc("lint-guardrails")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("ok", r.stdout)
+
+    def test_arquivo_malformado_e_codigo_1(self):
+        self.arquivo.write_text('{"regras": [{"nome": "x"}]}', encoding="utf-8")
+        r = self.dc("lint-guardrails")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("ferramenta", r.stdout)
+
+    def test_arquivo_ausente_e_codigo_2(self):
+        r = self.dc("lint-guardrails")
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
 

@@ -25,6 +25,7 @@ resolvidas: elas vão na saída, sob `Não resolvidas:`, para o executor relatar
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -216,6 +217,64 @@ def _normas(args: argparse.Namespace) -> int:
     return OK
 
 
+def _ler_json_do_stdin(comando: str, chaves: tuple[str, ...]) -> dict:
+    """Objeto JSON do stdin com `chaves` — `ValueError`/`KeyError` (código 2) se vazio ou incompleto."""
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        raise ValueError(f"{comando} lê do stdin um objeto JSON com {', '.join(chaves)}")
+    dados = json.loads(texto)
+    if not isinstance(dados, dict):
+        raise ValueError(f"{comando}: o stdin precisa ser um objeto JSON")
+    ausentes = [chave for chave in chaves if chave not in dados]
+    if ausentes:
+        raise KeyError(f"{comando}: faltam no stdin {', '.join(ausentes)}")
+    return dados
+
+
+def _criar_guideline(args: argparse.Namespace) -> int:
+    import lib
+    import rules
+
+    dados = _ler_json_do_stdin("criar-guideline", ("nome", "descricao", "paths", "corpo"))
+    try:
+        alvo = rules.criar_guideline(
+            lib.repo_root(), dados["nome"], dados["descricao"], dados["paths"], dados["corpo"],
+            aguardando=bool(dados.get("aguardando", False)),
+        )
+    except (ValueError, FileExistsError) as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _adicionar_guardrail(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+
+    dados = _ler_json_do_stdin("adicionar-guardrail", ("regra", "proibido", "permitido"))
+    try:
+        alvo = guardrail.adicionar(lib.repo_root(), dados["regra"], dados["proibido"], dados["permitido"])
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _lint_guardrails(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+
+    arquivo = lib.repo_root() / ".claude" / "guardrails.json"
+    problemas = guardrail.lint_arquivo(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -282,6 +341,22 @@ def _parser() -> argparse.ArgumentParser:
         _normas,
     )
     p.add_argument("unidade")
+
+    comando(
+        "criar-guideline",
+        "grava e registra uma guideline em .claude/rules/; lê do stdin JSON "
+        "{nome, descricao, paths, corpo[, aguardando]} (1 se reprovada)",
+        _criar_guideline,
+    )
+
+    comando(
+        "adicionar-guardrail",
+        "acrescenta uma regra a .claude/guardrails.json provada pelo par; lê do stdin JSON "
+        "{regra, proibido, permitido} (1 se reprovada)",
+        _adicionar_guardrail,
+    )
+
+    comando("lint-guardrails", "valida .claude/guardrails.json do projeto (1 se tem problema)", _lint_guardrails)
 
     return parser
 

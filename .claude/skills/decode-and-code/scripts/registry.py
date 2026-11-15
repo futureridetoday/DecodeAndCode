@@ -47,8 +47,16 @@ def _caminho_registry(dir_rules: Path) -> Path:
 
 
 def _e_guideline(arquivo: Path) -> bool:
-    """`paths:` presente é guideline; ausente é princípio — mesmo corte de `rules.lint_guideline`."""
-    return regioes.ler_campo(arquivo, "paths") is not None
+    """`paths:` presente é guideline; ausente é princípio — mesmo corte de `rules.lint_guideline`.
+
+    `.md` sem frontmatter não é guideline. Não porque esteja certo — `lint_rule` e
+    `auditar_arvore` continuam apontando —, e sim porque levantar aqui travava o registro de toda
+    guideline do diretório (plano 0007, T2).
+    """
+    try:
+        return regioes.ler_campo(arquivo, "paths") is not None
+    except ValueError:
+        return False
 
 
 def _guidelines_no_disco(dir_rules: Path) -> dict[str, str]:
@@ -112,6 +120,22 @@ def _reprojetar(dir_rules: Path, transicionada: str) -> None:
 
     texto = json.dumps(novo, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     _caminho_registry(dir_rules).write_text(texto, encoding="utf-8")
+
+
+def registrar(raiz: Path, nome: str) -> Path:
+    """Registra em `registry.json` a guideline `<nome>` recém-gravada em `<raiz>/.claude/rules/`.
+
+    Reprojeta o registro inteiro: num projeto com guidelines e sem `registry.json`, o primeiro
+    `registrar` cria o registro com todas elas, datadas do dia — o registro é projeção, não fonte.
+    Levanta `ValueError`, sem escrever, se `<nome>.md` não é guideline em `rules/`. Devolve o
+    caminho do `registry.json`.
+    """
+    dir_rules = raiz / ".claude" / "rules"
+    arquivo = dir_rules / f"{nome}.md"
+    if not (arquivo.is_file() and _e_guideline(arquivo)):
+        raise ValueError(f"não há guideline {nome!r} em {dir_rules}")
+    _reprojetar(dir_rules, nome)
+    return _caminho_registry(dir_rules)
 
 
 def listar() -> list[dict]:

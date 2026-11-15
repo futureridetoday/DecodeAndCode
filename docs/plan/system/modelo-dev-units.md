@@ -282,6 +282,14 @@ plano que instanciou este mecanismo pela primeira vez.
 divergência entre o que ele registra e o estado real do disco em vez de escolher um dos dois em
 silêncio.
 
+**Escrever guideline e guardrail também é operação.** `dc.py criar-guideline` grava a guideline só
+depois de ela passar em `lint_guideline` e a registra; `paths` sai no subconjunto em que o lint e o
+Claude Code concordam, e caminho que ainda não existe leva `paths_pending: true`, que dispensa só o
+casamento no disco. `dc.py adicionar-guardrail` acrescenta a regra só depois de ela, avaliada
+sozinha, negar o caso proibido e liberar o permitido; `dc.py lint-guardrails` valida o arquivo
+inteiro. Os guias [`create-guideline.md`](../../recursos/create-guideline.md) e
+[`create-guardrail.md`](../../recursos/create-guardrail.md) dão o passo a passo.
+
 #### Empacotamento — o que o plugin leva, e o que fica
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**

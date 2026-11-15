@@ -26,11 +26,15 @@ isso antes de acontecer de novo.
 from __future__ import annotations
 
 import fnmatch
+import json
 import re
+import shutil
+import tempfile
 from pathlib import Path
 
 import lib
 import regioes
+import registry
 
 CAMPOS_FRONTMATTER = ("name", "description")
 
@@ -118,23 +122,26 @@ def _checar_corpo(corpo: str) -> list[str]:
     return []
 
 
-def lint_guideline(path: Path) -> list[str]:
+def lint_guideline(path: Path, raiz: Path | None = None) -> list[str]:
     """Verifica se `path` é uma guideline válida — lista vazia quando aprovada.
 
     Estende `lint_rule` com o que só faz sentido quando `paths:` é obrigatório: presente,
-    não vazio, e casando ao menos um arquivo que existe no repositório. Formato de lista e
-    compilação de glob já são responsabilidade de `lint_rule` — aqui não se repete.
+    não vazio, e casando ao menos um arquivo que existe sob `raiz` (padrão: `lib.repo_root()`).
+    Formato de lista e compilação de glob já são responsabilidade de `lint_rule` — aqui não se
+    repete. Com `paths_pending: true` no frontmatter, o casamento no disco é dispensado — o
+    caminho ainda não existe (plano 0007, `D-08`); as demais checagens continuam.
 
     Mesmo contrato de `lint_rule`: levanta `FileNotFoundError` se `path` não existe.
     """
     problemas = lint_rule(path)
-    problemas.extend(_checar_paths_guideline(path))
+    problemas.extend(_checar_paths_guideline(path, raiz))
     return problemas
 
 
-def _checar_paths_guideline(path: Path) -> list[str]:
+def _checar_paths_guideline(path: Path, raiz: Path | None = None) -> list[str]:
     """`paths:` ausente ou vazio reprova; presente, ao menos uma entrada precisa casar
-    arquivo real — checado por `Path.glob` a partir de `lib.repo_root()`, contra o disco."""
+    arquivo real — checado por `Path.glob` a partir de `raiz`, contra o disco, salvo
+    `paths_pending: true`."""
     try:
         valor = regioes.ler_campo(path, "paths")
     except ValueError:
@@ -149,7 +156,10 @@ def _checar_paths_guideline(path: Path) -> list[str]:
     if not entradas:
         return ["'paths:' presente e vazio — guideline sem escopo"]
 
-    raiz = lib.repo_root()
+    if (regioes.ler_campo(path, "paths_pending") or "").strip() == "true":
+        return []
+
+    raiz = raiz if raiz is not None else lib.repo_root()
     for entrada in entradas:
         try:
             if any(raiz.glob(entrada)):
@@ -158,6 +168,75 @@ def _checar_paths_guideline(path: Path) -> list[str]:
             continue  # glob que não compila — já reportado por lint_rule
 
     return [f"'paths:' não casa nenhum arquivo existente no repositório: {entradas!r}"]
+
+
+_NOME_GUIDELINE_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+_CURINGA_RE = re.compile(r"[*?\[]")
+
+
+def _problema_de_padrao(padrao: str) -> str | None:
+    """Recusa o padrão fora do subconjunto em que o lint e o Claude Code concordam (`D-02`)."""
+    if "{" in padrao or "," in padrao:
+        return f"padrão com chave ou vírgula não é gerado: {padrao!r}"
+    if padrao.startswith("/"):
+        return f"padrão com '/' inicial — paths é relativo à raiz do projeto: {padrao!r}"
+    if padrao.endswith("/**"):
+        return f"padrão terminado em '/**' — a forma de pasta inteira é 'dir/**/*': {padrao!r}"
+    primeiro, separador, _ = padrao.partition("/")
+    if not separador or (primeiro != "**" and _CURINGA_RE.search(primeiro)):
+        return f"padrão precisa começar por diretório ou por '**/': {padrao!r}"
+    return None
+
+
+def criar_guideline(
+    raiz: Path,
+    nome: str,
+    descricao: str,
+    paths: list[str],
+    corpo: str,
+    aguardando: bool = False,
+) -> Path:
+    """Grava `<raiz>/.claude/rules/<nome>.md` só se a guideline passar em `lint_guideline`.
+
+    `name` e `description` vão com escape JSON, que é YAML válido; cada entrada de `paths`, entre
+    aspas duplas. Com `aguardando=True`, grava `paths_pending: true` e o casamento no disco é
+    dispensado (`D-08`). Levanta `ValueError` para entrada ou guideline inválida e
+    `FileExistsError` se o nome já existe em `rules/` ou `rules-off/` — nos dois casos, nada fica
+    no disco.
+    """
+    if not _NOME_GUIDELINE_RE.match(nome):
+        raise ValueError(f"nome de guideline fora de kebab-case ASCII: {nome!r}")
+    if not paths:
+        raise ValueError("guideline sem 'paths' — isso é princípio, não guideline")
+    problemas = [p for p in map(_problema_de_padrao, paths) if p]
+    if problemas:
+        raise ValueError("; ".join(problemas))
+
+    dir_rules = raiz / ".claude" / "rules"
+    for existente in (dir_rules / f"{nome}.md", raiz / ".claude" / "rules-off" / f"{nome}.md"):
+        if existente.exists():
+            raise FileExistsError(f"guideline já existe: {existente}")
+
+    frontmatter = [
+        f"name: {json.dumps(nome)}",
+        f"description: {json.dumps(descricao, ensure_ascii=False)}",
+        f"paths: {json.dumps(paths, ensure_ascii=False)}",
+    ]
+    if aguardando:
+        frontmatter.append("paths_pending: true")
+    texto = "---\n" + "\n".join(frontmatter) + "\n---\n\n" + corpo.strip() + "\n"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        provisorio = Path(tmp) / f"{nome}.md"
+        provisorio.write_text(texto, encoding="utf-8")
+        problemas = lint_guideline(provisorio, raiz=raiz)
+        if problemas:
+            raise ValueError("; ".join(problemas))
+        dir_rules.mkdir(parents=True, exist_ok=True)
+        destino = dir_rules / f"{nome}.md"
+        shutil.move(str(provisorio), destino)
+    registry.registrar(raiz, nome)
+    return destino
 
 
 def auditar_arvore() -> list[str]:

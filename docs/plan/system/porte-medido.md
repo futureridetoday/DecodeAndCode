@@ -35,3 +35,4 @@ dependencies: []
 | [0004-installable-method](../model/0004-installable-method/0004-installable-method.md) | grande | 6 | 21 | 1426 | 2026-09-01 |
 | [0005-plugin-release-distribution](../model/0005-plugin-release-distribution.md) | médio | 9 | não declarado | — | 2026-09-02 |
 | [0006-e2e-fixes](../model/0006-e2e-fixes.md) | médio | 7 | não declarado | — | 2026-10-17 |
+| [0007-add-norm-writers](../model/0007-add-norm-writers.md) | médio | 7 | não declarado | — | 2026-11-15 |

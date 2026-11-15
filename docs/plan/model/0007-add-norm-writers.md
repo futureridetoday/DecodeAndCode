@@ -16,7 +16,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: approved
+status: done
 version: 1.0.0
 updated: "2026-11-15"
 approved_by: Bortoli
@@ -74,7 +74,7 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 
 ## Tarefas
 
-- [ ] **T1 — `rules.criar_guideline(raiz, nome, descricao, paths, corpo) -> Path`.** O nome casa
+- [x] **T1 — `rules.criar_guideline(raiz, nome, descricao, paths, corpo) -> Path`.** O nome casa
       `^[a-z0-9]+(-[a-z0-9]+)*$` — kebab-case ASCII; não se usa o `nomenclatura`, que é de plano e
       exige de 2 a 5 tokens — e é recusado se já existir em `rules/` ou em `rules-off/`. `name` e
       `description` são escritos entre aspas duplas com escape JSON (`json.dumps`), que é YAML válido.
@@ -93,7 +93,7 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
       `**/*.tsx`; chave recusada; `docs/**` recusado e `docs/**/*` aceito; nome existente em
       `rules-off/`; nome com acento ou maiúscula; reprovação sem resíduo; caminho inexistente recusado
       sem `aguardando` e aceito com ele.
-- [ ] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
+- [x] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
       `_reprojetar(raiz / ".claude" / "rules", nome)`. `_e_guideline` passa a tratar `.md` sem
       frontmatter como "não é guideline", em vez de levantar. O motivo não é que o arquivo esteja
       certo — `lint_rule` continua recusando rule sem frontmatter, e `auditar_arvore` continua
@@ -102,24 +102,24 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
       Teste com um `.md` sem frontmatter ao lado de uma guideline. **Efeito declarado:** num projeto com
       guidelines e sem `registry.json` — o AmFlow hoje —, o primeiro `registrar` cria o registro com
       todas elas, datadas do dia (`registry.py:96-114`); o registro é projeção, não fonte.
-- [ ] **T3 — `guardrail.lint_arquivo(caminho) -> list[str]`**: JSON válido, `regras` como lista,
+- [x] **T3 — `guardrail.lint_arquivo(caminho) -> list[str]`**: JSON válido, `regras` como lista,
       as quatro chaves com string não vazia, `ferramenta` e `detector` que compilam, `nome` único.
       Lista vazia quando são. Testes para cada recusa, e contra o `guardrails.json` deste repositório.
-- [ ] **T4 — `guardrail.adicionar(raiz, regra, proibido, permitido) -> Path`.** Avalia a regra
+- [x] **T4 — `guardrail.adicionar(raiz, regra, proibido, permitido) -> Path`.** Avalia a regra
       candidata sozinha, num arquivo temporário: `decidir` precisa negar `proibido` com a própria
       regra (`regra == nome`) e liberar `permitido`. Só então acrescenta a regra ao
       `.claude/guardrails.json` do projeto, criando o arquivo se faltar, e roda `lint_arquivo` no
       resultado. Recusa `nome` repetido. `proibido` e `permitido` têm a forma do payload do hook
       (`tool_name`, `tool_input`).
-- [ ] **T5 — `dc.py criar-guideline`, `dc.py adicionar-guardrail` e `dc.py lint-guardrails`.** Os
+- [x] **T5 — `dc.py criar-guideline`, `dc.py adicionar-guardrail` e `dc.py lint-guardrails`.** Os
       dois primeiros leem JSON do stdin — `{nome, descricao, paths, corpo}` e
       `{regra: {nome, ferramenta, detector, mensagem}, proibido: {tool_name, tool_input}, permitido: {…}}`
       — e recusam stdin vazio, como o `handoff`. Todos passam `lib.repo_root()` como `raiz`. Os três
       entram em `SUBCOMANDOS` (`tests/test_dc.py:44-56`), com um caso cada.
-- [ ] **T6 — documentação.** Norma, *Camada normativa*: os comandos de escrita, citados uma vez.
+- [x] **T6 — documentação.** Norma, *Camada normativa*: os comandos de escrita, citados uma vez.
       `create-guideline.md` e `create-guardrail.md`: os passos de escrita e registro passam a ser os
       comandos; *Quando criar* não muda aqui (o primeiro uso é do `onboard-new-project`).
-- [ ] **T7 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+- [x] **T7 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
       `.claude-plugin/marketplace.json`.
 
 ## Oráculo
@@ -158,15 +158,15 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 ## Backlog
 
 <!-- backlog:start -->
-- [ ] **T1 — `rules.criar_guideline(raiz, nome, descricao, paths, corpo) -> Path`.** O nome casa
-- [ ] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
-- [ ] **T3 — `guardrail.lint_arquivo(caminho) -> list[str]`**: JSON válido, `regras` como lista,
-- [ ] **T4 — `guardrail.adicionar(raiz, regra, proibido, permitido) -> Path`.** Avalia a regra
-- [ ] **T5 — `dc.py criar-guideline`, `dc.py adicionar-guardrail` e `dc.py lint-guardrails`.** Os
-- [ ] **T6 — documentação.** Norma, *Camada normativa*: os comandos de escrita, citados uma vez.
-- [ ] **T7 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+- [x] **T1 — `rules.criar_guideline(raiz, nome, descricao, paths, corpo) -> Path`.** O nome casa
+- [x] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
+- [x] **T3 — `guardrail.lint_arquivo(caminho) -> list[str]`**: JSON válido, `regras` como lista,
+- [x] **T4 — `guardrail.adicionar(raiz, regra, proibido, permitido) -> Path`.** Avalia a regra
+- [x] **T5 — `dc.py criar-guideline`, `dc.py adicionar-guardrail` e `dc.py lint-guardrails`.** Os
+- [x] **T6 — documentação.** Norma, *Camada normativa*: os comandos de escrita, citados uma vez.
+- [x] **T7 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
 
-0 de 7 tarefas concluídas · atualizado em 2026-11-15
+7 de 7 tarefas concluídas · atualizado em 2026-11-15
 <!-- backlog:end -->
 
 ## Fonte
