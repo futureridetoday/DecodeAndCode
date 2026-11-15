@@ -1,7 +1,20 @@
 {
   "permissions": {
-    "allow": ["Read", "Edit", "Write", "Bash(git add*)", "Bash(mkdir*)", "Bash(chmod*)", "Bash(./scripts/test-python.sh*)", "Bash(bash scripts/test-python.sh *)"],
-    "deny": ["Bash(rm -rf*)", "Bash(git reset --hard*)", "Bash(git checkout -- *)"]
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(git add*)",
+      "Bash(mkdir*)",
+      "Bash(chmod*)",
+      "Bash(./scripts/test-python.sh*)",
+      "Bash(bash scripts/test-python.sh *)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)",
+      "Bash(git reset --hard*)",
+      "Bash(git checkout -- *)"
+    ]
   },
   "hooks": {
     "PreToolUse": [
@@ -33,6 +46,17 @@
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent_start.py\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session_start.py\""
           }
         ]
       }

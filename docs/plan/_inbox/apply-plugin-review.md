@@ -1043,7 +1043,7 @@ depende das outras. A Fase 4 depende de `D-01` só para decidir se a `16` existe
   [plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
 - [`modelo-dev-units.md`](../system/modelo-dev-units.md) — seções *Modelos*, *Empacotamento*,
   *Validar a ativação*, *Avaliação de escopo* e *O que cada porte carrega*
-- [`huddle.md`](../system/huddle.md) — `H-11`, a medição do desvio de leitura no `ai-builder`
+- [`huddle/bortoli-rafael.md`](../system/huddle/bortoli-rafael.md) — `H-11`, a medição do desvio de leitura no `ai-builder`
 - [`principles.md`](../../../.claude/rules/principles.md) — código é custo, subtração antes de
   adição, gates A e B
 - [`scripts.md`](../../../.claude/rules/scripts.md) — a guideline que `D-04` alteraria

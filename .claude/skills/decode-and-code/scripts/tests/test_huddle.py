@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Teste declarado da unidade 0001-21 — `huddle.lint_arquivo`, `lint_relatorio` e `iniciar`.
 
-`TestLintArquivoContraORealArquivo` é o caso contra a instância — `docs/plan/system/huddle.md`
-real, não só fixture (`L-31`): é ele que prova que o parser aprova o arquivo que o time usa todo
+`TestLintArquivoContraORealArquivo` é o caso contra a instância — `docs/plan/system/huddle/bortoli-rafael.md`
+real (o arquivo único foi migrado para o da pessoa no plano 0008), não só fixture (`L-31`): é ele que prova que o parser aprova o arquivo que o time usa todo
 dia, com suas nove entradas abertas e uma fechada. `TestLintArquivoInvariantesIsolados` isola cada
 um dos três invariantes num caso próprio, contra um huddle sintético mínimo que sozinho já aprova —
 mesmo padrão de `AGENTE_VALIDO`/`UNIDADE_VALIDA`.
@@ -45,7 +45,9 @@ class TestLintArquivoContraORealArquivo(unittest.TestCase):
     """`L-31` — sem este caso, o lint prova só o mecanismo, nunca a instância real."""
 
     def test_huddle_real_aprova_sem_ressalva(self):
-        caminho = lib.plan_root() / "system" / "huddle.md"
+        # Caminho fixo, não `huddle.usuario`: é a instância deste repositório, e o `user.name` do CI
+        # não é o de quem a escreve.
+        caminho = lib.plan_root() / "system" / "huddle" / "bortoli-rafael.md"
         self.assertEqual(huddle.lint_arquivo(caminho), [])
 
 

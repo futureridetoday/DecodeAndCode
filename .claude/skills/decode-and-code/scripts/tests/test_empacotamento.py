@@ -60,14 +60,15 @@ import lint_skill
 
 NOMES_DAS_SKILLS = lib.SKILLS
 
-# Os três hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
+# Os quatro hooks da fonte (evento → script) e os três que viajam (`P-05`, `D-02`, plano 0008).
 _HOOKS_DA_FONTE = {
     "PreToolUse": "pre_tool_use.py",
     "InstructionsLoaded": "instructions_loaded.py",
     "SubagentStart": "subagent_start.py",
+    "SessionStart": "session_start.py",
 }
-_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded"}
-_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py"}
+_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded", "SessionStart"}
+_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py", "session_start.py"}
 
 
 def _montar_fonte(raiz: Path) -> None:
@@ -315,7 +316,7 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
 
         eventos_settings = set(json.loads((self.raiz / ".claude" / "settings.json").read_text())["hooks"])
-        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
 
         conteudo = (self.destino / "hooks" / "hooks.json").read_text(encoding="utf-8")
         eventos_gerados = set(json.loads(conteudo)["hooks"])
@@ -637,7 +638,7 @@ class TestPacoteEnxuto(unittest.TestCase):
             empacotar.construir(destino)
 
             fonte = json.loads((lib.repo_root() / ".claude" / "settings.json").read_text(encoding="utf-8"))
-            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
 
             hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
             self.assertEqual(set(hooks_json), _EVENTOS_QUE_VIAJAM)

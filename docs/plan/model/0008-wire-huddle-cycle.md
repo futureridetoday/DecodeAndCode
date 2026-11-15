@@ -16,7 +16,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: approved
+status: done
 version: 1.0.0
 updated: "2026-11-15"
 approved_by: Bortoli
@@ -69,7 +69,7 @@ Medida em 2026-11-10, só leitura.
 |---|---|
 | Nenhuma skill nem hook do pacote menciona o huddle; `huddle.iniciar` só é chamado por teste | `grep -rn -i huddle` no pacote 2.0.0 — só `huddle.py`, a norma e a docstring de `bootstrap.py` |
 | Nenhum subcomando de huddle no `dc.py`; o único Bash liberado nas skills é o `dc.py`. Edit e Write estão liberados, então o registro à mão é possível, mas sem formato garantido e sem instrução que o peça | `dc.py:236-284`; `ALLOWED_TOOLS` em `tests/test_skill_base.py:33-36` |
-| Esta instância: 10 abertas, 1 fechada (H-02, em 2026-08-22); último registro em 2026-09-14 | [`huddle.md`](../system/huddle.md) |
+| Esta instância: 10 abertas, 1 fechada (H-02, em 2026-08-22); último registro em 2026-09-14 | [`huddle/bortoli-rafael.md`](../system/huddle/bortoli-rafael.md) |
 | AmFlow: 10 abertas, 0 fechadas; último registro em 2026-10-01 | `AmFlow/docs/plan/system/huddle.md` |
 | *Prompt de continuidade* colado uma vez só, em 2026-08-22, com os campos ainda vazios | Transcripts locais dos dois projetos |
 | 2026-09-03: um relatório declarou `entradas novas no huddle: 1` e o arquivo não ganhou entrada; o `lint_relatorio` de hoje aceitaria | Transcript da revisão de `adota-decode-and-code`, no AmFlow |
@@ -90,12 +90,12 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
 
 ## Tarefas
 
-- [ ] **T1 — identidade e caminho.** `huddle.usuario(projeto) -> str`: `git config user.name` do
+- [x] **T1 — identidade e caminho.** `huddle.usuario(projeto) -> str`: `git config user.name` do
       projeto em kebab-case ASCII; sem nome configurado, recusa com mensagem que diz o comando para
       configurá-lo. `huddle.caminho(projeto, usuario)` devolve
       `<projeto>/<plan_root>/system/huddle/<usuario>.md`. Testes com nome acentuado, com espaço e
       ausente, contra `git` real num repositório `tempfile`.
-- [ ] **T2 — operações no `huddle.py`.** Compatíveis com o contrato da `0001-21`: `iniciar(destino)`
+- [x] **T2 — operações no `huddle.py`.** Compatíveis com o contrato da `0001-21`: `iniciar(destino)`
       continua funcionando, e ganha os parâmetros opcionais `projeto` e `usuario`, sem
       `lib.repo_root()` quando `projeto` vem; o esqueleto passa a ter `owner`, `last_huddle: ""` e
       `reminder_days: 7` no frontmatter, e `lint_arquivo` passa a recusar `reminder_days` que não seja
@@ -117,13 +117,13 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       e a contagem dos omitidos; sem git, lista vazia e um aviso, nunca exceção.
       Testes num arquivo novo, `tests/test_huddle_cycle.py`, inclusive com uma seção extra depois de
       `## Fechadas`; `tests/test_huddle.py` só muda no caminho da instância real (T9).
-- [ ] **T3 — linha de fecho com ids.** `lint_relatorio(texto, arquivo=None)`: sem `arquivo`, o
+- [x] **T3 — linha de fecho com ids.** `lint_relatorio(texto, arquivo=None)`: sem `arquivo`, o
       contrato de hoje; com `arquivo`, exige `entradas novas no huddle: N` e, com `N > 0`, os ids
       entre parênteses — exemplo literal `entradas novas no huddle: 2 (H-12, H-13)` —, `N` igual à
       quantidade de ids, e cada id em `## Abertas` com a data de hoje no cabeçalho, para que entrada
       antiga não passe como nova. Testes para zero, `N` coerente, id inexistente, id antigo e `N`
       divergente.
-- [ ] **T4 — subcomandos planos no `dc.py`**, na forma da `D-06` do `add-norm-writers`:
+- [x] **T4 — subcomandos planos no `dc.py`**, na forma da `D-06` do `add-norm-writers`:
       `huddle-iniciar`, `huddle-abrir`, `huddle-fechar`, `huddle-concluir`, `huddle-pauta`,
       `huddle-fecho`, `huddle-lint`, `huddle-lint-relatorio` e `huddle-migrar`. Resolvem o arquivo da
       pessoa por T1, com a raiz de `lib.repo_root()`, como os outros subcomandos. `huddle-abrir` e
@@ -134,7 +134,7 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       mesmo em zero* —, no padrão do `dc.py normas`; se a norma do projeto não tiver esses títulos (a
       cópia materializada antes deste plano, `L-05`), lê a do pacote, na ordem de
       `bootstrap._fonte_norma`. Os nove entram em `SUBCOMANDOS` (`tests/test_dc.py:44-56`).
-- [ ] **T5 — as quatro skills** (`intake`, `review-plan`, `derive`, `implement`): o passo final roda
+- [x] **T5 — as quatro skills** (`intake`, `review-plan`, `derive`, `implement`): o passo final roda
       `dc.py huddle-fecho`, registra por `dc.py huddle-abrir` o que continuou aberto, e roda
       `dc.py huddle-lint-relatorio` sobre a mensagem final antes de enviá-la. No `implement`, fica
       explícito que o arquivo do huddle é exceção à regra de tocar só os arquivos declarados. O
@@ -144,7 +144,7 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       cada trecho removido apontando onde a mesma instrução continua. `lint_skill`,
       `test_skill_md_do_intake_cabe_no_teto_de_bytes` e `test_skills_citam_so_subcomandos_que_existem`
       continuam verdes.
-- [ ] **T6 — `SessionStart` no pacote.** `session_start.py`, matcher `startup`, resolve o projeto por
+- [x] **T6 — `SessionStart` no pacote.** `session_start.py`, matcher `startup`, resolve o projeto por
       `CLAUDE_PROJECT_DIR` — nunca por `lib.repo_root()`. Acha os scripts pelo mesmo
       `sys.path.insert` de `pre_tool_use.py:41`, importa só `lib` (para `lib.config()["plan_root"]`)
       e `huddle` (para T1), e roda um `git config user.name` com `cwd` no projeto — o único
@@ -158,7 +158,7 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       eventos. Teste por subprocesso com `CLAUDE_PROJECT_DIR` num `tempfile`: 6, 7 e 8 dias,
       `reminder_days: 0`, `last_huddle` ausente, e outra pessoa com entradas abertas — que não gera
       aviso para quem está na sessão.
-- [ ] **T7 — skill `huddle`.** Linha da `TOPOLOGIA`: `modo: huddle`, `model: opus`,
+- [x] **T7 — skill `huddle`.** Linha da `TOPOLOGIA`: `modo: huddle`, `model: opus`,
       `disable-model-invocation: true` (a `D-08` do `0001`: o huddle se abre quando a conversa
       acontece), sem `context`, `allowed-tools` igual a `ALLOWED_TOOLS`. Atalho `skills/huddle/dc.py`
       copiado das outras; o corpo cita `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`. Sem
@@ -168,13 +168,13 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       (`add-norm-writers`) e depois `dc.py huddle-fechar` com o caminho gravado; termina com
       `dc.py huddle-concluir`. Com `registrar <texto>`: abre a
       entrada com a pessoa como autora e pergunta o tipo.
-- [ ] **T8 — documentação.** Norma, seção *Huddle*: um arquivo por pessoa, identidade, comandos,
+- [x] **T8 — documentação.** Norma, seção *Huddle*: um arquivo por pessoa, identidade, comandos,
       linha com ids, quatro skills, `reminder_days`, promoção, quem registra. As enumerações que a
       quinta skill e o terceiro hook tornam falsas: norma (*Empacotamento*, *Camada de execução*,
       *Modelos*), README (contagem de hooks e de skills, seção *Huddle*), `docs/recursos/hooks.md`,
       `.claude/CLAUDE.md` (*Arquitetura* e *Recursos Instalados*), comentário de `lib.SKILLS`.
       `docs/recursos/huddle.md` novo.
-- [ ] **T9 — migração desta instância e saída do rascunho antigo.** `dc.py huddle-migrar` move
+- [x] **T9 — migração desta instância e saída do rascunho antigo.** `dc.py huddle-migrar` move
       `docs/plan/system/huddle.md` para `docs/plan/system/huddle/<usuario>.md` — o mesmo comando que
       o AmFlow usará na sua migração. As referências vivas ao caminho antigo passam ao novo, medidas
       por `grep -rn "system/huddle.md"` em 2026-11-15: `.claude/CLAUDE.md:56`; `README.md:159-186`
@@ -183,7 +183,7 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
       a passar; a *Fonte* do `apply-plugin-review.md`; e os dois links deste plano. Planos concluídos
       (`0001` e as unidades `19` e `21`) não são reescritos: são registro do que valia quando
       fecharam. `huddle-command.md` sai do `_inbox`.
-- [ ] **T10 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+- [x] **T10 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
       `.claude-plugin/marketplace.json`.
 
 ## Oráculo
@@ -235,25 +235,25 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
 ## Backlog
 
 <!-- backlog:start -->
-- [ ] **T1 — identidade e caminho.** `huddle.usuario(projeto) -> str`: `git config user.name` do
-- [ ] **T2 — operações no `huddle.py`.** Compatíveis com o contrato da `0001-21`: `iniciar(destino)`
-- [ ] **T3 — linha de fecho com ids.** `lint_relatorio(texto, arquivo=None)`: sem `arquivo`, o
-- [ ] **T4 — subcomandos planos no `dc.py`**, na forma da `D-06` do `add-norm-writers`:
-- [ ] **T5 — as quatro skills** (`intake`, `review-plan`, `derive`, `implement`): o passo final roda
-- [ ] **T6 — `SessionStart` no pacote.** `session_start.py`, matcher `startup`, resolve o projeto por
-- [ ] **T7 — skill `huddle`.** Linha da `TOPOLOGIA`: `modo: huddle`, `model: opus`,
-- [ ] **T8 — documentação.** Norma, seção *Huddle*: um arquivo por pessoa, identidade, comandos,
-- [ ] **T9 — migração desta instância e saída do rascunho antigo.** `dc.py huddle-migrar` move
-- [ ] **T10 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+- [x] **T1 — identidade e caminho.** `huddle.usuario(projeto) -> str`: `git config user.name` do
+- [x] **T2 — operações no `huddle.py`.** Compatíveis com o contrato da `0001-21`: `iniciar(destino)`
+- [x] **T3 — linha de fecho com ids.** `lint_relatorio(texto, arquivo=None)`: sem `arquivo`, o
+- [x] **T4 — subcomandos planos no `dc.py`**, na forma da `D-06` do `add-norm-writers`:
+- [x] **T5 — as quatro skills** (`intake`, `review-plan`, `derive`, `implement`): o passo final roda
+- [x] **T6 — `SessionStart` no pacote.** `session_start.py`, matcher `startup`, resolve o projeto por
+- [x] **T7 — skill `huddle`.** Linha da `TOPOLOGIA`: `modo: huddle`, `model: opus`,
+- [x] **T8 — documentação.** Norma, seção *Huddle*: um arquivo por pessoa, identidade, comandos,
+- [x] **T9 — migração desta instância e saída do rascunho antigo.** `dc.py huddle-migrar` move
+- [x] **T10 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
 
-0 de 10 tarefas concluídas · atualizado em 2026-11-15
+10 de 10 tarefas concluídas · atualizado em 2026-11-15
 <!-- backlog:end -->
 
 ## Fonte
 
 - [`modelo-dev-units.md`](../system/modelo-dev-units.md) — seções *Huddle*, *Bootstrap*,
   *Empacotamento*, *Camada de execução* e *Modelos*
-- [`huddle.md`](../system/huddle.md) — a instância e a evidência de uso
+- [`huddle/bortoli-rafael.md`](../system/huddle/bortoli-rafael.md) — a instância e a evidência de uso
 - [`0001-decode-and-code-foundation`](0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
   — `D-08`, `D-09`, `D-28`, `L-08`; *O huddle é fila, não fonte*, *Gatilho de escrita*, *Momento* e
   *A rotina fica de fora do plugin*

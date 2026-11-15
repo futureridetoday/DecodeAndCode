@@ -275,6 +275,153 @@ def _lint_guardrails(args: argparse.Namespace) -> int:
     return REPROVADO if problemas else OK
 
 
+# Huddle por pessoa — plano 0008, T4. Todos resolvem o arquivo de quem está na sessão.
+
+# Prefixos das subseções da seção *Huddle* que o `huddle-fecho` imprime (gatilhos e momento).
+_SECOES_DO_FECHO = ("Despejo", "Momento")
+
+
+def _pessoa() -> tuple[Path, str, Path]:
+    """`(raiz, usuario, arquivo)` de quem está na sessão — `ValueError` sem `user.name` no git."""
+    import huddle
+    import lib
+
+    raiz = lib.repo_root()
+    usuario = huddle.usuario(raiz)
+    return raiz, usuario, huddle.caminho(raiz, usuario)
+
+
+def _ler_texto_do_stdin(comando: str) -> str:
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        raise ValueError(f"{comando} lê o texto do stdin")
+    return texto
+
+
+def _huddle_iniciar(args: argparse.Namespace) -> int:
+    import huddle
+
+    raiz, usuario, arquivo = _pessoa()
+    criado = huddle.iniciar(arquivo, projeto=raiz, usuario=usuario)
+    print(criado if criado else f"já existe: {arquivo}")
+    return OK
+
+
+def _huddle_abrir(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, usuario, arquivo = _pessoa()
+    texto = _ler_texto_do_stdin("huddle-abrir")
+    try:
+        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario))
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    return OK
+
+
+def _huddle_fechar(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    try:
+        huddle.fechar(arquivo, args.id, args.destino)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"{args.id} fechada")
+    return OK
+
+
+def _huddle_concluir(args: argparse.Namespace) -> int:
+    import huddle
+    from datetime import date
+
+    _, _, arquivo = _pessoa()
+    data = args.data or date.today().isoformat()
+    huddle.concluir(arquivo, data)
+    print(f"last_huddle: {data}")
+    return OK
+
+
+def _huddle_pauta(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    if not arquivo.exists():
+        print(f"sem huddle: {arquivo}")
+        return OK
+    pauta = huddle.pauta(arquivo, args.desde)
+    print(f"## Abertas ({len(pauta['abertas'])})")
+    for aberta in pauta["abertas"]:
+        primeira = next((l for l in aberta["texto"].splitlines() if l.strip()), "")
+        print(f"- {aberta['id']} · {aberta['tipo']} · {aberta['data']} · {primeira}")
+    print(f"\n## Commits desde {pauta['desde']} ({len(pauta['commits'])})")
+    for commit in pauta["commits"]:
+        print(f"- {commit}")
+    if pauta["omitidos"]:
+        print(f"- … e mais {pauta['omitidos']} omitidos")
+    if pauta["aviso"]:
+        print(f"\naviso: {pauta['aviso']}")
+    return OK
+
+
+def _huddle_fecho(args: argparse.Namespace) -> int:
+    """Imprime as subseções de gatilhos e de momento da seção *Huddle*: da norma do projeto, ou da
+    do pacote quando a do projeto é anterior a elas (`L-05`), na ordem de `bootstrap._fonte_norma`."""
+    import bootstrap
+    import lib
+    import normas
+
+    candidatas = [lib.plan_root() / "system" / "modelo-dev-units.md"]
+    try:
+        candidatas.append(bootstrap._fonte_norma())
+    except FileNotFoundError:
+        pass
+    for norma in candidatas:
+        achados = [normas._buscar(norma, nome) for nome in _SECOES_DO_FECHO]
+        if all(isinstance(a, tuple) for a in achados):
+            for titulo, trecho in achados:
+                print(f"### {os.path.relpath(norma)} § {titulo}")
+                print(trecho)
+                print()
+            return OK
+    raise ValueError(f"seções {_SECOES_DO_FECHO} não encontradas em {[str(c) for c in candidatas]}")
+
+
+def _huddle_lint(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    problemas = huddle.lint_arquivo(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
+def _huddle_lint_relatorio(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    problemas = huddle.lint_relatorio(_ler_texto_do_stdin("huddle-lint-relatorio"), arquivo=arquivo)
+    for problema in problemas:
+        print(problema)
+    if not problemas:
+        print("ok")
+    return REPROVADO if problemas else OK
+
+
+def _huddle_migrar(args: argparse.Namespace) -> int:
+    import huddle
+
+    raiz, usuario, _ = _pessoa()
+    destino = huddle.migrar(raiz, usuario)
+    print(destino if destino else "nada a migrar")
+    return OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -357,6 +504,38 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     comando("lint-guardrails", "valida .claude/guardrails.json do projeto (1 se tem problema)", _lint_guardrails)
+
+    comando("huddle-iniciar", "cria o arquivo de huddle de quem está na sessão, sem sobrescrever", _huddle_iniciar)
+
+    p = comando(
+        "huddle-abrir",
+        "abre uma entrada no huddle da pessoa e imprime o H-XX; lê o texto do stdin (1 se recusada)",
+        _huddle_abrir,
+    )
+    p.add_argument("tipo")
+    p.add_argument("--autor", help="padrão: a pessoa da sessão")
+
+    p = comando("huddle-fechar", "fecha uma entrada aberta com o destino (1 se o id não está aberto)", _huddle_fechar)
+    p.add_argument("id")
+    p.add_argument("destino")
+
+    p = comando("huddle-concluir", "grava a data do huddle em last_huddle", _huddle_concluir)
+    p.add_argument("--data", help="padrão: hoje")
+
+    p = comando("huddle-pauta", "abertas da pessoa e commits desde o último huddle", _huddle_pauta)
+    p.add_argument("--desde", help="padrão: last_huddle, ou created")
+
+    comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
+
+    comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
+
+    comando(
+        "huddle-lint-relatorio",
+        "confere a linha de fecho do relatório no stdin contra o huddle da pessoa (1 se reprovada)",
+        _huddle_lint_relatorio,
+    )
+
+    comando("huddle-migrar", "move o huddle único de projeto para o arquivo da pessoa", _huddle_migrar)
 
     return parser
 

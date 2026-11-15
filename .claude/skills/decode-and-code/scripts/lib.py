@@ -52,9 +52,10 @@ PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 # Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
 MODOS = ("review-plan", "derive", "implement")
 
-# As skills que viajam no pacote (`empacotar`): os três modos mais o `intake`, que antecede o ciclo e
-# não é modo da norma. Acrescentar skill é editar só aqui.
-SKILLS = MODOS + ("intake",)
+# As skills que viajam no pacote (`empacotar`): os três modos, o `intake`, que antecede o ciclo, e o
+# `huddle`, que conduz a conversa da pessoa (plano 0008) — nenhum dos dois é modo da norma.
+# Acrescentar skill é editar só aqui.
+SKILLS = MODOS + ("intake", "huddle")
 
 _config_cache: dict | None = None
 

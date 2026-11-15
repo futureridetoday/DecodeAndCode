@@ -86,6 +86,15 @@ TOPOLOGIA = {
         "background": "false",
         "argument-hint": '"<pedido>"',
     },
+    # Plano 0008, T7: o huddle se abre quando a conversa acontece (`D-08` do `0001`), nunca por
+    # iniciativa do modelo — por isso `disable-model-invocation: true`, como o `derive`.
+    "huddle": {
+        "modo": "huddle",
+        "model": "opus",
+        "disable-model-invocation": "true",
+        "context": None,
+        "allowed-tools": ALLOWED_TOOLS,
+    },
 }
 
 
@@ -128,7 +137,7 @@ class TestSkillBase(unittest.TestCase):
                     self.assertEqual(regioes.ler_campo(SKILLS / nome / "SKILL.md", campo), valor)
 
     def test_so_as_skills_em_fork_declaram_agent(self):
-        for nome in ("review-plan", "derive"):
+        for nome in ("review-plan", "derive", "huddle"):
             with self.subTest(skill=nome):
                 self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
 

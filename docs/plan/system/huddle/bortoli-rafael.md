@@ -13,6 +13,11 @@ status: draft
 version: 0.3.0
 updated: 2026-09-14
 
+# huddle
+owner: bortoli-rafael
+last_huddle: ""
+reminder_days: 7
+
 # system
 scope: project
 auto_load: false
@@ -271,7 +276,7 @@ imitação; o que reproduz a qualidade da conversa são as **condições**, e el
 ```markdown
 Huddle da semana. Antes de responder qualquer coisa:
 
-1. Leia `docs/plan/system/huddle.md` inteiro. `## Como conversamos` vale para esta conversa;
+1. Leia `docs/plan/system/huddle/bortoli-rafael.md` inteiro. `## Como conversamos` vale para esta conversa;
    `## Abertas` é a pauta.
 2. Rode `git log --oneline -{N}` para ver o que se moveu desde {data do último huddle}.
 

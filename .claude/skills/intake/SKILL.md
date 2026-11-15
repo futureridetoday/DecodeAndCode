@@ -48,19 +48,20 @@ Resolva o pedido abaixo com a menor intervenção que funcione, antes de qualque
 
 Pedido: $ARGUMENTS
 
-`plan_root` vem do `config.json` em `${CLAUDE_SKILL_DIR}/../decode-and-code/`, nunca fixo; os scripts, de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`.
+`plan_root` vem do `config.json` ao lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo.
 
 ## Instruções
 
 1. **Sempre:** `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap` (idempotente).
 2. **Classifique o pedido:** recurso do Claude Code, ou plano, feature, problema. Se as duas leituras cabem, apresente ambas e pergunte.
-3. **Recurso do Claude Code:** leia o que o projeto já tem em `.claude/` e suba a escada, parando no primeiro degrau que resolve: nada (já existe e falha por outro motivo) → instrução → hook (o comportamento precisa ser garantido) → skill ou command → agent (só com contexto isolado). Entregue o recurso ou a recomendação, com o degrau e o porquê, mesmo contra o tipo pedido. Schema em dúvida: confirme em code.claude.com, não por analogia.
-4. **Plano, feature ou problema:** leia os arquivos relacionados e aplique Clarificar → Evitar → Reduzir e os gates A e B da norma `<plan_root>/system/modelo-dev-units.md` (*Antes do plano*). Comece pela objeção: ache o motivo para não construir. Se o gate A reprova (sem impacto mensurável agora), reporte e pare sem gravar.
-5. **Falta informação** para responder os estágios: pare e liste o que falta, numa rodada só. Nunca grave esboço incompleto para resolver depois.
-6. **Estágios e gates respondidos:** grave o esboço mínimo em `<plan_root>/_inbox/<nome>.md`, no formato da norma `<plan_root>/system/modelo-dev-units.md` (*O que cada porte carrega*). Nome semântico, sem número (vem na aprovação). Os gates A e B vão respondidos por escrito no esboço, com o que o B cortou. Depois:
+3. **Recurso do Claude Code:** leia o que o projeto já tem em `.claude/` e suba a escada, parando no primeiro degrau que resolve: nada (já existe e falha por outro motivo) → instrução → hook (o comportamento precisa ser garantido) → skill ou command → agent (só com contexto isolado). Entregue-o mesmo contra o tipo pedido. Schema em dúvida: confirme em code.claude.com, não por analogia.
+4. **Plano, feature ou problema:** leia os arquivos relacionados e aplique Clarificar → Evitar → Reduzir e os gates A e B da norma `<plan_root>/system/modelo-dev-units.md` (*Antes do plano*). Se o gate A reprova (sem impacto mensurável agora), reporte e pare sem gravar.
+5. **Falta informação** para responder os estágios: pare e liste o que falta, numa rodada só.
+6. **Estágios e gates respondidos:** grave o esboço mínimo em `<plan_root>/_inbox/<nome>.md`, no formato da norma (*O que cada porte carrega*). Os gates A e B vão respondidos por escrito no esboço, com o que o B cortou. Depois:
    - `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`
    - `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>`
 7. Lint sem problemas: recomende `review-plan <caminho>` como próximo passo.
+8. **Fecho:** `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho`; o que ficou aberto vai por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, texto no stdin; a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio` antes de enviar.
 
 Composição via `dc.py`: rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando.
 
@@ -70,4 +71,4 @@ Derivar (`derive`), implementar (`implement`) e aprovar, que é do humano.
 
 ## Saída
 
-Uma única mensagem, no idioma do pedido. Recurso: o degrau, o porquê e o que foi criado ou recomendado. Plano: o caminho do esboço, os gates A e B e `review-plan <caminho>`. Parada: o que falta, ou o gate que reprovou.
+Uma única mensagem, no idioma do pedido. Recurso: o degrau, o porquê e o que foi criado ou recomendado. Plano: o caminho do esboço e os gates A e B. Parada: o que falta, ou o gate que reprovou. Termina com `entradas novas no huddle: N (H-XX, …)`.

@@ -57,6 +57,15 @@ SUBCOMANDOS = (
     "criar-guideline",
     "adicionar-guardrail",
     "lint-guardrails",
+    "huddle-iniciar",
+    "huddle-abrir",
+    "huddle-fechar",
+    "huddle-concluir",
+    "huddle-pauta",
+    "huddle-fecho",
+    "huddle-lint",
+    "huddle-lint-relatorio",
+    "huddle-migrar",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -680,6 +689,126 @@ class TestLintGuardrails(_ProjetoCase):
         r = self.dc("lint-guardrails")
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestHuddle(_ProjetoCase):
+    """Plano 0008, T4 — os nove `huddle-*`, resolvendo o arquivo da pessoa pelo `user.name` local."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.arquivo = self.raiz_planos / "system" / "huddle" / "ana-lima.md"
+
+    def abrir(self, texto: str = "Qual o teto?", tipo: str = "pergunta") -> subprocess.CompletedProcess:
+        return self.dc("huddle-abrir", tipo, entrada=texto)
+
+    def test_iniciar_cria_o_arquivo_da_pessoa(self):
+        r = self.dc("huddle-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(self.arquivo.is_file())
+        self.assertEqual(self.dc("huddle-iniciar").returncode, 0)
+
+    def test_abrir_le_o_texto_do_stdin_e_imprime_o_id(self):
+        r = self.abrir()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), "H-01")
+        self.assertIn("Qual o teto?", self.arquivo.read_text(encoding="utf-8"))
+        self.assertIn("· ana-lima", self.arquivo.read_text(encoding="utf-8"))
+
+    def test_abrir_com_autor(self):
+        r = self.dc("huddle-abrir", "pergunta", "--autor", "Claude", entrada="x")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("· Claude", self.arquivo.read_text(encoding="utf-8"))
+
+    def test_abrir_stdin_vazio_e_codigo_2(self):
+        r = self.abrir(texto="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_abrir_tipo_invalido_e_codigo_1(self):
+        r = self.abrir(tipo="ideia")
+        self.assertEqual(r.returncode, 1, r.stderr)
+
+    def test_fechar_e_concluir(self):
+        self.abrir()
+        r = self.dc("huddle-fechar", "H-01", "descartada")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        r = self.dc("huddle-concluir", "--data", "2026-11-15")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        texto = self.arquivo.read_text(encoding="utf-8")
+        self.assertIn("| H-01 |", texto)
+        self.assertIn("last_huddle: 2026-11-15", texto)
+
+    def test_fechar_id_inexistente_e_codigo_1(self):
+        self.dc("huddle-iniciar")
+        self.assertEqual(self.dc("huddle-fechar", "H-09", "x").returncode, 1)
+
+    def test_pauta_lista_as_abertas(self):
+        self.abrir(texto="**Título da pergunta.**")
+        r = self.dc("huddle-pauta")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("H-01", r.stdout)
+
+    def test_fecho_imprime_despejo_e_momento_da_norma(self):
+        r = self.dc("huddle-fecho")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Despejo", r.stdout)
+        self.assertIn("Momento", r.stdout)
+        self.assertIn("entradas novas no huddle", r.stdout)
+
+    def test_fecho_cai_para_a_norma_do_pacote_quando_a_do_projeto_e_anterior(self):
+        """L-05: a norma materializada antes do 0008 não tem os títulos — vale a do pacote."""
+        norma = self.raiz_planos / "system" / "modelo-dev-units.md"
+        norma.write_text("# Norma antiga\n\n## Huddle\n\nSem as subseções.\n", encoding="utf-8")
+        r = self.dc("huddle-fecho")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Despejo", r.stdout)
+        self.assertNotIn(os.path.relpath(norma, self.projeto), r.stdout)
+
+    def test_lint_do_arquivo_da_pessoa(self):
+        self.dc("huddle-iniciar")
+        r = self.dc("huddle-lint")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("ok", r.stdout)
+
+    def test_lint_relatorio_confere_ids(self):
+        self.abrir()
+        ok = self.dc("huddle-lint-relatorio", entrada="Feito.\n\nentradas novas no huddle: 1 (H-01)\n")
+        self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+        ruim = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 1 (H-07)\n")
+        self.assertEqual(ruim.returncode, 1)
+
+    def test_lint_relatorio_sem_arquivo_da_pessoa_reprova_ids_com_1(self):
+        r = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 1 (H-01)\n")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        zero = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 0\n")
+        self.assertEqual(zero.returncode, 0, zero.stderr)
+
+    def test_lint_relatorio_stdin_vazio_e_codigo_2(self):
+        r = self.dc("huddle-lint-relatorio", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_migrar_move_o_arquivo_unico(self):
+        antigo = self.raiz_planos / "system" / "huddle.md"
+        antigo.write_text("---\nname: huddle\n# system\nscope: project\n---\n\n## Abertas\n\n## Fechadas\n\n| # | Tipo | Fechada em | Destino |\n|---|---|---|---|\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "x"], cwd=self.projeto, check=True)
+        r = self.dc("huddle-migrar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse(antigo.exists())
+        self.assertTrue(self.arquivo.is_file())
+        self.assertIn("nada a migrar", self.dc("huddle-migrar").stdout)
+
+    def test_sem_user_name_e_codigo_2_com_a_instrucao(self):
+        subprocess.run(["git", "config", "--unset", "user.name"], cwd=self.projeto, check=True)
+        ambiente = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+        with mock.patch.dict(os.environ, ambiente):
+            r = self.dc("huddle-iniciar")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("git config user.name", r.stderr)
 
 
 class TestVerificar(_ProjetoCase):

@@ -46,14 +46,15 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 ## Arquitetura
 
 - `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
-  determinismo) e `config.json`. Ao lado dela, as quatro skills: uma por modo — `review-plan/`,
-  `derive/` e `implement/` — e `intake/`, que antecede o ciclo. O método não tem agent
+  determinismo) e `config.json`. Ao lado dela, as cinco skills: uma por modo — `review-plan/`,
+  `derive/` e `implement/` —, `intake/`, que antecede o ciclo, e `huddle/`, que conduz a conversa
+  da pessoa sobre o que ficou em aberto. O método não tem agent
 - `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
   [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
   subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
   decodificação e os gates A e B moram na norma, que viaja com o plugin
 - `docs/plan/` — planos e unidades, destino de todo trabalho novo
-- `docs/plan/system/` — fundação: norma, política de linguagem, `huddle.md`
+- `docs/plan/system/` — fundação: norma, política de linguagem, `huddle/` (um arquivo por pessoa)
 - `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
   `empacotar.construir` copia (`D-10` do plano `0004`: a raiz do repositório carrega só o
   marketplace, nunca o plugin)
@@ -71,6 +72,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 | `review-plan` | skill | Revisa um plano antes da aprovação, com os seis checks da norma — parte por script, parte por julgamento. Opus |
 | `derive` | skill | Deriva a estrutura e as unidades de um plano aprovado. Só por invocação explícita. Opus |
 | `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
+| `huddle` | skill | Conduz o huddle da pessoa da sessão: percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém. Só por invocação explícita. Opus |
+| `session_start` | hook | `SessionStart` (`startup`): lembra a pessoa do huddle atrasado. Viaja no pacote |
 | `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
 
 ## Restrições

@@ -36,3 +36,4 @@ dependencies: []
 | [0005-plugin-release-distribution](../model/0005-plugin-release-distribution.md) | médio | 9 | não declarado | — | 2026-09-02 |
 | [0006-e2e-fixes](../model/0006-e2e-fixes.md) | médio | 7 | não declarado | — | 2026-10-17 |
 | [0007-add-norm-writers](../model/0007-add-norm-writers.md) | médio | 7 | não declarado | — | 2026-11-15 |
+| [0008-wire-huddle-cycle](../model/0008-wire-huddle-cycle.md) | médio | 10 | não declarado | — | 2026-11-15 |
