@@ -225,6 +225,18 @@ unidade 05 usam o `wire-huddle-cycle`. **Este plano só se aprova depois que os 
 | D-13 | **Guideline para caminho que ainda não existe é gravada já**, com `paths_pending: true`, pelo mecanismo da `D-08` do `add-norm-writers` — o padrão vale desde o primeiro arquivo, que é o que o setup promete | Decidida pelo humano em 2026-11-15 |
 | D-14 | **O marketplace que `setup-escopo` grava vem de uma chave `marketplace` no `config.json` do pacote**, porque o pacote não leva o `marketplace.json`. É identidade do próprio plugin, não instância de projeto | Decidida pelo humano em 2026-11-15 |
 
+## Decisões da derivação
+
+Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
+
+| # | Decisão | Por quê |
+|---|---|---|
+| DD-01 | **`setup-escopo` mora em `escopo.py`, não em `setup.py`** (`0009-03`) | `setup.py` guarda o registro; ler e escrever o `settings.json` é outro arquivo e outro erro. As duas unidades ficam sem arquivo de código em comum além do `dc.py` |
+| DD-02 | **A chave `marketplace` do `config.json` leva também `plugin`** (`0009-03`) | `enabledPlugins` usa `plugin@marketplace`, e o nome do plugin não está em nenhum lugar que o `config.json` já tenha |
+| DD-03 | **`normas.secoes(arquivo, nomes)` é a função do `explicar`** (`0009-04`) | `normas._buscar` já resolve seção por prefixo; a função nova só junta as quatro e levanta com as que faltam |
+| DD-04 | **A `0009-07` é unidade `norma`** | Entrega só prosa; o oráculo é a aprovação humana, e o `lint-unidade` exige `approved_by` e `approved_at` antes do `implement` |
+| DD-05 | **A checagem do setup vem antes de `huddle.usuario` no hook** (`0009-05`) | Projeto recém-aberto pode não ter `user.name`; o aviso de setup não pode depender do que o setup resolve |
+
 ## Lacunas
 
 | # | Lacuna | Por que fica registrada |
@@ -244,6 +256,17 @@ unidade 05 usam o `wire-huddle-cycle`. **Este plano só se aprova depois que os 
 ## Backlog
 
 <!-- backlog:start -->
+| Unidade | Título | Estado |
+|---|---|---|
+| [0009-01](01-setup-record.md) | setup-record | `spec` |
+| [0009-02](02-project-scan.md) | project-scan | `spec` |
+| [0009-03](03-project-scope.md) | project-scope | `spec` |
+| [0009-04](04-method-brief.md) | method-brief | `spec` |
+| [0009-05](05-setup-notice.md) | setup-notice | `spec` |
+| [0009-06](06-setup-skill.md) | setup-skill | `spec` |
+| [0009-07](07-setup-docs.md) | setup-docs | `spec` |
+
+7 de 7 derivadas · 0 verificadas · atualizado em 2026-11-15
 <!-- backlog:end -->
 
 ## Fonte
