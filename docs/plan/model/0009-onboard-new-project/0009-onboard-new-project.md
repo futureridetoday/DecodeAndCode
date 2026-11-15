@@ -7,7 +7,7 @@ description: O primeiro uso do plugin num projeto vira um setup guiado — põe 
 tags: [decode-and-code, onboarding, setup, guideline, guardrail, huddle]
 
 # alvo
-plan_id: ""
+plan_id: "0009"
 plan_size: grande
 core: model
 module: onboard-new-project
@@ -16,11 +16,11 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: draft
+status: approved
 version: 1.0.0
 updated: "2026-11-15"
-approved_by: ""
-approved_at: ""
+approved_by: Bortoli
+approved_at: 2026-11-15
 
 # system
 scope: project
@@ -86,7 +86,7 @@ Exemplo: o time separou cada componente do shadcn em dois arquivos, estilo e fun
 guardrail recusa escrever em `components/**` um arquivo de componente que contenha definição de
 estilo. O guardrail barra o que **uma** escrita contém, por regex — não confere o conjunto de
 arquivos (`D-11`). O detector recebe o caminho e o conteúdo da escrita juntos, separados por
-quebra de linha (`guardrail.py:34-36`), então a restrição a `components/**` vive no próprio regex;
+quebra de linha (`guardrail.py:36-38`), então a restrição a `components/**` vive no próprio regex;
 no exemplo, o par permitido é escrever o arquivo de estilo, que também contém `cva`. A skill
 pergunta pelas decisões do time e também as procura no inventário.
 
@@ -146,7 +146,7 @@ As unidades seguem a ordem de dependência. A validação ponta a ponta não é 
 |---|---|---|
 | 01 | `setup-record` | `setup.py` e os subcomandos planos `setup-iniciar`, `setup-perfil`, `setup-registrar`, `setup-decididas`, `setup-concluir` e `setup-lint` (`D-06` do `add-norm-writers`), sobre `<plan_root>/system/setup.md`, com esqueleto em `_CONTEUDO_INICIAL`: `completed_at` no frontmatter, `## Perfil` (objetivo, escopo, stack, como o humano confirmou) e `## Decisões`, tabela `chave \| tipo \| origem \| resultado \| destino ou motivo \| data`. `tipo` ∈ {guideline, guardrail, princípio}; `origem` ∈ {stack, decisão do time, arquivo `<caminho>`, existente}; `resultado` ∈ {aceita, rejeitada, existente}; `chave` é o slug da sugestão, dado pela skill. `decididas` lista as chaves já registradas. Entrada por stdin em JSON |
 | 02 | `project-scan` | `descoberta.py` e `dc.py descobrir`: o inventário por uma tupla literal de globs — `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `README*`, `CONTRIBUTING*`, `package.json`, `pyproject.toml` (texto bruto), `tsconfig.json`, `components.json`, `tailwind.config.*`, configs de ESLint, Prettier, Biome e Ruff, `.editorconfig`, `.pre-commit-config.yaml`, `.github/workflows/*.yml`, `.gitlab-ci.yml`, `.cursor/rules/**`, `.cursorrules`, `.windsurfrules`, `.clinerules` — com caminho e as primeiras 60 linhas; e, à parte, as rules, os princípios e as regras de `guardrails.json` que já existem. Não classifica |
-| 03 | `project-scope` | `dc.py setup-escopo`: lê o `.claude/settings.json` do projeto e, se pedido, acrescenta `enabledPlugins` e `extraKnownMarketplaces` do plugin, preservando o resto do arquivo; idempotente; recusa JSON inválido sem tocar nele. O nome e a origem do marketplace vêm de uma chave nova `marketplace` no `config.json` do pacote — o pacote só leva `.claude-plugin/plugin.json`, e o `marketplace.json` fica na raiz do repositório, com `source: archive` —, o que exige a chave nos padrões de `lib.py:33-39`, porque chave desconhecida levanta erro (`lib.py:82-84`) (`D-14`) |
+| 03 | `project-scope` | `dc.py setup-escopo`: lê o `.claude/settings.json` do projeto e, se pedido, acrescenta `enabledPlugins` e `extraKnownMarketplaces` do plugin, preservando o resto do arquivo; idempotente; recusa JSON inválido sem tocar nele. O nome e a origem do marketplace vêm de uma chave nova `marketplace` no `config.json` do pacote — o pacote só leva `.claude-plugin/plugin.json`, e o `marketplace.json` fica na raiz do repositório, com `source: archive` —, o que exige a chave nos padrões de `lib.py:33-39`, porque chave desconhecida levanta erro (`lib.py:84-85`) (`D-14`) |
 | 04 | `method-brief` | `dc.py explicar`: imprime, da norma resolvida como em `bootstrap._fonte_norma` (pacote primeiro), as seções *Antes do plano — fluxo de decodificação*, *O que cada porte carrega*, *Cold-start é o critério de suficiência da unidade* e *Skills `review-plan`, `derive` e `implement`*. O teste falha se alguma delas sumir |
 
 ### Fase 2 — Fluxo
@@ -213,17 +213,17 @@ unidade 05 usam o `wire-huddle-cycle`. **Este plano só se aprova depois que os 
 | D-01 | **Gatilho: aviso no `SessionStart` mais a skill na conversa principal.** Imposto pela plataforma (*Restrições*) | Decorre da documentação |
 | D-02 | **O estado do setup fica em `<plan_root>/system/setup.md`, versionado** | Decidida pelo humano em 2026-11-10 |
 | D-03 | **O critério de sugestão no primeiro uso: guideline nasce da stack e do objetivo do projeto; guardrail, de decisão explícita do time que desvia do padrão da stack.** Os guias pedem falha observada ou incidente, que projeto novo não tem; ganham o parágrafo *No primeiro uso* | Decidida pelo humano em 2026-11-10 |
-| D-04 | **O setup não sugere princípio.** Princípio entra por plano com unidade de tipo `norma`; achado com essa cara vira entrada `observação` no huddle | Recomendação |
-| D-05 | **O setup só escreve no que o bootstrap cria, no `.claude/settings.json` (escopo), em `.claude/rules/`, no `guardrails.json`, no `setup.md` e no arquivo de huddle da pessoa.** Nunca no `CLAUDE.md` nem no `AGENTS.md`; o que eles carregam não se repete em guideline | Recomendação |
+| D-04 | **O setup não sugere princípio.** Princípio entra por plano com unidade de tipo `norma`; achado com essa cara vira entrada `observação` no huddle | Decidida pelo humano em 2026-11-15 |
+| D-05 | **O setup só escreve no que o bootstrap cria, no `.claude/settings.json` (escopo), em `.claude/rules/`, no `guardrails.json`, no `setup.md` e no arquivo de huddle da pessoa.** Nunca no `CLAUDE.md` nem no `AGENTS.md`; o que eles carregam não se repete em guideline | Decidida pelo humano em 2026-11-15 |
 | D-06 | **A explicação do Code descreve só o que existe.** Agentes especialistas e revisão por QA independente ficam para plano próprio | Decidida pelo humano em 2026-11-10 |
-| D-07 | **A skill conversa e gera as rules no idioma do usuário**, como o `intake` já responde no idioma do pedido | Recomendação |
+| D-07 | **A skill conversa e gera as rules no idioma do usuário**, como o `intake` já responde no idioma do pedido | Decidida pelo humano em 2026-11-15 |
 | D-08 | **Todas as guidelines antes, depois todos os guardrails, uma sugestão por vez, num fluxo só** | Pedido do humano em 2026-11-10 |
 | D-09 | **O plugin trabalha no escopo do projeto.** O setup propõe habilitá-lo no `.claude/settings.json` e o aviso aparece mesmo com o plugin só no escopo de usuário, para que todo o time use as mesmas guidelines e guardrails | Decidida pelo humano em 2026-11-10 |
 | D-10 | **O `B-06` é antecipado**, sem esperar a primeira instalação de terceiro | Decidida pelo humano em 2026-11-10 |
 | D-11 | **Guardrail barra o que uma escrita contém**, pelo mecanismo atual de regex; verificar o conjunto de arquivos seria mecanismo novo | Decidida pelo humano em 2026-11-10 |
-| D-12 | **Sem *Como conversamos* no setup.** A norma define o arquivo de huddle com `## Abertas` e `## Fechadas`, nada autoritativo; um contrato de conversa ali contradiz isso | Recomendação |
+| D-12 | **Sem *Como conversamos* no setup.** A norma define o arquivo de huddle com `## Abertas` e `## Fechadas`, nada autoritativo; um contrato de conversa ali contradiz isso | Decidida pelo humano em 2026-11-15 |
 | D-13 | **Guideline para caminho que ainda não existe é gravada já**, com `paths_pending: true`, pelo mecanismo da `D-08` do `add-norm-writers` — o padrão vale desde o primeiro arquivo, que é o que o setup promete | Decidida pelo humano em 2026-11-15 |
-| D-14 | **O marketplace que `setup-escopo` grava vem de uma chave `marketplace` no `config.json` do pacote**, porque o pacote não leva o `marketplace.json`. É identidade do próprio plugin, não instância de projeto | Recomendação |
+| D-14 | **O marketplace que `setup-escopo` grava vem de uma chave `marketplace` no `config.json` do pacote**, porque o pacote não leva o `marketplace.json`. É identidade do próprio plugin, não instância de projeto | Decidida pelo humano em 2026-11-15 |
 
 ## Lacunas
 
@@ -248,18 +248,18 @@ unidade 05 usam o `wire-huddle-cycle`. **Este plano só se aprova depois que os 
 
 ## Fonte
 
-- [`modelo-dev-units.md`](../system/modelo-dev-units.md) — seções *Camada normativa*, *Antes do
+- [`modelo-dev-units.md`](../../system/modelo-dev-units.md) — seções *Camada normativa*, *Antes do
   plano — fluxo de decodificação*, *O que cada porte carrega*, *Bootstrap*, *Ciclo instalado*,
   *Avaliação de escopo* e *Huddle*
-- [`_backlog.md`](_backlog.md) — `B-06`, que este plano resolve
-- [`add-norm-writers.md`](../model/0007-add-norm-writers.md) e [`wire-huddle-cycle.md`](../model/0008-wire-huddle-cycle.md) —
+- [`_backlog.md`](../../_inbox/_backlog.md) — `B-06`, que este plano resolve
+- [`add-norm-writers.md`](../0007-add-norm-writers.md) e [`wire-huddle-cycle.md`](../0008-wire-huddle-cycle.md) —
   os planos de que este depende
-- [`0001-decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
+- [`0001-decode-and-code-foundation`](../0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
   — *Materializar não pode ser automático*
-- [`0006-e2e-fixes`](../model/0006-e2e-fixes.md) — `L-03`, o pacote dentro do checkout
-- [`create-guideline.md`](../../recursos/create-guideline.md),
-  [`create-guardrail.md`](../../recursos/create-guardrail.md),
-  [`create-principle.md`](../../recursos/create-principle.md)
+- [`0006-e2e-fixes`](../0006-e2e-fixes.md) — `L-03`, o pacote dentro do checkout
+- [`create-guideline.md`](../../../recursos/create-guideline.md),
+  [`create-guardrail.md`](../../../recursos/create-guardrail.md),
+  [`create-principle.md`](../../../recursos/create-principle.md)
 - Builder do AmFlow, `skills/build-resource/SKILL.md` (*Refinar*) e `commands/new-project.md` (uma
   pergunta por vez) — o padrão das perguntas, não o texto
 - Documentação oficial do Claude Code, lida em 2026-11-10:
