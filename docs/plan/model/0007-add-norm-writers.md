@@ -7,7 +7,7 @@ description: Guideline e guardrail passam a ser gravados por comando, com frontm
 tags: [decode-and-code, guideline, guardrail, normas, dc-py]
 
 # alvo
-plan_id: ""
+plan_id: "0007"
 plan_size: médio
 core: model
 module: add-norm-writers
@@ -16,11 +16,11 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: draft
+status: approved
 version: 1.0.0
 updated: "2026-11-15"
-approved_by: ""
-approved_at: ""
+approved_by: Bortoli
+approved_at: 2026-11-15
 
 # system
 scope: project
@@ -137,12 +137,12 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 | # | Decisão | Estado |
 |---|---|---|
 | D-01 | **Três planos, nesta ordem:** este, `wire-huddle-cycle` (que usa estes comandos para promover item) e `onboard-new-project` | Decidida pelo humano em 2026-11-10 |
-| D-02 | **O gerador escreve `paths` só no subconjunto em que lint e Claude Code concordam**, em vez de corrigir o lint agora | Recomendação |
-| D-03 | **A regra candidata é avaliada sozinha.** Avaliada junto das existentes, uma regra anterior que já negasse o caso faria o teste passar sem a regra nova casar nada | Recomendação |
-| D-04 | **Entrada pelo stdin em JSON**, como o `handoff` já faz | Recomendação |
-| D-05 | **Um plano, não dois.** A parte de guideline (T1, T2) e a de guardrail (T3, T4) passam sozinhas no teste de independência. Ficam juntas porque os dois consumidores — a promoção no huddle e o setup — usam as duas, a superfície no `dc.py` é a mesma, e separar criaria dois planos pequenos com a mesma dependência a jusante (norma, *O que a avaliação não faz*: o plano registra o porquê) | Recomendação |
-| D-06 | **Subcomandos planos em kebab-case** (`criar-guideline`, `adicionar-guardrail`, `lint-guardrails`), como todos os do `dc.py` hoje; o teste de drift das skills lê um token só depois de `dc.py"` (`tests/test_dc.py:197-202`). O `wire-huddle-cycle` segue a mesma forma | Recomendação |
-| D-07 | **A raiz do projeto é parâmetro explícito** das funções novas, e o `dc.py` a resolve por `lib.repo_root()`, como os outros subcomandos | Recomendação |
+| D-02 | **O gerador escreve `paths` só no subconjunto em que lint e Claude Code concordam**, em vez de corrigir o lint agora | Decidida pelo humano em 2026-11-15 |
+| D-03 | **A regra candidata é avaliada sozinha.** Avaliada junto das existentes, uma regra anterior que já negasse o caso faria o teste passar sem a regra nova casar nada | Decidida pelo humano em 2026-11-15 |
+| D-04 | **Entrada pelo stdin em JSON**, como o `handoff` já faz | Decidida pelo humano em 2026-11-15 |
+| D-05 | **Um plano, não dois.** A parte de guideline (T1, T2) e a de guardrail (T3, T4) passam sozinhas no teste de independência. Ficam juntas porque os dois consumidores — a promoção no huddle e o setup — usam as duas, a superfície no `dc.py` é a mesma, e separar criaria dois planos pequenos com a mesma dependência a jusante (norma, *O que a avaliação não faz*: o plano registra o porquê) | Decidida pelo humano em 2026-11-15 |
+| D-06 | **Subcomandos planos em kebab-case** (`criar-guideline`, `adicionar-guardrail`, `lint-guardrails`), como todos os do `dc.py` hoje; o teste de drift das skills lê um token só depois de `dc.py"` (`tests/test_dc.py:197-202`). O `wire-huddle-cycle` segue a mesma forma | Decidida pelo humano em 2026-11-15 |
+| D-07 | **A raiz do projeto é parâmetro explícito** das funções novas, e o `dc.py` a resolve por `lib.repo_root()`, como os outros subcomandos | Decidida pelo humano em 2026-11-15 |
 | D-08 | **Guideline para caminho que ainda não existe é gravada já**, marcada com `paths_pending: true` no próprio frontmatter, e vale desde o primeiro arquivo criado no escopo. A marca fica na rule, não no `setup.md` do `onboard-new-project`, para este plano não depender daquele | Decidida pelo humano em 2026-11-15 |
 
 ## Lacunas
@@ -158,6 +158,15 @@ Todas as funções novas recebem a raiz do projeto como parâmetro explícito; o
 ## Backlog
 
 <!-- backlog:start -->
+- [ ] **T1 — `rules.criar_guideline(raiz, nome, descricao, paths, corpo) -> Path`.** O nome casa
+- [ ] **T2 — `registry.registrar(raiz, nome)`**, chamado por T1 depois da gravação: reaproveita
+- [ ] **T3 — `guardrail.lint_arquivo(caminho) -> list[str]`**: JSON válido, `regras` como lista,
+- [ ] **T4 — `guardrail.adicionar(raiz, regra, proibido, permitido) -> Path`.** Avalia a regra
+- [ ] **T5 — `dc.py criar-guideline`, `dc.py adicionar-guardrail` e `dc.py lint-guardrails`.** Os
+- [ ] **T6 — documentação.** Norma, *Camada normativa*: os comandos de escrita, citados uma vez.
+- [ ] **T7 — versão**: o número é decisão humana no release; bump em `.claude/plugin.json` e
+
+0 de 7 tarefas concluídas · atualizado em 2026-11-15
 <!-- backlog:end -->
 
 ## Fonte

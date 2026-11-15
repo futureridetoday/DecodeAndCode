@@ -247,7 +247,7 @@ plano torna verificável é a **declaração**, o **formato**, a **posse** e o *
   *A rotina fica de fora do plugin*
 - [`21-huddle-log`](../model/0001-decode-and-code-foundation/21-huddle-log.md) — o contrato atual de
   `huddle.py`, mantido
-- [`add-norm-writers.md`](add-norm-writers.md) — os comandos que a promoção usa
+- [`add-norm-writers.md`](../model/0007-add-norm-writers.md) — os comandos que a promoção usa
 - [`apply-plugin-review.md`](apply-plugin-review.md) — `D-05`, `D-06`, `D-08` e `P-07`
 - `huddle-command.md`, rascunho de 2026-09-02 que este plano substitui (T9)
 - Documentação oficial do Claude Code, lida em 2026-11-10:

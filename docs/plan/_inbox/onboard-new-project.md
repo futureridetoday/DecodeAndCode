@@ -252,7 +252,7 @@ unidade 05 usam o `wire-huddle-cycle`. **Este plano só se aprova depois que os 
   plano — fluxo de decodificação*, *O que cada porte carrega*, *Bootstrap*, *Ciclo instalado*,
   *Avaliação de escopo* e *Huddle*
 - [`_backlog.md`](_backlog.md) — `B-06`, que este plano resolve
-- [`add-norm-writers.md`](add-norm-writers.md) e [`wire-huddle-cycle.md`](wire-huddle-cycle.md) —
+- [`add-norm-writers.md`](../model/0007-add-norm-writers.md) e [`wire-huddle-cycle.md`](wire-huddle-cycle.md) —
   os planos de que este depende
 - [`0001-decode-and-code-foundation`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md)
   — *Materializar não pode ser automático*

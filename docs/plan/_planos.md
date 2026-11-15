@@ -35,6 +35,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0004 | [installable-method](model/0004-installable-method/0004-installable-method.md) | model | installable-method | — | concluído | 2026-08-27 |
 | 0005 | [plugin-release-distribution](model/0005-plugin-release-distribution.md) | model | plugin-release-distribution | — | concluído | 2026-09-01 |
 | 0006 | [e2e-fixes](model/0006-e2e-fixes.md) | model | e2e-fixes | — | concluído | 2026-10-16 |
+| 0007 | [add-norm-writers](model/0007-add-norm-writers.md) | model | add-norm-writers | — | em desenvolvimento | 2026-11-15 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
