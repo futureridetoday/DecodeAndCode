@@ -252,6 +252,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | L-09 | **Rule escopada em subagente** | A doc confirma para subagente customizado e para Explore e Plan; para skill em fork, não. "Qualquer agente" fica a medir |
 | L-10 | **O aviso aparece em todo projeto aberto com o plugin no escopo de usuário** | Consequência de `D-09`, inclusive em repositórios que nunca vão adotar o método. Se incomodar, uma opção "não neste projeto" exige onde guardar a recusa sem escrever no repositório |
 | L-11 | **Guideline com `paths_pending` pode ter o caminho errado sem que nada acuse** | Herdada da `L-05` do `add-norm-writers`: a sessão real da validação ponta a ponta mede o caso feliz, não o erro de digitação |
+| L-12 | **O `### <caminho>` do `descobrir` colide com os títulos dos trechos** | Medido na revisão da `0009-02` neste repositório: o `README.md` traz `### Por comando`, que na saída parece uma fonte. A `0009-02` fixou o formato sem cerca em volta do trecho; quem lê é a skill da `0009-06`, e a validação ponta a ponta mede se ela confunde |
 
 ## Backlog
 
@@ -259,14 +260,14 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | Unidade | Título | Estado |
 |---|---|---|
 | [0009-01](01-setup-record.md) | setup-record | `verified` |
-| [0009-02](02-project-scan.md) | project-scan | `spec` |
+| [0009-02](02-project-scan.md) | project-scan | `verified` |
 | [0009-03](03-project-scope.md) | project-scope | `spec` |
 | [0009-04](04-method-brief.md) | method-brief | `spec` |
 | [0009-05](05-setup-notice.md) | setup-notice | `spec` |
 | [0009-06](06-setup-skill.md) | setup-skill | `spec` |
 | [0009-07](07-setup-docs.md) | setup-docs | `spec` |
 
-7 de 7 derivadas · 1 verificada · atualizado em 2026-11-16
+7 de 7 derivadas · 2 verificadas · atualizado em 2026-11-16
 <!-- backlog:end -->
 
 ## Fonte

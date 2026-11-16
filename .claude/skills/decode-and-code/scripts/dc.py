@@ -513,6 +513,14 @@ def _setup_lint(args: argparse.Namespace) -> int:
     return REPROVADO if problemas else OK
 
 
+def _descobrir(args: argparse.Namespace) -> int:
+    import descoberta
+    import lib
+
+    print(descoberta.formatar(descoberta.descobrir(lib.repo_root())))
+    return OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -627,6 +635,8 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     comando("huddle-migrar", "move o huddle único de projeto para o arquivo da pessoa", _huddle_migrar)
+
+    comando("descobrir", "inventaria as fontes do projeto e a norma que ele já tem, sem classificar", _descobrir)
 
     comando("setup-iniciar", "cria <plan_root>/system/setup.md, sem sobrescrever", _setup_iniciar)
 

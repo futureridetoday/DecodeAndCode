@@ -66,6 +66,7 @@ SUBCOMANDOS = (
     "huddle-lint",
     "huddle-lint-relatorio",
     "huddle-migrar",
+    "descobrir",
     "setup-iniciar",
     "setup-perfil",
     "setup-registrar",
@@ -771,6 +772,18 @@ class TestSetup(_ProjetoCase):
                 self.assertSemTraceback(r)
         r = self.dc("setup-registrar", entrada=self.REGISTRO)
         self.assertEqual(r.returncode, 2)
+
+
+class TestDescobrir(_ProjetoCase):
+    """Plano 0009, unidade 02 — `descobrir` inventaria o projeto e sai 0."""
+
+    def test_imprime_fontes_e_ja_existe(self):
+        self.bootstrap()
+        (self.projeto / "components.json").write_text("{}", encoding="utf-8")
+        r = self.dc("descobrir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("### components.json", r.stdout)
+        self.assertIn("## Já existe", r.stdout)
 
 
 class TestHuddle(_ProjetoCase):
