@@ -422,6 +422,97 @@ def _huddle_migrar(args: argparse.Namespace) -> int:
     return OK
 
 
+# Registro do setup — plano 0009, unidade 01. Todos resolvem `<plan_root>/system/setup.md` do projeto.
+
+
+def _setup_arquivo() -> Path:
+    import lib
+    import setup
+
+    return setup.caminho(lib.repo_root())
+
+
+def _setup_existente(comando: str) -> Path:
+    arquivo = _setup_arquivo()
+    if not arquivo.is_file():
+        raise FileNotFoundError(f"{comando}: {arquivo} não existe — rode `dc.py setup-iniciar`")
+    return arquivo
+
+
+def _setup_iniciar(args: argparse.Namespace) -> int:
+    import lib
+    import setup
+
+    criado = setup.iniciar(lib.repo_root())
+    print(criado if criado else f"já existe: {_setup_arquivo()}")
+    return OK
+
+
+def _setup_perfil(args: argparse.Namespace) -> int:
+    import setup
+
+    dados = _ler_json_do_stdin("setup-perfil", ("objetivo", "escopo", "stack", "confirmacao"))
+    arquivo = _setup_existente("setup-perfil")
+    try:
+        setup.perfil(arquivo, dados["objetivo"], dados["escopo"], dados["stack"], dados["confirmacao"])
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"perfil gravado: {arquivo}")
+    return OK
+
+
+def _setup_registrar(args: argparse.Namespace) -> int:
+    import setup
+
+    dados = _ler_json_do_stdin("setup-registrar", ("chave", "tipo", "origem", "resultado", "detalhe"))
+    arquivo = _setup_existente("setup-registrar")
+    try:
+        setup.registrar(
+            arquivo, dados["chave"], dados["tipo"], dados["origem"], dados["resultado"], dados["detalhe"]
+        )
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"registrada: {dados['chave']}")
+    return OK
+
+
+def _setup_decididas(args: argparse.Namespace) -> int:
+    import setup
+
+    for chave in setup.decididas(_setup_existente("setup-decididas")):
+        print(chave)
+    return OK
+
+
+def _setup_concluir(args: argparse.Namespace) -> int:
+    import setup
+    from datetime import date
+
+    arquivo = _setup_existente("setup-concluir")
+    data = args.data or date.today().isoformat()
+    try:
+        setup.concluir(arquivo, data)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"completed_at: {data}")
+    return OK
+
+
+def _setup_lint(args: argparse.Namespace) -> int:
+    import setup
+
+    arquivo = _setup_existente("setup-lint")
+    problemas = setup.lint(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -536,6 +627,28 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     comando("huddle-migrar", "move o huddle único de projeto para o arquivo da pessoa", _huddle_migrar)
+
+    comando("setup-iniciar", "cria <plan_root>/system/setup.md, sem sobrescrever", _setup_iniciar)
+
+    comando(
+        "setup-perfil",
+        "grava o perfil no setup.md; lê do stdin JSON {objetivo, escopo, stack, confirmacao} (1 se recusado)",
+        _setup_perfil,
+    )
+
+    comando(
+        "setup-registrar",
+        "registra uma decisão no setup.md; lê do stdin JSON {chave, tipo, origem, resultado, detalhe} "
+        "(1 se recusada)",
+        _setup_registrar,
+    )
+
+    comando("setup-decididas", "lista as chaves já registradas no setup.md", _setup_decididas)
+
+    p = comando("setup-concluir", "grava a data de conclusão do setup em completed_at", _setup_concluir)
+    p.add_argument("--data", help="padrão: hoje")
+
+    comando("setup-lint", "valida o setup.md do projeto (1 se tem problema)", _setup_lint)
 
     return parser
 

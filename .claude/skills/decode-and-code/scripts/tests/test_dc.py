@@ -66,6 +66,12 @@ SUBCOMANDOS = (
     "huddle-lint",
     "huddle-lint-relatorio",
     "huddle-migrar",
+    "setup-iniciar",
+    "setup-perfil",
+    "setup-registrar",
+    "setup-decididas",
+    "setup-concluir",
+    "setup-lint",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -689,6 +695,82 @@ class TestLintGuardrails(_ProjetoCase):
         r = self.dc("lint-guardrails")
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestSetup(_ProjetoCase):
+    """Plano 0009, unidade 01 — os seis `setup-*` sobre `<plan_root>/system/setup.md`."""
+
+    REGISTRO = '{"chave": "usar-ruff", "tipo": "guideline", "origem": "stack", "resultado": "aceita", "detalhe": "python.md"}'
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.arquivo = self.raiz_planos / "system" / "setup.md"
+
+    def test_iniciar_cria_e_nao_sobrescreve(self):
+        r = self.dc("setup-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(self.arquivo.is_file())
+        r = self.dc("setup-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("já existe", r.stdout)
+
+    def test_ciclo_completo_com_lint_e_decididas(self):
+        self.dc("setup-iniciar")
+        perfil = '{"objetivo": "o", "escopo": "e", "stack": "s", "confirmacao": "c"}'
+        self.assertEqual(self.dc("setup-perfil", entrada=perfil).returncode, 0)
+        self.assertEqual(self.dc("setup-registrar", entrada=self.REGISTRO).returncode, 0)
+        self.assertEqual(self.dc("setup-decididas").stdout.splitlines(), ["usar-ruff"])
+        r = self.dc("setup-concluir", "--data", "2026-11-16")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "completed_at: 2026-11-16"), r.stderr)
+        r = self.dc("setup-lint")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_concluir_sem_data_usa_hoje(self):
+        from datetime import date
+
+        self.dc("setup-iniciar")
+        r = self.dc("setup-concluir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn(date.today().isoformat(), r.stdout)
+
+    def test_valor_recusado_sai_com_1_sem_mudar_o_arquivo(self):
+        self.dc("setup-iniciar")
+        antes = self.arquivo.read_text(encoding="utf-8")
+        ruim = self.REGISTRO.replace('"guideline"', '"convenção"')
+        r = self.dc("setup-registrar", entrada=ruim)
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertEqual(self.dc("setup-concluir", "--data", "ontem").returncode, 1)
+        self.assertEqual(self.arquivo.read_text(encoding="utf-8"), antes)
+
+    def test_lint_reprovado_sai_com_1(self):
+        self.dc("setup-iniciar")
+        self.arquivo.write_text(
+            self.arquivo.read_text(encoding="utf-8") + "| a | regra | stack | aceita | x | 2026-11-16 |\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(self.dc("setup-lint").returncode, 1)
+
+    def test_stdin_vazio_ou_incompleto_sai_com_2(self):
+        self.dc("setup-iniciar")
+        for subcomando in ("setup-perfil", "setup-registrar"):
+            with self.subTest(subcomando=subcomando, entrada="vazio"):
+                r = self.dc(subcomando, entrada="")
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+            with self.subTest(subcomando=subcomando, entrada="incompleto"):
+                r = self.dc(subcomando, entrada='{"chave": "x"}')
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+
+    def test_arquivo_ausente_sai_com_2(self):
+        for subcomando in ("setup-decididas", "setup-lint", "setup-concluir"):
+            with self.subTest(subcomando=subcomando):
+                r = self.dc(subcomando)
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+        r = self.dc("setup-registrar", entrada=self.REGISTRO)
+        self.assertEqual(r.returncode, 2)
 
 
 class TestHuddle(_ProjetoCase):

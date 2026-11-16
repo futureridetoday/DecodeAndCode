@@ -15,9 +15,9 @@ unit_id: 0009-01
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_setup.py
-verified_at: ""
+verified_at: 2026-11-16
 
 # history
 author: Claude

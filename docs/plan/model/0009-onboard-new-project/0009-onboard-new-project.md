@@ -258,7 +258,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 <!-- backlog:start -->
 | Unidade | Título | Estado |
 |---|---|---|
-| [0009-01](01-setup-record.md) | setup-record | `spec` |
+| [0009-01](01-setup-record.md) | setup-record | `verified` |
 | [0009-02](02-project-scan.md) | project-scan | `spec` |
 | [0009-03](03-project-scope.md) | project-scope | `spec` |
 | [0009-04](04-method-brief.md) | method-brief | `spec` |
@@ -266,7 +266,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | [0009-06](06-setup-skill.md) | setup-skill | `spec` |
 | [0009-07](07-setup-docs.md) | setup-docs | `spec` |
 
-7 de 7 derivadas · 0 verificadas · atualizado em 2026-11-15
+7 de 7 derivadas · 1 verificada · atualizado em 2026-11-16
 <!-- backlog:end -->
 
 ## Fonte
