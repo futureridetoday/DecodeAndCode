@@ -73,6 +73,8 @@ SUBCOMANDOS = (
     "setup-decididas",
     "setup-concluir",
     "setup-lint",
+    "setup-escopo",
+    "explicar",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -774,6 +776,41 @@ class TestSetup(_ProjetoCase):
         self.assertEqual(r.returncode, 2)
 
 
+class TestSetupEscopo(_ProjetoCase):
+    """Plano 0009, unidade 03 — `setup-escopo` lê e, com `--aplicar`, habilita o plugin."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.settings = self.projeto / ".claude" / "settings.json"
+
+    def test_sem_aplicar_mostra_o_estado_e_nao_escreve(self):
+        r = self.dc("setup-escopo")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("habilitado: false", r.stdout)
+        self.assertIn("marketplace: false", r.stdout)
+        self.assertFalse(self.settings.exists())
+
+    def test_aplicar_escreve_e_a_segunda_vez_nao_muda(self):
+        r = self.dc("setup-escopo", "--aplicar")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "habilitado"), r.stderr)
+        escrito = self.settings.read_text(encoding="utf-8")
+        r = self.dc("setup-escopo", "--aplicar")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "já estava habilitado"), r.stderr)
+        self.assertEqual(self.settings.read_text(encoding="utf-8"), escrito)
+        self.assertIn("habilitado: true", self.dc("setup-escopo").stdout)
+
+    def test_json_invalido_sai_com_2_e_o_arquivo_fica_intacto(self):
+        self.settings.parent.mkdir(parents=True, exist_ok=True)
+        self.settings.write_text("{ quebrado", encoding="utf-8")
+        for args in ((), ("--aplicar",)):
+            with self.subTest(args=args):
+                r = self.dc("setup-escopo", *args)
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+        self.assertEqual(self.settings.read_text(encoding="utf-8"), "{ quebrado")
+
+
 class TestDescobrir(_ProjetoCase):
     """Plano 0009, unidade 02 — `descobrir` inventaria o projeto e sai 0."""
 
@@ -861,6 +898,13 @@ class TestHuddle(_ProjetoCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("Despejo", r.stdout)
         self.assertNotIn(os.path.relpath(norma, self.projeto), r.stdout)
+
+    def test_explicar_imprime_os_quatro_titulos_da_norma(self):
+        r = self.dc("explicar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for titulo in ("Antes do plano", "O que cada porte carrega", "Cold-start é o critério", "Skills `review-plan`"):
+            with self.subTest(titulo=titulo):
+                self.assertIn(titulo, r.stdout)
 
     def test_lint_do_arquivo_da_pessoa(self):
         self.dc("huddle-iniciar")

@@ -37,7 +37,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0006 | [e2e-fixes](model/0006-e2e-fixes.md) | model | e2e-fixes | — | concluído | 2026-10-16 |
 | 0007 | [add-norm-writers](model/0007-add-norm-writers.md) | model | add-norm-writers | — | concluído | 2026-11-15 |
 | 0008 | [wire-huddle-cycle](model/0008-wire-huddle-cycle.md) | model | wire-huddle-cycle | — | concluído | 2026-11-15 |
-| 0009 | [onboard-new-project](model/0009-onboard-new-project/0009-onboard-new-project.md) | model | onboard-new-project | — | em desenvolvimento | 2026-11-15 |
+| 0009 | [onboard-new-project](model/0009-onboard-new-project/0009-onboard-new-project.md) | model | onboard-new-project | — | concluído | 2026-11-15 |
 | 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | em desenvolvimento | 2026-11-17 |
 <!-- planos:end -->
 

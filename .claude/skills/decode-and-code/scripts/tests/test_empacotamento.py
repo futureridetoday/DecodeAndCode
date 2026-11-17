@@ -4,7 +4,7 @@
 Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
-de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as quatro skills, a
+de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as skills de `lib.SKILLS`, a
 pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os três scripts de
 desenvolvimento (`P-05`), três hooks e um `settings.json` com os três eventos e a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
@@ -35,7 +35,7 @@ porque o do pacote deixou de existir.
 
 O `P-10` tira do `SKILL.md` empacotado todo campo de frontmatter fora da documentação oficial
 (`empacotar._so_campos_oficiais`): o mecanismo, em `TestSoCamposOficiais`, com texto sintético; a
-instância, em `TestPacoteRealEstaLimpo`, contra as quatro skills reais.
+instância, em `TestPacoteRealEstaLimpo`, contra as skills reais.
 """
 
 from __future__ import annotations
@@ -443,6 +443,23 @@ class TestVerificar(_BaseComFonteSintetica):
 
         problemas = empacotar.verificar(self.destino)
         self.assertTrue(any("vazamento.md" in p for p in problemas))
+
+    def test_repo_do_marketplace_nao_e_acusado_mas_o_nome_solto_e(self):
+        """`DD-06`: o `repo` do `config.json` é identidade do plugin; o nome do projeto solto não."""
+        empacotar.construir(self.destino)
+        repo = f"futureridetoday/{self.raiz.name}"
+        config = {"marketplace": {"source": {"repo": repo}}}
+        pasta = self.destino / "skills" / "decode-and-code"
+
+        with mock.patch.object(lib, "config", return_value=config):
+            (pasta / "identidade.json").write_text(f'{{"repo": "{repo}"}}\n', encoding="utf-8")
+            self.assertEqual(empacotar.verificar(self.destino), [])
+
+            (pasta / "identidade.json").write_text(
+                f'{{"repo": "{repo}", "projeto": "{self.raiz.name}"}}\n', encoding="utf-8"
+            )
+            problemas = empacotar.verificar(self.destino)
+            self.assertTrue(any("identidade.json" in p for p in problemas))
 
     def test_ancora_conta_dentro_de_hooks_e_nao_fora(self):
         """A decisão contrária da `L-31`: fora de `hooks/` a âncora é dado, dentro é hook quebrado."""

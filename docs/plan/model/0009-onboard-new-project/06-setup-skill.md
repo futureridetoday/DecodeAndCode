@@ -15,9 +15,9 @@ unit_id: 0009-06
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_skill_base.py
-verified_at: ""
+verified_at: 2026-11-17
 
 # history
 author: Claude
@@ -68,8 +68,41 @@ executar. O que o corpo precisa dizer, porque o plano não é lido em sessão:
   com **Aprovar** / **Editar** / **Rejeitar**; **Editar** abre **Edição livre** ou **Edição guiada**
   (*O fluxo*, etapas 2 e 3). Guideline nasce da stack e do objetivo; guardrail, de decisão explícita
   do time que desvia do padrão da stack (`D-03`); caminho que ainda não existe vai com
-  `aguardando: true`. Cada resultado vai para `dc.py setup-registrar`. Achado com cara de princípio
-  vira `observação` no huddle (`D-04`).
+  `aguardando: true`. Cada resultado vai para `dc.py setup-registrar`, e o corpo dá o vocabulário que
+  o `setup.py` da `0009-01` aceita, porque valor fora dele sai `1`: `tipo` ∈ {`guideline`,
+  `guardrail`, `princípio`}; `origem` ∈ {`stack`, `decisão do time`, `existente`, `arquivo
+  <caminho>`}; `resultado` ∈ {`aceita`, `rejeitada`, `existente`}. Sugestão editada e depois aprovada
+  é `aceita` — não há `editada`. Achado com cara de princípio vira `observação` no huddle (`D-04`) e
+  é registrado com `tipo: princípio`, `resultado: rejeitada` e o id `H-XX` no detalhe; se o projeto
+  ainda tem o arquivo único antigo, o `huddle-abrir` recusa, e a skill propõe o `huddle-migrar` da
+  etapa 4 antes de registrar.
+
+**JSON pelo stdin, por arquivo** (`L-15`). O Claude Code recusa o heredoc com JSON ("Contains brace
+with quote character"), medido na validação ponta a ponta. O corpo manda gravar o JSON com a
+ferramenta `Write` num arquivo temporário fora do projeto (o scratchpad da sessão) e passá-lo com
+`<`: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>` — forma que o `allowed-tools`
+casa. Vale para `setup-perfil`, `setup-registrar`, `criar-guideline` e `adicionar-guardrail`. O
+`huddle-abrir` lê texto, não JSON, e continua como nas outras skills.
+
+**Formato do guardrail no corpo** (`L-16`). O pacote não leva o `create-guardrail.md`, e a norma não
+traz os campos; o corpo dá o que o `guardrail.py` espera. O JSON do `adicionar-guardrail` é
+`{regra, proibido, permitido}`:
+- `regra` tem os quatro campos de `guardrail.CHAVES_DA_REGRA`: `nome` (kebab-case), `ferramenta`
+  (regex sobre o nome da ferramenta, ex.: `^(Write|Edit)$`), `detector` (regex) e `mensagem`;
+- o `detector` casa o texto de todos os valores de `tool_input` que são texto, unidos por quebra de
+  linha — num `Write`, o caminho e o conteúdo; num `Edit`, o caminho, o trecho antigo e o novo. Não
+  há campo de caminho: a restrição de pasta vai dentro do próprio regex;
+- `proibido` e `permitido` têm a forma do payload do hook, `{tool_name, tool_input}`; o comando
+  recusa a regra que não nega o primeiro ou nega o segundo.
+
+**Tipos do huddle no corpo.** `huddle-abrir` aceita `pergunta`, `divergência`, `padrão`, `revisitar`
+e `observação`; na validação o modelo tentou `contorno` antes.
+
+> **Refeita de novo em 2026-11-17** (`L-15`, `L-16`), depois da validação ponta a ponta: só o corpo do
+> `SKILL.md` muda.
+
+> **Refeita em 2026-11-16** (`L-14`). A primeira execução listou `editada` entre os resultados, valor
+> que o `setup-registrar` recusa. Só o corpo do `SKILL.md` muda.
 - **4** — com o arquivo único antigo, propor `dc.py huddle-migrar`; senão `dc.py huddle-iniciar`, ou
   só explicar se o arquivo da pessoa já existe.
 - **5** — `dc.py explicar` e explicar Decode e Code a partir do que ele imprime (`D-06`).

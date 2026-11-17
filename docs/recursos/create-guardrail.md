@@ -17,6 +17,13 @@ guideline, **se escolhe por evidência de falha**: um incidente mostrou o limite
 Se o código ainda viola a regra, o trabalho é consertar o código primeiro; o guardrail entra
 depois, para impedir a regressão.
 
+## No primeiro uso
+
+No `/decode-and-code:setup`, o projeto ainda não tem incidente, e o critério muda: o guardrail nasce de
+**decisão explícita do time** que desvia do padrão da stack — o que a stack faria por padrão e o time
+decidiu barrar. Ele barra o que uma escrita contém, por regex. Depois do primeiro uso, vale o critério
+acima.
+
 ## Onde fica
 
 Uma regra no array `regras` de [`.claude/guardrails.json`](../../.claude/guardrails.json), na raiz

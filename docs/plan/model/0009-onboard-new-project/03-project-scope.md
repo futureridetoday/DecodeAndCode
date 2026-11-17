@@ -15,9 +15,9 @@ unit_id: 0009-03
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_escopo.py
-verified_at: ""
+verified_at: 2026-11-16
 
 # history
 author: Claude
@@ -71,13 +71,26 @@ não baixa nada (`L-07` do plano): a skill explica isso, esta unidade só escrev
 **Escrita:** `json.dumps(dados, ensure_ascii=False, indent=2)` com quebra de linha final; a ordem das
 chaves existentes é mantida e as novas entram no fim.
 
+**O empacotador não acusa a identidade do plugin** (`DD-06` do plano, `L-13`).
+`empacotar.verificar` procura em todo arquivo do pacote o nome do diretório que o construiu
+(`_marcadores_instancia`), e o `repo` acima contém esse nome no checkout deste repositório. Antes de
+procurar os marcadores, `verificar` tira do texto de cada arquivo a string exata
+`lib.config()["marketplace"]["source"]["repo"]`. O marcador solto, fora dessa string, continua sendo
+acusado em qualquer arquivo. O `repo` fica com a grafia do `marketplace.json` da raiz,
+`futureridetoday/DecodeAndCode`, em `config.json` e em `lib._DEFAULTS`, sem contorno de caixa.
+
+> **Refeita em 2026-11-16.** A primeira execução entregou `escopo.py`, `test_escopo.py`, o
+> `setup-escopo` e a chave `marketplace` com o `repo` em minúsculas, para escapar do verificador.
+> O que falta é o valor com a grafia acima, a isenção em `empacotar.verificar` e o teste dela.
+
 ## Sequência
 
 1. Escrever `tests/test_escopo.py` contra um projeto em `tempfile`.
 2. Acrescentar `marketplace` ao `config.json` e a `lib._DEFAULTS`, e ajustar `tests/test_config.py` se ele enumerar as chaves.
 3. Escrever `escopo.py` com `estado` e `habilitar`, lendo o marketplace de `lib.config()["marketplace"]`.
 4. O subcomando `setup-escopo` no `dc.py`, em `SUBCOMANDOS` de `tests/test_dc.py`, com um caso para cada saída.
-5. Rodar o teste declarado e a suíte inteira, inclusive `test_empacotamento.py`, que confere o `config.json` do pacote.
+5. A isenção em `empacotar.verificar`, com dois casos em `test_empacotamento.py`: o `repo` do `config.json` num arquivo do pacote não é acusado; o nome do projeto solto no mesmo arquivo é.
+6. Rodar o teste declarado e a suíte inteira, inclusive `test_empacotamento.py`, que constrói o pacote a partir deste repositório.
 
 ## Arquivos
 
@@ -90,6 +103,8 @@ chaves existentes é mantida e as novas entram no fim.
 | `.claude/skills/decode-and-code/scripts/tests/test_config.py:42-60` | se enumerar as chaves |
 | `.claude/skills/decode-and-code/scripts/dc.py` | handler e entrada no `_parser` |
 | `.claude/skills/decode-and-code/scripts/tests/test_dc.py` | `SUBCOMANDOS` e os casos |
+| `.claude/skills/decode-and-code/scripts/empacotar.py:338-366` | `verificar` tira o `repo` do marketplace antes de procurar os marcadores |
+| `.claude/skills/decode-and-code/scripts/tests/test_empacotamento.py` | os dois casos da isenção, na classe que testa `verificar` |
 
 ## Dependências
 
@@ -102,6 +117,7 @@ Nenhuma unidade deste plano.
 | Por que o plugin vai para o escopo do projeto, e de onde vem o marketplace | [`0009-onboard-new-project.md`](0009-onboard-new-project.md), seção *Decisões* |
 | O que a plataforma permite e o que não faz | [`0009-onboard-new-project.md`](0009-onboard-new-project.md), seção *Restrições da plataforma* |
 | Escopo de projeto não instala nas outras máquinas | [`0009-onboard-new-project.md`](0009-onboard-new-project.md), seção *Lacunas* |
+| Por que o verificador deixa passar o `repo` do marketplace | [`0009-onboard-new-project.md`](0009-onboard-new-project.md), seção *Decisões da derivação* |
 
 ## Critério de aceite
 
@@ -109,7 +125,9 @@ Nenhuma unidade deste plano.
 no conteúdo serializado e acrescenta só `enabledPlugins` e `extraKnownMarketplaces`, com os valores
 lidos de `lib.config()["marketplace"]`; uma segunda chamada devolve `False` e não muda o arquivo; sem
 `settings.json`, cria um com só as duas chaves; com JSON inválido, levanta `ValueError` e o arquivo
-fica idêntico. **A suíte inteira continua verde.**
+fica idêntico. `lib.config()["marketplace"]["source"]["repo"]` é `futureridetoday/DecodeAndCode`, e
+`empacotar.verificar` não o acusa, mas acusa o nome do projeto solto no mesmo arquivo. **A suíte
+inteira continua verde.**
 
 ## Verificação
 

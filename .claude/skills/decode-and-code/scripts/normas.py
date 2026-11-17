@@ -132,3 +132,12 @@ def _buscar(arquivo: Path, nome: str) -> tuple[str, str] | str:
     if inicio is None:
         return f"seção não encontrada: {nome}"
     return titulo, "\n".join(linhas[inicio:]).rstrip()
+
+
+def secoes(arquivo: Path, nomes: tuple[str, ...]) -> list[tuple[str, str]]:
+    """`(título, trecho)` de cada seção de `nomes`, na ordem dela — `ValueError` nomeando as que faltam."""
+    achados = [_buscar(arquivo, nome) for nome in nomes]
+    faltam = [nome for nome, achado in zip(nomes, achados) if not isinstance(achado, tuple)]
+    if faltam:
+        raise ValueError(f"seções ausentes em {arquivo}: {', '.join(faltam)}")
+    return achados

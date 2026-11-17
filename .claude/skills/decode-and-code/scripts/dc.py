@@ -389,6 +389,28 @@ def _huddle_fecho(args: argparse.Namespace) -> int:
     raise ValueError(f"seções {_SECOES_DO_FECHO} não encontradas em {[str(c) for c in candidatas]}")
 
 
+# Prefixos das seções da norma que sustentam o princípio Decode → Code, para o `explicar`.
+_SECOES_DO_METODO = (
+    "Antes do plano",
+    "O que cada porte carrega",
+    "Cold-start é o critério de suficiência da unidade",
+    "Skills `review-plan`, `derive` e `implement`",
+)
+
+
+def _explicar(args: argparse.Namespace) -> int:
+    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code."""
+    import bootstrap
+    import normas
+
+    norma = bootstrap._fonte_norma()
+    for titulo, trecho in normas.secoes(norma, _SECOES_DO_METODO):
+        print(f"### {os.path.relpath(norma)} § {titulo}")
+        print(trecho)
+        print()
+    return OK
+
+
 def _huddle_lint(args: argparse.Namespace) -> int:
     import huddle
 
@@ -419,6 +441,21 @@ def _huddle_migrar(args: argparse.Namespace) -> int:
     raiz, usuario, _ = _pessoa()
     destino = huddle.migrar(raiz, usuario)
     print(destino if destino else "nada a migrar")
+    return OK
+
+
+def _setup_escopo(args: argparse.Namespace) -> int:
+    import escopo
+    import lib
+
+    projeto = lib.repo_root()
+    if args.aplicar:
+        escreveu = escopo.habilitar(projeto)
+        print("habilitado" if escreveu else "já estava habilitado")
+        return OK
+    estado = escopo.estado(projeto)
+    print(f"habilitado: {str(estado['habilitado']).lower()}")
+    print(f"marketplace: {str(estado['marketplace']).lower()}")
     return OK
 
 
@@ -626,6 +663,8 @@ def _parser() -> argparse.ArgumentParser:
 
     comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
 
+    comando("explicar", "imprime, da norma, as seções que sustentam o método Decode → Code", _explicar)
+
     comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
 
     comando(
@@ -659,6 +698,13 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--data", help="padrão: hoje")
 
     comando("setup-lint", "valida o setup.md do projeto (1 se tem problema)", _setup_lint)
+
+    p = comando(
+        "setup-escopo",
+        "mostra se o plugin está habilitado no .claude/settings.json do projeto; --aplicar habilita",
+        _setup_escopo,
+    )
+    p.add_argument("--aplicar", action="store_true", help="grava enabledPlugins e extraKnownMarketplaces")
 
     return parser
 

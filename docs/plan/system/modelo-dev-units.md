@@ -294,8 +294,8 @@ inteiro. Os guias [`create-guideline.md`](../../recursos/create-guideline.md) e
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
-si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as cinco skills
-(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake` e o `huddle`) e a pasta
+si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as seis skills
+(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake`, o `huddle` e o `setup`) e a pasta
 compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
@@ -701,7 +701,7 @@ mudar de ideia. A revisão apenas audita se ela se sustenta (ver *Avaliação de
 ### O que cada porte carrega
 
 `plan_size` (ver *Aprovação*, acima) não é só rótulo — o formato exigido varia por porte, para que
-correção de oito linhas não pague a estrutura de um plano de vinte unidades (`B-01`):
+correção de oito linhas não pague a estrutura de um plano de vinte unidades:
 
 | Porte | Decomposição | `## Independência` | Região de backlog |
 |---|---|---|---|
@@ -909,9 +909,10 @@ saber qual é o próximo livre no módulo.
 Operado por **três skills, uma por modo**, que delegam todo determinismo a scripts. Uma quarta, o
 `intake`, antecede o ciclo e não é modo: decide o menor mecanismo antes de o plano nascer e grava o
 esboço em `_inbox/`. Uma quinta, o `huddle`, também não é modo: conduz a conversa da pessoa sobre o
-que ficou em aberto (seção *Huddle*).
+que ficou em aberto (seção *Huddle*). Uma sexta, o `setup`, conduz o primeiro uso do método no projeto
+(seção *Setup — o primeiro uso*).
 
-### Skills `review-plan`, `derive` e `implement` — substituem `plan-dev-units`
+### Skills `review-plan`, `derive` e `implement`
 
 O plano é insumo, não produto das skills: você o escreve com Opus, e elas o revisam e derivam.
 
@@ -1109,8 +1110,8 @@ se deveria ter escrito.
 ### Momento — no fecho, e a linha de fecho é obrigatória mesmo em zero
 
 Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
-escrita na hora seria natimorta. No fecho de **qualquer uma das quatro skills** — `intake`,
-`review-plan`, `derive` e `implement` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
+escrita na hora seria natimorta. No fecho de **qualquer uma das cinco skills** — `intake`,
+`review-plan`, `derive`, `implement` e `setup` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
 subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto, e termina o
 relatório com uma linha que declara quantas entradas novas houve, com os ids:
 
@@ -1207,6 +1208,48 @@ que roda antes.
 
 O `plan_root` continua vindo do `config()`, componível com a entrada — `projeto /
 lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem precisar da âncora.
+
+---
+
+## Setup — o primeiro uso
+
+O bootstrap cria o chão; não diz a quem instala que a norma é do projeto. O plugin carrega só o
+**mecanismo** — `.claude/rules/` e `guardrails.json` são instância, e nenhum deles viaja. O setup é o
+primeiro uso conduzido: a skill `setup`, na conversa principal, com a ferramenta de perguntas, que
+não existe em subagente — por isso não é fork, e não é o `intake`.
+
+**O gatilho.** O hook `SessionStart` resolve o projeto por `CLAUDE_PROJECT_DIR` e, sem `setup.md` com
+`completed_at`, devolve um aviso propondo o setup — inclusive com o plugin só no escopo de usuário,
+porque a primeira etapa é pô-lo no escopo do projeto. Enquanto o setup não conclui, o aviso de
+huddle não aparece. O aviso nunca escreve; quem inicia é a pessoa, com `/decode-and-code:setup`, e o
+modelo pode propor depois de vê-lo.
+
+**As etapas.** 0, pré-condições: bootstrap se faltar o chão, e o plugin habilitado em
+`.claude/settings.json` (`setup-escopo`), para que o time inteiro trabalhe com as mesmas normas. 1,
+perfil: objetivo, escopo e stack, confirmados com a pessoa a partir do inventário que `descobrir`
+faz. 2 e 3, todas as guidelines e depois todos os guardrails, **uma sugestão por vez**, cada uma
+aprovada, editada ou rejeitada na conversa. 4, huddle da pessoa. 5, o método, explicado a partir do
+que `dc.py explicar` imprime. 6, `setup-concluir` e o fecho do huddle.
+
+**Critério de sugestão.** Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos
+onde vale — a de caminho que ainda não existe se grava já, com `paths_pending`. Guardrail nasce de
+decisão explícita do time que desvia do padrão da stack, e barra o que uma escrita contém. Os guias
+pedem falha observada ou incidente, que projeto novo não tem. **O setup não sugere princípio**:
+princípio entra por plano com unidade `norma`, e achado com essa cara vira entrada `observação` no
+huddle.
+
+**O estado.** `<plan_root>/system/setup.md`, versionado: `completed_at` no frontmatter, `## Perfil` e
+`## Decisões`, uma linha por sugestão com chave, tipo, origem, resultado, destino ou motivo e data.
+`setup-decididas` lista as chaves já registradas, o que torna o setup retomável e impede a sugestão
+repetida. Tudo é escrito por script (`setup.py`); nada se edita à mão.
+
+**O que escreve, e o que não.** Escreve só no que o bootstrap cria, em `.claude/settings.json`
+(escopo), em `.claude/rules/`, em `guardrails.json`, em `setup.md` e no arquivo de huddle da pessoa.
+**Nunca** no `CLAUDE.md` nem no `AGENTS.md`: o que eles carregam não se repete em guideline. A skill
+fala e gera as rules no idioma da pessoa.
+
+O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
+`docs/recursos/setup.md`.
 
 ---
 

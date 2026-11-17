@@ -74,6 +74,16 @@ Ou direto do asset publicado, sem build local:
 claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.0.0/decode-and-code-2.0.0.zip
 ```
 
+## Como começar
+
+1. **Instale no escopo do projeto**, não só no de usuário: assim cada colega que clonar o repositório
+   trabalha com as mesmas guidelines e guardrails. A skill `setup` propõe gravar isso em
+   `.claude/settings.json` (`dc.py setup-escopo`); cada pessoa ainda instala o plugin uma vez por clone.
+2. **Rode `/decode-and-code:setup`** — a primeira coisa a fazer. Ao abrir a sessão num projeto sem
+   setup concluído, o aviso de abertura o propõe. A skill entende o projeto, sugere guidelines e
+   guardrails uma por vez (aprovar, editar ou rejeitar), inicia o seu huddle e explica o método. Guia:
+   [`docs/recursos/setup.md`](docs/recursos/setup.md).
+
 ## Como usar o Decode And Code
 
 Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, hooks)
@@ -87,6 +97,7 @@ princípio, uma guideline, um guardrail.
 | skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `huddle` | Conduz o huddle da pessoa — percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém; só por invocação explícita (Opus) | [huddle.md](docs/recursos/huddle.md) |
+| skill | `setup` | Conduz o primeiro uso do método no projeto — escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez, huddle e o método; o aviso de abertura o propõe (Opus) | [setup.md](docs/recursos/setup.md) |
 | skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
 | hooks | 4 hooks, 3 no pacote | Guardrail do projeto (`PreToolUse`), log de norma/guidelines (`InstructionsLoaded`) e lembrete do huddle (`SessionStart`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
@@ -177,7 +188,7 @@ discutida, e quando resolve **sai** — para a norma, uma guideline ou um guardr
   abre uma entrada.
 - **Ser lembrado.** O hook `SessionStart` avisa ao abrir a sessão quando há entrada aberta e o
   último huddle foi há `reminder_days` dias ou mais (7 por padrão; `0` desliga), campo do seu arquivo.
-- **O modelo registra no fecho.** As quatro skills do ciclo terminam rodando `dc.py huddle-fecho`,
+- **O modelo registra no fecho.** As cinco skills que registram terminam rodando `dc.py huddle-fecho`,
   registram o que ficou aberto e declaram `entradas novas no huddle: N (H-XX, …)` — obrigatória
   mesmo com `N` igual a zero —, conferida por `dc.py huddle-lint-relatorio`.
 - **Projeto com o arquivo único antigo** (`<plan_root>/system/huddle.md`): `dc.py huddle-migrar`
@@ -188,7 +199,7 @@ Guia: [`docs/recursos/huddle.md`](docs/recursos/huddle.md). Formato, gatilhos e 
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — as cinco skills e a pasta compartilhada `decode-and-code/` (scripts), os
+`.claude/` é a **fonte** — as seis skills e a pasta compartilhada `decode-and-code/` (scripts), os
 hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
 **gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
 que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,
