@@ -26,7 +26,7 @@ registrar, e a linha de fecho dos relatórios só provava que existia, não que 
 - **Script para tudo que é formato**, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir`,
   `huddle-fechar`, `huddle-concluir`, `huddle-pauta`, `huddle-fecho`, `huddle-lint`,
   `huddle-lint-relatorio` e `huddle-migrar`.
-- **Registro no fecho.** As quatro skills do ciclo (`intake`, `review-plan`, `derive`, `implement`)
+- **Registro no fecho.** As cinco skills que registram (`intake`, `review-plan`, `derive`, `implement`, `setup`)
   terminam rodando `huddle-fecho`, registram o que ficou aberto com `huddle-abrir --autor Claude`, e
   passam a mensagem final por `huddle-lint-relatorio`, que exige
   `entradas novas no huddle: N (H-XX, …)` com ids abertos hoje no arquivo da pessoa.

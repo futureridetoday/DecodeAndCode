@@ -16,7 +16,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-10
-status: approved
+status: done
 version: 1.0.0
 updated: "2026-11-15"
 approved_by: Bortoli
@@ -313,9 +313,9 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | [0009-04](04-method-brief.md) | method-brief | `verified` |
 | [0009-05](05-setup-notice.md) | setup-notice | `verified` |
 | [0009-06](06-setup-skill.md) | setup-skill | `verified` |
-| [0009-07](07-setup-docs.md) | setup-docs | `spec` |
+| [0009-07](07-setup-docs.md) | setup-docs | `verified` |
 
-7 de 7 derivadas · 6 verificadas · atualizado em 2026-11-17
+7 de 7 derivadas · 7 verificadas · atualizado em 2026-11-17
 <!-- backlog:end -->
 
 ## Fonte

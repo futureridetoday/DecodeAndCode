@@ -19,6 +19,13 @@ Se a regra passa no teste do princípio (*ninguém competente rejeitaria*), é p
 guideline — veja [`create-principle.md`](create-principle.md). Se ela é *procedimento que alguém
 invoca* em vez de *norma que ativa sozinha ao tocar um arquivo*, é skill.
 
+## No primeiro uso
+
+No `/decode-and-code:setup`, o projeto ainda não tem falha observada, e o critério muda: a guideline
+nasce da **stack e do objetivo** do projeto, escopada pelos caminhos onde vale. O que o `CLAUDE.md`,
+o `AGENTS.md` ou um linter já impõe não vira guideline. Caminho que ainda não existe se grava já,
+com `aguardando: true`. Depois do primeiro uso, vale o critério acima.
+
 ## Onde fica
 
 Um arquivo por guideline em [`.claude/rules/`](../../.claude/rules/) — `.claude/rules/<nome>.md`.

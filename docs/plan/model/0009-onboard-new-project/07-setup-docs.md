@@ -13,13 +13,13 @@ block: ""
 owner: model
 unit_id: 0009-07
 unit_type: norma
-approved_by: ""
-approved_at: ""
+approved_by: Bortoli
+approved_at: 2026-11-17
 
 # verificação
-state: spec
+state: verified
 test: ""
-verified_at: ""
+verified_at: 2026-11-17
 
 # history
 author: Claude
