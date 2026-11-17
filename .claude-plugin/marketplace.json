@@ -16,7 +16,7 @@
         "sha256": "9eb4ba998d9520f402301d45b966d89a332a39688f575348f7694a0ac76b2b4e"
       },
       "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
-      "version": "2.3.0",
+      "version": "2.3.1",
       "author": {
         "name": "Future Ride Today"
       },

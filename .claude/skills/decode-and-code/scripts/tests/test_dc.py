@@ -1173,10 +1173,20 @@ class TestVerificarComSaida(unittest.TestCase):
         self.assertIn("não existe no disco", saida)
         self.assertIn("pacote/test_x.py", saida)
 
-    def test_norma_devolve_os_problemas_do_lint(self):
+    def test_norma_sem_aprovacao_devolve_o_que_falta(self):
         norma = fixtures.unidade(self.raiz, nome="02-norma.md", unit_type="norma", test="")
+        estado, _, saida = verificacao.verificar_com_saida(norma, dry_run=True)
+        self.assertEqual(estado, "spec")
+        self.assertIn("approved_by", saida)
+        self.assertIn("approved_at", saida)
+
+    def test_norma_devolve_os_problemas_do_lint(self):
+        norma = fixtures.unidade(
+            self.raiz, nome="02-norma.md", unit_type="norma", test="pacote/test_x.py",
+            approved_by="Bortoli", approved_at="2020-01-01",
+        )
         esperado = lint_unidade.lint(norma)
-        self.assertTrue(esperado, "a norma sem aprovação precisa ter problema de lint")
+        self.assertTrue(esperado, "norma com test: preenchido precisa ter problema de lint")
         estado, _, saida = verificacao.verificar_com_saida(norma, dry_run=True)
         self.assertEqual(estado, "spec")
         self.assertEqual(saida, "\n".join(esperado))
