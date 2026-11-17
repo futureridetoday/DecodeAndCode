@@ -352,6 +352,8 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     """
     destino = _resolver_destino(destino)
     marcadores = _marcadores_instancia()
+    # Identidade do plugin (`DD-06` do plano 0009): o `repo` do marketplace não é instância.
+    repo_do_plugin = lib.config()["marketplace"]["source"]["repo"]
 
     problemas = []
     for arquivo in sorted(destino.rglob("*")):
@@ -359,7 +361,7 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
             continue
         if arquivo.relative_to(destino) == _MANIFESTO_RELATIVO:
             continue
-        texto = _texto(arquivo)
+        texto = _texto(arquivo).replace(repo_do_plugin, "")
         for marcador in marcadores:
             if marcador in texto:
                 problemas.append(f"{arquivo.relative_to(destino)}: ocorrência de {marcador!r}")

@@ -444,6 +444,23 @@ class TestVerificar(_BaseComFonteSintetica):
         problemas = empacotar.verificar(self.destino)
         self.assertTrue(any("vazamento.md" in p for p in problemas))
 
+    def test_repo_do_marketplace_nao_e_acusado_mas_o_nome_solto_e(self):
+        """`DD-06`: o `repo` do `config.json` é identidade do plugin; o nome do projeto solto não."""
+        empacotar.construir(self.destino)
+        repo = f"futureridetoday/{self.raiz.name}"
+        config = {"marketplace": {"source": {"repo": repo}}}
+        pasta = self.destino / "skills" / "decode-and-code"
+
+        with mock.patch.object(lib, "config", return_value=config):
+            (pasta / "identidade.json").write_text(f'{{"repo": "{repo}"}}\n', encoding="utf-8")
+            self.assertEqual(empacotar.verificar(self.destino), [])
+
+            (pasta / "identidade.json").write_text(
+                f'{{"repo": "{repo}", "projeto": "{self.raiz.name}"}}\n', encoding="utf-8"
+            )
+            problemas = empacotar.verificar(self.destino)
+            self.assertTrue(any("identidade.json" in p for p in problemas))
+
     def test_ancora_conta_dentro_de_hooks_e_nao_fora(self):
         """A decisão contrária da `L-31`: fora de `hooks/` a âncora é dado, dentro é hook quebrado."""
         empacotar.construir(self.destino)

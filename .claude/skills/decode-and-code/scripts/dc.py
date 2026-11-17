@@ -422,6 +422,21 @@ def _huddle_migrar(args: argparse.Namespace) -> int:
     return OK
 
 
+def _setup_escopo(args: argparse.Namespace) -> int:
+    import escopo
+    import lib
+
+    projeto = lib.repo_root()
+    if args.aplicar:
+        escreveu = escopo.habilitar(projeto)
+        print("habilitado" if escreveu else "já estava habilitado")
+        return OK
+    estado = escopo.estado(projeto)
+    print(f"habilitado: {str(estado['habilitado']).lower()}")
+    print(f"marketplace: {str(estado['marketplace']).lower()}")
+    return OK
+
+
 # Registro do setup — plano 0009, unidade 01. Todos resolvem `<plan_root>/system/setup.md` do projeto.
 
 
@@ -659,6 +674,13 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--data", help="padrão: hoje")
 
     comando("setup-lint", "valida o setup.md do projeto (1 se tem problema)", _setup_lint)
+
+    p = comando(
+        "setup-escopo",
+        "mostra se o plugin está habilitado no .claude/settings.json do projeto; --aplicar habilita",
+        _setup_escopo,
+    )
+    p.add_argument("--aplicar", action="store_true", help="grava enabledPlugins e extraKnownMarketplaces")
 
     return parser
 

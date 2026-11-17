@@ -236,6 +236,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | DD-03 | **`normas.secoes(arquivo, nomes)` é a função do `explicar`** (`0009-04`) | `normas._buscar` já resolve seção por prefixo; a função nova só junta as quatro e levanta com as que faltam |
 | DD-04 | **A `0009-07` é unidade `norma`** | Entrega só prosa; o oráculo é a aprovação humana, e o `lint-unidade` exige `approved_by` e `approved_at` antes do `implement` |
 | DD-05 | **A checagem do setup vem antes de `huddle.usuario` no hook** (`0009-05`) | Projeto recém-aberto pode não ter `user.name`; o aviso de setup não pode depender do que o setup resolve |
+| DD-06 | **`empacotar.verificar` tira do texto o `marketplace.source.repo` do `config.json` antes de procurar o nome do projeto** (`0009-03`, `L-13`) | Decidida pelo humano em 2026-11-16. É identidade do plugin, como o `plugin.json`, que o verificador já deixa de fora; o nome solto em qualquer outro lugar continua acusado. Gravar o `repo` em minúsculas passava só porque a comparação diferencia caixa: um clone numa pasta `decodeandcode` voltava a reprovar |
 
 ## Lacunas
 
@@ -253,6 +254,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | L-10 | **O aviso aparece em todo projeto aberto com o plugin no escopo de usuário** | Consequência de `D-09`, inclusive em repositórios que nunca vão adotar o método. Se incomodar, uma opção "não neste projeto" exige onde guardar a recusa sem escrever no repositório |
 | L-11 | **Guideline com `paths_pending` pode ter o caminho errado sem que nada acuse** | Herdada da `L-05` do `add-norm-writers`: a sessão real da validação ponta a ponta mede o caso feliz, não o erro de digitação |
 | L-12 | **O `### <caminho>` do `descobrir` colide com os títulos dos trechos** | Medido na revisão da `0009-02` neste repositório: o `README.md` traz `### Por comando`, que na saída parece uma fonte. A `0009-02` fixou o formato sem cerca em volta do trecho; quem lê é a skill da `0009-06`, e a validação ponta a ponta mede se ela confunde |
+| L-13 | **A `0009-03` fixou um `repo` que o empacotador recusa** | Medido na primeira execução da `0009-03`: `empacotar.verificar` acusa o nome do diretório de origem em todo arquivo do pacote, e `config.json` e `lib.py` viajam nele. A unidade não listava `empacotar.py`; o executor gravou o `repo` em minúsculas (`H-12`). Corrigida pela `DD-06`, com a unidade refeita |
 
 ## Backlog
 
@@ -261,13 +263,13 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 |---|---|---|
 | [0009-01](01-setup-record.md) | setup-record | `verified` |
 | [0009-02](02-project-scan.md) | project-scan | `verified` |
-| [0009-03](03-project-scope.md) | project-scope | `spec` |
+| [0009-03](03-project-scope.md) | project-scope | `verified` |
 | [0009-04](04-method-brief.md) | method-brief | `spec` |
 | [0009-05](05-setup-notice.md) | setup-notice | `spec` |
 | [0009-06](06-setup-skill.md) | setup-skill | `spec` |
 | [0009-07](07-setup-docs.md) | setup-docs | `spec` |
 
-7 de 7 derivadas · 2 verificadas · atualizado em 2026-11-16
+7 de 7 derivadas · 3 verificadas · atualizado em 2026-11-16
 <!-- backlog:end -->
 
 ## Fonte

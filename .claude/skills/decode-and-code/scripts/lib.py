@@ -36,6 +36,13 @@ _DEFAULTS = {
     "root_markers": [".claude", "docs"],
     "move_script": "scripts/move-md.py",
     "runners": {".py": "scripts/test-python.sh", ".ts": "scripts/test-ts.sh"},
+    # Identidade do próprio plugin (`D-14` do plano 0009): o pacote não leva o `marketplace.json`.
+    # `empacotar.verificar` tira este `repo` do texto antes de procurar o nome do projeto (`DD-06`).
+    "marketplace": {
+        "name": "future-ride-today",
+        "plugin": "decode-and-code",
+        "source": {"source": "github", "repo": "futureridetoday/DecodeAndCode"},
+    },
 }
 
 # Os defaults são a fonte única. `_find_repo_root` lê a versão resolvida pelo config,
