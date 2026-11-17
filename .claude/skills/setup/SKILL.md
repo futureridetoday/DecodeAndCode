@@ -59,7 +59,7 @@ Explique que cada colega instala o plugin uma vez por clone.
 **1 — Perfil.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-iniciar` e
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" descobrir`. Confirme objetivo, escopo e stack, uma pergunta por vez,
 com sugestões tiradas do inventário e o texto livre como saída. Grave o JSON
-`{objetivo, escopo, stack, confirmacao}` por heredoc `<<'FIM'` em
+`{objetivo, escopo, stack, confirmacao}` em arquivo, como descrito em *JSON pelo stdin*, e passe-o a
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil`.
 
 **2 e 3 — Guidelines, depois guardrails.** Antes de sugerir, rode
@@ -79,8 +79,8 @@ padrão da stack, e barra o que uma escrita contém, por regex — pergunte pela
 inventário. Mostre a proposta inteira e grave só depois do **Aprovar**: guideline, o JSON
 `{nome, descricao, paths, corpo}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline` (com
 `aguardando: true` se o caminho ainda não existe); guardrail, o JSON `{regra, proibido, permitido}` para
-`python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`. O formato está na norma, seção *Camada
-normativa*. Cada resultado vai para `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-registrar`, com o JSON
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`, no formato de *Formato do guardrail*. A norma,
+seção *Camada normativa*, cobre a guideline. Cada resultado vai para `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-registrar`, com o JSON
 `{chave, tipo, origem, resultado, detalhe}`. O `setup-registrar` aceita só um vocabulário fechado, e valor
 fora dele sai `1`: `tipo` é `guideline`, `guardrail` ou `princípio`; `origem` é `stack`, `decisão do time`,
 `existente` ou `arquivo <caminho>`; `resultado` é `aceita`, `rejeitada` ou `existente`. Sugestão editada e
@@ -88,6 +88,31 @@ depois aprovada é `aceita` — não existe `editada`. Achado com cara de princ�
 guardrail, vira entrada `observação` no huddle e se registra com `tipo: princípio`, `resultado: rejeitada`
 e o id `H-XX` no `detalhe`; se o projeto ainda tem o arquivo único antigo, o `huddle-abrir` recusa, e você
 propõe o `huddle-migrar` da etapa 4 antes de registrar.
+
+### JSON pelo stdin, por arquivo
+
+O Claude Code recusa heredoc com JSON ("Contains brace with quote character"). Para `setup-perfil`,
+`setup-registrar`, `criar-guideline` e `adicionar-guardrail`, grave o JSON com a ferramenta `Write` num
+arquivo temporário fora do projeto (o scratchpad da sessão) e passe-o com `<`, na forma que o
+`allowed-tools` casa: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>`. O `huddle-abrir`
+lê texto, não JSON, e segue como nas outras skills.
+
+### Formato do guardrail
+
+O JSON do `adicionar-guardrail` é `{regra, proibido, permitido}`:
+
+- `regra` tem quatro campos, todos texto não vazio: `nome` (kebab-case), `ferramenta` (regex sobre o nome
+  da ferramenta, ex.: `^(Write|Edit)$`), `detector` (regex) e `mensagem`.
+- O `detector` casa o texto de todos os valores de `tool_input` que são texto, unidos por quebra de
+  linha: num `Write`, o caminho e o conteúdo; num `Edit`, o caminho, o trecho antigo e o novo. Não há
+  campo de caminho — a restrição de pasta vai dentro do próprio regex.
+- `proibido` e `permitido` têm a forma do payload do hook, `{tool_name, tool_input}`; o comando recusa a
+  regra que não nega o `proibido` ou que nega o `permitido`.
+
+### Tipos do huddle
+
+`huddle-abrir` aceita `pergunta`, `divergência`, `padrão`, `revisitar` e `observação`; outro tipo
+(`contorno`, por exemplo) sai `1`.
 
 **4 — Huddle.** Se o projeto ainda tem o arquivo único antigo, proponha
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-migrar` e rode-o com o sim; senão rode

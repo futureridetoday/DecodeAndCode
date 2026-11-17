@@ -180,6 +180,47 @@ resultado fica registrado aqui.
   existentes e não são sugeridos de novo.
 - Ao fim, `git status` deste repositório sem mudança.
 
+### Resultado — 2026-11-16 e 2026-11-17
+
+Conduzida por `claude -p` (Claude Code 2.1.325, `claude-opus-5-5`), em turnos encadeados por
+`--resume`, com o pacote construído por `empacotar.construir` fora de qualquer repositório e carregado
+por `--plugin-dir`. Os logs em stream-json ficaram no scratchpad da sessão que orquestrou.
+
+**Desvio do roteiro:** em `-p` não existe a ferramenta de perguntas, então a skill perguntou em texto
+e cada resposta foi um turno novo. A permissão que a pessoa daria a cada pedido foi simulada com
+`--allowedTools` (o atalho `dc.py` da skill), `--add-dir` (leitura do pacote) e
+`--permission-mode acceptEdits` (escrita do componente), turno a turno.
+
+| Medida | Resultado |
+|---|---|
+| Aviso de setup | Chega ao modelo como `additionalContext`; ele propõe `/decode-and-code:setup` e espera o sim. Onde o `systemMessage` aparece para a pessoa não se mede em `-p` (`L-04` segue aberta) |
+| Início do setup | Não começa sozinho (`L-02` confirmada). Invocada pelo modelo, a skill pede permissão `Skill(...)`; digitada pela pessoa, roda |
+| Etapa 0 | `bootstrap` e `setup-escopo --aplicar` propostos e rodados com o sim; `settings.json` com só as duas chaves |
+| Etapa 1 | Uma pergunta por vez, com sugestões tiradas do inventário; perfil gravado e `setup-lint` aprovado |
+| Guidelines citam a stack | Sim: par `*.styles.ts`/`*.tsx` com `cva`, `cn()`, `forwardRef`/`Slot`, e tokens do tema |
+| `paths_pending` | As duas guidelines saíram com `paths_pending: true`. Numa sessão nova, ler `components/ui/button.tsx` carregou as duas rules no contexto sem abrir `.claude/`. A marca não sai sozinha (`L-05` do `0007`) |
+| Editar → Edição livre | Aplicou a mudança, apontou a tensão que ela criou com o corpo e voltou com Aprovar/Editar/Rejeitar |
+| Guardrail com o par | `cva-so-no-styles` gravado, provado pelo `adicionar-guardrail`; numa segunda sessão barrou o `button.tsx` com `cva` e deixou passar o par separado |
+| Segunda sessão | Sem aviso de setup |
+| `huddle.md` antigo | A etapa 4 propôs o `huddle-migrar`; o `git mv` funcionou e os lints aprovaram |
+| Este repositório (num clone) | `scripts`, `principles` e `ddl-remoto` registrados como `existente` e não sugeridos de novo. O aviso apareceu duas vezes: o hook do repositório e o do pacote |
+| `git status` daqui | Igual ao de antes da validação |
+| Etapas 5 e 6 | `explicar`, `setup-concluir` e o fecho do huddle rodaram nos dois projetos; o modelo abriu entradas no huddle da pessoa sozinho |
+
+**Achados que viram lacuna:** `L-15` (heredoc barrado), `L-16` (formato do guardrail fora do
+pacote), `L-17` (a pré-aprovação não atravessa o turno, medida) e `L-18` (arquivo da raiz em
+`paths`). Achados menores, sem lacuna: o modelo disse que o colega "recebe a oferta de instalação"
+ao abrir o projeto, o que a doc não afirma (`L-07`); a skill não lista os tipos do huddle, e o
+modelo tentou `contorno` antes de `observação`; no projeto com `.claude/` e `docs/` mas sem a norma,
+a etapa 0 não propôs o `bootstrap`.
+
+**Remedição depois da correção de `L-15` e `L-16`, 2026-11-17.** Pacote reconstruído (`verificar` e
+`validar` limpos), projeto novo `api-mini` (FastAPI, sem `.claude/` nem `docs/`) e um turno só, com
+todas as respostas no pedido e **sem nenhuma permissão simulada**. Medido: o JSON foi por arquivo e
+`<` nas quatro chamadas, nenhum heredoc; o guardrail `rotas-sem-sqlalchemy` saiu certo na primeira
+tentativa, com o par provado; as etapas 0 a 6 rodaram só com a pré-aprovação da skill. A única
+recusa foi um `; echo "exit $?"` que o modelo acrescentou a um comando, fora do texto da skill.
+
 ## Independência
 
 **Um plano, em três fases, e não três planos.** A Fase 2 compõe as funções da Fase 1, e a Fase 3
@@ -256,6 +297,10 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | L-12 | **O `### <caminho>` do `descobrir` colide com os títulos dos trechos** | Medido na revisão da `0009-02` neste repositório: o `README.md` traz `### Por comando`, que na saída parece uma fonte. A `0009-02` fixou o formato sem cerca em volta do trecho; quem lê é a skill da `0009-06`, e a validação ponta a ponta mede se ela confunde |
 | L-13 | **A `0009-03` fixou um `repo` que o empacotador recusa** | Medido na primeira execução da `0009-03`: `empacotar.verificar` acusa o nome do diretório de origem em todo arquivo do pacote, e `config.json` e `lib.py` viajam nele. A unidade não listava `empacotar.py`; o executor gravou o `repo` em minúsculas (`H-12`). Corrigida pela `DD-06`, com a unidade refeita |
 | L-14 | **A `0009-06` não dava à skill o vocabulário do `setup-registrar`** | Medido na revisão da primeira execução: o `SKILL.md` listava `editada` entre os resultados, e o `setup.py` recusa esse valor com saída `1`. A unidade também não dizia como registrar o achado com cara de princípio, nem o que fazer quando o `huddle-abrir` recusa por causa do arquivo único antigo. Corrigida na unidade, refeita |
+| L-15 | **O heredoc que a skill `setup` manda usar é barrado pelo Claude Code** | Medido na validação ponta a ponta: `<<'FIM'` com JSON recusado por "Contains brace with quote character" em toda chamada que lê do stdin (perfil, registro, guideline, guardrail). O modelo contornou gravando o JSON num arquivo e passando por `<`, o que o `allowed-tools` casa. Corrigida na `0009-06`, refeita. O `huddle/SKILL.md` do `0008` tem o mesmo heredoc com JSON no `criar-guideline` da promoção, e fica fora deste plano |
+| L-16 | **O formato da regra de guardrail não chega à skill** | Medido na validação: a skill manda à norma, *Camada normativa*, que não traz os campos; o `create-guardrail.md` fica em `docs/recursos/`, fora do pacote. O modelo errou duas vezes e só acertou lendo o `guardrail.py`, com permissão para ler fora do projeto. Corrigida na `0009-06`: o corpo traz os campos e o que o detector lê |
+| L-17 | **A pré-aprovação do `allowed-tools` vale só no turno da invocação — medida** | Fecha a dúvida da `L-06`: na mensagem seguinte da pessoa, todo `dc.py` volta a pedir permissão. Com a ferramenta de perguntas o fluxo fica num turno só; em `-p` ou com resposta por texto livre, cada comando pede aprovação |
+| L-18 | **Arquivo da raiz não entra em `paths` pelo nome** | Medido na validação: `criar-guideline` recusou `tailwind.config.ts`; a skill trocou por `**/tailwind.config.ts` com o sim da pessoa. É o lint de `paths` que este plano deixou de fora (`L-01` do `add-norm-writers`), agora com um caso real |
 
 ## Backlog
 
@@ -270,7 +315,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | [0009-06](06-setup-skill.md) | setup-skill | `verified` |
 | [0009-07](07-setup-docs.md) | setup-docs | `spec` |
 
-7 de 7 derivadas · 6 verificadas · atualizado em 2026-11-16
+7 de 7 derivadas · 6 verificadas · atualizado em 2026-11-17
 <!-- backlog:end -->
 
 ## Fonte

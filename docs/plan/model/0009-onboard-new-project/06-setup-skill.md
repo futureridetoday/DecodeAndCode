@@ -17,7 +17,7 @@ unit_type: dev
 # verificação
 state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_skill_base.py
-verified_at: 2026-11-16
+verified_at: 2026-11-17
 
 # history
 author: Claude
@@ -76,6 +76,30 @@ executar. O que o corpo precisa dizer, porque o plano não é lido em sessão:
   é registrado com `tipo: princípio`, `resultado: rejeitada` e o id `H-XX` no detalhe; se o projeto
   ainda tem o arquivo único antigo, o `huddle-abrir` recusa, e a skill propõe o `huddle-migrar` da
   etapa 4 antes de registrar.
+
+**JSON pelo stdin, por arquivo** (`L-15`). O Claude Code recusa o heredoc com JSON ("Contains brace
+with quote character"), medido na validação ponta a ponta. O corpo manda gravar o JSON com a
+ferramenta `Write` num arquivo temporário fora do projeto (o scratchpad da sessão) e passá-lo com
+`<`: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>` — forma que o `allowed-tools`
+casa. Vale para `setup-perfil`, `setup-registrar`, `criar-guideline` e `adicionar-guardrail`. O
+`huddle-abrir` lê texto, não JSON, e continua como nas outras skills.
+
+**Formato do guardrail no corpo** (`L-16`). O pacote não leva o `create-guardrail.md`, e a norma não
+traz os campos; o corpo dá o que o `guardrail.py` espera. O JSON do `adicionar-guardrail` é
+`{regra, proibido, permitido}`:
+- `regra` tem os quatro campos de `guardrail.CHAVES_DA_REGRA`: `nome` (kebab-case), `ferramenta`
+  (regex sobre o nome da ferramenta, ex.: `^(Write|Edit)$`), `detector` (regex) e `mensagem`;
+- o `detector` casa o texto de todos os valores de `tool_input` que são texto, unidos por quebra de
+  linha — num `Write`, o caminho e o conteúdo; num `Edit`, o caminho, o trecho antigo e o novo. Não
+  há campo de caminho: a restrição de pasta vai dentro do próprio regex;
+- `proibido` e `permitido` têm a forma do payload do hook, `{tool_name, tool_input}`; o comando
+  recusa a regra que não nega o primeiro ou nega o segundo.
+
+**Tipos do huddle no corpo.** `huddle-abrir` aceita `pergunta`, `divergência`, `padrão`, `revisitar`
+e `observação`; na validação o modelo tentou `contorno` antes.
+
+> **Refeita de novo em 2026-11-17** (`L-15`, `L-16`), depois da validação ponta a ponta: só o corpo do
+> `SKILL.md` muda.
 
 > **Refeita em 2026-11-16** (`L-14`). A primeira execução listou `editada` entre os resultados, valor
 > que o `setup-registrar` recusa. Só o corpo do `SKILL.md` muda.
