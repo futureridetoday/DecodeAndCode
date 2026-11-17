@@ -38,3 +38,4 @@ dependencies: []
 | [0007-add-norm-writers](../model/0007-add-norm-writers.md) | médio | 7 | não declarado | — | 2026-11-15 |
 | [0008-wire-huddle-cycle](../model/0008-wire-huddle-cycle.md) | médio | 10 | não declarado | — | 2026-11-15 |
 | [0009-onboard-new-project](../model/0009-onboard-new-project/0009-onboard-new-project.md) | grande | 7 | 32 | 2113 | 2026-11-17 |
+| [0010-fix-norma-entry-gate](../model/0010-fix-norma-entry-gate.md) | pequeno | — | não declarado | — | 2026-11-17 |
