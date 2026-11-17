@@ -15,9 +15,9 @@ unit_id: 0009-06
 unit_type: dev
 
 # verificação
-state: spec
+state: verified
 test: .claude/skills/decode-and-code/scripts/tests/test_skill_base.py
-verified_at: ""
+verified_at: 2026-11-16
 
 # history
 author: Claude
@@ -68,8 +68,17 @@ executar. O que o corpo precisa dizer, porque o plano não é lido em sessão:
   com **Aprovar** / **Editar** / **Rejeitar**; **Editar** abre **Edição livre** ou **Edição guiada**
   (*O fluxo*, etapas 2 e 3). Guideline nasce da stack e do objetivo; guardrail, de decisão explícita
   do time que desvia do padrão da stack (`D-03`); caminho que ainda não existe vai com
-  `aguardando: true`. Cada resultado vai para `dc.py setup-registrar`. Achado com cara de princípio
-  vira `observação` no huddle (`D-04`).
+  `aguardando: true`. Cada resultado vai para `dc.py setup-registrar`, e o corpo dá o vocabulário que
+  o `setup.py` da `0009-01` aceita, porque valor fora dele sai `1`: `tipo` ∈ {`guideline`,
+  `guardrail`, `princípio`}; `origem` ∈ {`stack`, `decisão do time`, `existente`, `arquivo
+  <caminho>`}; `resultado` ∈ {`aceita`, `rejeitada`, `existente`}. Sugestão editada e depois aprovada
+  é `aceita` — não há `editada`. Achado com cara de princípio vira `observação` no huddle (`D-04`) e
+  é registrado com `tipo: princípio`, `resultado: rejeitada` e o id `H-XX` no detalhe; se o projeto
+  ainda tem o arquivo único antigo, o `huddle-abrir` recusa, e a skill propõe o `huddle-migrar` da
+  etapa 4 antes de registrar.
+
+> **Refeita em 2026-11-16** (`L-14`). A primeira execução listou `editada` entre os resultados, valor
+> que o `setup-registrar` recusa. Só o corpo do `SKILL.md` muda.
 - **4** — com o arquivo único antigo, propor `dc.py huddle-migrar`; senão `dc.py huddle-iniciar`, ou
   só explicar se o arquivo da pessoa já existe.
 - **5** — `dc.py explicar` e explicar Decode e Code a partir do que ele imprime (`D-06`).

@@ -255,6 +255,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | L-11 | **Guideline com `paths_pending` pode ter o caminho errado sem que nada acuse** | Herdada da `L-05` do `add-norm-writers`: a sessão real da validação ponta a ponta mede o caso feliz, não o erro de digitação |
 | L-12 | **O `### <caminho>` do `descobrir` colide com os títulos dos trechos** | Medido na revisão da `0009-02` neste repositório: o `README.md` traz `### Por comando`, que na saída parece uma fonte. A `0009-02` fixou o formato sem cerca em volta do trecho; quem lê é a skill da `0009-06`, e a validação ponta a ponta mede se ela confunde |
 | L-13 | **A `0009-03` fixou um `repo` que o empacotador recusa** | Medido na primeira execução da `0009-03`: `empacotar.verificar` acusa o nome do diretório de origem em todo arquivo do pacote, e `config.json` e `lib.py` viajam nele. A unidade não listava `empacotar.py`; o executor gravou o `repo` em minúsculas (`H-12`). Corrigida pela `DD-06`, com a unidade refeita |
+| L-14 | **A `0009-06` não dava à skill o vocabulário do `setup-registrar`** | Medido na revisão da primeira execução: o `SKILL.md` listava `editada` entre os resultados, e o `setup.py` recusa esse valor com saída `1`. A unidade também não dizia como registrar o achado com cara de princípio, nem o que fazer quando o `huddle-abrir` recusa por causa do arquivo único antigo. Corrigida na unidade, refeita |
 
 ## Backlog
 
@@ -266,10 +267,10 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | [0009-03](03-project-scope.md) | project-scope | `verified` |
 | [0009-04](04-method-brief.md) | method-brief | `verified` |
 | [0009-05](05-setup-notice.md) | setup-notice | `verified` |
-| [0009-06](06-setup-skill.md) | setup-skill | `spec` |
+| [0009-06](06-setup-skill.md) | setup-skill | `verified` |
 | [0009-07](07-setup-docs.md) | setup-docs | `spec` |
 
-7 de 7 derivadas · 5 verificadas · atualizado em 2026-11-16
+7 de 7 derivadas · 6 verificadas · atualizado em 2026-11-16
 <!-- backlog:end -->
 
 ## Fonte

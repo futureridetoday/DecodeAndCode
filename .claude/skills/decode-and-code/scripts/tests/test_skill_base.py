@@ -95,6 +95,16 @@ TOPOLOGIA = {
         "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
+    # Plano 0009, unidade 06: o setup conduz a conversa do primeiro uso. O modelo pode propô-lo depois
+    # do aviso do SessionStart, e o primeiro passo é a confirmação; sem `context`, porque a ferramenta
+    # de perguntas não existe em fork.
+    "setup": {
+        "modo": "setup",
+        "model": "opus",
+        "disable-model-invocation": "false",
+        "context": None,
+        "allowed-tools": ALLOWED_TOOLS,
+    },
 }
 
 
@@ -137,7 +147,7 @@ class TestSkillBase(unittest.TestCase):
                     self.assertEqual(regioes.ler_campo(SKILLS / nome / "SKILL.md", campo), valor)
 
     def test_so_as_skills_em_fork_declaram_agent(self):
-        for nome in ("review-plan", "derive", "huddle"):
+        for nome in ("review-plan", "derive", "huddle", "setup"):
             with self.subTest(skill=nome):
                 self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
 
