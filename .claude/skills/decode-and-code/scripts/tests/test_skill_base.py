@@ -2,8 +2,8 @@
 """Teste da base das skills do método — unidades 0002-11 e `P-03`, e `P-06`.
 
 Cobre o que `lint_skill.lint()` já verifica — frontmatter completo e o modo declarado no corpo — e
-o que ele não vê: a topologia de `D-01`. São quatro skills — uma por modo e o `intake`, que antecede
-o ciclo —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
+o que ele não vê: a topologia de `D-01`. São as skills de `lib.SKILLS` — uma por modo, o `intake`, que antecede
+o ciclo, o `huddle` e o `setup` —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
 elas compartilham, sem `SKILL.md`. O texto do corpo de cada modo não é testado: palavra no markdown
 protege redação, não comportamento, e o que o corpo cita do `dc.py` é conferido por `test_dc.py`.
 

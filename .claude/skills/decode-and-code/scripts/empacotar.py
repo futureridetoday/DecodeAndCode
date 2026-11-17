@@ -160,7 +160,7 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
 def _copiar_skill(origem: Path, destino: Path) -> list[Path]:
     """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
 
-    Serve às quatro skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
+    Serve às skills de `lib.SKILLS` e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
     o `SKILL.md` — que só as skills têm — passa por `_so_campos_oficiais`. Só a pasta compartilhada
     perde também `_SCRIPTS_DE_DESENVOLVIMENTO` (`P-05`): é onde `scripts/` mora, e uma skill não
     deveria perder em silêncio um arquivo que por acaso tenha um desses nomes.
