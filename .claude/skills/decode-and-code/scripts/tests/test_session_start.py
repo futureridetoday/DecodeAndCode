@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import huddle
 import lib
 import regioes
+import setup
 
 HOOK = lib.repo_root() / ".claude" / "hooks" / "session_start.py"
 
@@ -37,6 +38,8 @@ class _Projeto(unittest.TestCase):
         }
         for args in (["init", "-q"], ["config", "user.name", "Ana"]):
             subprocess.run(["git", *args], cwd=self.projeto, check=True, env=self.ambiente)
+        self.setup_md = setup.iniciar(self.projeto)
+        setup.concluir(self.setup_md, date.today().isoformat())
         self.arquivo = huddle.caminho(self.projeto, "ana")
         huddle.iniciar(self.arquivo, projeto=self.projeto, usuario="ana")
         huddle.abrir(self.arquivo, "pergunta", "x", "ana")
@@ -107,6 +110,47 @@ class TestAviso(_Projeto):
         huddle.abrir(outro, "pergunta", "y", "beto")
         regioes.escrever_campos(outro, {"created": self.ha_dias(30)})
         self.assertIsNone(self.saida())
+
+
+class TestSetup(_Projeto):
+    def assertAvisoSetup(self, saida):
+        self.assertIn("/decode-and-code:setup", saida["systemMessage"])
+        especifico = saida["hookSpecificOutput"]
+        self.assertEqual(especifico["hookEventName"], "SessionStart")
+        self.assertIn("/decode-and-code:setup", especifico["additionalContext"])
+
+    def test_sem_setup_md_propoe_o_setup(self):
+        self.setup_md.unlink()
+        self.assertAvisoSetup(self.saida())
+
+    def test_completed_at_vazio_propoe_o_setup(self):
+        regioes.escrever_campos(self.setup_md, {"completed_at": ""})
+        self.assertAvisoSetup(self.saida())
+
+    def test_concluido_nao_avisa_setup(self):
+        self.assertIsNone(self.saida())
+
+    def test_setup_pendente_com_huddle_atrasado_so_avisa_setup(self):
+        huddle.concluir(self.arquivo, self.ha_dias(30))
+        regioes.escrever_campos(self.setup_md, {"completed_at": ""})
+        saida = self.saida()
+        self.assertAvisoSetup(saida)
+        self.assertNotIn("huddle", saida["systemMessage"].lower())
+
+    def test_projeto_sem_docs_nem_claude_nem_user_name(self):
+        with tempfile.TemporaryDirectory() as vazio:
+            ambiente = {**self.ambiente, "CLAUDE_PROJECT_DIR": str(Path(vazio).resolve())}
+            r = subprocess.run(
+                [sys.executable, str(HOOK)], input="{}", capture_output=True, text=True,
+                env=ambiente, timeout=30,
+            )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertAvisoSetup(json.loads(r.stdout))
+
+    def test_sem_user_name_avisa_setup(self):
+        subprocess.run(["git", "config", "--unset", "user.name"], cwd=self.projeto, check=True, env=self.ambiente)
+        regioes.escrever_campos(self.setup_md, {"completed_at": ""})
+        self.assertAvisoSetup(self.saida())
 
 
 class TestSilencioEmErro(_Projeto):
