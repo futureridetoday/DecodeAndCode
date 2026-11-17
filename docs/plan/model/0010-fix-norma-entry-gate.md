@@ -7,7 +7,7 @@ description: A `implement` recusa toda unidade `unit_type: norma` no gate de ent
 tags: [decode-and-code, implement, norma, gate, lint]
 
 # alvo
-plan_id: ""
+plan_id: "0010"
 plan_size: pequeno
 core: model
 module: fix-norma-entry-gate
@@ -16,11 +16,11 @@ block: ""
 # history
 author: Claude
 created: 2026-11-17
-status: draft
+status: approved
 version: 1.0.0
 updated: ""
-approved_by: ""
-approved_at: ""
+approved_by: Bortoli
+approved_at: 2026-11-17
 
 # system
 scope: project

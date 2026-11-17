@@ -38,6 +38,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0007 | [add-norm-writers](model/0007-add-norm-writers.md) | model | add-norm-writers | — | concluído | 2026-11-15 |
 | 0008 | [wire-huddle-cycle](model/0008-wire-huddle-cycle.md) | model | wire-huddle-cycle | — | concluído | 2026-11-15 |
 | 0009 | [onboard-new-project](model/0009-onboard-new-project/0009-onboard-new-project.md) | model | onboard-new-project | — | em desenvolvimento | 2026-11-15 |
+| 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | em desenvolvimento | 2026-11-17 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
