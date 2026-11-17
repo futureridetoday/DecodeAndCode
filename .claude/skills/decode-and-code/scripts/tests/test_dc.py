@@ -74,6 +74,7 @@ SUBCOMANDOS = (
     "setup-concluir",
     "setup-lint",
     "setup-escopo",
+    "explicar",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -897,6 +898,13 @@ class TestHuddle(_ProjetoCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("Despejo", r.stdout)
         self.assertNotIn(os.path.relpath(norma, self.projeto), r.stdout)
+
+    def test_explicar_imprime_os_quatro_titulos_da_norma(self):
+        r = self.dc("explicar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for titulo in ("Antes do plano", "O que cada porte carrega", "Cold-start é o critério", "Skills `review-plan`"):
+            with self.subTest(titulo=titulo):
+                self.assertIn(titulo, r.stdout)
 
     def test_lint_do_arquivo_da_pessoa(self):
         self.dc("huddle-iniciar")

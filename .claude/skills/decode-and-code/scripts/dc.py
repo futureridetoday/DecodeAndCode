@@ -389,6 +389,28 @@ def _huddle_fecho(args: argparse.Namespace) -> int:
     raise ValueError(f"seções {_SECOES_DO_FECHO} não encontradas em {[str(c) for c in candidatas]}")
 
 
+# Prefixos das seções da norma que sustentam o princípio Decode → Code, para o `explicar`.
+_SECOES_DO_METODO = (
+    "Antes do plano",
+    "O que cada porte carrega",
+    "Cold-start é o critério de suficiência da unidade",
+    "Skills `review-plan`, `derive` e `implement`",
+)
+
+
+def _explicar(args: argparse.Namespace) -> int:
+    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code."""
+    import bootstrap
+    import normas
+
+    norma = bootstrap._fonte_norma()
+    for titulo, trecho in normas.secoes(norma, _SECOES_DO_METODO):
+        print(f"### {os.path.relpath(norma)} § {titulo}")
+        print(trecho)
+        print()
+    return OK
+
+
 def _huddle_lint(args: argparse.Namespace) -> int:
     import huddle
 
@@ -640,6 +662,8 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--desde", help="padrão: last_huddle, ou created")
 
     comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
+
+    comando("explicar", "imprime, da norma, as seções que sustentam o método Decode → Code", _explicar)
 
     comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
 
