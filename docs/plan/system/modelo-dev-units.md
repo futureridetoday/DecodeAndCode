@@ -539,10 +539,16 @@ frontmatter, ao lado de `unit_type`: `approved_by` e `approved_at`. Mesmo par, m
 campos homônimos do plano (*Aprovação — três campos declarados pelo humano*, mais abaixo): o humano
 declara, o script só confere que a declaração existe.
 
-`verificacao.verificar` fecha uma unidade `norma` quando `lint_unidade` está limpo — o que já exige
-`approved_by`/`approved_at` preenchidos — **sem rodar nenhum `subprocess`**, e grava `verified_at`
+`verificacao.verificar` fecha uma unidade `norma` quando `lint_unidade` está limpo **e**
+`approved_by`/`approved_at` estão preenchidos — **sem rodar nenhum `subprocess`**, e grava `verified_at`
 igual a `approved_at`, nunca a data em que o script rodou: o fato verificado é a aprovação do
 humano, e reexecutar o gate amanhã não pode mover a data de um fato que não mudou.
+
+**A aprovação é conferida só na saída, nunca no `lint_unidade`.** O `lint_unidade` é também o gate
+de entrada da `implement` e o lint que o `derive` roda em cada unidade recém-escrita — e o humano só
+declara a aprovação **depois** de revisar a entrega. Exigi-la ali recusava toda unidade `norma` antes
+de ela existir: medido num projeto consumidor, as unidades `norma` recém-derivadas de um plano
+reprovavam só pela ausência dos dois campos, enquanto as `dev` do mesmo plano passavam.
 
 **O que continua em aberto.** O script segue sem julgar se a prosa presta — só confere que a
 aprovação existe e está registrada em campo. Adequação de conteúdo continua sendo julgamento

@@ -6,11 +6,13 @@ Três frentes, uma por oráculo que a unidade fecha:
 - `lint_plano.lint` — os três portes bem formados devolvem `[]`, cada linha da tabela de portes
   recusa isoladamente (um problema só, nunca mais), `plan_size` ausente ou fora do vocabulário
   entra na lista sem levantar, e o plano real `0001` deste repositório — que é `grande` — aprova.
-- `lint_unidade.lint` — aceita `unit_type: norma`, recusa a ausência de `approved_by`/`approved_at`,
-  recusa `test:` preenchido em `norma` e vazio em `dev`, recusa a linha órfã `Último resultado` em
-  qualquer unidade, e as onze unidades reais (`01` a `11`) continuam aprovando depois da remoção.
+- `lint_unidade.lint` — aceita `unit_type: norma` **sem** `approved_by`/`approved_at` (é o gate de
+  entrada, e a aprovação só existe depois da entrega), recusa `test:` preenchido em `norma` e vazio
+  em `dev`, recusa a linha órfã `Último resultado` em qualquer unidade, e as onze unidades reais
+  (`01` a `11`) continuam aprovando depois da remoção.
 - `verificacao.verificar` — uma unidade `norma` fecha por aprovação, nunca por execução: `verified`
-  sem rodar `subprocess` quando `approved_by`/`approved_at` estão preenchidos, `spec` sem eles.
+  sem rodar `subprocess` quando `approved_by`/`approved_at` estão preenchidos, `spec` sem qualquer
+  um deles, com o campo que falta na saída.
 """
 
 from __future__ import annotations
@@ -187,21 +189,16 @@ class TestLintUnidadeAceitaTipoNorma(unittest.TestCase):
             )
             self.assertEqual(lint_unidade.lint(alvo), [])
 
-    def test_norma_sem_approved_by_recusa(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            alvo = fixtures.unidade(
-                Path(tmp), unit_type="norma", test='""', approved_at="2026-08-25"
-            )
-            problemas = lint_unidade.lint(alvo)
-            self.assertTrue(any("approved_by" in p for p in problemas), problemas)
+    def test_norma_recem_derivada_sem_aprovacao_aprova_no_gate_de_entrada(self):
+        """A aprovação é do humano **depois** da entrega — exigi-la na entrada recusava toda `norma`.
 
-    def test_norma_sem_approved_at_recusa(self):
+        Medido no AmFlow (plano 0028, plugin 2.0.0): `lint-unidade` reprovava as três unidades
+        `norma` recém-derivadas só pela ausência de `approved_by`/`approved_at`, e a `implement`
+        encerrava antes de escrever qualquer coisa.
+        """
         with tempfile.TemporaryDirectory() as tmp:
-            alvo = fixtures.unidade(
-                Path(tmp), unit_type="norma", test='""', approved_by="Bortoli"
-            )
-            problemas = lint_unidade.lint(alvo)
-            self.assertTrue(any("approved_at" in p for p in problemas), problemas)
+            alvo = fixtures.unidade(Path(tmp), unit_type="norma", test='""')
+            self.assertEqual(lint_unidade.lint(alvo), [])
 
     def test_norma_com_test_preenchido_recusa(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -280,6 +277,24 @@ class TestVerificarUnidadeNorma(unittest.TestCase):
             executar.assert_not_called()
             self.assertEqual(estado, "spec")
             self.assertEqual(regioes.ler_campo(unidade, "verified_at"), '""')
+
+    def test_cada_campo_de_aprovacao_ausente_fecha_spec_e_aparece_na_saida(self):
+        """A exigência saiu do gate de entrada e mora no de saída — cada campo, isoladamente."""
+        casos = {
+            "approved_by": {"approved_at": "2020-01-01"},
+            "approved_at": {"approved_by": "Bortoli"},
+        }
+        for ausente, presentes in casos.items():
+            with self.subTest(ausente=ausente), tempfile.TemporaryDirectory() as tmp:
+                raiz = Path(tmp).resolve()
+                unidade = fixtures.unidade(raiz, unit_type="norma", test='""', **presentes)
+                with mock.patch.object(lib, "repo_root", return_value=raiz):
+                    with mock.patch.object(verificacao.subprocess, "run") as executar:
+                        estado, _, saida = verificacao.verificar_com_saida(unidade, dry_run=True)
+
+                executar.assert_not_called()
+                self.assertEqual(estado, "spec")
+                self.assertIn(ausente, saida)
 
     def test_dry_run_nao_escreve(self):
         with tempfile.TemporaryDirectory() as tmp:
