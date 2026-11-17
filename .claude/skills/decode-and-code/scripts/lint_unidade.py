@@ -13,8 +13,10 @@ estendida pela unidade 0001-13).
 
 `norma` inverte a obrigatoriedade de `test`: unidade que entrega markdown
 normativo não tem teste que prove que a prosa presta (`L-01`), então `test:`
-passa a ser exigido **vazio**, e a aprovação humana — `approved_by`/
-`approved_at` — é o oráculo em seu lugar. A linha órfã `Último resultado`
+passa a ser exigido **vazio**. A aprovação humana — `approved_by`/`approved_at`
+— é o oráculo em seu lugar, mas é de **saída**: o humano a declara depois de
+revisar a entrega, então quem a confere é `verificacao`, nunca este gate — aqui
+ela recusaria toda unidade `norma` antes de existir entrega. A linha órfã `Último resultado`
 (`L-22`) passa a ser recusada no corpo: ninguém a projetava, e ela sempre
 mentia ao lado de um `state: verified` com data.
 
@@ -88,8 +90,8 @@ def _checar_frontmatter(unidade: Path) -> list[str]:
     """Exige os campos do cold-start; formato de `unit_id`/`unit_type` só quando declarados.
 
     `test` sai do laço genérico: sua obrigatoriedade depende de `unit_type` (unidade 0001-13) —
-    obrigatório em `dev`/`plan`, exigido **vazio** em `norma`, que por sua vez exige
-    `approved_by`/`approved_at` no lugar do teste.
+    obrigatório em `dev`/`plan`, exigido **vazio** em `norma`. A aprovação da `norma` não entra
+    aqui: é gate de saída, conferido por `verificacao`.
     """
     try:
         valores = {
@@ -116,8 +118,6 @@ def _checar_frontmatter(unidade: Path) -> list[str]:
         problemas.append(f"unit_type inválido, esperado {UNIT_TYPES_VALIDOS}: {unit_type!r}")
 
     problemas.extend(_checar_test(test, unit_type_valido))
-    if unit_type_valido == "norma":
-        problemas.extend(_checar_aprovacao_norma(unidade))
 
     return problemas
 
@@ -135,16 +135,6 @@ def _checar_test(test: str | None, unit_type: str | None) -> list[str]:
     if _campo_vazio(test):
         return ["campo obrigatório ausente no frontmatter: test"]
     return []
-
-
-def _checar_aprovacao_norma(unidade: Path) -> list[str]:
-    """`norma` fecha por aprovação humana registrada, nunca por execução — o oráculo da `L-01`."""
-    problemas = []
-    if _campo_vazio(regioes.ler_campo(unidade, "approved_by")):
-        problemas.append("unit_type 'norma' exige 'approved_by' preenchido")
-    if _campo_vazio(regioes.ler_campo(unidade, "approved_at")):
-        problemas.append("unit_type 'norma' exige 'approved_at' preenchido")
-    return problemas
 
 
 def _checar_ultimo_resultado(corpo: str) -> list[str]:

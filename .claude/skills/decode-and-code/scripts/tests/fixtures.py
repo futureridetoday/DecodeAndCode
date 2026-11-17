@@ -188,7 +188,7 @@ def unidade(
 ) -> Path:
     """Escreve `<dir>/<nome>` — uma unidade que aprova em `lint_unidade.lint()`. Devolve o caminho.
 
-    `unit_type="norma"` (0001-13) pede `test=""` e `approved_by`/`approved_at` preenchidos — quem
+    `unit_type="norma"` (0001-13) pede `test=""`; `approved_by`/`approved_at` só para o gate de saída — quem
     chama compõe isso explicitamente; o default aqui continua sendo uma unidade `dev` comum.
     Levanta `ValueError` se `unit_id` não está no formato `NNNN-NN`, antes de escrever
     qualquer arquivo.

@@ -111,12 +111,13 @@ def verificar_com_saida(unidade: Path, dry_run: bool = False) -> tuple[str, bool
 def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool, str]:
     """Oráculo de `unit_type: norma` — estrutura válida somada a aprovação humana, sem rodar nada.
 
-    `lint_unidade.lint` já cobre a aprovação: uma `norma` sem `approved_by`/`approved_at`
-    preenchidos não passa no lint, então "lint limpo" e "aprovação declarada" são a mesma condição,
-    nunca duas checagens independentes. `verified_at` copia `approved_at` — nunca `date.today()` —
-    porque o fato verificado é a aprovação do humano, não a data em que o script rodou.
+    A aprovação é conferida **aqui**, não em `lint_unidade.lint`: aquele é também o gate de
+    entrada da `implement`, e o humano só declara `approved_by`/`approved_at` depois de revisar a
+    entrega — exigi-los lá recusava toda `norma` antes de ela existir. `verified_at` copia
+    `approved_at` — nunca `date.today()` — porque o fato verificado é a aprovação do humano, não a
+    data em que o script rodou.
     """
-    problemas = lint_unidade.lint(unidade)
+    problemas = lint_unidade.lint(unidade) + _aprovacao_ausente(unidade)
     estado = "verified" if not problemas else "spec"
     saida = "\n".join(problemas)
 
@@ -128,6 +129,15 @@ def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool, str]:
         unidade, {"state": estado, "verified_at": verified_at}
     )
     return estado, escreveu, saida
+
+
+def _aprovacao_ausente(unidade: Path) -> list[str]:
+    """Um problema por campo de aprovação vazio — o oráculo da `L-01`, declarado pelo humano."""
+    return [
+        f"unit_type 'norma' exige '{campo}' preenchido"
+        for campo in ("approved_by", "approved_at")
+        if lint_unidade._campo_vazio(regioes.ler_campo(unidade, campo))
+    ]
 
 
 def _executar(caminho_teste: Path, raiz: Path) -> tuple[int, str]:
