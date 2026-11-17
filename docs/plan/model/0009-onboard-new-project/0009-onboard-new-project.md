@@ -221,6 +221,17 @@ todas as respostas no pedido e **sem nenhuma permissão simulada**. Medido: o JS
 tentativa, com o par provado; as etapas 0 a 6 rodaram só com a pré-aprovação da skill. A única
 recusa foi um `; echo "exit $?"` que o modelo acrescentou a um comando, fora do texto da skill.
 
+**Sessão interativa com o plugin instalado, 2026-11-17.** O humano rodou o setup num projeto novo
+(`teste-setup`: React, shadcn e Tailwind, sem `components/`) com o 2.3.1 instalado pelo marketplace,
+na ferramenta de perguntas. Relato dele: tudo como planejado, sem erro. Conferido nos arquivos, com
+o `dc.py` do plugin instalado: `setup-lint`, `huddle-lint`, `lint-guardrails` e o lint das duas
+guidelines aprovam; o escopo está habilitado; as quatro decisões estão no vocabulário (uma guideline
+aceita depois da edição guiada, uma aceita sem edição, um guardrail aceito e um rejeitado); as duas
+guidelines têm `paths_pending`; o hook não avisa mais; e o guardrail `cva-fora-do-tsx`, avaliado por
+`guardrail.decidir`, barra o `cva` no `.tsx` e libera o par separado. O relato não detalha onde o
+`systemMessage` apareceu nem quantas permissões foram pedidas, então a `L-04` segue aberta e a
+`L-17` não tem contagem; "sem erro" indica que nenhum pedido atrapalhou o fluxo.
+
 ## Independência
 
 **Um plano, em três fases, e não três planos.** A Fase 2 compõe as funções da Fase 1, e a Fase 3
