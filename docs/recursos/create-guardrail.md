@@ -17,6 +17,13 @@ guideline, **se escolhe por evidência de falha**: um incidente mostrou o limite
 Se o código ainda viola a regra, o trabalho é consertar o código primeiro; o guardrail entra
 depois, para impedir a regressão.
 
+## No primeiro uso
+
+No `/decode-and-code:setup`, o projeto ainda não tem incidente, e o critério muda: o guardrail nasce de
+**decisão explícita do time** que desvia do padrão da stack — o que a stack faria por padrão e o time
+decidiu barrar. Ele barra o que uma escrita contém, por regex. Depois do primeiro uso, vale o critério
+acima.
+
 ## Onde fica
 
 Uma regra no array `regras` de [`.claude/guardrails.json`](../../.claude/guardrails.json), na raiz
@@ -25,16 +32,28 @@ ferramenta.
 
 ## Como criar
 
-Adicione um objeto a `regras`, com quatro campos:
+Pelo comando, do diretório do projeto, com a regra e os dois casos que a provam:
 
-```json
+```bash
+dc.py adicionar-guardrail <<'FIM'
 {
-  "nome": "<identificador-curto>",
-  "ferramenta": "<regex contra o nome da ferramenta>",
-  "detector": "<regex contra o conteúdo de tool_input>",
-  "mensagem": "<o motivo mostrado na recusa>"
+  "regra": {
+    "nome": "<identificador-curto>",
+    "ferramenta": "<regex contra o nome da ferramenta>",
+    "detector": "<regex contra o conteúdo de tool_input>",
+    "mensagem": "<o motivo mostrado na recusa>"
+  },
+  "proibido": {"tool_name": "<ferramenta>", "tool_input": {"<campo>": "<a chamada que deve ser negada>"}},
+  "permitido": {"tool_name": "<ferramenta>", "tool_input": {"<campo>": "<a chamada que deve passar>"}}
 }
+FIM
 ```
+
+O comando avalia a regra **sozinha**: ela precisa negar `proibido` com o próprio `nome` e liberar
+`permitido` — junto das regras existentes, uma anterior que já negasse o caso aprovaria uma regra
+que não casa nada. Só então acrescenta a regra ao fim de `regras`, criando o arquivo se faltar.
+Sai `0` com o caminho; `1` com o motivo, sem escrever, se a regra for malformada, não se provar ou
+repetir um `nome`.
 
 - `ferramenta` — regex casado contra `tool_name` (ex.: `"(execute_sql|apply_migration)$"`).
 - `detector` — regex casado contra os valores string de `tool_input`, juntados por `\n`. É o que
@@ -48,11 +67,11 @@ custou (bloqueava `truncate -s 0 arquivo.log`, liberava `psql -c "alter table ..
 
 ## Como validar
 
-- Rodar `guardrail.decidir(<payload>, <caminho de guardrails.json>)` com um payload da chamada
-  proibida (espera recusa, com `nome`/`mensagem`) e um da permitida (espera `None`).
-- Conferir que `guardrails.json` continua JSON válido — regra malformada faz o guardrail **falhar
-  aberto** (libera tudo), com aviso em stderr, por construção: guardrail que trava o trabalho por
-  defeito próprio é o obstáculo que a norma manda evitar.
+- O par proibido/permitido já foi provado pelo `adicionar-guardrail`.
+- `dc.py lint-guardrails` — o arquivo inteiro, inclusive regra escrita à mão: JSON válido, as
+  quatro chaves com texto, regex que compila, `nome` único. Regra malformada faz o guardrail
+  **falhar aberto** (libera tudo), com aviso em stderr, por construção: guardrail que trava o
+  trabalho por defeito próprio é o obstáculo que a norma manda evitar.
 - Numa sessão real, disparar a chamada proibida e ver a recusa com o `nome` da regra no motivo.
 
 ## Onde fica registrado

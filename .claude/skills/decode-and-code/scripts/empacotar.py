@@ -14,12 +14,13 @@ o par que fecha o invariante nos dois sentidos.
 **Pacote enxuto — `P-05` e `D-02` do plano `apply-plugin-review`.** O que só serve a quem
 desenvolve o método fica no repositório: `empacotar.py`, `reconciliar.py` (compara contra o
 AmFlow) e `lint_skill.py` não são importados por script de runtime nem por hook, só pelos testes
-(`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos três hooks do `settings.json` viajam dois,
-`PreToolUse` e `InstructionsLoaded` (`_EVENTOS_DO_PACOTE`): `SubagentStart` e
+(`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam três,
+`PreToolUse`, `InstructionsLoaded` e `SessionStart` (`_EVENTOS_DO_PACOTE`): `SubagentStart` e
 `InstructionsLoaded` são hooks de anúncio, e nenhum chega ao modelo; não há registro de projeto que
 instala o plugin usando o controle de três estados da norma (*Validar a ativação*). O
 `InstructionsLoaded` fica por ser o log desse controle, e o `SubagentStart` continua no
-`settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail.
+`settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail, e o `SessionStart` porque é o lembrete do huddle
+(plano 0008).
 
 **Frontmatter do `SKILL.md` — `P-10`.** O bloco "amflow — rastreabilidade" e o que mais a fonte
 declare fora da documentação oficial de skills (`_CAMPOS_OFICIAIS`) ficam só na fonte: fora do Claude
@@ -47,7 +48,7 @@ _ANCORA_PLUGIN = "${CLAUDE_PLUGIN_ROOT}/hooks"
 # Os hooks que viajam, por evento — a **única** lista (`D-02`, `P-05`). Os scripts de `hooks/` não
 # têm lista própria: saem dos comandos destes eventos (`_scripts_dos_hooks`), então um evento só
 # entra ou sai do pacote aqui.
-_EVENTOS_DO_PACOTE = ("PreToolUse", "InstructionsLoaded")
+_EVENTOS_DO_PACOTE = ("PreToolUse", "InstructionsLoaded", "SessionStart")
 
 # Só da pasta compartilhada, e só no pacote: nenhum runtime nem hook os importa (`P-05`).
 _SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py")
@@ -159,7 +160,7 @@ def _copiar_manifesto(origem: Path, destino: Path) -> Path:
 def _copiar_skill(origem: Path, destino: Path) -> list[Path]:
     """Copia uma pasta de `skills/` inteira, exceto `scripts/tests/`, `__pycache__` e `.DS_Store`.
 
-    Serve às quatro skills e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
+    Serve às skills de `lib.SKILLS` e à pasta compartilhada: o destino é `skills/<nome da pasta de origem>`, e
     o `SKILL.md` — que só as skills têm — passa por `_so_campos_oficiais`. Só a pasta compartilhada
     perde também `_SCRIPTS_DE_DESENVOLVIMENTO` (`P-05`): é onde `scripts/` mora, e uma skill não
     deveria perder em silêncio um arquivo que por acaso tenha um desses nomes.
@@ -351,6 +352,8 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     """
     destino = _resolver_destino(destino)
     marcadores = _marcadores_instancia()
+    # Identidade do plugin (`DD-06` do plano 0009): o `repo` do marketplace não é instância.
+    repo_do_plugin = lib.config()["marketplace"]["source"]["repo"]
 
     problemas = []
     for arquivo in sorted(destino.rglob("*")):
@@ -358,7 +361,7 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
             continue
         if arquivo.relative_to(destino) == _MANIFESTO_RELATIVO:
             continue
-        texto = _texto(arquivo)
+        texto = _texto(arquivo).replace(repo_do_plugin, "")
         for marcador in marcadores:
             if marcador in texto:
                 problemas.append(f"{arquivo.relative_to(destino)}: ocorrência de {marcador!r}")

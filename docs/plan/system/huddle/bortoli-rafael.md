@@ -13,6 +13,11 @@ status: draft
 version: 0.3.0
 updated: 2026-09-14
 
+# huddle
+owner: bortoli-rafael
+last_huddle: ""
+reminder_days: 7
+
 # system
 scope: project
 auto_load: false
@@ -248,6 +253,10 @@ trabalho se perde — e porque não sei se é rascunho em curso ou sobra de algo
 
 ---
 
+### H-12 · `divergência` · 2026-11-16 · Claude
+
+A unidade 0009-03 fixa o valor "futureridetoday/DecodeAndCode" para marketplace.source.repo, mas empacotar.verificar recusa o nome do diretório do projeto de origem em qualquer arquivo do pacote, e config.json e lib.py viajam nele (test_empacotamento ficou vermelho). O executor gravou "futureridetoday/decodeandcode", que o GitHub resolve sem distinguir caixa, sem tocar empacotar.py (fora dos arquivos da unidade). Decidir: manter a caixa baixa, ou isentar a chave marketplace no verificador.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
@@ -271,7 +280,7 @@ imitação; o que reproduz a qualidade da conversa são as **condições**, e el
 ```markdown
 Huddle da semana. Antes de responder qualquer coisa:
 
-1. Leia `docs/plan/system/huddle.md` inteiro. `## Como conversamos` vale para esta conversa;
+1. Leia `docs/plan/system/huddle/bortoli-rafael.md` inteiro. `## Como conversamos` vale para esta conversa;
    `## Abertas` é a pauta.
 2. Rode `git log --oneline -{N}` para ver o que se moveu desde {data do último huddle}.
 

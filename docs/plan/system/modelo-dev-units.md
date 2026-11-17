@@ -282,18 +282,26 @@ plano que instanciou este mecanismo pela primeira vez.
 divergência entre o que ele registra e o estado real do disco em vez de escolher um dos dois em
 silêncio.
 
+**Escrever guideline e guardrail também é operação.** `dc.py criar-guideline` grava a guideline só
+depois de ela passar em `lint_guideline` e a registra; `paths` sai no subconjunto em que o lint e o
+Claude Code concordam, e caminho que ainda não existe leva `paths_pending: true`, que dispensa só o
+casamento no disco. `dc.py adicionar-guardrail` acrescenta a regra só depois de ela, avaliada
+sozinha, negar o caso proibido e liberar o permitido; `dc.py lint-guardrails` valida o arquivo
+inteiro. Os guias [`create-guideline.md`](../../recursos/create-guideline.md) e
+[`create-guardrail.md`](../../recursos/create-guardrail.md) dão o passo a passo.
+
 #### Empacotamento — o que o plugin leva, e o que fica
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
-si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as quatro skills
-(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` — e o `intake`) e a pasta
+si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as seis skills
+(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake`, o `huddle` e o `setup`) e a pasta
 compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
-cada projeto, não), **dois hooks** — `PreToolUse` (o guardrail) e `InstructionsLoaded` (o log do
-controle de três estados) — com `hooks/hooks.json` gerado a partir do bloco `hooks` do
-`settings.json` reduzido a esses dois eventos (`_EVENTOS_DO_PACOTE`, a única lista; os scripts de
+cada projeto, não), **três hooks** — `PreToolUse` (o guardrail), `InstructionsLoaded` (o log do
+controle de três estados) e `SessionStart` (o lembrete do huddle, seção *Huddle*) — com
+`hooks/hooks.json` gerado a partir do bloco `hooks` do `settings.json` reduzido a esses três eventos (`_EVENTOS_DO_PACOTE`, a única lista; os scripts de
 `hooks/` saem dos comandos deles) — a âncora `${CLAUDE_PROJECT_DIR}` reescrita para
 `${CLAUDE_PLUGIN_ROOT}`, porque é essa variável que separa pacote de cópia —; o pacote não tem
 `agents/`.
@@ -305,8 +313,8 @@ deste repositório, não componente do método), os **três scripts de desenvolv
 importa, só os testes), o **hook de anúncio restante**
 (`SubagentStart` — não chega ao modelo, e não há registro de projeto que instala o
 plugin usando o controle de três estados; continua no `settings.json` daqui) e `docs/` (plano e
-norma são registro daqui — inclusive `docs/plan/system/huddle.md`, que carrega a conversa deste
-projeto e é instância pura —; a norma é citada, nunca copiada para dentro da skill).
+norma são registro daqui — inclusive os arquivos de `docs/plan/system/huddle/`, que carregam a
+conversa de cada pessoa deste projeto e são instância pura —; a norma é citada, nunca copiada para dentro da skill).
 `empacotar.verificar(destino)` audita a árvore já
 construída por **busca de conteúdo** — o **nome do repositório de origem** em qualquer arquivo, e a
 âncora `CLAUDE_PROJECT_DIR` **dentro de `hooks/`** —, como par de `construir`, que decide por
@@ -687,7 +695,7 @@ mudar de ideia. A revisão apenas audita se ela se sustenta (ver *Avaliação de
 ### O que cada porte carrega
 
 `plan_size` (ver *Aprovação*, acima) não é só rótulo — o formato exigido varia por porte, para que
-correção de oito linhas não pague a estrutura de um plano de vinte unidades (`B-01`):
+correção de oito linhas não pague a estrutura de um plano de vinte unidades:
 
 | Porte | Decomposição | `## Independência` | Região de backlog |
 |---|---|---|---|
@@ -894,9 +902,11 @@ saber qual é o próximo livre no módulo.
 
 Operado por **três skills, uma por modo**, que delegam todo determinismo a scripts. Uma quarta, o
 `intake`, antecede o ciclo e não é modo: decide o menor mecanismo antes de o plano nascer e grava o
-esboço em `_inbox/`.
+esboço em `_inbox/`. Uma quinta, o `huddle`, também não é modo: conduz a conversa da pessoa sobre o
+que ficou em aberto (seção *Huddle*). Uma sexta, o `setup`, conduz o primeiro uso do método no projeto
+(seção *Setup — o primeiro uso*).
 
-### Skills `review-plan`, `derive` e `implement` — substituem `plan-dev-units`
+### Skills `review-plan`, `derive` e `implement`
 
 O plano é insumo, não produto das skills: você o escreve com Opus, e elas o revisam e derivam.
 
@@ -991,7 +1001,7 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 ### Modelos
 
 **Sonnet é o padrão no `implement`.** O `review` e o `derive` pedem julgamento denso — Opus. **Cada
-skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive` e `intake` em `opus`,
+skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive`, `intake` e `huddle` em `opus`,
 `implement` em `sonnet`.
 
 Medido em 2026-10-15 (Claude Code 2.1.300, pacote carregado com `claude -p --plugin-dir`): sem
@@ -1027,9 +1037,18 @@ instancia.
 ## Huddle — fila do que ainda não foi decidido
 
 Fila do que ainda **não** foi decidido — o que as três camadas normativas não guardam, porque
-resolvem só o que já foi decidido. Um arquivo por projeto, em `<plan_root>/system/huddle.md`, e
-nunca carregado automaticamente: nem como rule, nem por `skills:`, nem por import — entra
-em contexto quando a conversa acontece, do contrário compete com norma já decidida.
+resolvem só o que já foi decidido. **Um arquivo por pessoa**, em
+`<plan_root>/system/huddle/<usuario>.md`, versionado, e nunca carregado automaticamente: nem como
+rule, nem por `skills:`, nem por import — entra em contexto quando a conversa acontece, do
+contrário compete com norma já decidida.
+
+**Identidade é o `git config user.name` do projeto**, em kebab-case ASCII (`huddle.usuario`): sem
+nome configurado, os comandos recusam e dizem como configurá-lo. Cada pessoa vê, na pauta e no
+aviso, só o próprio arquivo; o dos outros continua no git, e a promoção fica rastreada. Duas
+pessoas com o mesmo nome compartilham arquivo — aceito por simplicidade. O arquivo único de
+projeto de antes, `<plan_root>/system/huddle.md`, passa para o da pessoa por `dc.py huddle-migrar`
+(`git mv`, com os campos novos acrescentados); enquanto ele existir, `huddle-abrir` recusa, para o
+huddle não se partir em dois.
 
 **A propriedade que faz funcionar: nada ali é autoritativo enquanto está ali.** Uma entrada nasce
 aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, ou
@@ -1058,6 +1077,16 @@ valor que não é escolha nenhuma, nunca a escolha.
 
 Entrada fechada vira uma linha em `## Fechadas`, colunas `# | Tipo | Fechada em | Destino`.
 
+O frontmatter carrega três campos do mecanismo: `owner` (a pessoa), `last_huddle` (a data do último
+huddle, gravada por `huddle-concluir`) e `reminder_days` (a cada quantos dias o aviso de abertura
+lembra; `0` desliga; ausente ou inválido vale 7). `huddle.lint_arquivo` recusa `reminder_days` que
+não seja inteiro maior ou igual a zero.
+
+**Comandos** — tudo que é formato é script, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir <tipo>`
+(texto no stdin; próximo `H-XX` e data de hoje), `huddle-fechar <H-XX> "<destino>"`,
+`huddle-concluir`, `huddle-pauta` (abertas e commits desde o último huddle, no máximo 50),
+`huddle-fecho`, `huddle-lint`, `huddle-lint-relatorio` (relatório no stdin) e `huddle-migrar`.
+
 ### Despejo — o invariante verificável
 
 **O mesmo `H-XX` não pode estar em `## Abertas` e na tabela de `## Fechadas` ao mesmo tempo** — é a
@@ -1075,31 +1104,55 @@ se deveria ter escrito.
 ### Momento — no fecho, e a linha de fecho é obrigatória mesmo em zero
 
 Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
-escrita na hora seria natimorta. No fecho do relatório de **qualquer um dos três modos** —
-`review`, `derive` e `implement`, não só o último —, uma linha declara quantas entradas novas
-houve:
+escrita na hora seria natimorta. No fecho de **qualquer uma das cinco skills** — `intake`,
+`review-plan`, `derive`, `implement` e `setup` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
+subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto, e termina o
+relatório com uma linha que declara quantas entradas novas houve, com os ids:
 
 ```
-entradas novas no huddle: N
+entradas novas no huddle: 2 (H-12, H-13)
 ```
 
-**Inclusive com `N` igual a zero.** `huddle.lint_relatorio(texto)` recusa a ausência da linha —
-lista vazia quando presente, com qualquer `N` —, porque é o que separa *conferi e não havia* de
-*nunca conferi*, hoje indistinguíveis. **A mitigação é fraca, e vale dizer o quanto:** um relatório
-honesto com zero e um desatento com zero continuam idênticos ao lint; o que ele alcança é a
-ausência da declaração, nunca a atenção de quem a escreveu.
+**Inclusive com `N` igual a zero**, sem parênteses. O gate é `dc.py huddle-lint-relatorio`, que a
+skill roda sobre a mensagem final antes de enviá-la: recusa a ausência da linha — o que separa
+*conferi e não havia* de *nunca conferi* —, `N > 0` sem os ids, `N` diferente da quantidade de ids,
+e id que não esteja em `## Abertas` do arquivo da pessoa com a data de hoje, para que entrada
+antiga não passe como nova. **A mitigação é fraca, e vale dizer o quanto:** um relatório honesto
+com zero e um desatento com zero continuam idênticos ao lint; o que ele alcança é a declaração e a
+posse dos ids, nunca a atenção de quem a escreveu. E depende de a skill rodar o passo: é gate do
+`dc.py`, não hook, como os outros gates do método.
+
+### Quem registra, quando lembra, e como uma entrada vira norma
+
+**Os dois registram, cada um no próprio arquivo.** O modelo, pelos gatilhos acima, no arquivo da
+pessoa em cuja sessão o trabalho aconteceu, com `--autor Claude`; a pessoa, por
+`/decode-and-code:huddle registrar <texto>` — o tipo mais valioso que só ela escreve é a
+retrospectiva. A peneira continua na saída: entrada que não fecha não vira nada.
+
+**O lembrete é o hook `SessionStart`** (matcher `startup`): com o arquivo da pessoa presente,
+entrada aberta e `reminder_days` dias ou mais desde `last_huddle` (ou `created`), devolve um
+`systemMessage` para a pessoa e um `additionalContext` para o modelo — quantas abertas, há quantos
+dias, e `/decode-and-code:huddle`. Silencioso em qualquer outro caso e em qualquer erro, e nunca
+escreve. Só alcança quem abre o Claude Code.
+
+**A conversa é a skill `huddle`**, invocada pela pessoa (`disable-model-invocation: true`): roda a
+pauta e percorre as abertas uma a uma — decidir (destino em texto livre), promover, descartar com o
+motivo, manter —, e termina com `huddle-concluir`. **Promover é simples:** a proposta de guideline
+ou guardrail é montada com a pessoa, aprovada na conversa e gravada por `dc.py criar-guideline` ou
+`dc.py adicionar-guardrail` (seção *Camada normativa*); a entrada fecha com o caminho gravado como
+destino.
 
 ### Sem arquivo de template, e o que não viaja
 
-**O esqueleto vive em `huddle.iniciar(destino)`, nunca num `.md` para copiar** — mesmo
+**O esqueleto vive em `huddle.iniciar(destino, projeto, usuario)`, nunca num `.md` para copiar** — mesmo
 padrão de `porte._CONTEUDO_INICIAL`: formato com uma fonte só, que é o script, com esta seção
 descrevendo-o em prosa. Escreve `destino` com o frontmatter e as duas seções vazias e devolve o
 caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em nada.
 
-> **O `huddle.md` de cada projeto é instância pura, e não viaja no plugin — o mecanismo que cria um
+> **O arquivo de huddle de cada pessoa é instância pura, e não viaja no plugin — o mecanismo que cria um
 > vazio, sim**. Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
 > empacotá-la entregaria a quem instala o registro de decisões de outro repositório — o invariante 2
-> quebrado no artefato mais pessoal do método. Quem instala roda `iniciar` e recebe o seu, vazio.
+> quebrado no artefato mais pessoal do método. Quem instala roda `dc.py huddle-iniciar` e recebe o seu, vazio.
 
 ---
 
@@ -1149,6 +1202,48 @@ que roda antes.
 
 O `plan_root` continua vindo do `config()`, componível com a entrada — `projeto /
 lib.config()["plan_root"]` —, então o bootstrap honra a configuração sem precisar da âncora.
+
+---
+
+## Setup — o primeiro uso
+
+O bootstrap cria o chão; não diz a quem instala que a norma é do projeto. O plugin carrega só o
+**mecanismo** — `.claude/rules/` e `guardrails.json` são instância, e nenhum deles viaja. O setup é o
+primeiro uso conduzido: a skill `setup`, na conversa principal, com a ferramenta de perguntas, que
+não existe em subagente — por isso não é fork, e não é o `intake`.
+
+**O gatilho.** O hook `SessionStart` resolve o projeto por `CLAUDE_PROJECT_DIR` e, sem `setup.md` com
+`completed_at`, devolve um aviso propondo o setup — inclusive com o plugin só no escopo de usuário,
+porque a primeira etapa é pô-lo no escopo do projeto. Enquanto o setup não conclui, o aviso de
+huddle não aparece. O aviso nunca escreve; quem inicia é a pessoa, com `/decode-and-code:setup`, e o
+modelo pode propor depois de vê-lo.
+
+**As etapas.** 0, pré-condições: bootstrap se faltar o chão, e o plugin habilitado em
+`.claude/settings.json` (`setup-escopo`), para que o time inteiro trabalhe com as mesmas normas. 1,
+perfil: objetivo, escopo e stack, confirmados com a pessoa a partir do inventário que `descobrir`
+faz. 2 e 3, todas as guidelines e depois todos os guardrails, **uma sugestão por vez**, cada uma
+aprovada, editada ou rejeitada na conversa. 4, huddle da pessoa. 5, o método, explicado a partir do
+que `dc.py explicar` imprime. 6, `setup-concluir` e o fecho do huddle.
+
+**Critério de sugestão.** Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos
+onde vale — a de caminho que ainda não existe se grava já, com `paths_pending`. Guardrail nasce de
+decisão explícita do time que desvia do padrão da stack, e barra o que uma escrita contém. Os guias
+pedem falha observada ou incidente, que projeto novo não tem. **O setup não sugere princípio**:
+princípio entra por plano com unidade `norma`, e achado com essa cara vira entrada `observação` no
+huddle.
+
+**O estado.** `<plan_root>/system/setup.md`, versionado: `completed_at` no frontmatter, `## Perfil` e
+`## Decisões`, uma linha por sugestão com chave, tipo, origem, resultado, destino ou motivo e data.
+`setup-decididas` lista as chaves já registradas, o que torna o setup retomável e impede a sugestão
+repetida. Tudo é escrito por script (`setup.py`); nada se edita à mão.
+
+**O que escreve, e o que não.** Escreve só no que o bootstrap cria, em `.claude/settings.json`
+(escopo), em `.claude/rules/`, em `guardrails.json`, em `setup.md` e no arquivo de huddle da pessoa.
+**Nunca** no `CLAUDE.md` nem no `AGENTS.md`: o que eles carregam não se repete em guideline. A skill
+fala e gera as rules no idioma da pessoa.
+
+O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
+`docs/recursos/setup.md`.
 
 ---
 

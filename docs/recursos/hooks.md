@@ -1,35 +1,38 @@
 # hooks
 
-Versão 1.0.0 · hooks (3)
+Versão 1.1.0 · hooks (4)
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
-> A norma de descrição de recurso do AmFlow não cobre `hook` — este documento descreve os três
+> A norma de descrição de recurso do AmFlow não cobre `hook` — este documento descreve os quatro
 > a partir dos próprios arquivos, para completar o inventário. Não há nada para o usuário invocar
-> aqui: os hooks rodam sozinhos, no harness, **sem custo de contexto do modelo**.
+> aqui: os hooks rodam sozinhos, no harness. Três não custam contexto do modelo; o `session_start`
+> custa uma linha, e só quando o huddle está atrasado.
 
 ## O que é
 
-Três pontos de entrada em `.claude/hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
+Quatro pontos de entrada em `.claude/hooks/`, cada um ligando um evento do Claude Code a um mecanismo da
 skill sem decidir nada por conta própria:
 
 | Hook | Evento | O que faz |
 |---|---|---|
 | `pre_tool_use` | `PreToolUse` | Aplica o guardrail do projeto que instala — lê `.claude/guardrails.json` e pode **negar** uma chamada de ferramenta, com a regra e a mensagem no motivo |
 | `instructions_loaded` | `InstructionsLoaded` | Registra, num log por sessão fora do repositório, qual instrução carregou e o `load_reason` |
+| `session_start` | `SessionStart` (`startup`) | Lembra a pessoa do huddle atrasado: com entrada aberta e `reminder_days` dias ou mais desde o último huddle, devolve `systemMessage` para ela e `additionalContext` para o modelo; nunca escreve |
 | `subagent_start` | `SubagentStart` | Anuncia por stderr, no transcript do próprio subagente, o `agent_type` e o `agent_id` que iniciaram |
 
 ## Problema que resolve
 
-Duas coisas que o método precisa e que o modelo não vê sozinho: **a norma e as guidelines ativas
-carregaram mesmo?**, e **uma chamada de ferramenta violou um
-guardrail do projeto?**. Os hooks tornam isso observável e, no caso do guardrail, exigível — sem
+Três coisas que o método precisa e que o modelo não vê sozinho: **a norma e as guidelines ativas
+carregaram mesmo?**, **uma chamada de ferramenta violou um
+guardrail do projeto?**, e **o huddle da pessoa está atrasado?**. Os hooks tornam isso observável e, no caso do guardrail, exigível — sem
 gastar contexto, porque o Claude Code descarta o `systemMessage` desses eventos e o canal real é
-log e stderr.
+log e stderr. O `session_start` é a exceção: o aviso existe para ser lido, pela pessoa e pelo
+modelo.
 
 ## Como funciona
 
-`empacotar.construir()` gera o `hooks/hooks.json` do pacote, que casa cada evento (`matcher: "*"`)
+`empacotar.construir()` gera o `hooks/hooks.json` do pacote, que casa cada evento (`matcher: "*"`; `startup` no `SessionStart`)
 ao script correspondente via `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/<script>.py"`, e copia para
 `hooks/` só os scripts que esse arquivo cita.
 Toda a decisão vive nos módulos da skill (`guardrail.decidir`, `activation_notice.*`); os arquivos
@@ -38,17 +41,18 @@ devolve `None` e nada é escrito.
 
 ## O que vai no pacote
 
-Dos três, **viajam dois**: `pre_tool_use` (o guardrail) e `instructions_loaded` (o log do controle
-de três estados da norma, seção *Validar a ativação*). `subagent_start` fica **só
+Dos quatro, **viajam três**: `pre_tool_use` (o guardrail), `instructions_loaded` (o log do controle
+de três estados da norma, seção *Validar a ativação*) e `session_start` (o lembrete do huddle,
+seção *Huddle*). `subagent_start` fica **só
 neste repositório**, no `settings.json` daqui (`D-02` e `P-05` do plano `apply-plugin-review`):
 anuncia por stderr, nada chega ao modelo, e não há registro de projeto que instala o plugin usando
-o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser o terceiro
+o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser o quarto
 o liga no próprio `settings.json`.
 
 ## Como usar
 
-Não se usa diretamente. Uma vez o plugin instalado e habilitado, os dois que viajam disparam
-sozinhos (neste repositório, os três). O que o usuário faz com a saída deles:
+Não se usa diretamente. Uma vez o plugin instalado e habilitado, os três que viajam disparam
+sozinhos (neste repositório, os quatro). O que o usuário faz com a saída deles:
 
 - **Ler o log de ativação** — `"$TMPDIR"decode-and-code-activation-<session_id>.log` — para
   conferir que a norma e as guidelines certas carregaram. `activation_notice.relatorio(<log>)`

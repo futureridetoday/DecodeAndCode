@@ -19,6 +19,13 @@ Se a regra passa no teste do princípio (*ninguém competente rejeitaria*), é p
 guideline — veja [`create-principle.md`](create-principle.md). Se ela é *procedimento que alguém
 invoca* em vez de *norma que ativa sozinha ao tocar um arquivo*, é skill.
 
+## No primeiro uso
+
+No `/decode-and-code:setup`, o projeto ainda não tem falha observada, e o critério muda: a guideline
+nasce da **stack e do objetivo** do projeto, escopada pelos caminhos onde vale. O que o `CLAUDE.md`,
+o `AGENTS.md` ou um linter já impõe não vira guideline. Caminho que ainda não existe se grava já,
+com `aguardando: true`. Depois do primeiro uso, vale o critério acima.
+
 ## Onde fica
 
 Um arquivo por guideline em [`.claude/rules/`](../../.claude/rules/) — `.claude/rules/<nome>.md`.
@@ -26,35 +33,40 @@ Desligada, vai para o diretório irmão `.claude/rules-off/`, fora do que o Clau
 
 ## Como criar
 
-1. **Frontmatter** — três campos, todos obrigatórios:
+Pelo comando, do diretório do projeto — ele escreve o frontmatter, roda o lint e registra:
 
-   ```yaml
-   ---
-   name: <nome>
-   description: <quando esta guideline vale — não o que ela ensina>
-   paths: ["<glob>", "<glob>"]
-   ---
-   ```
+```bash
+dc.py criar-guideline <<'FIM'
+{"nome": "<nome>", "descricao": "<quando vale>", "paths": ["<glob>"], "corpo": "<a norma>"}
+FIM
+```
 
-   - `name` — não vazio, identifica a rule.
-   - `description` — diz **quando** aplica. É o texto que o modelo lê para decidir relevância;
-     descrever o conteúdo não ajuda a decidir escopo.
-   - `paths:` — lista `[...]` de globs. Cada entrada compila como glob **e** casa ao menos um
-     arquivo que existe no repositório. `paths:` ausente ⇒ é princípio; presente sem casar nada ⇒
-     falha silenciosa (carrega e nunca ativa).
+Sai `0` com o caminho gravado; `1` com o motivo, sem deixar arquivo no disco, se a guideline for
+reprovada. O que cada campo pede:
 
-2. **Corpo** — a norma técnica daquele escopo, nunca vazio. Anti-drift: o que a norma ou outra
-   guideline já diz, esta **referencia**, não copia (ex.: `scripts.md` cita `language-policy.md`
-   para a medição de ambiente e não a repete).
+- `nome` — kebab-case ASCII (`design-system`), único em `rules/` e `rules-off/`.
+- `descricao` — diz **quando** aplica. É o texto que o modelo lê para decidir relevância;
+  descrever o conteúdo não ajuda a decidir escopo.
+- `paths` — globs relativos à raiz do projeto, começando por diretório (`src/ui/*.tsx`) ou por
+  `**/` (`**/*.tsx`). Pasta inteira é `dir/**/*`, não `dir/**`. Sem chaves `{a,b}` nem vírgula —
+  uma entrada por padrão. Cada uma compila **e** casa ao menos um arquivo que existe; sem casar
+  nada, a guideline carrega e nunca ativa.
+- `corpo` — a norma técnica daquele escopo, nunca vazio. Anti-drift: o que a norma ou outra
+  guideline já diz, esta **referencia**, não copia (ex.: `scripts.md` cita `language-policy.md`
+  para a medição de ambiente e não a repete).
+- `aguardando` (opcional) — `true` para escopo que ainda não existe no disco: grava
+  `paths_pending: true`, que dispensa só o casamento; a guideline vale desde o primeiro arquivo
+  criado ali.
 
-3. **Registrar em `registry.json`** — `.claude/rules/registry.json` ganha
-   `"<nome>": {"atualizado_em": "<data>", "estado": "ligada"}`. É **projeção**, não fonte: reporta
-   divergência com o disco, nunca decide por ele.
+O registro em `.claude/rules/registry.json` é feito pelo comando. É **projeção**, não fonte:
+reporta divergência com o disco, nunca decide por ele.
 
 ## Como validar
 
 - `rules.lint_guideline(<caminho>)` — tudo de `lint_rule` (frontmatter, formato de `paths:`, corpo
-  não vazio) **mais** `paths:` presente, não vazio, e casando arquivo real.
+  não vazio) **mais** `paths:` presente, não vazio, e casando arquivo real, salvo
+  `paths_pending: true`. O `criar-guideline` já o roda antes de gravar; aqui serve para a guideline
+  escrita à mão.
 - `rules.auditar_arvore()` — recusa `.md` em subdiretório de `rules/` (o matcher recursa e o
   arquivo continua carregando), rule malformada em `rules/`, guideline quebrada em `rules-off/`.
 - **Dois atos humanos que nenhum script substitui:** abrir uma **sessão nova** e **tocar um arquivo

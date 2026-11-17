@@ -38,7 +38,7 @@ como branch default; o segundo instala o plugin a partir dele.
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-2.0.0.zip`).
+(`decode-and-code-2.3.0.zip`).
 
 ### Atualização
 
@@ -71,8 +71,18 @@ claude --plugin-dir dist/decode-and-code
 Ou direto do asset publicado, sem build local:
 
 ```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.0.0/decode-and-code-2.0.0.zip
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.3.0/decode-and-code-2.3.0.zip
 ```
+
+## Como começar
+
+1. **Instale no escopo do projeto**, não só no de usuário: assim cada colega que clonar o repositório
+   trabalha com as mesmas guidelines e guardrails. A skill `setup` propõe gravar isso em
+   `.claude/settings.json` (`dc.py setup-escopo`); cada pessoa ainda instala o plugin uma vez por clone.
+2. **Rode `/decode-and-code:setup`** — a primeira coisa a fazer. Ao abrir a sessão num projeto sem
+   setup concluído, o aviso de abertura o propõe. A skill entende o projeto, sugere guidelines e
+   guardrails uma por vez (aprovar, editar ou rejeitar), inicia o seu huddle e explica o método. Guia:
+   [`docs/recursos/setup.md`](docs/recursos/setup.md).
 
 ## Como usar o Decode And Code
 
@@ -86,8 +96,10 @@ princípio, uma guideline, um guardrail.
 | skill | `review-plan` | Revisa um plano antes da aprovação — os seis checks, parte por script, parte por julgamento (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `huddle` | Conduz o huddle da pessoa — percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém; só por invocação explícita (Opus) | [huddle.md](docs/recursos/huddle.md) |
+| skill | `setup` | Conduz o primeiro uso do método no projeto — escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez, huddle e o método; o aviso de abertura o propõe (Opus) | [setup.md](docs/recursos/setup.md) |
 | skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
-| hooks | 3 hooks, 2 no pacote | Guardrail do projeto (`PreToolUse`) e log de norma/guidelines (`InstructionsLoaded`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
+| hooks | 4 hooks, 3 no pacote | Guardrail do projeto (`PreToolUse`), log de norma/guidelines (`InstructionsLoaded`) e lembrete do huddle (`SessionStart`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
 | guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
 | guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
 | guia de uso | Criar um guardrail | Quando e como adicionar uma regra a `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
@@ -156,41 +168,38 @@ instala; as camadas, cada projeto preenche.
 
 ## Huddle
 
-[`docs/plan/system/huddle.md`](docs/plan/system/huddle.md) é a **fila do que ainda não foi
-decidido** — a pauta da conversa recorrente entre quem conduz o projeto e o modelo. Um arquivo por
-projeto, nunca carregado automaticamente: entra em contexto quando a conversa acontece, senão
-competiria com norma já decidida.
+O **huddle** é a **fila do que ainda não foi decidido** — a pauta da conversa recorrente entre cada
+pessoa do projeto e o modelo. **Um arquivo por pessoa**, em `<plan_root>/system/huddle/<usuario>.md`
+(aqui, [`docs/plan/system/huddle/`](docs/plan/system/huddle/)), versionado e nunca carregado
+automaticamente: entra em contexto quando a conversa acontece, senão competiria com norma já
+decidida. A pessoa é o `git config user.name`, e cada uma vê só o próprio arquivo.
 
 **Para que serve.** As três camadas normativas (princípio, guideline, guardrail) só guardam o que
 já foi decidido. O huddle guarda o resto: pergunta em aberto, contradição que a execução contornou,
 padrão que uma sessão sozinha não revela, alternativa rejeitada cuja premissa pode ter mudado, algo
 que o humano corrigiu. **Nada ali é autoritativo enquanto está ali.** Uma entrada nasce aberta, é
-discutida, e quando resolve **sai** — para a norma, uma guideline, ou o `## Decisões` de um plano —,
-deixando uma linha em `## Fechadas` com data e destino. Um huddle onde nada fecha só cresce.
+discutida, e quando resolve **sai** — para a norma, uma guideline ou um guardrail, ou o
+`## Decisões` de um plano —, deixando uma linha em `## Fechadas` com data e destino.
 
 **Como usar.**
 
-- **Criar o seu.** O `huddle.md` não viaja no pacote — é instância pura de cada projeto. Quem
-  instala o plugin roda `huddle.iniciar(<plan_root>/system/huddle.md)` e recebe o esqueleto vazio,
-  com as seções `## Abertas` e `## Fechadas`.
-- **Abrir uma entrada.** Cabeçalho de linha única — `### H-XX · <tipo> · AAAA-MM-DD · autor` —, com
-  `<tipo>` de vocabulário fechado: `pergunta`, `divergência`, `padrão`, `revisitar`, `observação`.
-- **Quando escrever.** No fecho do relatório de qualquer um dos três modos (`review`, `derive`,
-  `implement`), uma linha declara `entradas novas no huddle: N` — obrigatória mesmo com `N` igual a
-  zero, para separar *conferi e não havia* de *nunca conferi*.
-- **Verificar.** `huddle.lint_arquivo(<caminho>)` prova o invariante de despejo: o mesmo `H-XX`
-  nunca em `## Abertas` e `## Fechadas` ao mesmo tempo. `huddle.lint_relatorio(<texto>)` recusa o
-  relatório sem a linha de fecho.
-- **A conversa recorrente.** O próprio `huddle.md` traz um *Prompt de continuidade*, preenchido com
-  o estado fresco no fim do trabalho e colado numa sessão nova: `## Como conversamos` define as
-  condições da conversa, `## Abertas` é a pauta.
+- **Conversar.** `/decode-and-code:huddle` roda a pauta e percorre as abertas uma a uma: decidir,
+  promover a guideline ou guardrail, descartar ou manter. `/decode-and-code:huddle registrar <texto>`
+  abre uma entrada.
+- **Ser lembrado.** O hook `SessionStart` avisa ao abrir a sessão quando há entrada aberta e o
+  último huddle foi há `reminder_days` dias ou mais (7 por padrão; `0` desliga), campo do seu arquivo.
+- **O modelo registra no fecho.** As cinco skills que registram terminam rodando `dc.py huddle-fecho`,
+  registram o que ficou aberto e declaram `entradas novas no huddle: N (H-XX, …)` — obrigatória
+  mesmo com `N` igual a zero —, conferida por `dc.py huddle-lint-relatorio`.
+- **Projeto com o arquivo único antigo** (`<plan_root>/system/huddle.md`): `dc.py huddle-migrar`
+  o move para o arquivo da pessoa.
 
-Formato completo, os cinco gatilhos de escrita e a regra de despejo:
+Guia: [`docs/recursos/huddle.md`](docs/recursos/huddle.md). Formato, gatilhos e a regra de despejo:
 [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md), seção *Huddle*.
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — as quatro skills e a pasta compartilhada `decode-and-code/` (scripts), os
+`.claude/` é a **fonte** — as seis skills e a pasta compartilhada `decode-and-code/` (scripts), os
 hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
 **gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
 que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,

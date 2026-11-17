@@ -61,10 +61,11 @@ Os dois gates são os da norma (*Os dois gates*) — esta seção descreve só o
 2. **Ler a unidade inteira** — contrato, sequência, arquivos, normas referenciadas e critério de aceite.
 3. **Trazer as normas citadas** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" normas <unidade>`; a unidade só referencia as normas, e o conteúdo das seções que a tabela cita vem na saída. Cada linha sob `Não resolvidas:` é norma que não chegou: vai para o relatório (passo 8) como insuficiência da unidade, que volta para quem deriva.
 4. **Escrever o teste declarado**, cobrindo o critério de aceite — teste e código são entregáveis da mesma unidade; exigir teste preexistente tornaria impossível começar unidade nova.
-5. **Escrever o código** que faz o teste passar, tocando apenas os arquivos que a unidade declara.
+5. **Escrever o código** que faz o teste passar, tocando apenas os arquivos que a unidade declara — o arquivo do huddle da pessoa é a exceção, escrito só pelo passo 9.
 6. **Gate de saída** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" verificar <unidade>`; teste falhando, a unidade não transiciona para `verified`.
 7. **Projetar o backlog** do plano com `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`.
 8. **Relatar** o que foi feito — se algo da unidade estava insuficiente, dizer o quê, incluindo as linhas `Não resolvidas:` do passo 3; a correção é da unidade, nunca do executor.
+9. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime os gatilhos e o momento da norma (*Huddle*). O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
 
 > **Se o executor precisou perguntar, a unidade falhou.** O teste é empírico e barato, e a
 > insuficiência volta para quem deriva — nunca é resolvida por conta própria em execução.
@@ -74,7 +75,7 @@ Os dois gates são os da norma (*Os dois gates*) — esta seção descreve só o
 
 Para rodar o teste durante o trabalho (passos 4 e 5), use `python3 "${CLAUDE_SKILL_DIR}/dc.py" verificar <unidade> --dry-run`, que roda sem gravar estado. Teste que falha vem com a saída dele (as últimas 80 linhas): é dela que sai o que corrigir.
 
-Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `lint-unidade`, `normas`, `verificar` e `projetar-backlog`.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `lint-unidade`, `normas`, `verificar`, `projetar-backlog`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
 
 > **O executor nunca deriva nem revisa planos.** Decidir a fatia de uma unidade não é trabalho de quem executa.
 

@@ -5,5 +5,10 @@
   "runners": {
     ".py": "scripts/test-python.sh",
     ".ts": "scripts/test-ts.sh"
+  },
+  "marketplace": {
+    "name": "future-ride-today",
+    "plugin": "decode-and-code",
+    "source": {"source": "github", "repo": "futureridetoday/DecodeAndCode"}
   }
 }

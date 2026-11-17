@@ -4,7 +4,7 @@
 Duas naturezas, e as duas são necessárias (`L-31`).
 
 **Fonte sintética**, em `tempfile.TemporaryDirectory()` com `lib.repo_root` mockado — mesmo padrão
-de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as quatro skills, a
+de `test_registry.py` e `test_scaffold.py` — para o **mecanismo**: manifesto, as skills de `lib.SKILLS`, a
 pasta compartilhada com `scripts/tests/` e `__pycache__` para provar a exclusão, os três scripts de
 desenvolvimento (`P-05`), três hooks e um `settings.json` com os três eventos e a âncora
 `${CLAUDE_PROJECT_DIR}/.claude/hooks`.
@@ -35,7 +35,7 @@ porque o do pacote deixou de existir.
 
 O `P-10` tira do `SKILL.md` empacotado todo campo de frontmatter fora da documentação oficial
 (`empacotar._so_campos_oficiais`): o mecanismo, em `TestSoCamposOficiais`, com texto sintético; a
-instância, em `TestPacoteRealEstaLimpo`, contra as quatro skills reais.
+instância, em `TestPacoteRealEstaLimpo`, contra as skills reais.
 """
 
 from __future__ import annotations
@@ -60,14 +60,15 @@ import lint_skill
 
 NOMES_DAS_SKILLS = lib.SKILLS
 
-# Os três hooks da fonte (evento → script) e os dois que viajam (`P-05`, `D-02`).
+# Os quatro hooks da fonte (evento → script) e os três que viajam (`P-05`, `D-02`, plano 0008).
 _HOOKS_DA_FONTE = {
     "PreToolUse": "pre_tool_use.py",
     "InstructionsLoaded": "instructions_loaded.py",
     "SubagentStart": "subagent_start.py",
+    "SessionStart": "session_start.py",
 }
-_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded"}
-_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py"}
+_EVENTOS_QUE_VIAJAM = {"PreToolUse", "InstructionsLoaded", "SessionStart"}
+_HOOKS_QUE_VIAJAM = {"pre_tool_use.py", "instructions_loaded.py", "session_start.py"}
 
 
 def _montar_fonte(raiz: Path) -> None:
@@ -315,7 +316,7 @@ class TestConstruir(_BaseComFonteSintetica):
         empacotar.construir(self.destino)
 
         eventos_settings = set(json.loads((self.raiz / ".claude" / "settings.json").read_text())["hooks"])
-        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+        self.assertEqual(eventos_settings, set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
 
         conteudo = (self.destino / "hooks" / "hooks.json").read_text(encoding="utf-8")
         eventos_gerados = set(json.loads(conteudo)["hooks"])
@@ -442,6 +443,23 @@ class TestVerificar(_BaseComFonteSintetica):
 
         problemas = empacotar.verificar(self.destino)
         self.assertTrue(any("vazamento.md" in p for p in problemas))
+
+    def test_repo_do_marketplace_nao_e_acusado_mas_o_nome_solto_e(self):
+        """`DD-06`: o `repo` do `config.json` é identidade do plugin; o nome do projeto solto não."""
+        empacotar.construir(self.destino)
+        repo = f"futureridetoday/{self.raiz.name}"
+        config = {"marketplace": {"source": {"repo": repo}}}
+        pasta = self.destino / "skills" / "decode-and-code"
+
+        with mock.patch.object(lib, "config", return_value=config):
+            (pasta / "identidade.json").write_text(f'{{"repo": "{repo}"}}\n', encoding="utf-8")
+            self.assertEqual(empacotar.verificar(self.destino), [])
+
+            (pasta / "identidade.json").write_text(
+                f'{{"repo": "{repo}", "projeto": "{self.raiz.name}"}}\n', encoding="utf-8"
+            )
+            problemas = empacotar.verificar(self.destino)
+            self.assertTrue(any("identidade.json" in p for p in problemas))
 
     def test_ancora_conta_dentro_de_hooks_e_nao_fora(self):
         """A decisão contrária da `L-31`: fora de `hooks/` a âncora é dado, dentro é hook quebrado."""
@@ -637,7 +655,7 @@ class TestPacoteEnxuto(unittest.TestCase):
             empacotar.construir(destino)
 
             fonte = json.loads((lib.repo_root() / ".claude" / "settings.json").read_text(encoding="utf-8"))
-            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os três")
+            self.assertEqual(set(fonte["hooks"]), set(_HOOKS_DA_FONTE), "a fonte continua com os quatro")
 
             hooks_json = json.loads((destino / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
             self.assertEqual(set(hooks_json), _EVENTOS_QUE_VIAJAM)

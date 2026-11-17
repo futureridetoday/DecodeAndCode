@@ -22,6 +22,7 @@ trocado por mock — como `test_scaffold.py`.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -53,6 +54,27 @@ SUBCOMANDOS = (
     "handoff",
     "verificar",
     "normas",
+    "criar-guideline",
+    "adicionar-guardrail",
+    "lint-guardrails",
+    "huddle-iniciar",
+    "huddle-abrir",
+    "huddle-fechar",
+    "huddle-concluir",
+    "huddle-pauta",
+    "huddle-fecho",
+    "huddle-lint",
+    "huddle-lint-relatorio",
+    "huddle-migrar",
+    "descobrir",
+    "setup-iniciar",
+    "setup-perfil",
+    "setup-registrar",
+    "setup-decididas",
+    "setup-concluir",
+    "setup-lint",
+    "setup-escopo",
+    "explicar",
 )
 
 _tmp_pacote: tempfile.TemporaryDirectory | None = None
@@ -574,6 +596,358 @@ class TestHandoff(_ProjetoCase):
         r = self.dc("handoff", str(self.raiz_planos / "builder" / "0001-nao-existe"), entrada=self.STDIN)
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestCriarGuideline(_ProjetoCase):
+    """Plano 0007, T5 — `{nome, descricao, paths, corpo}` pelo stdin, raiz pelo `cwd`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        (self.projeto / "src").mkdir()
+        (self.projeto / "src" / "botao.tsx").write_text("x", encoding="utf-8")
+
+    def entrada(self, **kw) -> str:
+        dados = {"nome": "design-system", "descricao": "Use shadcn.", "paths": ["src/**/*"],
+                 "corpo": "Componentes de src/ui."}
+        dados.update(kw)
+        return json.dumps(dados)
+
+    def test_grava_e_registra_na_raiz_do_projeto(self):
+        r = self.dc("criar-guideline", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        alvo = self.projeto / ".claude" / "rules" / "design-system.md"
+        self.assertEqual(Path(r.stdout.strip()).resolve(), alvo)
+        self.assertTrue((self.projeto / ".claude" / "rules" / "registry.json").is_file())
+
+    def test_aguardando_grava_paths_pending(self):
+        r = self.dc("criar-guideline", entrada=self.entrada(paths=["app/**/*"], aguardando=True))
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_reprovada_e_codigo_1_sem_arquivo(self):
+        r = self.dc("criar-guideline", entrada=self.entrada(paths=["app/**/*"]))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertTrue(r.stdout.strip())
+        self.assertFalse((self.projeto / ".claude" / "rules" / "design-system.md").exists())
+
+    def test_stdin_vazio_e_codigo_2(self):
+        r = self.dc("criar-guideline", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_json_sem_campo_e_codigo_2(self):
+        r = self.dc("criar-guideline", entrada=json.dumps({"nome": "x"}))
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestAdicionarGuardrail(_ProjetoCase):
+    """Plano 0007, T5 — `{regra, proibido, permitido}` pelo stdin."""
+
+    REGRA = {"nome": "sem-classname", "ferramenta": "^Write$", "detector": "className=",
+             "mensagem": "Estilo vai no .styles.ts."}
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+
+    def entrada(self, **regra) -> str:
+        return json.dumps({
+            "regra": {**self.REGRA, **regra},
+            "proibido": {"tool_name": "Write", "tool_input": {"content": '<a className="x"/>'}},
+            "permitido": {"tool_name": "Write", "tool_input": {"content": "<A/>"}},
+        })
+
+    def test_grava_no_guardrails_do_projeto(self):
+        r = self.dc("adicionar-guardrail", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        arquivo = self.projeto / ".claude" / "guardrails.json"
+        self.assertEqual(json.loads(arquivo.read_text(encoding="utf-8"))["regras"][0]["nome"], "sem-classname")
+
+    def test_regra_que_nao_prova_e_codigo_1(self):
+        r = self.dc("adicionar-guardrail", entrada=self.entrada(detector="nunca-casa"))
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertFalse((self.projeto / ".claude" / "guardrails.json").exists())
+
+    def test_stdin_vazio_e_codigo_2(self):
+        r = self.dc("adicionar-guardrail", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestLintGuardrails(_ProjetoCase):
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.arquivo = self.projeto / ".claude" / "guardrails.json"
+        self.arquivo.parent.mkdir(parents=True, exist_ok=True)
+
+    def test_arquivo_valido_e_ok(self):
+        self.arquivo.write_text('{"regras": []}', encoding="utf-8")
+        r = self.dc("lint-guardrails")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("ok", r.stdout)
+
+    def test_arquivo_malformado_e_codigo_1(self):
+        self.arquivo.write_text('{"regras": [{"nome": "x"}]}', encoding="utf-8")
+        r = self.dc("lint-guardrails")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("ferramenta", r.stdout)
+
+    def test_arquivo_ausente_e_codigo_2(self):
+        r = self.dc("lint-guardrails")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestSetup(_ProjetoCase):
+    """Plano 0009, unidade 01 — os seis `setup-*` sobre `<plan_root>/system/setup.md`."""
+
+    REGISTRO = '{"chave": "usar-ruff", "tipo": "guideline", "origem": "stack", "resultado": "aceita", "detalhe": "python.md"}'
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.arquivo = self.raiz_planos / "system" / "setup.md"
+
+    def test_iniciar_cria_e_nao_sobrescreve(self):
+        r = self.dc("setup-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(self.arquivo.is_file())
+        r = self.dc("setup-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("já existe", r.stdout)
+
+    def test_ciclo_completo_com_lint_e_decididas(self):
+        self.dc("setup-iniciar")
+        perfil = '{"objetivo": "o", "escopo": "e", "stack": "s", "confirmacao": "c"}'
+        self.assertEqual(self.dc("setup-perfil", entrada=perfil).returncode, 0)
+        self.assertEqual(self.dc("setup-registrar", entrada=self.REGISTRO).returncode, 0)
+        self.assertEqual(self.dc("setup-decididas").stdout.splitlines(), ["usar-ruff"])
+        r = self.dc("setup-concluir", "--data", "2026-11-16")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "completed_at: 2026-11-16"), r.stderr)
+        r = self.dc("setup-lint")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_concluir_sem_data_usa_hoje(self):
+        from datetime import date
+
+        self.dc("setup-iniciar")
+        r = self.dc("setup-concluir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn(date.today().isoformat(), r.stdout)
+
+    def test_valor_recusado_sai_com_1_sem_mudar_o_arquivo(self):
+        self.dc("setup-iniciar")
+        antes = self.arquivo.read_text(encoding="utf-8")
+        ruim = self.REGISTRO.replace('"guideline"', '"convenção"')
+        r = self.dc("setup-registrar", entrada=ruim)
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertEqual(self.dc("setup-concluir", "--data", "ontem").returncode, 1)
+        self.assertEqual(self.arquivo.read_text(encoding="utf-8"), antes)
+
+    def test_lint_reprovado_sai_com_1(self):
+        self.dc("setup-iniciar")
+        self.arquivo.write_text(
+            self.arquivo.read_text(encoding="utf-8") + "| a | regra | stack | aceita | x | 2026-11-16 |\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(self.dc("setup-lint").returncode, 1)
+
+    def test_stdin_vazio_ou_incompleto_sai_com_2(self):
+        self.dc("setup-iniciar")
+        for subcomando in ("setup-perfil", "setup-registrar"):
+            with self.subTest(subcomando=subcomando, entrada="vazio"):
+                r = self.dc(subcomando, entrada="")
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+            with self.subTest(subcomando=subcomando, entrada="incompleto"):
+                r = self.dc(subcomando, entrada='{"chave": "x"}')
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+
+    def test_arquivo_ausente_sai_com_2(self):
+        for subcomando in ("setup-decididas", "setup-lint", "setup-concluir"):
+            with self.subTest(subcomando=subcomando):
+                r = self.dc(subcomando)
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+        r = self.dc("setup-registrar", entrada=self.REGISTRO)
+        self.assertEqual(r.returncode, 2)
+
+
+class TestSetupEscopo(_ProjetoCase):
+    """Plano 0009, unidade 03 — `setup-escopo` lê e, com `--aplicar`, habilita o plugin."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        self.settings = self.projeto / ".claude" / "settings.json"
+
+    def test_sem_aplicar_mostra_o_estado_e_nao_escreve(self):
+        r = self.dc("setup-escopo")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("habilitado: false", r.stdout)
+        self.assertIn("marketplace: false", r.stdout)
+        self.assertFalse(self.settings.exists())
+
+    def test_aplicar_escreve_e_a_segunda_vez_nao_muda(self):
+        r = self.dc("setup-escopo", "--aplicar")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "habilitado"), r.stderr)
+        escrito = self.settings.read_text(encoding="utf-8")
+        r = self.dc("setup-escopo", "--aplicar")
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, "já estava habilitado"), r.stderr)
+        self.assertEqual(self.settings.read_text(encoding="utf-8"), escrito)
+        self.assertIn("habilitado: true", self.dc("setup-escopo").stdout)
+
+    def test_json_invalido_sai_com_2_e_o_arquivo_fica_intacto(self):
+        self.settings.parent.mkdir(parents=True, exist_ok=True)
+        self.settings.write_text("{ quebrado", encoding="utf-8")
+        for args in ((), ("--aplicar",)):
+            with self.subTest(args=args):
+                r = self.dc("setup-escopo", *args)
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
+        self.assertEqual(self.settings.read_text(encoding="utf-8"), "{ quebrado")
+
+
+class TestDescobrir(_ProjetoCase):
+    """Plano 0009, unidade 02 — `descobrir` inventaria o projeto e sai 0."""
+
+    def test_imprime_fontes_e_ja_existe(self):
+        self.bootstrap()
+        (self.projeto / "components.json").write_text("{}", encoding="utf-8")
+        r = self.dc("descobrir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("### components.json", r.stdout)
+        self.assertIn("## Já existe", r.stdout)
+
+
+class TestHuddle(_ProjetoCase):
+    """Plano 0008, T4 — os nove `huddle-*`, resolvendo o arquivo da pessoa pelo `user.name` local."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.arquivo = self.raiz_planos / "system" / "huddle" / "ana-lima.md"
+
+    def abrir(self, texto: str = "Qual o teto?", tipo: str = "pergunta") -> subprocess.CompletedProcess:
+        return self.dc("huddle-abrir", tipo, entrada=texto)
+
+    def test_iniciar_cria_o_arquivo_da_pessoa(self):
+        r = self.dc("huddle-iniciar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(self.arquivo.is_file())
+        self.assertEqual(self.dc("huddle-iniciar").returncode, 0)
+
+    def test_abrir_le_o_texto_do_stdin_e_imprime_o_id(self):
+        r = self.abrir()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), "H-01")
+        self.assertIn("Qual o teto?", self.arquivo.read_text(encoding="utf-8"))
+        self.assertIn("· ana-lima", self.arquivo.read_text(encoding="utf-8"))
+
+    def test_abrir_com_autor(self):
+        r = self.dc("huddle-abrir", "pergunta", "--autor", "Claude", entrada="x")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("· Claude", self.arquivo.read_text(encoding="utf-8"))
+
+    def test_abrir_stdin_vazio_e_codigo_2(self):
+        r = self.abrir(texto="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_abrir_tipo_invalido_e_codigo_1(self):
+        r = self.abrir(tipo="ideia")
+        self.assertEqual(r.returncode, 1, r.stderr)
+
+    def test_fechar_e_concluir(self):
+        self.abrir()
+        r = self.dc("huddle-fechar", "H-01", "descartada")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        r = self.dc("huddle-concluir", "--data", "2026-11-15")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        texto = self.arquivo.read_text(encoding="utf-8")
+        self.assertIn("| H-01 |", texto)
+        self.assertIn("last_huddle: 2026-11-15", texto)
+
+    def test_fechar_id_inexistente_e_codigo_1(self):
+        self.dc("huddle-iniciar")
+        self.assertEqual(self.dc("huddle-fechar", "H-09", "x").returncode, 1)
+
+    def test_pauta_lista_as_abertas(self):
+        self.abrir(texto="**Título da pergunta.**")
+        r = self.dc("huddle-pauta")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("H-01", r.stdout)
+
+    def test_fecho_imprime_despejo_e_momento_da_norma(self):
+        r = self.dc("huddle-fecho")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Despejo", r.stdout)
+        self.assertIn("Momento", r.stdout)
+        self.assertIn("entradas novas no huddle", r.stdout)
+
+    def test_fecho_cai_para_a_norma_do_pacote_quando_a_do_projeto_e_anterior(self):
+        """L-05: a norma materializada antes do 0008 não tem os títulos — vale a do pacote."""
+        norma = self.raiz_planos / "system" / "modelo-dev-units.md"
+        norma.write_text("# Norma antiga\n\n## Huddle\n\nSem as subseções.\n", encoding="utf-8")
+        r = self.dc("huddle-fecho")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Despejo", r.stdout)
+        self.assertNotIn(os.path.relpath(norma, self.projeto), r.stdout)
+
+    def test_explicar_imprime_os_quatro_titulos_da_norma(self):
+        r = self.dc("explicar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for titulo in ("Antes do plano", "O que cada porte carrega", "Cold-start é o critério", "Skills `review-plan`"):
+            with self.subTest(titulo=titulo):
+                self.assertIn(titulo, r.stdout)
+
+    def test_lint_do_arquivo_da_pessoa(self):
+        self.dc("huddle-iniciar")
+        r = self.dc("huddle-lint")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("ok", r.stdout)
+
+    def test_lint_relatorio_confere_ids(self):
+        self.abrir()
+        ok = self.dc("huddle-lint-relatorio", entrada="Feito.\n\nentradas novas no huddle: 1 (H-01)\n")
+        self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+        ruim = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 1 (H-07)\n")
+        self.assertEqual(ruim.returncode, 1)
+
+    def test_lint_relatorio_sem_arquivo_da_pessoa_reprova_ids_com_1(self):
+        r = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 1 (H-01)\n")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        zero = self.dc("huddle-lint-relatorio", entrada="entradas novas no huddle: 0\n")
+        self.assertEqual(zero.returncode, 0, zero.stderr)
+
+    def test_lint_relatorio_stdin_vazio_e_codigo_2(self):
+        r = self.dc("huddle-lint-relatorio", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_migrar_move_o_arquivo_unico(self):
+        antigo = self.raiz_planos / "system" / "huddle.md"
+        antigo.write_text("---\nname: huddle\n# system\nscope: project\n---\n\n## Abertas\n\n## Fechadas\n\n| # | Tipo | Fechada em | Destino |\n|---|---|---|---|\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "x"], cwd=self.projeto, check=True)
+        r = self.dc("huddle-migrar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse(antigo.exists())
+        self.assertTrue(self.arquivo.is_file())
+        self.assertIn("nada a migrar", self.dc("huddle-migrar").stdout)
+
+    def test_sem_user_name_e_codigo_2_com_a_instrucao(self):
+        subprocess.run(["git", "config", "--unset", "user.name"], cwd=self.projeto, check=True)
+        ambiente = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+        with mock.patch.dict(os.environ, ambiente):
+            r = self.dc("huddle-iniciar")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("git config user.name", r.stderr)
 
 
 class TestVerificar(_ProjetoCase):

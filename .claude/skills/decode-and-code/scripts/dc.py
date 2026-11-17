@@ -25,6 +25,7 @@ resolvidas: elas vão na saída, sob `Não resolvidas:`, para o executor relatar
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -216,6 +217,347 @@ def _normas(args: argparse.Namespace) -> int:
     return OK
 
 
+def _ler_json_do_stdin(comando: str, chaves: tuple[str, ...]) -> dict:
+    """Objeto JSON do stdin com `chaves` — `ValueError`/`KeyError` (código 2) se vazio ou incompleto."""
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        raise ValueError(f"{comando} lê do stdin um objeto JSON com {', '.join(chaves)}")
+    dados = json.loads(texto)
+    if not isinstance(dados, dict):
+        raise ValueError(f"{comando}: o stdin precisa ser um objeto JSON")
+    ausentes = [chave for chave in chaves if chave not in dados]
+    if ausentes:
+        raise KeyError(f"{comando}: faltam no stdin {', '.join(ausentes)}")
+    return dados
+
+
+def _criar_guideline(args: argparse.Namespace) -> int:
+    import lib
+    import rules
+
+    dados = _ler_json_do_stdin("criar-guideline", ("nome", "descricao", "paths", "corpo"))
+    try:
+        alvo = rules.criar_guideline(
+            lib.repo_root(), dados["nome"], dados["descricao"], dados["paths"], dados["corpo"],
+            aguardando=bool(dados.get("aguardando", False)),
+        )
+    except (ValueError, FileExistsError) as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _adicionar_guardrail(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+
+    dados = _ler_json_do_stdin("adicionar-guardrail", ("regra", "proibido", "permitido"))
+    try:
+        alvo = guardrail.adicionar(lib.repo_root(), dados["regra"], dados["proibido"], dados["permitido"])
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _lint_guardrails(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+
+    arquivo = lib.repo_root() / ".claude" / "guardrails.json"
+    problemas = guardrail.lint_arquivo(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
+# Huddle por pessoa — plano 0008, T4. Todos resolvem o arquivo de quem está na sessão.
+
+# Prefixos das subseções da seção *Huddle* que o `huddle-fecho` imprime (gatilhos e momento).
+_SECOES_DO_FECHO = ("Despejo", "Momento")
+
+
+def _pessoa() -> tuple[Path, str, Path]:
+    """`(raiz, usuario, arquivo)` de quem está na sessão — `ValueError` sem `user.name` no git."""
+    import huddle
+    import lib
+
+    raiz = lib.repo_root()
+    usuario = huddle.usuario(raiz)
+    return raiz, usuario, huddle.caminho(raiz, usuario)
+
+
+def _ler_texto_do_stdin(comando: str) -> str:
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        raise ValueError(f"{comando} lê o texto do stdin")
+    return texto
+
+
+def _huddle_iniciar(args: argparse.Namespace) -> int:
+    import huddle
+
+    raiz, usuario, arquivo = _pessoa()
+    criado = huddle.iniciar(arquivo, projeto=raiz, usuario=usuario)
+    print(criado if criado else f"já existe: {arquivo}")
+    return OK
+
+
+def _huddle_abrir(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, usuario, arquivo = _pessoa()
+    texto = _ler_texto_do_stdin("huddle-abrir")
+    try:
+        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario))
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    return OK
+
+
+def _huddle_fechar(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    try:
+        huddle.fechar(arquivo, args.id, args.destino)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"{args.id} fechada")
+    return OK
+
+
+def _huddle_concluir(args: argparse.Namespace) -> int:
+    import huddle
+    from datetime import date
+
+    _, _, arquivo = _pessoa()
+    data = args.data or date.today().isoformat()
+    huddle.concluir(arquivo, data)
+    print(f"last_huddle: {data}")
+    return OK
+
+
+def _huddle_pauta(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    if not arquivo.exists():
+        print(f"sem huddle: {arquivo}")
+        return OK
+    pauta = huddle.pauta(arquivo, args.desde)
+    print(f"## Abertas ({len(pauta['abertas'])})")
+    for aberta in pauta["abertas"]:
+        primeira = next((l for l in aberta["texto"].splitlines() if l.strip()), "")
+        print(f"- {aberta['id']} · {aberta['tipo']} · {aberta['data']} · {primeira}")
+    print(f"\n## Commits desde {pauta['desde']} ({len(pauta['commits'])})")
+    for commit in pauta["commits"]:
+        print(f"- {commit}")
+    if pauta["omitidos"]:
+        print(f"- … e mais {pauta['omitidos']} omitidos")
+    if pauta["aviso"]:
+        print(f"\naviso: {pauta['aviso']}")
+    return OK
+
+
+def _huddle_fecho(args: argparse.Namespace) -> int:
+    """Imprime as subseções de gatilhos e de momento da seção *Huddle*: da norma do projeto, ou da
+    do pacote quando a do projeto é anterior a elas (`L-05`), na ordem de `bootstrap._fonte_norma`."""
+    import bootstrap
+    import lib
+    import normas
+
+    candidatas = [lib.plan_root() / "system" / "modelo-dev-units.md"]
+    try:
+        candidatas.append(bootstrap._fonte_norma())
+    except FileNotFoundError:
+        pass
+    for norma in candidatas:
+        achados = [normas._buscar(norma, nome) for nome in _SECOES_DO_FECHO]
+        if all(isinstance(a, tuple) for a in achados):
+            for titulo, trecho in achados:
+                print(f"### {os.path.relpath(norma)} § {titulo}")
+                print(trecho)
+                print()
+            return OK
+    raise ValueError(f"seções {_SECOES_DO_FECHO} não encontradas em {[str(c) for c in candidatas]}")
+
+
+# Prefixos das seções da norma que sustentam o princípio Decode → Code, para o `explicar`.
+_SECOES_DO_METODO = (
+    "Antes do plano",
+    "O que cada porte carrega",
+    "Cold-start é o critério de suficiência da unidade",
+    "Skills `review-plan`, `derive` e `implement`",
+)
+
+
+def _explicar(args: argparse.Namespace) -> int:
+    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code."""
+    import bootstrap
+    import normas
+
+    norma = bootstrap._fonte_norma()
+    for titulo, trecho in normas.secoes(norma, _SECOES_DO_METODO):
+        print(f"### {os.path.relpath(norma)} § {titulo}")
+        print(trecho)
+        print()
+    return OK
+
+
+def _huddle_lint(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    problemas = huddle.lint_arquivo(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
+def _huddle_lint_relatorio(args: argparse.Namespace) -> int:
+    import huddle
+
+    _, _, arquivo = _pessoa()
+    problemas = huddle.lint_relatorio(_ler_texto_do_stdin("huddle-lint-relatorio"), arquivo=arquivo)
+    for problema in problemas:
+        print(problema)
+    if not problemas:
+        print("ok")
+    return REPROVADO if problemas else OK
+
+
+def _huddle_migrar(args: argparse.Namespace) -> int:
+    import huddle
+
+    raiz, usuario, _ = _pessoa()
+    destino = huddle.migrar(raiz, usuario)
+    print(destino if destino else "nada a migrar")
+    return OK
+
+
+def _setup_escopo(args: argparse.Namespace) -> int:
+    import escopo
+    import lib
+
+    projeto = lib.repo_root()
+    if args.aplicar:
+        escreveu = escopo.habilitar(projeto)
+        print("habilitado" if escreveu else "já estava habilitado")
+        return OK
+    estado = escopo.estado(projeto)
+    print(f"habilitado: {str(estado['habilitado']).lower()}")
+    print(f"marketplace: {str(estado['marketplace']).lower()}")
+    return OK
+
+
+# Registro do setup — plano 0009, unidade 01. Todos resolvem `<plan_root>/system/setup.md` do projeto.
+
+
+def _setup_arquivo() -> Path:
+    import lib
+    import setup
+
+    return setup.caminho(lib.repo_root())
+
+
+def _setup_existente(comando: str) -> Path:
+    arquivo = _setup_arquivo()
+    if not arquivo.is_file():
+        raise FileNotFoundError(f"{comando}: {arquivo} não existe — rode `dc.py setup-iniciar`")
+    return arquivo
+
+
+def _setup_iniciar(args: argparse.Namespace) -> int:
+    import lib
+    import setup
+
+    criado = setup.iniciar(lib.repo_root())
+    print(criado if criado else f"já existe: {_setup_arquivo()}")
+    return OK
+
+
+def _setup_perfil(args: argparse.Namespace) -> int:
+    import setup
+
+    dados = _ler_json_do_stdin("setup-perfil", ("objetivo", "escopo", "stack", "confirmacao"))
+    arquivo = _setup_existente("setup-perfil")
+    try:
+        setup.perfil(arquivo, dados["objetivo"], dados["escopo"], dados["stack"], dados["confirmacao"])
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"perfil gravado: {arquivo}")
+    return OK
+
+
+def _setup_registrar(args: argparse.Namespace) -> int:
+    import setup
+
+    dados = _ler_json_do_stdin("setup-registrar", ("chave", "tipo", "origem", "resultado", "detalhe"))
+    arquivo = _setup_existente("setup-registrar")
+    try:
+        setup.registrar(
+            arquivo, dados["chave"], dados["tipo"], dados["origem"], dados["resultado"], dados["detalhe"]
+        )
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"registrada: {dados['chave']}")
+    return OK
+
+
+def _setup_decididas(args: argparse.Namespace) -> int:
+    import setup
+
+    for chave in setup.decididas(_setup_existente("setup-decididas")):
+        print(chave)
+    return OK
+
+
+def _setup_concluir(args: argparse.Namespace) -> int:
+    import setup
+    from datetime import date
+
+    arquivo = _setup_existente("setup-concluir")
+    data = args.data or date.today().isoformat()
+    try:
+        setup.concluir(arquivo, data)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"completed_at: {data}")
+    return OK
+
+
+def _setup_lint(args: argparse.Namespace) -> int:
+    import setup
+
+    arquivo = _setup_existente("setup-lint")
+    problemas = setup.lint(arquivo)
+    for problema in problemas:
+        print(f"{arquivo}: {problema}")
+    if not problemas:
+        print(f"{arquivo}: ok")
+    return REPROVADO if problemas else OK
+
+
+def _descobrir(args: argparse.Namespace) -> int:
+    import descoberta
+    import lib
+
+    print(descoberta.formatar(descoberta.descobrir(lib.repo_root())))
+    return OK
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dc.py",
@@ -282,6 +624,87 @@ def _parser() -> argparse.ArgumentParser:
         _normas,
     )
     p.add_argument("unidade")
+
+    comando(
+        "criar-guideline",
+        "grava e registra uma guideline em .claude/rules/; lê do stdin JSON "
+        "{nome, descricao, paths, corpo[, aguardando]} (1 se reprovada)",
+        _criar_guideline,
+    )
+
+    comando(
+        "adicionar-guardrail",
+        "acrescenta uma regra a .claude/guardrails.json provada pelo par; lê do stdin JSON "
+        "{regra, proibido, permitido} (1 se reprovada)",
+        _adicionar_guardrail,
+    )
+
+    comando("lint-guardrails", "valida .claude/guardrails.json do projeto (1 se tem problema)", _lint_guardrails)
+
+    comando("huddle-iniciar", "cria o arquivo de huddle de quem está na sessão, sem sobrescrever", _huddle_iniciar)
+
+    p = comando(
+        "huddle-abrir",
+        "abre uma entrada no huddle da pessoa e imprime o H-XX; lê o texto do stdin (1 se recusada)",
+        _huddle_abrir,
+    )
+    p.add_argument("tipo")
+    p.add_argument("--autor", help="padrão: a pessoa da sessão")
+
+    p = comando("huddle-fechar", "fecha uma entrada aberta com o destino (1 se o id não está aberto)", _huddle_fechar)
+    p.add_argument("id")
+    p.add_argument("destino")
+
+    p = comando("huddle-concluir", "grava a data do huddle em last_huddle", _huddle_concluir)
+    p.add_argument("--data", help="padrão: hoje")
+
+    p = comando("huddle-pauta", "abertas da pessoa e commits desde o último huddle", _huddle_pauta)
+    p.add_argument("--desde", help="padrão: last_huddle, ou created")
+
+    comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
+
+    comando("explicar", "imprime, da norma, as seções que sustentam o método Decode → Code", _explicar)
+
+    comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
+
+    comando(
+        "huddle-lint-relatorio",
+        "confere a linha de fecho do relatório no stdin contra o huddle da pessoa (1 se reprovada)",
+        _huddle_lint_relatorio,
+    )
+
+    comando("huddle-migrar", "move o huddle único de projeto para o arquivo da pessoa", _huddle_migrar)
+
+    comando("descobrir", "inventaria as fontes do projeto e a norma que ele já tem, sem classificar", _descobrir)
+
+    comando("setup-iniciar", "cria <plan_root>/system/setup.md, sem sobrescrever", _setup_iniciar)
+
+    comando(
+        "setup-perfil",
+        "grava o perfil no setup.md; lê do stdin JSON {objetivo, escopo, stack, confirmacao} (1 se recusado)",
+        _setup_perfil,
+    )
+
+    comando(
+        "setup-registrar",
+        "registra uma decisão no setup.md; lê do stdin JSON {chave, tipo, origem, resultado, detalhe} "
+        "(1 se recusada)",
+        _setup_registrar,
+    )
+
+    comando("setup-decididas", "lista as chaves já registradas no setup.md", _setup_decididas)
+
+    p = comando("setup-concluir", "grava a data de conclusão do setup em completed_at", _setup_concluir)
+    p.add_argument("--data", help="padrão: hoje")
+
+    comando("setup-lint", "valida o setup.md do projeto (1 se tem problema)", _setup_lint)
+
+    p = comando(
+        "setup-escopo",
+        "mostra se o plugin está habilitado no .claude/settings.json do projeto; --aplicar habilita",
+        _setup_escopo,
+    )
+    p.add_argument("--aplicar", action="store_true", help="grava enabledPlugins e extraKnownMarketplaces")
 
     return parser
 

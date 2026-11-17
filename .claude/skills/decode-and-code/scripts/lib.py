@@ -36,6 +36,13 @@ _DEFAULTS = {
     "root_markers": [".claude", "docs"],
     "move_script": "scripts/move-md.py",
     "runners": {".py": "scripts/test-python.sh", ".ts": "scripts/test-ts.sh"},
+    # Identidade do próprio plugin (`D-14` do plano 0009): o pacote não leva o `marketplace.json`.
+    # `empacotar.verificar` tira este `repo` do texto antes de procurar o nome do projeto (`DD-06`).
+    "marketplace": {
+        "name": "future-ride-today",
+        "plugin": "decode-and-code",
+        "source": {"source": "github", "repo": "futureridetoday/DecodeAndCode"},
+    },
 }
 
 # Os defaults são a fonte única. `_find_repo_root` lê a versão resolvida pelo config,
@@ -52,9 +59,10 @@ PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 # Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
 MODOS = ("review-plan", "derive", "implement")
 
-# As skills que viajam no pacote (`empacotar`): os três modos mais o `intake`, que antecede o ciclo e
-# não é modo da norma. Acrescentar skill é editar só aqui.
-SKILLS = MODOS + ("intake",)
+# As skills que viajam no pacote (`empacotar`): os três modos, o `intake`, que antecede o ciclo, o
+# `huddle`, que conduz a conversa da pessoa (plano 0008), e o `setup`, que conduz o primeiro uso
+# (plano 0009) — seis skills, e as três últimas não são modo da norma. Acrescentar skill é editar só aqui.
+SKILLS = MODOS + ("intake", "huddle", "setup")
 
 _config_cache: dict | None = None
 

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import tempfile
 from pathlib import Path
 
 
@@ -54,3 +55,93 @@ def decidir(payload_bruto: str, regras_caminho: Path) -> tuple[dict | None, str 
         return _avaliar(payload, regras), None
     except Exception as erro:
         return None, f"guardrail: falha aberta, liberando — {erro!r}"
+
+
+CHAVES_DA_REGRA = ("nome", "ferramenta", "detector", "mensagem")
+
+
+def lint_arquivo(caminho: Path) -> list[str]:
+    """Verifica se `caminho` é um arquivo de regras que `decidir` consegue usar — lista vazia
+    quando aprovado (plano 0007, T3).
+
+    Fecha a falha aberta antes que ela aconteça: regra malformada desliga a si mesma e todas as
+    seguintes, porque `decidir` libera em qualquer exceção. Levanta `FileNotFoundError` se o
+    arquivo não existe, como `rules.lint_rule`.
+    """
+    texto = caminho.read_text(encoding="utf-8")
+    try:
+        dados = json.loads(texto)
+    except json.JSONDecodeError as erro:
+        return [f"JSON inválido: {erro}"]
+    if not isinstance(dados, dict) or not isinstance(dados.get("regras"), list):
+        return ["o arquivo precisa ser um objeto com 'regras' como lista"]
+
+    problemas: list[str] = []
+    vistos: set[str] = set()
+    for i, regra in enumerate(dados["regras"], start=1):
+        if not isinstance(regra, dict):
+            problemas.append(f"regra {i}: não é objeto")
+            continue
+        for chave in CHAVES_DA_REGRA:
+            valor = regra.get(chave)
+            if not (isinstance(valor, str) and valor.strip()):
+                problemas.append(f"regra {i}: '{chave}' ausente, vazio ou não é texto")
+            elif chave in ("ferramenta", "detector"):
+                try:
+                    re.compile(valor)
+                except re.error as erro:
+                    problemas.append(f"regra {i}: '{chave}' não compila como regex — {erro}")
+        nome = regra.get("nome")
+        if isinstance(nome, str) and nome.strip():
+            if nome in vistos:
+                problemas.append(f"regra {i}: nome repetido {nome!r}")
+            vistos.add(nome)
+    return problemas
+
+
+def adicionar(raiz: Path, regra: dict, proibido: dict, permitido: dict) -> Path:
+    """Acrescenta `regra` a `<raiz>/.claude/guardrails.json` só se ela se provar pelo par.
+
+    A regra candidata é avaliada **sozinha** (`D-03`): `decidir` precisa negar `proibido` com a
+    própria regra e liberar `permitido`. Avaliada junto das existentes, uma regra anterior que já
+    negasse o caso faria a prova passar sem a candidata casar nada. `proibido` e `permitido` têm a
+    forma do payload do hook (`tool_name`, `tool_input`). Cria o arquivo se faltar. Levanta
+    `ValueError` — sem escrever nada — para regra malformada, prova que falha, nome repetido ou
+    arquivo existente que não passa em `lint_arquivo`. Devolve o caminho do arquivo.
+    """
+    arquivo = raiz / ".claude" / "guardrails.json"
+    with tempfile.TemporaryDirectory() as tmp:
+        sozinha = Path(tmp) / "candidata.json"
+        sozinha.write_text(json.dumps({"regras": [regra]}, ensure_ascii=False), encoding="utf-8")
+        problemas = lint_arquivo(sozinha)
+        if problemas:
+            raise ValueError("regra malformada: " + "; ".join(problemas))
+
+        negado, aviso = decidir(json.dumps(proibido), sozinha)
+        if aviso or not negado or negado.get("regra") != regra["nome"]:
+            raise ValueError(f"a regra {regra['nome']!r} não nega o caso proibido")
+        liberado, aviso = decidir(json.dumps(permitido), sozinha)
+        if aviso or liberado:
+            raise ValueError(f"a regra {regra['nome']!r} nega o caso permitido")
+
+    if arquivo.exists():
+        problemas = lint_arquivo(arquivo)
+        if problemas:
+            raise ValueError(f"{arquivo} já está malformado: " + "; ".join(problemas))
+        dados = json.loads(arquivo.read_text(encoding="utf-8"))
+    else:
+        dados = {"regras": []}
+    if any(r["nome"] == regra["nome"] for r in dados["regras"]):
+        raise ValueError(f"já existe regra com o nome {regra['nome']!r}")
+
+    dados["regras"].append(regra)
+    texto = json.dumps(dados, ensure_ascii=False, indent=2) + "\n"
+    with tempfile.TemporaryDirectory() as tmp:
+        resultado = Path(tmp) / "guardrails.json"
+        resultado.write_text(texto, encoding="utf-8")
+        problemas = lint_arquivo(resultado)
+        if problemas:
+            raise ValueError("resultado reprovado: " + "; ".join(problemas))
+    arquivo.parent.mkdir(parents=True, exist_ok=True)
+    arquivo.write_text(texto, encoding="utf-8")
+    return arquivo
