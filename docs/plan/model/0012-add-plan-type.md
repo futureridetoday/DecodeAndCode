@@ -9,6 +9,7 @@ tags: [decode-and-code, norma, plano, plan-type, lint]
 # alvo
 plan_id: "0012"
 plan_size: médio
+plan_type: feature
 core: model
 module: add-plan-type
 block: ""
@@ -16,7 +17,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-19
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: "Bortoli Rafael"
@@ -93,14 +94,14 @@ oráculo de um `chore` grande, como o zip que instala, entra embrulhado num test
 
 ## Tarefas
 
-- [ ] `lib.PLAN_TYPES_VALIDOS` com os sete tipos, ao lado de `PLAN_SIZES_VALIDOS`, uma cópia só
-- [ ] `lint_plano.lint`: `plan_type` ausente, vazio ou fora do vocabulário entra na lista de problemas, sem encerrar as demais checagens (o tipo não muda o schema do porte), com teste
-- [ ] `scaffold.aprovar`: recusa `plan_type` ausente ou fora do vocabulário, antes de mover e inclusive em `dry_run`, com teste
-- [ ] Norma, *Formato do plano*: seção *Tipo de plano* com a tabela acima; *Aprovação* passa a quatro campos; *O que cada porte carrega* aponta para a tabela; *Nomenclatura → Plano* ganha a frase do prefixo
-- [ ] `review-plan/SKILL.md`: uma linha no check de padrões — o plano declara o oráculo do seu tipo (cita a norma, não copia)
-- [ ] `derive/SKILL.md`: uma linha no passo de decisão das unidades — a coluna *derive* da tabela (cita a norma)
-- [ ] Declarar `plan_type` nos três esboços do `_inbox` — `apply-plugin-review`, `fix-setup-validation` e este, `add-plan-type` (`feature`) —, para que o `lint-plano` siga limpo
-- [ ] `scripts/test-python.sh` verde (a suíte inteira)
+- [x] `lib.PLAN_TYPES_VALIDOS` com os sete tipos, ao lado de `PLAN_SIZES_VALIDOS`, uma cópia só
+- [x] `lint_plano.lint`: `plan_type` ausente, vazio ou fora do vocabulário entra na lista de problemas, sem encerrar as demais checagens (o tipo não muda o schema do porte), com teste
+- [x] `scaffold.aprovar`: recusa `plan_type` ausente ou fora do vocabulário, antes de mover e inclusive em `dry_run`, com teste
+- [x] Norma, *Formato do plano*: seção *Tipo de plano* com a tabela acima; *Aprovação* passa a quatro campos; *O que cada porte carrega* aponta para a tabela; *Nomenclatura → Plano* ganha a frase do prefixo
+- [x] `review-plan/SKILL.md`: uma linha no check de padrões — o plano declara o oráculo do seu tipo (cita a norma, não copia)
+- [x] `derive/SKILL.md`: uma linha no passo de decisão das unidades — a coluna *derive* da tabela (cita a norma)
+- [x] Declarar `plan_type` nos três esboços do `_inbox` — `apply-plugin-review`, `fix-setup-validation` e este, `add-plan-type` (`feature`) —, para que o `lint-plano` siga limpo
+- [x] `scripts/test-python.sh` verde (a suíte inteira)
 
 ## Oráculo
 
@@ -129,6 +130,7 @@ Decididas pelo humano em 2026-11-19, a partir das propostas da revisão.
 | L-01 | **`remove`, `refactor` e `spike` não têm precedente** | Nenhum dos 11 planos é de um desses tipos; as linhas deles na tabela são desenho, não medição. O primeiro plano de cada um é onde a linha se prova — ou se corrige |
 | L-02 | **O tipo não troca o modelo do pequeno e do médio** | Quem executa no pequeno e no médio é sempre a sessão que orquestra, no modelo dela; *Opus* e *Sonnet* da tabela só se aplicam ao grande. Se o pedido pressupunha troca de modelo em todo porte, isso não se faz por campo do plano |
 | L-03 | **A métrica mede preenchimento, não benefício** | Com o gate, "planos com tipo declarado" vai a 100% sozinha. O que o tipo deveria melhorar — oráculo e executor certos, porte recomendado sem reestruturação na aprovação (`L-04` do `0006`) — não tem medição definida aqui; os primeiros planos com tipo são onde se observa |
+| L-04 | **O `lint_plano` roda, sim, sobre um plano aprovado** | O gate B cortou o retroativo dizendo que o `lint_plano` não roda sobre os 11 planos aprovados; `test_lint_plano.TestPlanoRealDoRepositorio` o roda sobre o `0001`. Na execução, o teste passou a esperar exatamente o problema de `plan_type` ausente, sem tocar o frontmatter do `0001` (`D-03`). Se o retroativo for reaberto, o teste volta a esperar `[]` |
 
 ## Fonte
 
@@ -140,14 +142,14 @@ Decididas pelo humano em 2026-11-19, a partir das propostas da revisão.
 ## Backlog
 
 <!-- backlog:start -->
-- [ ] `lib.PLAN_TYPES_VALIDOS` com os sete tipos, ao lado de `PLAN_SIZES_VALIDOS`, uma cópia só
-- [ ] `lint_plano.lint`: `plan_type` ausente, vazio ou fora do vocabulário entra na lista de problemas, sem encerrar as demais checagens (o tipo não muda o schema do porte), com teste
-- [ ] `scaffold.aprovar`: recusa `plan_type` ausente ou fora do vocabulário, antes de mover e inclusive em `dry_run`, com teste
-- [ ] Norma, *Formato do plano*: seção *Tipo de plano* com a tabela acima; *Aprovação* passa a quatro campos; *O que cada porte carrega* aponta para a tabela; *Nomenclatura → Plano* ganha a frase do prefixo
-- [ ] `review-plan/SKILL.md`: uma linha no check de padrões — o plano declara o oráculo do seu tipo (cita a norma, não copia)
-- [ ] `derive/SKILL.md`: uma linha no passo de decisão das unidades — a coluna *derive* da tabela (cita a norma)
-- [ ] Declarar `plan_type` nos três esboços do `_inbox` — `apply-plugin-review`, `fix-setup-validation` e este, `add-plan-type` (`feature`) —, para que o `lint-plano` siga limpo
-- [ ] `scripts/test-python.sh` verde (a suíte inteira)
+- [x] `lib.PLAN_TYPES_VALIDOS` com os sete tipos, ao lado de `PLAN_SIZES_VALIDOS`, uma cópia só
+- [x] `lint_plano.lint`: `plan_type` ausente, vazio ou fora do vocabulário entra na lista de problemas, sem encerrar as demais checagens (o tipo não muda o schema do porte), com teste
+- [x] `scaffold.aprovar`: recusa `plan_type` ausente ou fora do vocabulário, antes de mover e inclusive em `dry_run`, com teste
+- [x] Norma, *Formato do plano*: seção *Tipo de plano* com a tabela acima; *Aprovação* passa a quatro campos; *O que cada porte carrega* aponta para a tabela; *Nomenclatura → Plano* ganha a frase do prefixo
+- [x] `review-plan/SKILL.md`: uma linha no check de padrões — o plano declara o oráculo do seu tipo (cita a norma, não copia)
+- [x] `derive/SKILL.md`: uma linha no passo de decisão das unidades — a coluna *derive* da tabela (cita a norma)
+- [x] Declarar `plan_type` nos três esboços do `_inbox` — `apply-plugin-review`, `fix-setup-validation` e este, `add-plan-type` (`feature`) —, para que o `lint-plano` siga limpo
+- [x] `scripts/test-python.sh` verde (a suíte inteira)
 
-0 de 8 tarefas concluídas · atualizado em 2026-11-19
+8 de 8 tarefas concluídas · atualizado em 2026-11-19
 <!-- backlog:end -->

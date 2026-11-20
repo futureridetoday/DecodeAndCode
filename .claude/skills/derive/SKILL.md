@@ -58,7 +58,7 @@ A Sequência é a da norma (*Fluxo completo*, etapas 4 a 7) — esta seção des
 
 1. **Aprovar** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar <plano>` valida `core`, atribui o número do plano, valida o nome, move o arquivo do `_inbox` (compondo `move-md.py`) e registra a linha em `_planos.md`. Qualquer validação que falhar impede toda escrita.
 2. **Ler o escopo** — a tabela `## Escopo` do plano já movido: uma linha por unidade prevista, com número e responsabilidade.
-3. **Decidir a fatia** — para cada unidade, o contrato, a sequência e os arquivos que ela toca. **É aqui que está o julgamento**, e por isso o modo pede Opus, nunca Sonnet.
+3. **Decidir a fatia** — para cada unidade, o contrato, a sequência e os arquivos que ela toca. **É aqui que está o julgamento**, e por isso o modo pede Opus, nunca Sonnet. O `plan_type` do plano muda a fatia: siga a coluna *derive* da norma (*Tipo de plano*).
 4. **Numerar e escrever** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" proxima-unidade <dir_plano>` dá o próximo `nn`; cada arquivo carrega todos os blocos do corpo (norma, *Formato do arquivo de unidade*) e declara `test:` mesmo antes de o arquivo existir. *Normas aplicáveis* no formato da norma (link relativo e "seção *X*") — o `lint-unidade` do passo 5 recusa o que não resolve.
 5. **Lint antes de seguir** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <arquivo>...` em cada unidade recém-escrita; qualquer problema apontado é corrigido ali, antes de passar para a próxima.
 6. **Projetar o backlog** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`, que atualiza também a situação da linha em `_planos.md`.

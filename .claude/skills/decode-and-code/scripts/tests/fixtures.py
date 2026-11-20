@@ -277,6 +277,7 @@ module: {module}
 block: ""
 status: {status}
 plan_size: {plan_size}
+plan_type: {plan_type}
 approved_by: {approved_by}
 approved_at: {approved_at}
 ---
@@ -328,6 +329,7 @@ def plano(
     status: str = "approved",
     previstas: int | None = None,
     plan_size: str = "grande",
+    plan_type: str = "feature",
     approved_by: str = "Teste",
     approved_at: str = "2026-07-25",
     tarefas: bool = False,
@@ -371,6 +373,7 @@ def plano(
         status=status,
         escopo=_bloco_escopo(previstas),
         plan_size=plan_size,
+        plan_type=plan_type,
         approved_by=approved_by,
         approved_at=approved_at,
         tarefas=_bloco_tarefas(tarefas),

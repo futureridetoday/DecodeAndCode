@@ -56,6 +56,10 @@ ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 # vocabulário é da norma.
 PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
+# Vocabulário fechado de `plan_type` (plano 0012), pelo mesmo motivo e com os mesmos dois leitores
+# de `PLAN_SIZES_VALIDOS`. O que cada tipo muda a jusante está na norma, *Tipo de plano*.
+PLAN_TYPES_VALIDOS = ("fix", "feature", "remove", "refactor", "norma", "chore", "spike")
+
 # Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
 MODOS = ("review-plan", "derive", "implement")
 

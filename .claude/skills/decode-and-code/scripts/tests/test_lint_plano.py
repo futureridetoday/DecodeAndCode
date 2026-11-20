@@ -172,7 +172,11 @@ class TestPlanSizeAusenteOuInvalido(unittest.TestCase):
 
 class TestPlanoRealDoRepositorio(unittest.TestCase):
     def test_plano_0001_grande_aprova(self):
-        self.assertEqual(lint_plano.lint(PLANO_REAL_0001), [])
+        """Formato do porte limpo; a falta de `plan_type` é esperada — plano anterior ao 0012 (`D-03`)."""
+        self.assertEqual(
+            lint_plano.lint(PLANO_REAL_0001),
+            ["campo obrigatório ausente no frontmatter: plan_type"],
+        )
 
 
 class TestLintUnidadeAceitaTipoNorma(unittest.TestCase):
@@ -316,6 +320,43 @@ class TestVerificarUnidadeNorma(unittest.TestCase):
             self.assertEqual(estado, "verified")
             self.assertFalse(escreveu)
             self.assertEqual(unidade.read_text(encoding="utf-8"), original)
+
+
+class TestPlanType(unittest.TestCase):
+    """`plan_type` (plano 0012): ausente ou fora do vocabulário entra na lista, sem encerrar o resto."""
+
+    def _lint(self, plan_type: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(
+                Path(tmp), plan_size="médio", tarefas=True, plan_type=plan_type
+            )
+            return lint_plano.lint(_arquivo(dir_plano))
+
+    def test_plan_type_valido_nao_gera_problema(self):
+        self.assertEqual(self._lint("fix"), [])
+
+    def test_plan_type_ausente_entra_como_problema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="médio", tarefas=True)
+            arquivo = _arquivo(dir_plano)
+            texto = arquivo.read_text(encoding="utf-8").replace("plan_type: feature\n", "")
+            arquivo.write_text(texto, encoding="utf-8")
+            self.assertEqual(
+                lint_plano.lint(arquivo), ["campo obrigatório ausente no frontmatter: plan_type"]
+            )
+
+    def test_plan_type_fora_do_vocabulario_nomeia_o_vocabulario(self):
+        problemas = self._lint("perf")
+        self.assertEqual(len(problemas), 1, problemas)
+        self.assertIn("plan_type fora do vocabulário", problemas[0])
+        self.assertIn(str(lib.PLAN_TYPES_VALIDOS), problemas[0])
+
+    def test_plan_type_invalido_nao_encerra_as_demais_checagens(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dir_plano = fixtures.plano(Path(tmp), plan_size="médio", plan_type="perf")
+            problemas = lint_plano.lint(_arquivo(dir_plano))
+        self.assertTrue(any("plan_type" in p for p in problemas), problemas)
+        self.assertTrue(any("Tarefas" in p for p in problemas), problemas)
 
 
 if __name__ == "__main__":

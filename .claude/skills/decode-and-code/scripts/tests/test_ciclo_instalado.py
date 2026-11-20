@@ -115,6 +115,7 @@ module: ciclo-sintetico
 block: ""
 status: draft
 plan_size: grande
+plan_type: feature
 approved_by: Teste
 approved_at: 2026-08-28
 ---

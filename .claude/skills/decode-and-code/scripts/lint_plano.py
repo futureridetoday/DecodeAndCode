@@ -47,12 +47,27 @@ def lint(plano: Path) -> list[str]:
         for campo in ("plan_id", "status")
         if regioes.ler_campo(plano, campo) is None
     ]
+    problemas.extend(_checar_tipo(plano))
 
     corpo = _corpo(plano.read_text(encoding="utf-8"))
     problemas.extend(_checar_independencia(corpo, plan_size))
     problemas.extend(_checar_decomposicao(corpo, plan_size))
     problemas.extend(_checar_backlog(plano, plan_size))
     return problemas
+
+
+def _checar_tipo(plano: Path) -> list[str]:
+    """`plan_type` ausente, vazio ou fora do vocabulário — sem encerrar as demais checagens (0012).
+
+    Ao contrário de `plan_size`, o tipo não muda o schema do porte, então os outros blocos seguem
+    conferidos. Aspas são despidas como em `scaffold.aprovar`, para lint e gate concordarem.
+    """
+    plan_type = (regioes.ler_campo(plano, "plan_type") or "").strip(" \t\"'")
+    if not plan_type:
+        return ["campo obrigatório ausente no frontmatter: plan_type"]
+    if plan_type not in lib.PLAN_TYPES_VALIDOS:
+        return [f"plan_type fora do vocabulário {lib.PLAN_TYPES_VALIDOS}: {plan_type!r}"]
+    return []
 
 
 def _corpo(texto: str) -> str:

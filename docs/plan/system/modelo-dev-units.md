@@ -536,7 +536,7 @@ forçar um seria fingir um oráculo que não existe.
 `norma` inverte a exigência de `test:` — passa a ser obrigatório **vazio**, no mesmo padrão de
 vocabulário fechado que já vale para o próprio `unit_type` — e ganha dois campos novos no
 frontmatter, ao lado de `unit_type`: `approved_by` e `approved_at`. Mesmo par, mesmo papel dos
-campos homônimos do plano (*Aprovação — três campos declarados pelo humano*, mais abaixo): o humano
+campos homônimos do plano (*Aprovação — quatro campos declarados pelo humano*, mais abaixo): o humano
 declara, o script só confere que a declaração existe.
 
 `verificacao.verificar` fecha uma unidade `norma` quando `lint_unidade` está limpo **e**
@@ -619,19 +619,20 @@ resolve a ambiguidade de para onde mover o arquivo na aprovação.
 > O alvo define onde o plano e suas unidades **vivem**, não a fronteira do que o código **toca**. Uma
 > unidade pode tocar arquivos de qualquer lugar — é o campo *Arquivos* que declara isso.
 
-### Aprovação — três campos declarados pelo humano
+### Aprovação — quatro campos declarados pelo humano
 
 A etapa de aprovação (*Fluxo completo*, etapa 3) deixa um artefato: o plano declara, no
-frontmatter, os três campos que só o humano pode preencher. `scaffold.aprovar` recusa a ausência de
+frontmatter, os quatro campos que só o humano pode preencher. `scaffold.aprovar` recusa a ausência de
 qualquer um — antes de mover o plano, antes de escrever qualquer coisa, inclusive em `dry_run`.
 
 | Campo | Valor | O que o gate faz |
 |---|---|---|
 | `plan_size` | `pequeno` \| `médio` \| `grande` | Recusa ausente **e** recusa valor fora do vocabulário |
+| `plan_type` | um dos sete de *Tipo de plano*, abaixo | Recusa ausente **e** recusa valor fora do vocabulário |
 | `approved_by` | nome de quem aprovou | Recusa ausente |
 | `approved_at` | `YYYY-MM-DD` | Recusa ausente, e recusa o que não for data ISO |
 
-Recusar `plan_size` fora do vocabulário não é julgar o porte: o gate segue sem opinar se `grande`
+Recusar `plan_size` ou `plan_type` fora do vocabulário não é julgar o porte nem o tipo: o gate segue sem opinar se `grande`
 era a escolha certa para este plano — isso é julgamento humano. O que ele recusa é o valor que não é
 escolha nenhuma, no mesmo padrão de vocabulário fechado que `unit_type` já usa.
 
@@ -713,11 +714,46 @@ correção de oito linhas não pague a estrutura de um plano de vinte unidades:
 é promessa de projeção: se nenhum script escreve ali, ela mente para sempre. E `## Independência`
 num plano sem decomposição responde a uma pergunta que ninguém fez.
 
+O porte define o formato; o que muda no oráculo e em quem executa é do tipo (*Tipo de plano*,
+abaixo).
+
 `lint_plano.lint` verifica exatamente esta tabela — leitura, nunca escrita. `plan_size` ausente,
 vazio ou fora do vocabulário entra na lista de problemas devolvida, e `lint_plano` **nunca
 levanta**: quem recusa a aprovação por causa de `plan_size` é `scaffold.aprovar` (*Aprovação*,
 acima), que é o gate. `lint_plano` também roda sobre plano ainda no `_inbox`, antes de existir
 aprovação nenhuma para recusar.
+
+### Tipo de plano
+
+`plan_type` declara que tipo de trabalho o plano é, num vocabulário fechado de sete (plano
+`0012-add-plan-type`). Existe porque cada tipo muda algo a jusante — o oráculo de entrega, o que o
+`review-plan` confere e, no grande, o que o `derive` faz e quem executa; tipo que não mudasse nada
+seria só rótulo. O intake propõe o tipo, com o porquê, e o humano o confirma na aprovação, junto com
+o porte. `lint_plano` reporta ausência e valor fora do vocabulário sem encerrar as demais
+checagens — o tipo não muda o schema do porte —, e `scaffold.aprovar` recusa os dois.
+
+O que **não** varia por tipo: o pequeno e o médio **nunca** passam pelo `implement` — a sessão que
+orquestra executa (*Fluxo completo*). As colunas *derive* e *quem executa* agem só no **grande**;
+nos outros portes o tipo muda o review e o oráculo de entrega.
+
+| Tipo | Oráculo de entrega | Porte provável | `review-plan` confere | `derive` (grande) | Quem executa (grande) |
+|---|---|---|---|---|---|
+| `fix` | O teste que reproduz o defeito, vermelho antes do código e verde depois | pequeno, médio | O defeito está medido e citado (`L-XX`, `H-XX`, incidente) e o teste que o reproduz está declarado | A mesma unidade leva o teste que reproduz e a correção — unidade só com o teste terminaria vermelha, e o gate de saída nunca a marcaria `verified`; o critério de aceite exige a execução vermelha antes do código | `implement`; o relatório mostra a execução vermelha, e o gate de saída, a verde |
+| `feature` | Teste declarado de cada unidade — o ciclo de referência | médio, grande | `## Independência` auditada com peso | Sem regra própria | `implement` |
+| `remove` | Suíte verde e diff com saldo **negativo** de linhas | pequeno, médio | A evidência de não uso está citada (busca, medição) | As unidades declaram em `test:` a suíte existente que cobre o que sai | `implement`; a revisão da entrega mede o saldo com `git diff --numstat` |
+| `refactor` | Suíte verde **sem alterar teste existente** | médio | O gate A cita a dor medida | Nenhuma unidade lista teste existente em *Arquivos* | `implement`; a revisão da entrega confere `git diff --stat` vazio nos testes existentes |
+| `norma` | Aprovação humana (`approved_by`/`approved_at`) | pequeno | Lista as seções da norma que mudam; nenhum arquivo de código | Só unidades `unit_type: norma` | `implement` — o gate de saída fecha a unidade `norma` pela aprovação humana, sem rodar teste (*Tipo de unidade*) |
+| `chore` | O artefato produzido existe e funciona (zip, release, CI verde) | médio | O artefato e o modo de conferi-lo estão nomeados | Sem regra própria | `implement` |
+| `spike` | A medição ou a decisão registrada — huddle, `## Decisões` ou outro plano | pequeno | A pergunta está escrita e o destino da resposta, nomeado; nenhum código de produção | Não se deriva `spike` grande | — |
+
+O porte provável é **recomendação** para o intake propor, não regra: o lint não cruza tipo com porte.
+
+O tipo não troca o modelo: `model:` é frontmatter estático de cada skill (*Modelos*). O que o tipo
+decide, no grande, é se a unidade vai ao `implement` ou fica com a sessão que orquestra.
+
+No grande, todo tipo que passa pelo `implement` com `unit_type: dev` precisa de teste com runner no
+mapa `runners` (*Bootstrap → O que não cria*). O oráculo de um `chore` grande, como o zip que
+instala, entra embrulhado num teste desses.
 
 ---
 
@@ -824,6 +860,10 @@ No `_inbox`, apenas o nome semântico:
 | **Qualificador** | opcional: fase, camada, variante | `l3`, `impl` |
 
 Restrições: kebab-case, **inglês**, 2–5 tokens, ≤ 64 caracteres, sem conectivos.
+
+A intenção no nome **não declara o tipo** do plano, e não precisa coincidir com ele: o tipo é o
+campo `plan_type` (*Tipo de plano*), e nenhum script compara os dois — `0011-fix-norma-config-claims`
+é do tipo `norma`.
 
 > **Por que inglês, se a documentação é pt-BR.** O nome do plano vira o `module` do frontmatter e o
 > nome da pasta no disco — e o `.claude/CLAUDE.md` § *Idioma e Nomenclatura* classifica módulo como
@@ -1263,7 +1303,7 @@ O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
 |---|---|---|---|
 | 1 | Plano nasce | Opus | `docs/plan/_inbox/nome.md` |
 | 2 | Revisão | skill + script | Cinco checks |
-| 3 | **Aprovação** | **humano** | `plan_size`/`approved_by`/`approved_at` declarados no plano |
+| 3 | **Aprovação** | **humano** | `plan_size`/`plan_type`/`approved_by`/`approved_at` declarados no plano |
 | 4 | Número atribuído | script | Próximo livre em `_planos.md` — 4 dígitos |
 | 5 | Estrutura criada | script | `docs/plan/<core>/<NNNN>-<nome>/` |
 | 5b | Plano movido e prefixado | script | `_inbox/<nome>.md` → `<NNNN>-<nome>/<NNNN>-<nome>.md` |

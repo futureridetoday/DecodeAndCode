@@ -66,6 +66,7 @@ class TestAprovarCaminhoFeliz(unittest.TestCase):
             'block: ""\n'
             "status: draft\n"
             "plan_size: grande\n"
+            "plan_type: feature\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
@@ -194,6 +195,7 @@ class TestAprovarDryRun(unittest.TestCase):
             'block: ""\n'
             "status: draft\n"
             "plan_size: grande\n"
+            "plan_type: feature\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
@@ -258,6 +260,7 @@ class TestAprovarErros(unittest.TestCase):
             'block: ""\n'
             "status: draft\n"
             "plan_size: grande\n"
+            "plan_type: feature\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"
