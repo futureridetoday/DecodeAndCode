@@ -43,7 +43,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0012 | [add-plan-type](model/0012-add-plan-type.md) | model | add-plan-type | — | concluído | 2026-11-19 |
 | 0013 | [fix-setup-validation](model/0013-fix-setup-validation.md) | model | fix-setup-validation | — | concluído | 2026-11-19 |
 | 0014 | [fix-review-plan-claims](model/0014-fix-review-plan-claims.md) | model | fix-review-plan-claims | — | concluído | 2026-11-19 |
-| 0015 | [add-plan-size-advice](model/0015-add-plan-size-advice.md) | model | add-plan-size-advice | — | em desenvolvimento | 2026-11-20 |
+| 0015 | [add-plan-size-advice](model/0015-add-plan-size-advice.md) | model | add-plan-size-advice | — | concluído | 2026-11-20 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
