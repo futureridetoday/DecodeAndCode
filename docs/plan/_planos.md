@@ -39,6 +39,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0008 | [wire-huddle-cycle](model/0008-wire-huddle-cycle.md) | model | wire-huddle-cycle | — | concluído | 2026-11-15 |
 | 0009 | [onboard-new-project](model/0009-onboard-new-project/0009-onboard-new-project.md) | model | onboard-new-project | — | concluído | 2026-11-15 |
 | 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | concluído | 2026-11-17 |
+| 0011 | [fix-norma-config-claims](model/0011-fix-norma-config-claims.md) | model | fix-norma-config-claims | — | concluído | 2026-11-19 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

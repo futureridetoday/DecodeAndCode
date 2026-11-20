@@ -257,15 +257,16 @@ trabalho se perde — e porque não sei se é rascunho em curso ou sobra de algo
 
 A unidade 0009-03 fixa o valor "futureridetoday/DecodeAndCode" para marketplace.source.repo, mas empacotar.verificar recusa o nome do diretório do projeto de origem em qualquer arquivo do pacote, e config.json e lib.py viajam nele (test_empacotamento ficou vermelho). O executor gravou "futureridetoday/decodeandcode", que o GitHub resolve sem distinguir caixa, sem tocar empacotar.py (fora dos arquivos da unidade). Decidir: manter a caixa baixa, ou isentar a chave marketplace no verificador.
 
-### H-14 · `divergência` · 2026-11-19 · Claude
+### H-15 · `observação` · 2026-11-19 · Claude
 
-O runner de teste não pode ser declarado pelo projeto que instala, e só reconhece Python e vitest. A norma (modelo-dev-units.md, Bootstrap, "O que não cria") diz que o projeto declara o seu runner em `runners`, no `config.json`; o código diz outra coisa: `lib._config_path()` lê o `config.json` de dentro do plugin (irmão de `scripts/`), não do projeto. Num projeto consumidor, declarar um runner `.swift` exigiria editar a cópia instalada do plugin, que a próxima atualização sobrescreve. Além disso, `verificacao._execucao_incompleta` só detecta teste pulado ou zero teste na saída de `unittest` e `vitest`; com `xcodebuild test` ou `swift test`, skip passaria como verde. Efeito: o porte grande (`implement` + gate de saída) não fecha em projeto iOS nem em qualquer stack fora de `.py`/`.ts`; pequeno e médio funcionam. Achado lendo o código ao responder se o intake serve para um app iOS (sessão de 2026-11-19); não medido em projeto real. Decidir: config do projeto sobreposta à do plugin, e como generalizar a detecção de execução incompleta.
+O guardrail fundador (modelo-dev-units.md, Hierarquia estrutural → Guardrail fundador, e o check "Há erros de arquitetura?" do modo review) diz que o projeto declara um grafo acíclico entre cores e que um script conta referências contra a seta. Não há onde declarar o grafo nem script que o conte: `grep grafo` nos scripts do método não acha nada. É a mesma classe do H-14 (a norma promete mecanismo que o código não tem), mas fica fora do fix-norma-config-claims, cuja métrica cobre só afirmações sobre config.json. Achado no review-plan desse plano, 2026-11-19. Decidir: corrigir o texto (o check é julgamento inteiro até existir mecanismo) ou planejar o mecanismo.
 
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
 |---|---|---|---|
 | H-02 | `pergunta` | 2026-08-22 | **Confirmada, e a hipótese estava certa.** O plano decidia mecanismos e deixava três formas em aberto: a lista de princípios, o repositório onde vivia o entregável das unidades de prova, e onde vivia a configuração dos scripts. As três fecharam na revisão de 2026-08-22 — `D-03`, `D-11` e a reescrita das unidades `04` e `06`. A revisão achou cinco bloqueantes; três eram essa mesma coisa por ângulos diferentes |
+| H-14 | `divergência` | 2026-11-19 | plano [`0011-fix-norma-config-claims`](../../model/0011-fix-norma-config-claims.md) (norma corrigida; config de projeto como desenho adiado D-01 a D-03) |
 
 ---
 
