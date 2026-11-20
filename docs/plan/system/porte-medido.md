@@ -41,3 +41,4 @@ dependencies: []
 | [0010-fix-norma-entry-gate](../model/0010-fix-norma-entry-gate.md) | pequeno | — | não declarado | — | 2026-11-17 |
 | [0011-fix-norma-config-claims](../model/0011-fix-norma-config-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
 | [0012-add-plan-type](../model/0012-add-plan-type.md) | médio | 8 | não declarado | — | 2026-11-19 |
+| [0014-fix-review-plan-claims](../model/0014-fix-review-plan-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
