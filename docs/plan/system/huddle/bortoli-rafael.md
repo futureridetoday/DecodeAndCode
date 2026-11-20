@@ -261,6 +261,10 @@ A unidade 0009-03 fixa o valor "futureridetoday/DecodeAndCode" para marketplace.
 
 O guardrail fundador (modelo-dev-units.md, Hierarquia estrutural → Guardrail fundador, e o check "Há erros de arquitetura?" do modo review) diz que o projeto declara um grafo acíclico entre cores e que um script conta referências contra a seta. Não há onde declarar o grafo nem script que o conte: `grep grafo` nos scripts do método não acha nada. É a mesma classe do H-14 (a norma promete mecanismo que o código não tem), mas fica fora do fix-norma-config-claims, cuja métrica cobre só afirmações sobre config.json. Achado no review-plan desse plano, 2026-11-19. Decidir: corrigir o texto (o check é julgamento inteiro até existir mecanismo) ou planejar o mecanismo.
 
+### H-16 · `pergunta` · 2026-11-19 · Claude
+
+Na execução do 0012 declarei `plan_type: fix` nos dois esboços do `_inbox` sem decisão humana: `apply-plugin-review` (achados de revisão com solução, que também tem cara de `refactor` e `remove`, como o enxugamento do `ai-builder`) e `fix-setup-validation` (defeitos C1–C9 somados às melhorias M3–M7). O lint só pedia o campo presente. Confirmar ou trocar o tipo na aprovação de cada um; se `apply-plugin-review` mistura tipos, é sinal para dividi-lo.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
