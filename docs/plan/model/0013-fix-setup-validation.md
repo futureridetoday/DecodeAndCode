@@ -17,7 +17,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-18
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: Bortoli
@@ -109,7 +109,7 @@ script (C6, C8) ou onde uma linha de formato evita releitura medida (M3, M4).
 - [x] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
 - [x] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
 - [x] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
-- [ ] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
+- [x] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
 
 ## Oráculo
 
@@ -123,6 +123,25 @@ script (C6, C8) ou onde uma linha de formato evita releitura medida (M3, M4).
 | M3 | Teste de `descoberta.formatar` com trecho que contém `###`: o título fica dentro da cerca |
 | C4 | Sessão de setup no app com o pacote novo: a guideline de arquivo da raiz é gravada na primeira tentativa, sem recusa do `criar-guideline` |
 | C6 | Teste de `guardrail._avaliar`: `Edit` cujo `old_string` casa o detector e cujo `new_string` não casa — recusado antes da correção (vermelho), liberado depois (verde); com o `new_string` casando, segue recusado |
+
+## Remedição
+
+**Sessão no app desktop, 2026-11-20**, com o pacote do branch deste plano (versão `2.3.2-dev.0013`,
+de um marketplace local com o mesmo nome `future-ride-today`), num projeto Next.js novo com
+`.claude/` e `docs/` e sem a norma. Sessão em modo de permissão padrão; a contagem vem da transcrição
+e do `.claude/settings.local.json`, e a ausência de pedido na tela foi confirmada pelo humano.
+
+| Alvo | Antes (2.3.1) | Agora |
+|---|---|---|
+| C1 | Pergunta em prosa, 2º turno, 7 pedidos de `dc.py` | 1 turno; 11 perguntas pela ferramenta, inclusive as abertas; **0** pedidos de `dc.py` |
+| C2 | Bootstrap não proposto | Proposto, com "cria só o que falta e nunca sobrescreve" |
+| C3, M4 | `grep` no código do plugin; 2 `sed`/`grep` na norma | **0** `Read`/`Grep`; 28 dos 31 comandos de shell são `dc.py` |
+| C4 | `tailwind.config.ts` recusado | `**/tailwind.config.ts` gravado na primeira tentativa |
+| M7 | Fecho sem o que vai para o git | Listou o que vai para o git e o `settings.local.json` como pessoal |
+| `settings.local.json` | 7 entradas de `dc.py` | Só `Skill(decode-and-code:setup)` (`L-05`) |
+
+Não exercitados nesta rodada: **Editar** e guardrail — a pessoa respondeu "Nenhuma por ora" às
+decisões do time (`L-04`).
 
 ## Independência
 
@@ -139,6 +158,9 @@ a métrica do *Objetivo* só fecha com elas.
 |---|---|---|
 | L-01 | **`L-04` do `0009`, medida no app em 2026-11-19** | O `systemMessage` não aparece para a pessoa no app; só o modelo recebe o aviso. Nenhum item daqui muda, mas o setup no app depende de o modelo propô-lo |
 | L-02 | **Texto de skill não tem teste que reproduza o defeito** | O tipo `fix` pede o teste vermelho antes da correção. C1, C2, C3, C4, C7, C9, M5 e M7 mudam só texto de `SKILL.md`, e o comportamento que corrigem é do modelo numa sessão real: o oráculo deles é a remedição no app (*Oráculo*), medição reportada e não gate automático, como a *Validação ponta a ponta* do `0009`. Têm teste vermelho→verde só C6 e C8; M3 e M4 são melhoria, com teste novo; C5 e C9 têm checagem por `grep` e `lint_skill` além da sessão |
+| L-03 | **`setup-escopo --aplicar` imprime só "habilitado"** | Grava também o marketplace em `extraKnownMarketplaces`, e a saída não diz. Achado da remedição de 2026-11-20; não muda o fluxo |
+| L-04 | **M5 e o Editar sem medição em sessão** | A remedição não criou guardrail nem editou guideline. O modelo de detector do M5 foi provado só contra `guardrail._avaliar` (caminho absoluto e relativo barrados, fora da pasta liberado), não numa sessão |
+| L-05 | **`Skill(decode-and-code:setup)` pediu permissão** | Única entrada nova no `settings.local.json`. A sessão abriu com o comando como primeira mensagem, e o modelo chamou a ferramenta `Skill`; pela pessoa digitando o comando, não foi medido se o pedido aparece |
 
 ## Fonte
 
@@ -163,7 +185,7 @@ a métrica do *Objetivo* só fecha com elas.
 - [x] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
 - [x] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
 - [x] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
-- [ ] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
+- [x] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
 
-13 de 14 tarefas concluídas · atualizado em 2026-11-19
+14 de 14 tarefas concluídas · atualizado em 2026-11-19
 <!-- backlog:end -->
