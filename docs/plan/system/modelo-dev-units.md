@@ -723,6 +723,26 @@ levanta**: quem recusa a aprovação por causa de `plan_size` é `scaffold.aprov
 acima), que é o gate. `lint_plano` também roda sobre plano ainda no `_inbox`, antes de existir
 aprovação nenhuma para recusar.
 
+#### Quando cada porte cabe
+
+A tabela acima diz o que cada porte **carrega**; esta diz **quando** cada um cabe. O critério é o que
+o porte muda a jusante, e as perguntas se respondem em ordem — a primeira que responde sim decide:
+
+| # | Pergunta | Sim → |
+|---|---|---|
+| 1 | O trabalho é uma mudança só, sem passos que valha projetar? | `pequeno` — sem decomposição e sem backlog |
+| 2 | Há passos, mas uma sessão os executa em sequência, sem cold-start? | `médio` — `## Tarefas`, executadas pela sessão que orquestra (*Fluxo completo*) |
+| 3 | Alguma parte precisa de cold-start isolado — não cabe no contexto de uma sessão, ou precisa de teste próprio por unidade com gate de saída? | `grande` — unidades derivadas, `implement` e, entre sessões, `_handoff.md` |
+
+**Contagem é contexto, não critério.** Unidades, tarefas e arquivos se sobrepõem entre portes em
+*Porte medido*: um médio fechou com 14 tarefas, um grande com 6 unidades, e um médio de cerca de 20
+arquivos (`D-14` do `0008`) coube numa sessão. O *porte provável* de *Tipo de plano* é ponto de
+partida; as perguntas o confirmam ou corrigem.
+
+Quem as aplica é o `intake`, ao propor o porte, e o `review-plan`, ao recomendá-lo — sempre como
+aviso (*Avaliação de escopo → O que a avaliação não faz*). A declaração continua do humano, na
+aprovação.
+
 ### Tipo de plano
 
 `plan_type` declara que tipo de trabalho o plano é, num vocabulário fechado de sete (plano
@@ -829,7 +849,9 @@ original invertido, e pior, porque a coordenação passa a ser entre documentos 
 
 - **Não impõe teto de unidades.** Tamanho é reportado como contexto — unidades previstas, módulos e
   cores tocados — nunca como critério de reprovação. Um número sem base empírica competiria com o
-  teste de independência e dividiria planos coesos.
+  teste de independência e dividiria planos coesos. O porte recomendado, pelo critério de *Quando
+  cada porte cabe*, também é **aviso**, nunca bloqueante: a declaração de `plan_size` continua do
+  humano (*Aprovação*).
 - **Não bloqueia a aprovação.** Quem aprova é o humano; um check que recusa vira obstáculo a
   contornar. Quando a avaliação sinaliza divisão e a decisão é não dividir, **o plano registra o
   porquê** — mesmo princípio das lacunas `L-XX`. O custo de justificar por escrito já filtra o
@@ -971,7 +993,7 @@ Nem todos têm a mesma natureza; separar evita pedir julgamento onde cabe script
 
 | Check | Natureza | Como |
 |---|---|---|
-| **O plano precisa ser dividido?** | **Misto** | `concorrencia` checa `_planos.md`; julgamento relata o tamanho e audita a declaração de independência (ver *Avaliação de escopo*) |
+| **O plano precisa ser dividido?** | **Misto** | `concorrencia` checa `_planos.md`; julgamento relata o tamanho, recomenda o porte contra o declarado pelo critério de *Quando cada porte cabe* e audita a declaração de independência (ver *Avaliação de escopo*) |
 | Usou a documentação oficial adequada ao escopo? | Julgamento | O modelo abre cada fonte citada, confere que existe e avalia se é a certa |
 | Há erros de arquitetura? | Julgamento | A contagem contra a seta do grafo de cores (ver *Guardrail fundador*) ainda não tem mecanismo |
 | Há erros conceituais? | Julgamento | — |
