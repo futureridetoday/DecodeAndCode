@@ -17,7 +17,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-20
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: Bortoli

@@ -43,3 +43,4 @@ dependencies: []
 | [0012-add-plan-type](../model/0012-add-plan-type.md) | médio | 8 | não declarado | — | 2026-11-19 |
 | [0014-fix-review-plan-claims](../model/0014-fix-review-plan-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
 | [0013-fix-setup-validation](../model/0013-fix-setup-validation.md) | médio | 14 | não declarado | — | 2026-11-19 |
+| [0015-add-plan-size-advice](../model/0015-add-plan-size-advice.md) | pequeno | — | não declarado | — | 2026-11-20 |
