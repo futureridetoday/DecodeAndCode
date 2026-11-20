@@ -98,7 +98,7 @@ Campos exigidos:
 
 ```
 System           → o repositório
-  Core           → fronteira de ownership: declarada por projeto, em `config.json`
+  Core           → fronteira de ownership: declarada pelo plano, no campo `core:`
     Module       → capability de domínio: auth, catalog, mcp
       Block      → variação/extensão aditiva (opcional): login-google
         Unit     → fatia vertical mínima verificável: AU-02
@@ -1195,7 +1195,11 @@ Sem arquivo de template: o esqueleto vive em `_CONTEUDO_INICIAL`, como `porte.py
 ### O que não cria
 
 Runner de teste e `_inbox/_backlog.md` ficam de fora. São **instância do projeto que
-instala**, não estrutura do método — o projeto declara o seu runner em `runners`, no `config.json`.
+instala**, não estrutura do método — o projeto escreve o script do seu runner no caminho que o mapa
+`runners` declara, relativo à raiz. O mapa (extensão → script) vem do `config.json` do plugin, hoje
+`.py` e `.ts`; o projeto não o estende, e o gate de saída recusa teste de extensão fora dele
+(*"extensão de teste sem runner declarado"*). A config de projeto que o estenderia está desenhada e
+adiada no plano `0011-fix-norma-config-claims`, *Desenho adiado*.
 Criar um na casa de quem instala seria feature além do pedido, e é o invariante 2 aplicado à
 operação que mais tenta violá-lo: a que escreve num projeto alheio.
 
