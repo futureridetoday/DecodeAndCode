@@ -42,3 +42,4 @@ dependencies: []
 | [0011-fix-norma-config-claims](../model/0011-fix-norma-config-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
 | [0012-add-plan-type](../model/0012-add-plan-type.md) | médio | 8 | não declarado | — | 2026-11-19 |
 | [0014-fix-review-plan-claims](../model/0014-fix-review-plan-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
+| [0013-fix-setup-validation](../model/0013-fix-setup-validation.md) | médio | 14 | não declarado | — | 2026-11-19 |
