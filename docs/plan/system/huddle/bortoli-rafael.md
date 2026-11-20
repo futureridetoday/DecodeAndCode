@@ -265,6 +265,10 @@ O guardrail fundador (modelo-dev-units.md, Hierarquia estrutural → Guardrail f
 
 Na execução do 0012 declarei `plan_type: fix` nos dois esboços do `_inbox` sem decisão humana: `apply-plugin-review` (achados de revisão com solução, que também tem cara de `refactor` e `remove`, como o enxugamento do `ai-builder`) e `fix-setup-validation` (defeitos C1–C9 somados às melhorias M3–M7). O lint só pedia o campo presente. Confirmar ou trocar o tipo na aprovação de cada um; se `apply-plugin-review` mistura tipos, é sinal para dividi-lo.
 
+### H-17 · `observação` · 2026-11-19 · Claude
+
+Links relativos quebrados fora de plano, achados pela varredura do intake de fix-review-plan-claims (lint_skill._checar_links sobre docs/plan/**, 2026-11-19): `_inbox/_backlog.md` → `../../../scripts/move-md.py`; unidade `0001/19-planner-agent.md` → `../../system/huddle.md`; e o próprio arquivo de huddle `system/huddle/bortoli-rafael.md` → `../model/0001-.../0001-decode-and-code-foundation.md` e `../_inbox/_backlog.md` (profundidade errada depois da mudança para `huddle/`). Nenhum chega a uma revisão de plano, por isso não entraram no esboço — corrigir à mão ou descartar.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
