@@ -58,9 +58,11 @@ Argumentos: $ARGUMENTS
      Grave com `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<destino>"`.
    - **Promover** — a guideline ou o guardrail. Monte a proposta com a pessoa e mostre-a inteira;
      **só grave depois de ela aprovar na conversa**. Guideline: o JSON
-     `{nome, descricao, paths, corpo}` (e `aguardando: true` se o caminho ainda não existe) vai
-     por heredoc com `<<'FIM'` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline`. Guardrail: o
-     JSON `{regra, proibido, permitido}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`.
+     `{nome, descricao, paths, corpo}` (e `aguardando: true` se o caminho ainda não existe) para
+     `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline`. Guardrail: o JSON
+     `{regra, proibido, permitido}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`.
+     Heredoc com JSON o Claude Code recusa: grave o JSON com `Write` num arquivo fora do projeto e
+     passe-o com `<` — `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline < <arquivo>`.
      Código `1` traz o motivo da recusa: ajuste com a pessoa e tente de novo. Gravado, feche com
      `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<guideline ou guardrail>: <caminho>"`.
    - **Descartar** — com o motivo escrito: `huddle-fechar <H-XX> "descartada: <motivo>"`.

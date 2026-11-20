@@ -397,14 +397,22 @@ _SECOES_DO_METODO = (
     "Skills `review-plan`, `derive` e `implement`",
 )
 
+# `explicar <seção>`: as que o setup lia com `sed`/`grep` na norma (M4 do `0013`).
+_SECOES_AVULSAS = {
+    "huddle": "Huddle",
+    "camada-normativa": "Camada normativa",
+}
+
 
 def _explicar(args: argparse.Namespace) -> int:
-    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code."""
+    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code,
+    ou só a seção nomeada em `secao`."""
     import bootstrap
     import normas
 
     norma = bootstrap._fonte_norma()
-    for titulo, trecho in normas.secoes(norma, _SECOES_DO_METODO):
+    nomes = (_SECOES_AVULSAS[args.secao],) if args.secao else _SECOES_DO_METODO
+    for titulo, trecho in normas.secoes(norma, nomes):
         print(f"### {os.path.relpath(norma)} § {titulo}")
         print(trecho)
         print()
@@ -663,7 +671,12 @@ def _parser() -> argparse.ArgumentParser:
 
     comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
 
-    comando("explicar", "imprime, da norma, as seções que sustentam o método Decode → Code", _explicar)
+    p = comando(
+        "explicar",
+        "imprime, da norma, as seções que sustentam o método Decode → Code, ou só a seção nomeada",
+        _explicar,
+    )
+    p.add_argument("secao", nargs="?", choices=sorted(_SECOES_AVULSAS))
 
     comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
 

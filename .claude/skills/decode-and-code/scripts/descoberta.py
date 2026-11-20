@@ -9,6 +9,7 @@ classifica nada: classificar é da skill `setup`.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import guardrail
@@ -98,8 +99,16 @@ def descobrir(projeto: Path) -> dict:
 
 
 def formatar(resultado: dict) -> str:
-    """O texto do `dc.py descobrir`: um bloco `### <caminho>` por fonte e `## Já existe` no fim."""
-    blocos = [f"### {f['caminho']}\n{f['trecho'].rstrip()}\n" for f in resultado["fontes"]]
+    """O texto do `dc.py descobrir`: um bloco `### <caminho>` por fonte e `## Já existe` no fim.
+
+    O trecho vai numa cerca mais longa que qualquer sequência de crases dele, para que os títulos
+    e as cercas do próprio arquivo não se confundam com o `### <caminho>` (M3 do `0013`).
+    """
+    blocos = []
+    for f in resultado["fontes"]:
+        trecho = f["trecho"].rstrip()
+        cerca = "`" * max(3, max((len(r) for r in re.findall(r"`+", trecho)), default=0) + 1)
+        blocos.append(f"### {f['caminho']}\n{cerca}\n{trecho}\n{cerca}\n")
     e = resultado["existentes"]
     fim = ["## Já existe"]
     for rotulo, chave in (("Guidelines", "guidelines"), ("Princípios", "principios"), ("Guardrails", "guardrails")):
