@@ -41,6 +41,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | concluído | 2026-11-17 |
 | 0011 | [fix-norma-config-claims](model/0011-fix-norma-config-claims.md) | model | fix-norma-config-claims | — | concluído | 2026-11-19 |
 | 0012 | [add-plan-type](model/0012-add-plan-type.md) | model | add-plan-type | — | concluído | 2026-11-19 |
+| 0013 | [fix-setup-validation](model/0013-fix-setup-validation.md) | model | fix-setup-validation | — | em desenvolvimento | 2026-11-19 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
