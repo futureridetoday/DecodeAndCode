@@ -9,6 +9,7 @@ tags: [decode-and-code, plugin, revisao, empacotamento, verificacao]
 # alvo
 plan_id: ""
 plan_size: grande
+plan_type: fix
 core: model
 module: apply-plugin-review
 block: ""

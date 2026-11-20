@@ -231,6 +231,7 @@ class TestScaffoldSegueOAlvoDoConfig(unittest.TestCase):
             'block: ""\n'
             "status: draft\n"
             "plan_size: pequeno\n"
+            "plan_type: feature\n"
             "approved_by: Bortoli\n"
             "approved_at: 2026-08-24\n"
             "---\n\n"

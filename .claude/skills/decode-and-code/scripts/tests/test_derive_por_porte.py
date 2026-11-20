@@ -101,6 +101,7 @@ class _BaseComRaizTemporaria(unittest.TestCase):
             'block: ""\n'
             "status: draft\n"
             f"plan_size: {plan_size}\n"
+            "plan_type: feature\n"
             "approved_by: Teste\n"
             "approved_at: 2026-08-25\n"
             "---\n\n"

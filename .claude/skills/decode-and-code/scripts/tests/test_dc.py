@@ -126,6 +126,7 @@ plan_id: ""
 block: ""
 status: draft
 plan_size: grande
+plan_type: feature
 approved_by: Teste
 approved_at: 2026-10-15
 ---
