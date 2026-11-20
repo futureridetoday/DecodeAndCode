@@ -232,6 +232,21 @@ guidelines têm `paths_pending`; o hook não avisa mais; e o guardrail `cva-fora
 `systemMessage` apareceu nem quantas permissões foram pedidas, então a `L-04` segue aberta e a
 `L-17` não tem contagem; "sem erro" indica que nenhum pedido atrapalhou o fluxo.
 
+**Sessão no app desktop com o plugin instalado, relatada em 2026-11-18.** O humano rodou o setup com
+o 2.3.1 pelo app do Claude (sessão "Test Decode 2.3 via ui"), num projeto novo. Relato dele,
+confirmado em 2026-11-19:
+
+| Medida | Resultado |
+|---|---|
+| 1º turno | 49 passos sem nenhum pedido de permissão — a pré-aprovação da skill valeu |
+| Pergunta aberta | O modelo pediu em prosa a descrição do 2º guardrail, em vez da ferramenta de perguntas, e encerrou o turno |
+| 2º turno | A resposta abriu turno novo e a pré-aprovação caiu: **7** comandos `dc.py` pediram permissão, gravados no `.claude/settings.local.json` do projeto de teste — a contagem que faltava à `L-17` |
+| Leitura da norma | **2** pedidos de permissão por `sed`/`grep` na norma, para achar *Huddle* e *Camada normativa* |
+| Código do plugin | O modelo leu o código do plugin com `grep` para entender a saída do `setup-escopo` |
+
+O relato não diz onde o `systemMessage` apareceu no app, então a `L-04` segue aberta. Esses achados
+são a fonte de `C1`, `C3`, `M4` e `M7` do esboço `fix-setup-validation`.
+
 ## Independência
 
 **Um plano, em três fases, e não três planos.** A Fase 2 compõe as funções da Fase 1, e a Fase 3
