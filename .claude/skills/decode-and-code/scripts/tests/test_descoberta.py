@@ -73,6 +73,20 @@ class TestDescobrir(unittest.TestCase):
         self.assertIn("## Já existe", texto)
         self.assertIn("Guardrails: sem-env", texto)
 
+    def test_formatar_cerca_o_trecho_e_o_titulo_dele_fica_dentro(self):
+        # M3 do 0013: `### <caminho>` colidia com os títulos do próprio trecho (`L-12` do 0009).
+        trecho = "# Projeto\n\n### Uso\n\n```bash\nnpm run dev\n```\n"
+        texto = descoberta.formatar({
+            "fontes": [{"caminho": "README.md", "trecho": trecho}],
+            "existentes": {"guidelines": [], "principios": [], "guardrails": [], "aviso": None},
+        })
+        self.assertIn("### README.md\n````\n# Projeto", texto)
+        abre = texto.index("````\n")
+        fecha = texto.index("\n````\n", abre + 1)
+        self.assertLess(abre, texto.index("### Uso"))
+        self.assertLess(texto.index("### Uso"), fecha)
+        self.assertLess(texto.index("```bash"), fecha)
+
 
 if __name__ == "__main__":
     unittest.main()

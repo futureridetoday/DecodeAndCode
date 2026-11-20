@@ -96,19 +96,19 @@ script (C6, C8) ou onde uma linha de formato evita releitura medida (M3, M4).
 
 ## Tarefas
 
-- [ ] C1 — `setup/SKILL.md`: toda pergunta pela ferramenta de perguntas, aberta inclusive; turno único até a etapa 6
-- [ ] C2 — `setup/SKILL.md`, etapa 0: condição do bootstrap inclui a norma ausente; bootstrap nunca sobrescreve
-- [ ] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
-- [ ] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
-- [ ] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
+- [x] C1 — `setup/SKILL.md`: toda pergunta pela ferramenta de perguntas, aberta inclusive; turno único até a etapa 6
+- [x] C2 — `setup/SKILL.md`, etapa 0: condição do bootstrap inclui a norma ausente; bootstrap nunca sobrescreve
+- [x] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
+- [x] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
+- [x] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
 - [x] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
-- [ ] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
+- [x] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
 - [x] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
-- [ ] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
-- [ ] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
-- [ ] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
-- [ ] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
-- [ ] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
+- [x] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
+- [x] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
+- [x] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
+- [x] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
+- [x] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
 - [ ] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
 
 ## Oráculo
@@ -150,20 +150,20 @@ a métrica do *Objetivo* só fecha com elas.
 ## Backlog
 
 <!-- backlog:start -->
-- [ ] C1 — `setup/SKILL.md`: toda pergunta pela ferramenta de perguntas, aberta inclusive; turno único até a etapa 6
-- [ ] C2 — `setup/SKILL.md`, etapa 0: condição do bootstrap inclui a norma ausente; bootstrap nunca sobrescreve
-- [ ] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
-- [ ] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
-- [ ] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
+- [x] C1 — `setup/SKILL.md`: toda pergunta pela ferramenta de perguntas, aberta inclusive; turno único até a etapa 6
+- [x] C2 — `setup/SKILL.md`, etapa 0: condição do bootstrap inclui a norma ausente; bootstrap nunca sobrescreve
+- [x] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
+- [x] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
+- [x] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
 - [x] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
-- [ ] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
+- [x] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
 - [x] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
-- [ ] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
-- [ ] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
-- [ ] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
-- [ ] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
-- [ ] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
+- [x] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
+- [x] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
+- [x] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
+- [x] M5 — `setup/SKILL.md`: modelo de detector para "pasta X, conteúdo Y"
+- [x] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
 - [ ] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
 
-2 de 14 tarefas concluídas · atualizado em 2026-11-19
+13 de 14 tarefas concluídas · atualizado em 2026-11-19
 <!-- backlog:end -->
