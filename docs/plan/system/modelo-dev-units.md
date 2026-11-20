@@ -215,8 +215,8 @@ formaliza um invariante que já vale. Por ser **verificável por grep** — refe
 outro, contadas nas duas direções —, é o candidato natural a primeiro guardrail automatizado.
 
 > **O grafo é do projeto que instala, nunca do plugin.** O mecanismo — declarar o grafo e verificá-lo
-> por contagem — viaja; a instância não. Projeto que não declara grafo não ganha o check: ele volta a
-> ser julgamento, e o *Modo `review`* registra isso.
+> por contagem — **ainda não existe**: nenhum projeto consumidor declara grafo (gate A do plano
+> `0014-fix-review-plan-claims`). Até existir, o check de arquitetura do *Modo `review`* é julgamento.
 
 #### Guideline
 
@@ -971,14 +971,14 @@ Nem todos têm a mesma natureza; separar evita pedir julgamento onde cabe script
 
 | Check | Natureza | Como |
 |---|---|---|
-| **O plano precisa ser dividido?** | **Misto** | Script checa concorrência em `_planos.md` e reporta tamanho; julgamento audita a declaração de independência (ver *Avaliação de escopo*) |
-| Usou a documentação oficial adequada ao escopo? | **Misto** | Script confere se as fontes citadas existem; julgamento avalia se são as certas |
-| Há erros de arquitetura? | **Misto**, quando há grafo | Script conta referências contra a seta do grafo de cores (ver *Guardrail fundador*); sem grafo declarado, o check é julgamento inteiro |
+| **O plano precisa ser dividido?** | **Misto** | `concorrencia` checa `_planos.md`; julgamento relata o tamanho e audita a declaração de independência (ver *Avaliação de escopo*) |
+| Usou a documentação oficial adequada ao escopo? | Julgamento | O modelo abre cada fonte citada, confere que existe e avalia se é a certa |
+| Há erros de arquitetura? | Julgamento | A contagem contra a seta do grafo de cores (ver *Guardrail fundador*) ainda não tem mecanismo |
 | Há erros conceituais? | Julgamento | — |
 | Há lacunas em aberto? | Julgamento | Registrar como `L-XX` |
-| É compatível com os padrões do projeto? | **Misto** | Guardrails do `CLAUDE.md` são verificáveis; o resto é julgamento |
+| É compatível com os padrões do projeto? | **Misto** | `lint-plano` confere o formato por porte e o `plan_type`; os guardrails de `.claude/guardrails.json` se impõem em execução, pelo hook, e o julgamento confere que o plano não depende de violá-los nem às guidelines de `.claude/rules/` |
 
-Quatro dos seis têm parte automatizável. Sem extraí-la, a revisão vira leitura subjetiva — e leitura
+Dois dos seis têm parte automatizável. Sem extraí-la, a revisão vira leitura subjetiva — e leitura
 subjetiva é onde a variância volta.
 
 ### Os dois gates
@@ -1302,7 +1302,7 @@ O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
 | # | Etapa | Executor | Resultado |
 |---|---|---|---|
 | 1 | Plano nasce | Opus | `docs/plan/_inbox/nome.md` |
-| 2 | Revisão | skill + script | Cinco checks |
+| 2 | Revisão | skill + script | Seis checks |
 | 3 | **Aprovação** | **humano** | `plan_size`/`plan_type`/`approved_by`/`approved_at` declarados no plano |
 | 4 | Número atribuído | script | Próximo livre em `_planos.md` — 4 dígitos |
 | 5 | Estrutura criada | script | `docs/plan/<core>/<NNNN>-<nome>/` |
