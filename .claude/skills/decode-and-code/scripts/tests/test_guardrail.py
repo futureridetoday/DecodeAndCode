@@ -343,6 +343,28 @@ class TestFalhaAberta(unittest.TestCase):
         self.assertIsNotNone(aviso)
 
 
+class TestEditAvaliaSoOQueEntra(unittest.TestCase):
+    """C6 do plano `0013`: o `old_string` do `Edit` é o que sai do arquivo, não o que a escrita contém.
+
+    Medido nos três testes da validação do `0009` (`H-02`): o guardrail barrava o `Edit` que
+    removia o próprio problema, porque `_avaliar` juntava todo valor string de `tool_input`.
+    """
+
+    _REGRAS = [{"nome": "sem-cva", "ferramenta": "^(Write|Edit)$", "detector": r"cva\(",
+                "mensagem": "cva só no .styles.ts"}]
+
+    def _edit(self, old: str, new: str) -> dict:
+        return {"tool_name": "Edit",
+                "tool_input": {"file_path": "components/button.tsx", "old_string": old, "new_string": new}}
+
+    def test_edit_que_remove_o_problema_e_liberado(self):
+        self.assertIsNone(guardrail._avaliar(self._edit("const v = cva(", "const v = 1"), self._REGRAS))
+
+    def test_edit_que_introduz_o_problema_segue_recusado(self):
+        decisao = guardrail._avaliar(self._edit("const v = 1", "const v = cva("), self._REGRAS)
+        self.assertEqual(decisao["regra"], "sem-cva")
+
+
 class TestMecanismoSemInstancia(unittest.TestCase):
     """`guardrail.py` conhece a forma de uma regra, nunca o nome de um serviço ou projeto."""
 

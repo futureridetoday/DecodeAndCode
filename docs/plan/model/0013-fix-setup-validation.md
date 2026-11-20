@@ -101,9 +101,9 @@ script (C6, C8) ou onde uma linha de formato evita releitura medida (M3, M4).
 - [ ] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
 - [ ] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
 - [ ] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
-- [ ] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
+- [x] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
 - [ ] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
-- [ ] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
+- [x] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
 - [ ] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
 - [ ] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
 - [ ] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
@@ -155,9 +155,9 @@ a métrica do *Objetivo* só fecha com elas.
 - [ ] C3 — `setup/SKILL.md`, etapa 0: o que a saída do `setup-escopo` significa
 - [ ] C4 — `setup/SKILL.md`: arquivo da raiz como `**/<arquivo>`, sem chaves em `paths`
 - [ ] C5 — `huddle/SKILL.md`: JSON por arquivo e `<` no `criar-guideline` da promoção
-- [ ] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
+- [x] C6 — `guardrail._avaliar` ignora `old_string`, com o teste escrito antes da correção
 - [ ] C7 — `setup/SKILL.md`: cada pessoa instala uma vez por clone
-- [ ] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
+- [x] C8 — `setup.py`, `perfil`: sem linha em branco duplicada, com teste
 - [ ] C9 — `setup/SKILL.md`: seções de referência depois da etapa 6
 - [ ] M3 — `descoberta.formatar`: trecho em cerca de código, com teste
 - [ ] M4 — `dc.py explicar <seção>`, com teste; a `setup/SKILL.md` aponta o comando
@@ -165,5 +165,5 @@ a métrica do *Objetivo* só fecha com elas.
 - [ ] M7 — `setup/SKILL.md`, fecho: o que vai para o git e o que é pessoal
 - [ ] Remedir no app: uma sessão de setup completa, contando pedidos de permissão e leituras do plugin
 
-0 de 14 tarefas concluídas · atualizado em 2026-11-19
+2 de 14 tarefas concluídas · atualizado em 2026-11-19
 <!-- backlog:end -->

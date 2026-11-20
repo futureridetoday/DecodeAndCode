@@ -33,8 +33,10 @@ def _avaliar(payload: dict, regras: list[dict]) -> dict | None:
     `decidir`, não a esta função, transformar isso em liberação.
     """
     tool_name = payload.get("tool_name", "")
+    # `old_string` é o que o `Edit` tira do arquivo, não o que a escrita contém (`D-11` do `0009`).
     conteudo = "\n".join(
-        valor for valor in payload.get("tool_input", {}).values() if isinstance(valor, str)
+        valor for chave, valor in payload.get("tool_input", {}).items()
+        if isinstance(valor, str) and chave != "old_string"
     )
     for regra in regras:
         if re.search(regra["ferramenta"], tool_name) and re.search(regra["detector"], conteudo):

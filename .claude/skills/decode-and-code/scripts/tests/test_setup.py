@@ -113,6 +113,14 @@ class TestRecusas(_Case):
             self.registrar()
         self.assertEqual(self.texto(), antes)
 
+    def test_perfil_sem_linha_em_branco_duplicada(self):
+        # C8 do plano `0013`: medido nos três testes da validação do `0009`.
+        setup.perfil(self.arquivo, "a", "b", "c", "d")
+        setup.perfil(self.arquivo, "x", "y", "z", "w")
+        texto = self.texto()
+        self.assertNotIn("\n\n\n", texto)
+        self.assertIn("## Perfil\n\n- **Objetivo:** x\n", texto)
+
     def test_perfil_com_campo_vazio_nao_escreve(self):
         antes = self.texto()
         with self.assertRaises(ValueError):
