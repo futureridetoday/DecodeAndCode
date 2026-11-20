@@ -137,7 +137,7 @@ a métrica do *Objetivo* só fecha com elas.
 
 | # | Lacuna | Detalhe |
 |---|---|---|
-| L-01 | **`L-04` do `0009` segue aberta** | Onde o `systemMessage` aparece no app aguarda relato do humano; não muda nenhum item daqui |
+| L-01 | **`L-04` do `0009`, medida no app em 2026-11-19** | O `systemMessage` não aparece para a pessoa no app; só o modelo recebe o aviso. Nenhum item daqui muda, mas o setup no app depende de o modelo propô-lo |
 | L-02 | **Texto de skill não tem teste que reproduza o defeito** | O tipo `fix` pede o teste vermelho antes da correção. C1, C2, C3, C4, C7, C9, M5 e M7 mudam só texto de `SKILL.md`, e o comportamento que corrigem é do modelo numa sessão real: o oráculo deles é a remedição no app (*Oráculo*), medição reportada e não gate automático, como a *Validação ponta a ponta* do `0009`. Têm teste vermelho→verde só C6 e C8; M3 e M4 são melhoria, com teste novo; C5 e C9 têm checagem por `grep` e `lint_skill` além da sessão |
 
 ## Fonte
