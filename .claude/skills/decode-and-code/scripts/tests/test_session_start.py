@@ -13,12 +13,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import eventos
 import huddle
 import lib
 import regioes
@@ -151,6 +152,40 @@ class TestSetup(_Projeto):
         subprocess.run(["git", "config", "--unset", "user.name"], cwd=self.projeto, check=True, env=self.ambiente)
         regioes.escrever_campos(self.setup_md, {"completed_at": ""})
         self.assertAvisoSetup(self.saida())
+
+
+class TestAvisoDeErroDoLog(_Projeto):
+    """Plano 0018, `D-08`: `E-XX` sem resolução há 7 dias ou mais aparece no aviso de abertura."""
+
+    def setUp(self):
+        super().setUp()
+        regioes.escrever_campos(self.arquivo, {"last_huddle": date.today().isoformat()})
+        (self.projeto / "docs" / "plan" / "_planos.md").write_text("x\n", encoding="utf-8")
+
+    def erro_ha(self, dias: int) -> None:
+        eventos.registrar_erro(self.projeto, ["normas"], 2, "falhou", agora=datetime.now() - timedelta(days=dias))
+
+    def test_oito_dias_aparece_para_a_pessoa_e_o_modelo(self):
+        self.erro_ha(8)
+        saida = self.saida()
+        self.assertIn("E-01", saida["systemMessage"])
+        self.assertIn("log-resolver", saida["hookSpecificOutput"]["additionalContext"])
+
+    def test_seis_dias_e_silencioso(self):
+        self.erro_ha(6)
+        self.assertIsNone(self.saida())
+
+    def test_junto_com_o_huddle_atrasado(self):
+        regioes.escrever_campos(self.arquivo, {"last_huddle": self.ha_dias(10)})
+        self.erro_ha(8)
+        mensagem = self.saida()["systemMessage"]
+        self.assertIn("Huddle:", mensagem)
+        self.assertIn("E-01", mensagem)
+
+    def test_setup_pendente_continua_sozinho(self):
+        regioes.escrever_campos(self.setup_md, {"completed_at": ""})
+        self.erro_ha(8)
+        self.assertNotIn("E-01", self.saida()["systemMessage"])
 
 
 class TestSilencioEmErro(_Projeto):

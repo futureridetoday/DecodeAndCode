@@ -12,12 +12,13 @@ nenhuma sessão real nem com outro teste, e limpa o arquivo de log que criar.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from tempfile import gettempdir
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -93,9 +94,15 @@ class TestHooksReais(unittest.TestCase):
                 raise unittest.SkipTest(f"hook não encontrado: {cls.hooks / nome}")
 
     def setUp(self):
+        # Plano 0018: o anúncio vai para `.claude/log/eventos.jsonl` do projeto da sessão, que
+        # precisa ter bootstrap; antes ia para um arquivo por sessão em `gettempdir()`.
         self._sessao = f"teste-{uuid.uuid4().hex}"
-        self._log = Path(gettempdir()) / f"decode-and-code-activation-{self._sessao}.log"
-        self.addCleanup(self._log.unlink, missing_ok=True)
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self._projeto = Path(tmp.name)
+        (self._projeto / "docs" / "plan").mkdir(parents=True)
+        (self._projeto / "docs" / "plan" / "_planos.md").write_text("x\n", encoding="utf-8")
+        self._log = self._projeto / ".claude" / "log" / "eventos.jsonl"
 
     def _rodar(self, script: str, payload: dict) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -104,6 +111,7 @@ class TestHooksReais(unittest.TestCase):
             capture_output=True,
             text=True,
             timeout=10,
+            env={**os.environ, "CLAUDE_PROJECT_DIR": str(self._projeto)},
         )
 
     # -- instructions_loaded.py --------------------------------------------------

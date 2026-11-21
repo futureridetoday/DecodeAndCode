@@ -10,6 +10,7 @@ Os três sinais de `relatorio` são exercitados contra logs sintéticos de `fixt
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -158,6 +159,24 @@ class TestRelatorioSinais(unittest.TestCase):
         alvo = fixtures.rule(self.raiz, nome="principio", paths=None)
         log = fixtures.log_ativacao(self.raiz, entradas=[(str(alvo), "session_start")])
         linhas = activation_notice.relatorio(log)
+        self.assertTrue(linhas[0].endswith("— ok"), linhas[0])
+
+    def test_eventos_jsonl_filtrado_pela_sessao(self):
+        """Plano 0018: o log de ativação é o `eventos.jsonl` do projeto, com o `session_id`."""
+        alvo = fixtures.rule(self.raiz, nome="principio", paths=None)
+        anuncio = activation_notice.anunciar_instructions_loaded({"file_path": str(alvo), "load_reason": "session_start"})
+        log = self.raiz / "eventos.jsonl"
+        log.write_text(
+            "".join(json.dumps(e) + "\n" for e in (
+                {"classe": "ativacao", "sessao": "s1", "anuncio": anuncio},
+                {"classe": "comando", "comando": ["normas"]},
+                {"classe": "ativacao", "sessao": "s2", "anuncio": anuncio},
+            )),
+            encoding="utf-8",
+        )
+        self.assertEqual(len(activation_notice.relatorio(log)), 2)
+        linhas = activation_notice.relatorio(log, sessao="s1")
+        self.assertEqual(len(linhas), 1)
         self.assertTrue(linhas[0].endswith("— ok"), linhas[0])
 
 

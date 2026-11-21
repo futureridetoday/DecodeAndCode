@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -68,6 +69,7 @@ SUBCOMANDOS = (
     "huddle-lint",
     "huddle-lint-relatorio",
     "huddle-migrar",
+    "log-resolver",
     "descobrir",
     "setup-iniciar",
     "setup-perfil",
@@ -674,6 +676,81 @@ class TestCriarPrincipio(_ProjetoCase):
         r = self.dc("criar-principio", entrada=json.dumps({"nome": "x"}))
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestLog(_ProjetoCase):
+    """Plano 0018 — o `main` registra toda chamada e a saída 2 vira `E-XX`; `log-resolver` o apaga."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.erros = self.projeto / ".claude" / "log" / "erros"
+
+    def eventos(self) -> list[dict]:
+        arquivo = self.projeto / ".claude" / "log" / "eventos.jsonl"
+        return [json.loads(l) for l in arquivo.read_text(encoding="utf-8").splitlines()]
+
+    def test_toda_chamada_vira_evento(self):
+        self.assertEqual(self.dc("validar-nome", "nome-bom").returncode, 0)
+        self.assertEqual(self.eventos()[-1]["comando"], ["validar-nome"])
+        self.assertEqual(self.eventos()[-1]["codigo"], 0)
+
+    def test_excecao_mantem_stderr_e_grava_e_xx_com_traceback(self):
+        r = self.dc("normas", "nao-existe.md")
+        self.assertEqual(r.returncode, 2)
+        self.assertEqual(r.stderr.count("\n"), 1)
+        self.assertSemTraceback(r)
+        texto = (self.erros / "E-01.md").read_text(encoding="utf-8")
+        self.assertIn("Traceback", texto)
+        self.assertIn('alvo: "nao-existe.md"', texto)
+
+    def test_erro_de_uso_do_argparse_grava_e_xx(self):
+        r = self.dc("normas")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("argparse", (self.erros / "E-01.md").read_text(encoding="utf-8"))
+
+    def test_log_que_nao_escreve_nao_muda_a_saida(self):
+        shutil.rmtree(self.projeto / ".claude" / "log")
+        (self.projeto / ".claude" / "log").write_text("arquivo no lugar da pasta", encoding="utf-8")
+        r = self.dc("normas", "nao-existe.md")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_projeto_sem_bootstrap_nao_ganha_log(self):
+        outro = self.projeto.parent / "sem-metodo"
+        (outro / ".claude").mkdir(parents=True)
+        (outro / "docs").mkdir()
+        self.assertEqual(_executar(outro, "validar-nome", "nome-bom").returncode, 0)
+        self.assertFalse((outro / ".claude" / "log").exists())
+
+    def test_log_resolver(self):
+        self.dc("normas", "nao-existe.md")
+        recusado = self.dc("log-resolver", "E-01", "método")
+        self.assertEqual(recusado.returncode, 1, recusado.stderr)
+        self.assertTrue((self.erros / "E-01.md").exists())
+        self.assertEqual(self.dc("log-resolver", "E-01", "H-01").returncode, 1)
+        self.dc("huddle-iniciar")
+        self.dc("huddle-abrir", "pergunta", entrada="Por que o normas falhou?")
+        r = self.dc("log-resolver", "E-01", "H-01")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.erros / "E-01.md").exists())
+
+    def test_pauta_resume_o_log_e_concluir_apaga_so_o_que_ela_mostrou(self):
+        self.dc("huddle-iniciar")
+        self.dc("normas", "nao-existe.md")
+        pauta = self.dc("huddle-pauta")
+        self.assertIn("## Log desde", pauta.stdout)
+        self.assertIn("comando normas, saída 2: 1", pauta.stdout)
+        self.assertIn("E-01 aberto desde", pauta.stdout)
+        self.dc("validar-nome", "depois-da-pauta")
+        r = self.dc("huddle-concluir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        comandos = [e.get("comando") for e in self.eventos()]
+        self.assertNotIn(["normas"], comandos)
+        self.assertIn(["validar-nome"], comandos)
+        self.assertTrue((self.erros / "E-01.md").exists())
 
 
 class TestAdicionarGuardrail(_ProjetoCase):

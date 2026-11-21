@@ -52,7 +52,10 @@ Argumentos: $ARGUMENTS
 ## Sem argumento — conduzir o huddle
 
 1. **Pauta** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-pauta`. Mostre as abertas e um resumo
-   dos commits desde o último huddle: é o que a conversa percorre.
+   dos commits desde o último huddle: é o que a conversa percorre. Se houver `## Log`, resuma-o
+   também — comandos que reprovaram ou falharam, bloqueios de guardrail e os `E-XX` abertos. Um
+   `E-XX` se resolve com `python3 "${CLAUDE_SKILL_DIR}/dc.py" log-resolver <E-XX> "<destino>"`, com
+   destino `H-XX`, `L-XX` ou `descartado: <motivo>`.
 2. **Uma entrada por vez**, pela ferramenta de perguntas, com quatro saídas:
    - **Decidir** — o destino em texto livre (a norma, o `## Decisões` de um plano, uma resposta).
      Grave com `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<destino>"`.
@@ -67,7 +70,8 @@ Argumentos: $ARGUMENTS
      `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<guideline ou guardrail>: <caminho>"`.
    - **Descartar** — com o motivo escrito: `huddle-fechar <H-XX> "descartada: <motivo>"`.
    - **Manter** — continua aberta; nada a gravar.
-3. **Concluir** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-concluir`, que grava a data do huddle.
+3. **Concluir** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-concluir`, que grava a data do huddle
+   e apaga do log os eventos que a pauta mostrou.
 4. **Relatar** o que fechou, o que virou norma (com o caminho), o que foi descartado e o que ficou.
 
 Os critérios para guideline e guardrail — guideline nasce da stack e do objetivo, guardrail de
@@ -87,4 +91,4 @@ Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` li
 diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem
 tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando.
 Subcomandos: `huddle-pauta`, `huddle-fechar`, `huddle-concluir`, `huddle-abrir`, `huddle-migrar`,
-`criar-guideline` e `adicionar-guardrail`.
+`log-resolver`, `criar-guideline` e `adicionar-guardrail`.
