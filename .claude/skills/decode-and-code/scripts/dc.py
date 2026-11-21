@@ -339,11 +339,47 @@ def _log_resolver(args: argparse.Namespace) -> int:
         _, _, arquivo = _pessoa()
         texto = arquivo.read_text(encoding="utf-8") if arquivo.is_file() else ""
         abertas = set(re.findall(r"(?m)^###\s+(H-\d+)\b", huddle._secao(texto, "Abertas") or ""))
-    motivo = eventos.resolver(lib.repo_root(), args.id, args.destino, abertas)
+    raiz = lib.repo_root()
+    motivo = eventos.resolver(raiz, args.id, args.destino, abertas)
     if motivo:
         print(motivo)
         return REPROVADO
+    if args.destino.strip() == eventos.METODO:
+        # O `E-XX` não se reusa, então só um `M-XX` nasce dele (plano 0019, `D-05`).
+        id_metodo = next((m["id"] for m in eventos.metodos(raiz) if m["origem"] == args.id), "?")
+        print(f"{args.id} resolvido: {eventos.METODO}: {id_metodo} — revise com metodo-listar antes de levar")
+        return OK
     print(f"{args.id} resolvido: {args.destino.strip()}")
+    return OK
+
+
+def _metodo_listar(args: argparse.Namespace) -> int:
+    """Cada `M-XX` pendente, inteiro, para a pessoa revisar antes de levar (plano 0019, `D-06`)."""
+    import eventos
+    import lib
+
+    pendentes = eventos.metodos(lib.repo_root())
+    if not pendentes:
+        print("nenhum M-XX pendente")
+        return OK
+    for i, metodo in enumerate(pendentes):
+        if i:
+            print()
+        print(f"=== {metodo['id']} · {metodo['arquivo'].relative_to(lib.repo_root())}")
+        print(metodo["arquivo"].read_text(encoding="utf-8").rstrip())
+    return OK
+
+
+def _metodo_levado(args: argparse.Namespace) -> int:
+    """Apaga o `M-XX` que a pessoa levou ao repositório do método, com o lugar (plano 0019, `D-04`)."""
+    import eventos
+    import lib
+
+    motivo = eventos.levado(lib.repo_root(), args.id, args.onde)
+    if motivo:
+        print(motivo)
+        return REPROVADO
+    print(f"{args.id} levado: {' '.join(args.onde.split())}")
     return OK
 
 
@@ -369,7 +405,7 @@ def _huddle_abrir(args: argparse.Namespace) -> int:
     _, usuario, arquivo = _pessoa()
     texto = _ler_texto_do_stdin("huddle-abrir")
     try:
-        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario))
+        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario, evidencia=args.evidencia))
     except ValueError as erro:
         print(erro)
         return REPROVADO
@@ -377,15 +413,47 @@ def _huddle_abrir(args: argparse.Namespace) -> int:
 
 
 def _huddle_fechar(args: argparse.Namespace) -> int:
+    import eventos
     import huddle
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
+    if args.destino.strip() == eventos.METODO:
+        return _fechar_para_metodo(raiz, arquivo, args.id)
     try:
         huddle.fechar(arquivo, args.id, args.destino)
     except ValueError as erro:
         print(erro)
         return REPROVADO
     print(f"{args.id} fechada")
+    return OK
+
+
+def _fechar_para_metodo(raiz: Path, arquivo: Path, h_id: str) -> int:
+    """`huddle-fechar <H-XX> método` (plano 0019, `D-06`): o texto genérico vem do stdin, já
+    aprovado na conversa; o `M-XX` é gravado antes, e a entrada só fecha se ele existir."""
+    import eventos
+    import huddle
+
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        print(f"{h_id} não fechada: '{eventos.METODO}' lê do stdin o texto genérico, sem nada do projeto")
+        return REPROVADO
+    try:
+        aberta = huddle.entrada(arquivo, h_id)
+    except (ValueError, OSError):
+        print(f"{h_id} não está em '## Abertas'")
+        return REPROVADO
+    id_metodo = eventos.registrar_metodo(raiz, h_id, texto, aberta["evidencia"])
+    if id_metodo is None:
+        print(f"{h_id} não fechada: não foi possível gravar o M-XX em {eventos.dir_log(raiz) / 'metodo'}")
+        return REPROVADO
+    try:
+        huddle.fechar(arquivo, h_id, f"{eventos.METODO}: {id_metodo}")
+    except ValueError as erro:
+        (eventos.dir_log(raiz) / "metodo" / f"{id_metodo}.md").unlink(missing_ok=True)
+        print(erro)
+        return REPROVADO
+    print(f"{h_id} fechada: {eventos.METODO}: {id_metodo} — revise com metodo-listar antes de levar")
     return OK
 
 
@@ -434,6 +502,10 @@ def _resumo_log(raiz: Path, desde: str) -> list[str]:
     linhas += [
         f"- {id_erro} aberto desde {data[:10]}" + (f" — há {eventos.ALARME_DIAS} dias ou mais" if id_erro in atrasados else "")
         for id_erro, data in eventos.erros(raiz)
+    ]
+    linhas += [
+        f"- {m['id']} (de {m['origem']}) pendente desde {m['data'][:10]} — leve-o e rode metodo-levado"
+        for m in eventos.metodos(raiz)
     ]
     return linhas
 
@@ -772,19 +844,38 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("tipo")
     p.add_argument("--autor", help="padrão: a pessoa da sessão")
+    p.add_argument(
+        "--evidencia",
+        help="origem da entrada, opcional: E-XX, L-XX, 'bloqueio: <regra>', 'gate: <comando>' ou 'revisão: <plano>'",
+    )
 
-    p = comando("huddle-fechar", "fecha uma entrada aberta com o destino (1 se o id não está aberto)", _huddle_fechar)
+    p = comando(
+        "huddle-fechar",
+        "fecha uma entrada aberta com o destino (1 se o id não está aberto); com destino 'método', "
+        "lê do stdin o texto genérico e grava .claude/log/metodo/M-XX.md antes de fechar (1 sem texto)",
+        _huddle_fechar,
+    )
     p.add_argument("id")
     p.add_argument("destino")
 
     p = comando(
         "log-resolver",
         "apaga .claude/log/erros/<E-XX>.md com o destino que o resolveu: H-XX aberto no huddle da "
-        "pessoa, L-XX ou 'descartado: <motivo>' (1 se recusado, sem apagar)",
+        "pessoa, L-XX, 'método' (grava o M-XX antes) ou 'descartado: <motivo>' (1 se recusado, sem apagar)",
         _log_resolver,
     )
     p.add_argument("id")
     p.add_argument("destino")
+
+    comando("metodo-listar", "mostra inteiro cada .claude/log/metodo/M-XX.md pendente", _metodo_listar)
+
+    p = comando(
+        "metodo-levado",
+        "apaga o M-XX levado ao repositório do método e registra onde (1 se 'onde' vazio ou o M-XX não existe)",
+        _metodo_levado,
+    )
+    p.add_argument("id")
+    p.add_argument("onde")
 
     p = comando("huddle-concluir", "grava a data do huddle em last_huddle", _huddle_concluir)
     p.add_argument("--data", help="padrão: hoje")

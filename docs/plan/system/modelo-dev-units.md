@@ -1160,8 +1160,9 @@ projeto de antes, `<plan_root>/system/huddle.md`, passa para o da pessoa por `dc
 huddle não se partir em dois.
 
 **A propriedade que faz funcionar: nada ali é autoritativo enquanto está ali.** Uma entrada nasce
-aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, ou
-para o `## Decisões` de um plano — deixando uma linha em `## Fechadas` com data e destino. Não
+aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, para
+o `## Decisões` de um plano, ou para o repositório do método — deixando uma linha em `## Fechadas`
+com data e destino. Não
 resolvida, é descartada com o motivo escrito. Um arquivo onde nada fecha só cresce; o tamanho certo
 é o do que está genuinamente em aberto.
 
@@ -1184,25 +1185,45 @@ valor que não é escolha nenhuma, nunca a escolha.
 | `revisitar` | Alternativa rejeitada cuja premissa pode ter mudado |
 | `observação` | Algo notado que ainda não virou afirmação |
 
+**Evidência, opcional.** A entrada que tem origem a declara numa linha no **fim** do corpo, para a
+pauta seguir mostrando a primeira linha do texto:
+
+```
+Evidência: E-03
+```
+
+O prefixo vem de um vocabulário fechado de cinco, as origens que o ciclo de evolução da norma conta
+(plano `0018`, `D-09`): `E-XX` (erro do log), `L-XX` (lacuna de plano), `bloqueio: <regra>`,
+`gate: <comando>` e `revisão: <plano>`. Depois do prefixo, o texto é livre. Entra por
+`huddle-abrir <tipo> --evidencia "<origem>"`, que recusa, sem escrever, o valor que não começa por
+um dos cinco. Entrada sem a linha continua válida, como todas as de antes do plano `0019`.
+
 Entrada fechada vira uma linha em `## Fechadas`, colunas `# | Tipo | Fechada em | Destino`.
+
+**Destino `método`.** Quando a entrada é sobre o próprio método — defeito, lacuna ou regra do
+plugin, não do projeto —, `huddle-fechar <H-XX> método` lê do stdin um texto **genérico**, sem nome
+de plano, módulo ou trecho do projeto, redigido na conversa e aprovado pela pessoa. Grava antes o
+`M-XX` (seção *Log de uso → Feedback ao método*) e só então fecha, com destino `método: M-XX`. Sem
+texto, ou com a gravação falhando, recusa com 1 e a entrada continua aberta.
 
 O frontmatter carrega três campos do mecanismo: `owner` (a pessoa), `last_huddle` (a data do último
 huddle, gravada por `huddle-concluir`) e `reminder_days` (a cada quantos dias o aviso de abertura
 lembra; `0` desliga; ausente ou inválido vale 7). `huddle.lint_arquivo` recusa `reminder_days` que
 não seja inteiro maior ou igual a zero.
 
-**Comandos** — tudo que é formato é script, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir <tipo>`
-(texto no stdin; próximo `H-XX` e data de hoje), `huddle-fechar <H-XX> "<destino>"`,
-`huddle-concluir`, `huddle-pauta` (abertas e commits desde o último huddle, no máximo 50),
-`huddle-fecho`, `huddle-lint`, `huddle-lint-relatorio` (relatório no stdin) e `huddle-migrar`.
+**Comandos** — tudo que é formato é script, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir <tipo>
+[--evidencia "<origem>"]` (texto no stdin; próximo `H-XX` e data de hoje), `huddle-fechar <H-XX>
+"<destino>"` (com `método`, o texto genérico no stdin), `huddle-concluir`, `huddle-pauta` (abertas
+e commits desde o último huddle, no máximo 50), `huddle-fecho`, `huddle-lint`,
+`huddle-lint-relatorio` (relatório no stdin) e `huddle-migrar`.
 
 ### Despejo — o invariante verificável
 
 **O mesmo `H-XX` não pode estar em `## Abertas` e na tabela de `## Fechadas` ao mesmo tempo** — é a
 promessa central do arquivo, e sem verificação um huddle onde nada fecha só cresce sem que ninguém
 note. `huddle.lint_arquivo(caminho)` prova isso, lista vazia quando sã: cabeçalho de entrada bem
-formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, e nenhum `H-XX`
-presente nas duas seções.
+formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, nenhum `H-XX`
+presente nas duas seções, e linha `Evidência:` só com um dos cinco prefixos.
 
 **Os cinco gatilhos de escrita não têm o mesmo oráculo**: *o executor decidiu algo que o
 humano não decidiu*, *duas fontes discordam*, *algo foi contornado em vez de corrigido*, *uma
@@ -1215,8 +1236,10 @@ se deveria ter escrito.
 Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
 escrita na hora seria natimorta. No fecho de **qualquer uma das cinco skills** — `intake`,
 `review-plan`, `derive`, `implement` e `setup` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
-subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto, e termina o
-relatório com uma linha que declara quantas entradas novas houve, com os ids:
+subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto — com
+`--evidencia "<origem>"` quando a entrada nasce de um erro do log, de uma lacuna, de um bloqueio, de
+um gate ou de uma revisão (*Formato e vocabulário fechado*) —, e termina o relatório com uma linha
+que declara quantas entradas novas houve, com os ids:
 
 ```
 entradas novas no huddle: 2 (H-12, H-13)
@@ -1245,8 +1268,9 @@ dias, e `/decode-and-code:huddle`. Silencioso em qualquer outro caso e em qualqu
 escreve. Só alcança quem abre o Claude Code.
 
 **A conversa é a skill `huddle`**, invocada pela pessoa (`disable-model-invocation: true`): roda a
-pauta e percorre as abertas uma a uma — decidir (destino em texto livre), promover, descartar com o
-motivo, manter —, e termina com `huddle-concluir`. **Promover é simples:** a proposta de guideline
+pauta e percorre as abertas uma a uma — decidir (destino em texto livre, ou `método` quando a
+entrada é sobre o próprio método), promover, descartar com o motivo, manter —, e termina com
+`huddle-concluir`. **Promover é simples:** a proposta de guideline
 ou guardrail é montada com a pessoa, aprovada na conversa e gravada por `dc.py criar-guideline` ou
 `dc.py adicionar-guardrail` (seção *Camada normativa*); a entrada fecha com o caminho gravado como
 destino.
@@ -1287,6 +1311,7 @@ o git ignora, e só em projeto que adotou o método.
 | `bloqueio` | hook `PreToolUse`, só quando nega | a regra e o nome da ferramenta — **nunca** valor de `tool_input`, que pode ter segredo |
 | `ativacao` | hook `InstructionsLoaded` | o anúncio de `activation_notice` e o `session_id` |
 | `erro` e `resolvido` | `eventos.registrar_erro` e `eventos.resolver` | o `E-XX` e, no segundo, o destino |
+| `levado` | `eventos.levado` | o `M-XX` e onde ele foi levado |
 
 **Erros.** A saída 2 do `dc.py` — exceção de um handler ou erro de uso do `argparse` — é defeito do
 método, e só ela vira `.claude/log/erros/E-XX.md`: o comando, o código, o fim da saída com o
@@ -1299,8 +1324,29 @@ mesmo tempo, e reescrever perdia eventos (medido no `0018`). O evento sai quando
 `huddle-concluir` apaga os eventos até a última `huddle-pauta`, por posição — a única reescrita.
 Evento com mais de 14 dias some da leitura e sai do arquivo nessa mesma reescrita. O `E-XX`
 **só sai por resolução**, nunca por prazo: `dc.py log-resolver <E-XX> "<destino>"` o apaga, com
-destino `H-XX` aberto no huddle da pessoa, `L-XX` ou `descartado: <motivo>`. Com 7 dias sem
-resolução, ele aparece no aviso de abertura e na pauta do huddle. Nada se apaga à mão.
+destino `H-XX` aberto no huddle da pessoa, `L-XX`, `método` ou `descartado: <motivo>`. Com 7 dias
+sem resolução, ele aparece no aviso de abertura e na pauta do huddle. Nada se apaga à mão.
+
+**Feedback ao método.** O que é sobre o próprio método, e não sobre o projeto, espera em
+`.claude/log/metodo/M-XX.md` até a pessoa levá-lo ao repositório do método — à mão, porque o projeto
+pode ser de terceiro, e envio por script pediria credencial e rede (plano `0018`, `D-09`). Chegam
+lá dois caminhos:
+
+| Origem | Como | O que o `M-XX` leva |
+|---|---|---|
+| Entrada do huddle | `huddle-fechar <H-XX> método`, texto genérico no stdin (seção *Huddle*) | o texto, e a evidência só quando é `E-XX` ou `L-XX` — ids sem conteúdo; as outras três trazem nome do projeto e ficam de fora |
+| Erro do log | `log-resolver <E-XX> método` — nunca automático: o erro só sai por resolução | cópia mecânica: o subcomando sem os argumentos, o código, o fim da saída e a versão. Ficam de fora o `HEAD`, o working tree e o alvo — também de dentro da saída, onde vira `<alvo>` |
+
+Nos dois, o `M-XX` é gravado **antes** de a entrada fechar ou o `E-XX` sair; se a gravação falhar,
+nada fecha. A raiz do projeto vira `<projeto>`, e o diretório da pessoa vira `~`. Só isso é
+mecânico: nome de plano ou trecho de código no texto dependem da pessoa, que revisa cada `M-XX`
+inteiro, frontmatter e texto, em `dc.py metodo-listar`. A pauta do huddle lista os pendentes. O
+`M-XX` **só sai** por `dc.py metodo-levado <M-XX> "<onde>"`, que o apaga e registra o evento
+`levado`; nunca por prazo. A numeração vem de `metodo/.ultimo`, como a do `E-XX`. Como o log, o
+`M-XX` não é versionado e se perde com o clone — o preço de não pôr traceback no git.
+
+No próprio repositório do método, levar é abrir ali um `H-XX` ou registrar um `L-XX` no plano a que
+o defeito pertence, e então rodar `metodo-levado <M-XX> "<H-XX ou L-XX>"`.
 
 **Contrato.** O log nunca muda o que já existia: o código de saída e o stderr do `dc.py`, e a
 resposta dos hooks, são os mesmos com ou sem ele, e qualquer falha de escrita fica no próprio log.

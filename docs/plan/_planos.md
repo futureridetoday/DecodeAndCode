@@ -47,6 +47,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0016 | [setup-principles](model/0016-setup-principles.md) | model | setup-principles | — | concluído | 2026-11-20 |
 | 0017 | [setup-resources](model/0017-setup-resources.md) | model | setup-resources | — | concluído | 2026-11-20 |
 | 0018 | [norm-evolution-log](model/0018-norm-evolution-log.md) | model | norm-evolution-log | — | concluído | 2026-11-20 |
+| 0019 | [norm-evolution-evidence](model/0019-norm-evolution-evidence.md) | model | norm-evolution-evidence | — | concluído | 2026-11-21 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

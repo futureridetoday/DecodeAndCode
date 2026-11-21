@@ -1,6 +1,6 @@
 # huddle
 
-Versão 1.0.0 · skill
+Versão 1.1.0 · skill
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
@@ -8,9 +8,9 @@ Versão 1.0.0 · skill
 
 A skill que conduz o **huddle** da pessoa da sessão: a conversa sobre o que ainda não foi decidido.
 Percorre as entradas abertas do arquivo da pessoa, uma por vez, e para cada uma decide, promove a
-guideline ou guardrail, descarta com o motivo ou mantém. Com `registrar <texto>`, abre uma entrada
-nova. Roda em Opus e só por invocação explícita (`disable-model-invocation: true`): o huddle se abre
-quando a conversa acontece.
+guideline ou guardrail, leva ao método, descarta com o motivo ou mantém. Com `registrar <texto>`,
+abre uma entrada nova. Roda em Opus e só por invocação explícita (`disable-model-invocation: true`):
+o huddle se abre quando a conversa acontece.
 
 ## Problema que resolve
 
@@ -34,12 +34,21 @@ registrar, e a linha de fecho dos relatórios só provava que existia, não que 
   huddle foi há `reminder_days` dias ou mais.
 - **Promoção.** A proposta é montada com a pessoa, aprovada na conversa e gravada por
   `dc.py criar-guideline` ou `dc.py adicionar-guardrail`; a entrada fecha com o caminho gravado.
+- **Evidência.** A entrada pode declarar de onde veio, por `huddle-abrir <tipo> --evidencia
+  "<origem>"`: `E-XX`, `L-XX`, `bloqueio: <regra>`, `gate: <comando>` ou `revisão: <plano>`. Fica
+  numa linha `Evidência:` no fim do texto; é opcional.
+- **Feedback ao método.** Entrada sobre o próprio método fecha com `huddle-fechar <H-XX> método`,
+  com um texto genérico, aprovado por você, no stdin; um erro do log, com
+  `log-resolver <E-XX> método`. Os dois gravam `.claude/log/metodo/M-XX.md`, fora do git, com os
+  caminhos absolutos trocados por `<projeto>` e `~`. `dc.py metodo-listar` mostra cada um inteiro,
+  para você revisar antes de levar; `dc.py metodo-levado <M-XX> "<onde>"` o apaga depois que você
+  o levou ao repositório do método. A pauta lista os pendentes.
 
 ## Como usar
 
 - `/decode-and-code:huddle` — a conversa: pauta, entradas uma a uma, `huddle-concluir` no fim.
 - `/decode-and-code:huddle registrar <texto>` — abre uma entrada com você como autor; a skill
-  pergunta o tipo.
+  pergunta o tipo e, opcional, a evidência.
 - **Frequência do lembrete** — o campo `reminder_days` do seu arquivo (padrão 7; `0` desliga).
 - **Projeto com o arquivo único antigo** (`<plan_root>/system/huddle.md`) — rode
   `dc.py huddle-migrar` uma vez; até lá, registrar é recusado para o huddle não se partir em dois.
@@ -57,8 +66,9 @@ registrar, e a linha de fecho dos relatórios só provava que existia, não que 
 
 ## Fundamentação
 
-Norma, seção *Huddle*, em [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md). Plano
-[`0008-wire-huddle-cycle`](../plan/model/0008-wire-huddle-cycle.md).
+Norma, seções *Huddle* e *Log de uso*, em [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md).
+Planos [`0008-wire-huddle-cycle`](../plan/model/0008-wire-huddle-cycle.md) e
+[`0019-norm-evolution-evidence`](../plan/model/0019-norm-evolution-evidence.md).
 
 ## Limites
 
@@ -70,3 +80,6 @@ Norma, seção *Huddle*, em [`modelo-dev-units.md`](../plan/system/modelo-dev-un
 - **Virada de dia**: uma entrada aberta antes da meia-noite e declarada num relatório depois dela é
   recusada como antiga.
 - A pré-aprovação do `dc.py` vale só no turno da skill; fora dele, cada comando pede permissão.
+- **O envio ao método é manual.** O `M-XX` não sai do projeto sozinho e não é versionado: se perde
+  com o clone. A troca de caminhos é mecânica; nome de plano ou trecho de código no texto dependem
+  da sua revisão.

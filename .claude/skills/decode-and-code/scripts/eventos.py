@@ -13,6 +13,9 @@ efeito colateral que o `0001` recusa (*Materializar não pode ser automático*).
 - `erros/E-XX.md`: um por saída 2 do `dc.py` (`D-06`, `D-14`), com frontmatter e referências — o
   comando, o código, o fim da saída, o `HEAD`, o working tree e a versão do plugin. Sai só por
   `resolver`, nunca por prazo. A numeração vem de `erros/.ultimo`, que só cresce e que nada apaga.
+- `metodo/M-XX.md` (plano 0019): feedback ao método, à espera de ser levado ao repositório dele.
+  Nasce de `huddle-fechar <H-XX> método` ou de `resolver(<E-XX>, "método")`, com os caminhos
+  absolutos trocados (`D-06`), e sai só por `levado`. Numeração em `metodo/.ultimo`.
 
 Nenhuma função levanta para quem chama: o log nunca muda o código de saída nem a resposta de
 quem o usa. `resolver` devolve o motivo da recusa em vez de levantar.
@@ -34,7 +37,9 @@ ALARME_DIAS = 7
 LINHAS_DA_SAIDA = 40
 
 _ID_RE = re.compile(r"^E-(\d+)$")
-_DESTINO_RE = re.compile(r"^(H-\d+|L-\d+|descartado: .*\S.*)$")
+_METODO_RE = re.compile(r"^M-(\d+)$")
+_DESTINO_RE = re.compile(r"^(H-\d+|L-\d+|método|descartado: .*\S.*)$")
+METODO = "método"
 
 
 def _agora() -> datetime:
@@ -135,16 +140,25 @@ def _versao_plugin() -> str:
     return ""
 
 
-def _proximo_id(pasta: Path) -> str:
+def _proximo_id(pasta: Path, prefixo: str = "E") -> str:
     contador = pasta / ".ultimo"
     try:
         ultimo = int(contador.read_text(encoding="utf-8").strip())
     except (OSError, ValueError):
         ultimo = 0
-    existentes = [int(m.group(1)) for p in pasta.glob("E-*.md") if (m := _ID_RE.match(p.stem))]
+    padrao = re.compile(rf"^{prefixo}-(\d+)$")
+    existentes = [int(m.group(1)) for p in pasta.glob(f"{prefixo}-*.md") if (m := padrao.match(p.stem))]
     proximo = max([ultimo, *existentes]) + 1
     contador.write_text(f"{proximo}\n", encoding="utf-8")
-    return f"E-{proximo:02d}"
+    return f"{prefixo}-{proximo:02d}"
+
+
+def _frontmatter(campos: dict) -> str:
+    return "---\n" + "".join(f"{chave}: {json.dumps(valor, ensure_ascii=False)}\n" for chave, valor in campos.items()) + "---\n"
+
+
+def _cerca(texto: str) -> str:
+    return "`" * max(3, max((len(r) for r in re.findall(r"`+", texto)), default=0) + 1)
 
 
 def registrar_erro(
@@ -161,7 +175,7 @@ def registrar_erro(
         id_erro = _proximo_id(pasta)
 
         fim = "\n".join(saida.rstrip().splitlines()[-LINHAS_DA_SAIDA:])
-        cerca = "`" * max(3, max((len(r) for r in re.findall(r"`+", fim)), default=0) + 1)
+        cerca = _cerca(fim)
         modificados = [linha[3:] for linha in _git(projeto, "status", "--porcelain").splitlines() if len(linha) > 3]
         arquivos = "\n".join(f"- [`{c}`](../../../{c})" for c in modificados) or "(nenhum)"
         frontmatter = {
@@ -174,9 +188,8 @@ def registrar_erro(
             "versao": _versao_plugin(),
         }
         texto = (
-            "---\n"
-            + "".join(f"{chave}: {json.dumps(valor, ensure_ascii=False)}\n" for chave, valor in frontmatter.items())
-            + f"---\n\n# {id_erro} — saída {codigo} do dc.py\n\n"
+            _frontmatter(frontmatter)
+            + f"\n# {id_erro} — saída {codigo} do dc.py\n\n"
             + f"## Saída\n\n{cerca}\n{fim}\n{cerca}\n\n## Working tree\n\n{arquivos}\n"
         )
         (pasta / f"{id_erro}.md").write_text(texto, encoding="utf-8")
@@ -186,13 +199,18 @@ def registrar_erro(
         return None
 
 
-def _data_do_erro(arquivo: Path) -> str:
+def _campo(arquivo: Path, chave: str) -> str:
+    """Valor de `chave` no frontmatter que `_frontmatter` escreveu, ou `""`."""
     for linha in arquivo.read_text(encoding="utf-8").splitlines()[1:]:
-        if linha.startswith("data:"):
-            return json.loads(linha[len("data:"):].strip())
+        if linha.startswith(f"{chave}:"):
+            return str(json.loads(linha[len(chave) + 1:].strip()))
         if linha.strip() == "---":
             break
     return ""
+
+
+def _data_do_erro(arquivo: Path) -> str:
+    return _campo(arquivo, "data")
 
 
 def erros(projeto: Path) -> list[tuple[str, str]]:
@@ -218,20 +236,134 @@ def atrasados(projeto: Path, hoje: date, dias: int = ALARME_DIAS) -> list[str]:
 def resolver(projeto: Path, id_erro: str, destino: str, abertas: set[str] | None = None) -> str | None:
     """Apaga `erros/<id_erro>.md` e registra o evento `resolvido`. Devolve `None`, ou o motivo da
     recusa — e então nada é apagado. `destino` é `H-XX` (presente em `abertas`, quando dado),
-    `L-XX` ou `descartado: <motivo>` (`D-08`, `D-15`)."""
+    `L-XX`, `método` ou `descartado: <motivo>` (`D-08`, `D-15`).
+
+    Com `método` (plano 0019, `D-05`), o `M-XX` é gravado a partir do `E-XX` **antes** de o apagar;
+    se a gravação falhar, o `E-XX` fica. O evento leva o destino `método: M-XX`."""
     if not _ID_RE.match(id_erro):
         return f"id fora do formato E-XX: {id_erro!r}"
     destino = destino.strip()
     if not _DESTINO_RE.match(destino):
-        return f"destino fora do vocabulário (H-XX, L-XX ou 'descartado: <motivo>'): {destino!r}"
+        return f"destino fora do vocabulário (H-XX, L-XX, método ou 'descartado: <motivo>'): {destino!r}"
     if destino.startswith("H-") and abertas is not None and destino not in abertas:
         return f"{destino} não está entre as abertas do huddle da pessoa"
     arquivo = dir_log(projeto) / "erros" / f"{id_erro}.md"
     if not arquivo.is_file():
         return f"erro não encontrado: {id_erro}"
+    if destino == METODO:
+        id_metodo = _metodo_do_erro(projeto, arquivo)
+        if id_metodo is None:
+            return f"não foi possível gravar o M-XX de {id_erro} — o {id_erro} continua aberto"
+        destino = f"{METODO}: {id_metodo}"
     try:
         arquivo.unlink()
     except OSError as erro:
         return f"não foi possível apagar {arquivo}: {erro}"
     registrar(projeto, {"classe": "resolvido", "id": id_erro, "destino": destino})
+    return None
+
+
+# Feedback ao método — plano 0019.
+
+
+def sem_caminhos(texto: str, projeto: Path) -> str:
+    """Troca a raiz do projeto por `<projeto>` e o diretório da pessoa por `~` (`D-06`).
+
+    Só caminho absoluto, mecanicamente: nome de plano ou trecho de código continuam no texto, e a
+    pessoa os revisa no `metodo-listar` (`L-03`). O mais longo primeiro, porque o projeto costuma
+    morar dentro da home; cada um na forma dada e na resolvida (`/var` e `/private/var`)."""
+    trocas: dict[str, str] = {}
+    for caminho, marca in ((Path.home(), "~"), (Path(projeto), "<projeto>")):
+        for forma in {str(caminho), str(caminho.resolve())}:
+            if len(forma) > 1:
+                trocas[forma] = marca
+    for forma in sorted(trocas, key=len, reverse=True):
+        texto = re.sub(re.escape(forma) + r"(?![\w.-])", lambda _m, m=trocas[forma]: m, texto)
+    return texto
+
+
+def registrar_metodo(
+    projeto: Path, origem: str, texto: str, evidencia: str = "", versao: str | None = None,
+    agora: datetime | None = None,
+) -> str | None:
+    """Escreve o próximo `metodo/M-XX.md` e devolve o id, ou `None` quando o projeto não tem o
+    método ou a escrita falhou. Nunca levanta.
+
+    `evidencia` só entra no frontmatter quando é `E-XX` ou `L-XX` — ids sem conteúdo; as outras
+    três levam nome do projeto e ficam de fora (`D-04`). O texto passa por `sem_caminhos`."""
+    try:
+        if not ativo(projeto):
+            return None
+        pasta = _preparar(projeto) / "metodo"
+        pasta.mkdir(exist_ok=True)
+        id_metodo = _proximo_id(pasta, "M")
+        id_evidencia = re.match(r"[EL]-\d+\b", evidencia.strip())
+        campos = {
+            "id": id_metodo,
+            "origem": origem,
+            "data": (agora or _agora()).isoformat(),
+            "versao": _versao_plugin() if versao is None else versao,
+            "evidencia": id_evidencia.group(0) if id_evidencia else "",
+        }
+        corpo = sem_caminhos(texto.strip(), projeto)
+        (pasta / f"{id_metodo}.md").write_text(
+            _frontmatter(campos) + f"\n# {id_metodo} — de {origem}\n\n{corpo}\n", encoding="utf-8"
+        )
+        return id_metodo
+    except Exception:
+        return None
+
+
+def _metodo_do_erro(projeto: Path, arquivo: Path) -> str | None:
+    """O `M-XX` mecânico de um `E-XX`: o subcomando sem os argumentos, o código, o fim da saída e a
+    versão. Ficam de fora o alvo, o `HEAD` e o working tree (`D-06`) — o alvo também de dentro da
+    saída, onde a mensagem da exceção o repete, trocado por `<alvo>`."""
+    try:
+        conteudo = arquivo.read_text(encoding="utf-8")
+        m = re.search(r"(?ms)^## Saída\n\n(`{3,})\n(.*?)\n\1\n", conteudo)
+        saida = m.group(2) if m else ""
+        alvo = _campo(arquivo, "alvo").strip()
+        if alvo:
+            saida = re.sub(r"(?<![\w.-])" + re.escape(alvo) + r"(?![\w.-])", "<alvo>", saida)
+        subcomando = (_campo(arquivo, "comando").split() or ["?"])[0]
+        cerca = _cerca(saida)
+        texto = (
+            f"Saída {_campo(arquivo, 'codigo')} do `dc.py {subcomando}`.\n\n"
+            f"## Saída\n\n{cerca}\n{saida}\n{cerca}"
+        )
+        return registrar_metodo(projeto, arquivo.stem, texto, versao=_campo(arquivo, "versao"))
+    except Exception:
+        return None
+
+
+def metodos(projeto: Path) -> list[dict]:
+    """`{"id", "origem", "data", "arquivo"}` de cada `M-XX` pendente, em ordem de id. Nunca levanta."""
+    try:
+        achados = []
+        for arquivo in (dir_log(projeto) / "metodo").glob("M-*.md"):
+            m = _METODO_RE.match(arquivo.stem)
+            if m:
+                achados.append((int(m.group(1)), {"id": arquivo.stem, "origem": _campo(arquivo, "origem"),
+                                                   "data": _campo(arquivo, "data"), "arquivo": arquivo}))
+        return [dados for _, dados in sorted(achados, key=lambda par: par[0])]
+    except Exception:
+        return []
+
+
+def levado(projeto: Path, id_metodo: str, onde: str) -> str | None:
+    """Apaga `metodo/<id_metodo>.md` e registra o evento `levado` com `onde`. Devolve `None`, ou o
+    motivo da recusa — e então nada é apagado. É a única saída de um `M-XX` (`D-04`)."""
+    if not _METODO_RE.match(id_metodo):
+        return f"id fora do formato M-XX: {id_metodo!r}"
+    onde = " ".join(onde.split())
+    if not onde:
+        return "diga onde o M-XX foi levado: o H-XX, o L-XX ou o lugar no repositório do método"
+    arquivo = dir_log(projeto) / "metodo" / f"{id_metodo}.md"
+    if not arquivo.is_file():
+        return f"M-XX não encontrado: {id_metodo}"
+    try:
+        arquivo.unlink()
+    except OSError as erro:
+        return f"não foi possível apagar {arquivo}: {erro}"
+    registrar(projeto, {"classe": "levado", "id": id_metodo, "onde": onde})
     return None
