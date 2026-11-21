@@ -20,10 +20,10 @@ import lib
 import regioes
 
 TIPOS = ("guideline", "guardrail", "princípio")
-ORIGENS = ("stack", "decisão do time", "existente")
+ORIGENS = ("stack", "decisão do time", "existente", "proposto")
 RESULTADOS = ("aceita", "rejeitada", "existente")
 
-_SECAO_RE = r"(?ms)^##\s+{}\s*$\n(.*?)(?=^##\s+|\Z)"
+_SECAO_RE = r"(?ms)^##\s+{}[ \t]*$\n(.*?)(?=^##\s+|\Z)"
 _CHAVE_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 _DATA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _LINHA_TABELA_RE = re.compile(r"(?m)^\|.*\|[ \t]*$\n?")

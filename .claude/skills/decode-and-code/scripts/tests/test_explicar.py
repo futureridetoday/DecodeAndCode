@@ -46,5 +46,53 @@ class TestSecoes(unittest.TestCase):
                 self.assertIn(faltando, str(ctx.exception))
 
 
+class TestExplicarSecao(unittest.TestCase):
+    """M4 do 0013: `explicar <seção>` imprime só aquela seção, e o modelo não abre a norma com `sed`."""
+
+    def setUp(self):
+        # `dc.main` roda aqui no processo, a partir do checkout: `lib.repo_root()` acha este
+        # repositório, e o log do plano 0018 gravaria nele. O log não é o que este teste prova.
+        from unittest import mock
+
+        patcher = mock.patch.object(dc, "_registrar")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _rodar(self, *argv: str) -> str:
+        import contextlib
+        import io
+
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            codigo = dc.main(["explicar", *argv])
+        self.assertEqual(codigo, 0)
+        return saida.getvalue()
+
+    def test_cada_secao_nomeada_imprime_um_bloco_com_o_titulo_dela(self):
+        for nome, prefixo in dc._SECOES_AVULSAS.items():
+            with self.subTest(nome=nome):
+                texto = self._rodar(nome)
+                cabecalhos = [l for l in texto.splitlines() if l.startswith("### ") and " § " in l]
+                self.assertEqual(len(cabecalhos), 1, cabecalhos)
+                self.assertTrue(texto.startswith(cabecalhos[0]))
+                self.assertIn(f"§ {prefixo}", cabecalhos[0].replace("3. ", ""))
+
+    def test_huddle_e_camada_normativa_existem(self):
+        self.assertEqual(set(dc._SECOES_AVULSAS), {"huddle", "camada-normativa"})
+
+    def test_sem_secao_continua_imprimindo_as_quatro_do_metodo(self):
+        texto = self._rodar()
+        cabecalhos = [l for l in texto.splitlines() if l.startswith("### ") and " § " in l]
+        self.assertEqual(len(cabecalhos), len(dc._SECOES_DO_METODO))
+
+    def test_secao_desconhecida_e_erro_de_uso(self):
+        import contextlib
+        import io
+
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as ctx:
+            dc.main(["explicar", "nao-existe"])
+        self.assertEqual(ctx.exception.code, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

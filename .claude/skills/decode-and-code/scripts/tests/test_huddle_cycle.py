@@ -212,6 +212,48 @@ class TestFechar(_ProjetoComHuddle):
         self.assertIn("texto livre", self.secao("Notas"))
 
 
+class TestEvidencia(_ProjetoComHuddle):
+    """Plano 0019, `D-07` — evidência opcional, prefixo de vocabulário fechado, no fim do corpo."""
+
+    def test_cinco_prefixos_aceitos(self):
+        for valor in ("E-03", "L-04 do 0017", "bloqueio: sem-segredo", "gate: lint-plano", "revisão: 0019"):
+            with self.subTest(valor=valor):
+                self.assertTrue(huddle.evidencia_valida(valor))
+
+    def test_fora_do_vocabulario_recusado(self):
+        for valor in ("palpite", "E-", "E-3x", "bloqueio:", "gate:   ", "H-01", "E-03\nL-01"):
+            with self.subTest(valor=valor):
+                self.assertFalse(huddle.evidencia_valida(valor))
+
+    def test_linha_no_fim_do_corpo_e_a_pauta_mostra_o_texto(self):
+        huddle.abrir(self.arquivo, "padrão", "Primeira linha.\n\nSegunda.", "ana", evidencia="E-03")
+        self.assertEqual(huddle.entrada(self.arquivo, "H-01")["evidencia"], "E-03")
+        self.assertTrue(huddle.entrada(self.arquivo, "H-01")["texto"].endswith("Evidência: E-03"))
+        [aberta] = huddle.pauta(self.arquivo)["abertas"]
+        self.assertTrue(aberta["texto"].startswith("Primeira linha."))
+        self.assertEqual(huddle.lint_arquivo(self.arquivo), [])
+
+    def test_evidencia_invalida_recusada_sem_escrever(self):
+        antes = self.texto()
+        with self.assertRaises(ValueError):
+            huddle.abrir(self.arquivo, "padrão", "x", "ana", evidencia="palpite")
+        self.assertEqual(self.texto(), antes)
+
+    def test_sem_evidencia_continua_como_antes(self):
+        huddle.abrir(self.arquivo, "pergunta", "x", "ana")
+        self.assertEqual(huddle.entrada(self.arquivo, "H-01")["evidencia"], "")
+        self.assertNotIn("Evidência:", self.texto())
+
+    def test_lint_recusa_linha_fora_do_vocabulario(self):
+        huddle.abrir(self.arquivo, "pergunta", "x\n\nEvidência: palpite", "ana")
+        problemas = huddle.lint_arquivo(self.arquivo)
+        self.assertTrue(any("H-01: evidência" in p for p in problemas), problemas)
+
+    def test_entrada_que_nao_esta_aberta(self):
+        with self.assertRaises(ValueError):
+            huddle.entrada(self.arquivo, "H-09")
+
+
 class TestConcluir(_ProjetoComHuddle):
     def test_grava_last_huddle(self):
         huddle.concluir(self.arquivo, "2026-11-15")

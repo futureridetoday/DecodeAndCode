@@ -25,6 +25,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "decode-and-code" / "scripts"))
+import eventos  # noqa: E402
 import huddle  # noqa: E402
 import setup  # noqa: E402
 
@@ -52,11 +53,8 @@ def _aviso_setup() -> dict:
     }
 
 
-def aviso(projeto: Path, hoje: date) -> dict | None:
-    """O JSON do hook, ou `None` quando não há o que lembrar. Pode levantar — `main` silencia."""
-    if _setup_pendente(projeto):
-        return _aviso_setup()
-
+def _aviso_huddle(projeto: Path, hoje: date) -> tuple[str, str] | None:
+    """`(systemMessage, additionalContext)` do huddle atrasado, ou `None`."""
     arquivo = huddle.caminho(projeto, huddle.usuario(projeto))
     if not arquivo.is_file():
         return None
@@ -75,18 +73,47 @@ def aviso(projeto: Path, hoje: date) -> dict | None:
     if dias < dias_lembrete:
         return None
 
-    texto = (
+    return (
         f"Huddle: {abertas} entrada(s) aberta(s), último huddle há {dias} dias. "
-        "Rode /decode-and-code:huddle."
+        "Rode /decode-and-code:huddle.",
+        f"O huddle da pessoa desta sessão tem {abertas} entrada(s) aberta(s) e o último foi há "
+        f"{dias} dias. Se fizer sentido, sugira /decode-and-code:huddle.",
     )
+
+
+def _aviso_erros(projeto: Path, hoje: date) -> tuple[str, str] | None:
+    """Os `E-XX` do log sem resolução há `eventos.ALARME_DIAS` dias ou mais (plano 0018, `D-08`)."""
+    ids = eventos.atrasados(projeto, hoje)
+    if not ids:
+        return None
+    lista = ", ".join(ids)
+    return (
+        f"Log: {len(ids)} erro(s) do método sem resolução há {eventos.ALARME_DIAS} dias ou mais ({lista}).",
+        f"Há {len(ids)} erro(s) do decode-and-code em .claude/log/erros/ sem resolução há "
+        f"{eventos.ALARME_DIAS} dias ou mais ({lista}). Sugira olhá-los e resolvê-los com dc.py log-resolver.",
+    )
+
+
+def aviso(projeto: Path, hoje: date) -> dict | None:
+    """O JSON do hook, ou `None` quando não há o que lembrar. Pode levantar — `main` silencia.
+
+    O setup pendente vem sozinho, como antes; depois dele, o huddle atrasado e os `E-XX` atrasados
+    do log saem juntos, cada um quando há o que dizer.
+    """
+    if _setup_pendente(projeto):
+        return _aviso_setup()
+    try:
+        parte_huddle = _aviso_huddle(projeto, hoje)
+    except Exception:
+        parte_huddle = None  # sem `user.name` ou huddle ilegível: o alarme do log ainda sai
+    partes = [parte for parte in (parte_huddle, _aviso_erros(projeto, hoje)) if parte]
+    if not partes:
+        return None
     return {
-        "systemMessage": texto,
+        "systemMessage": " ".join(mensagem for mensagem, _ in partes),
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": (
-                f"O huddle da pessoa desta sessão tem {abertas} entrada(s) aberta(s) e o último foi há "
-                f"{dias} dias. Se fizer sentido, sugira /decode-and-code:huddle."
-            ),
+            "additionalContext": " ".join(contexto for _, contexto in partes),
         },
     }
 

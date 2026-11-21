@@ -38,3 +38,13 @@ dependencies: []
 | [0007-add-norm-writers](../model/0007-add-norm-writers.md) | médio | 7 | não declarado | — | 2026-11-15 |
 | [0008-wire-huddle-cycle](../model/0008-wire-huddle-cycle.md) | médio | 10 | não declarado | — | 2026-11-15 |
 | [0009-onboard-new-project](../model/0009-onboard-new-project/0009-onboard-new-project.md) | grande | 7 | 32 | 2113 | 2026-11-17 |
+| [0010-fix-norma-entry-gate](../model/0010-fix-norma-entry-gate.md) | pequeno | — | não declarado | — | 2026-11-17 |
+| [0011-fix-norma-config-claims](../model/0011-fix-norma-config-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
+| [0012-add-plan-type](../model/0012-add-plan-type.md) | médio | 8 | não declarado | — | 2026-11-19 |
+| [0014-fix-review-plan-claims](../model/0014-fix-review-plan-claims.md) | pequeno | — | não declarado | — | 2026-11-19 |
+| [0013-fix-setup-validation](../model/0013-fix-setup-validation.md) | médio | 14 | não declarado | — | 2026-11-19 |
+| [0015-add-plan-size-advice](../model/0015-add-plan-size-advice.md) | pequeno | — | não declarado | — | 2026-11-20 |
+| [0016-setup-principles](../model/0016-setup-principles.md) | médio | 7 | não declarado | — | 2026-11-20 |
+| [0017-setup-resources](../model/0017-setup-resources.md) | médio | 7 | não declarado | — | 2026-11-20 |
+| [0018-norm-evolution-log](../model/0018-norm-evolution-log.md) | médio | 8 | não declarado | — | 2026-11-20 |
+| [0019-norm-evolution-evidence](../model/0019-norm-evolution-evidence.md) | médio | 7 | não declarado | — | 2026-11-21 |

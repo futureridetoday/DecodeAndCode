@@ -195,6 +195,24 @@ def _verificar(args: argparse.Namespace) -> int:
     return REPROVADO
 
 
+def _guidelines_aplicaveis(args: argparse.Namespace) -> int:
+    import lib
+    import normas
+
+    achadas = normas.aplicaveis(Path(args.unidade), lib.repo_root())
+    linhas = [a.linha for a in achadas if a.linha]
+    avisos = [a for a in achadas if a.aviso]
+    if not achadas:
+        print("nenhuma guideline casa os arquivos da unidade")
+    for linha in linhas:
+        print(linha)
+    if avisos:
+        print("Avisos:")
+        for a in avisos:
+            print(f"{a.nome} — {a.aviso}")
+    return OK
+
+
 def _normas(args: argparse.Namespace) -> int:
     import normas
 
@@ -248,6 +266,23 @@ def _criar_guideline(args: argparse.Namespace) -> int:
     return OK
 
 
+def _criar_principio(args: argparse.Namespace) -> int:
+    import lib
+    import rules
+
+    dados = _ler_json_do_stdin("criar-principio", ("nome", "enunciado", "teste"))
+    try:
+        alvo = rules.criar_principio(
+            lib.repo_root(), dados["nome"], dados["enunciado"], dados["teste"],
+            descricao=str(dados.get("descricao", "")),
+        )
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
 def _adicionar_guardrail(args: argparse.Namespace) -> int:
     import guardrail
     import lib
@@ -291,6 +326,63 @@ def _pessoa() -> tuple[Path, str, Path]:
     return raiz, usuario, huddle.caminho(raiz, usuario)
 
 
+def _log_resolver(args: argparse.Namespace) -> int:
+    """Apaga o `E-XX` com o destino que o resolveu (plano 0018, `D-08`, `D-15`)."""
+    import re
+
+    import eventos
+    import huddle
+    import lib
+
+    abertas = None
+    if args.destino.strip().startswith("H-"):
+        _, _, arquivo = _pessoa()
+        texto = arquivo.read_text(encoding="utf-8") if arquivo.is_file() else ""
+        abertas = set(re.findall(r"(?m)^###\s+(H-\d+)\b", huddle._secao(texto, "Abertas") or ""))
+    raiz = lib.repo_root()
+    motivo = eventos.resolver(raiz, args.id, args.destino, abertas)
+    if motivo:
+        print(motivo)
+        return REPROVADO
+    if args.destino.strip() == eventos.METODO:
+        # O `E-XX` não se reusa, então só um `M-XX` nasce dele (plano 0019, `D-05`).
+        id_metodo = next((m["id"] for m in eventos.metodos(raiz) if m["origem"] == args.id), "?")
+        print(f"{args.id} resolvido: {eventos.METODO}: {id_metodo} — revise com metodo-listar antes de levar")
+        return OK
+    print(f"{args.id} resolvido: {args.destino.strip()}")
+    return OK
+
+
+def _metodo_listar(args: argparse.Namespace) -> int:
+    """Cada `M-XX` pendente, inteiro, para a pessoa revisar antes de levar (plano 0019, `D-06`)."""
+    import eventos
+    import lib
+
+    pendentes = eventos.metodos(lib.repo_root())
+    if not pendentes:
+        print("nenhum M-XX pendente")
+        return OK
+    for i, metodo in enumerate(pendentes):
+        if i:
+            print()
+        print(f"=== {metodo['id']} · {metodo['arquivo'].relative_to(lib.repo_root())}")
+        print(metodo["arquivo"].read_text(encoding="utf-8").rstrip())
+    return OK
+
+
+def _metodo_levado(args: argparse.Namespace) -> int:
+    """Apaga o `M-XX` que a pessoa levou ao repositório do método, com o lugar (plano 0019, `D-04`)."""
+    import eventos
+    import lib
+
+    motivo = eventos.levado(lib.repo_root(), args.id, args.onde)
+    if motivo:
+        print(motivo)
+        return REPROVADO
+    print(f"{args.id} levado: {' '.join(args.onde.split())}")
+    return OK
+
+
 def _ler_texto_do_stdin(comando: str) -> str:
     texto = "" if sys.stdin.isatty() else sys.stdin.read()
     if not texto.strip():
@@ -313,7 +405,7 @@ def _huddle_abrir(args: argparse.Namespace) -> int:
     _, usuario, arquivo = _pessoa()
     texto = _ler_texto_do_stdin("huddle-abrir")
     try:
-        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario))
+        print(huddle.abrir(arquivo, args.tipo, texto, args.autor or usuario, evidencia=args.evidencia))
     except ValueError as erro:
         print(erro)
         return REPROVADO
@@ -321,9 +413,12 @@ def _huddle_abrir(args: argparse.Namespace) -> int:
 
 
 def _huddle_fechar(args: argparse.Namespace) -> int:
+    import eventos
     import huddle
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
+    if args.destino.strip() == eventos.METODO:
+        return _fechar_para_metodo(raiz, arquivo, args.id)
     try:
         huddle.fechar(arquivo, args.id, args.destino)
     except ValueError as erro:
@@ -333,25 +428,101 @@ def _huddle_fechar(args: argparse.Namespace) -> int:
     return OK
 
 
+def _fechar_para_metodo(raiz: Path, arquivo: Path, h_id: str) -> int:
+    """`huddle-fechar <H-XX> método` (plano 0019, `D-06`): o texto genérico vem do stdin, já
+    aprovado na conversa; o `M-XX` é gravado antes, e a entrada só fecha se ele existir."""
+    import eventos
+    import huddle
+
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not texto.strip():
+        print(f"{h_id} não fechada: '{eventos.METODO}' lê do stdin o texto genérico, sem nada do projeto")
+        return REPROVADO
+    try:
+        aberta = huddle.entrada(arquivo, h_id)
+    except (ValueError, OSError):
+        print(f"{h_id} não está em '## Abertas'")
+        return REPROVADO
+    id_metodo = eventos.registrar_metodo(raiz, h_id, texto, aberta["evidencia"])
+    if id_metodo is None:
+        print(f"{h_id} não fechada: não foi possível gravar o M-XX em {eventos.dir_log(raiz) / 'metodo'}")
+        return REPROVADO
+    try:
+        huddle.fechar(arquivo, h_id, f"{eventos.METODO}: {id_metodo}")
+    except ValueError as erro:
+        (eventos.dir_log(raiz) / "metodo" / f"{id_metodo}.md").unlink(missing_ok=True)
+        print(erro)
+        return REPROVADO
+    print(f"{h_id} fechada: {eventos.METODO}: {id_metodo} — revise com metodo-listar antes de levar")
+    return OK
+
+
 def _huddle_concluir(args: argparse.Namespace) -> int:
     import huddle
     from datetime import date
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
     data = args.data or date.today().isoformat()
     huddle.concluir(arquivo, data)
     print(f"last_huddle: {data}")
+    _consumir_log(raiz)
     return OK
+
+
+def _consumir_log(raiz: Path) -> None:
+    """Apaga os eventos até a última `huddle-pauta` — o que a conversa já leu (plano 0018, `D-08`)."""
+    import eventos
+
+    lidos = eventos.eventos(raiz)
+    marcas = [i for i, e in enumerate(lidos) if e.get("classe") == "comando" and e.get("comando") == ["huddle-pauta"]]
+    if marcas:
+        saiu = eventos.consumir(raiz, marcas[-1] + 1)
+        print(f"log: {saiu} evento(s) lido(s) na pauta, apagado(s)")
+
+
+def _resumo_log(raiz: Path, desde: str) -> list[str]:
+    """As linhas de log da pauta: contagem por classe desde `desde` e os `E-XX` abertos (plano 0018)."""
+    from collections import Counter
+    from datetime import date
+
+    import eventos
+
+    contagem: Counter = Counter()
+    for e in eventos.eventos(raiz):
+        if str(e.get("data", ""))[:10] < desde:
+            continue
+        classe = e.get("classe")
+        if classe == "comando":
+            nome = (e.get("comando") or ["?"])[0]
+            contagem[f"comando {nome}" + (f", saída {e.get('codigo')}" if e.get("codigo") else "")] += 1
+        elif classe == "bloqueio":
+            contagem[f"bloqueio {e.get('regra')}"] += 1
+    atrasados = set(eventos.atrasados(raiz, date.today()))
+    linhas = [f"- {chave}: {n}" for chave, n in sorted(contagem.items())]
+    linhas += [
+        f"- {id_erro} aberto desde {data[:10]}" + (f" — há {eventos.ALARME_DIAS} dias ou mais" if id_erro in atrasados else "")
+        for id_erro, data in eventos.erros(raiz)
+    ]
+    linhas += [
+        f"- {m['id']} (de {m['origem']}) pendente desde {m['data'][:10]} — leve-o e rode metodo-levado"
+        for m in eventos.metodos(raiz)
+    ]
+    return linhas
 
 
 def _huddle_pauta(args: argparse.Namespace) -> int:
     import huddle
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
     if not arquivo.exists():
         print(f"sem huddle: {arquivo}")
         return OK
     pauta = huddle.pauta(arquivo, args.desde)
+    log = _resumo_log(raiz, pauta["desde"])
+    if log:
+        print(f"## Log desde {pauta['desde']}")
+        print("\n".join(log))
+        print()
     print(f"## Abertas ({len(pauta['abertas'])})")
     for aberta in pauta["abertas"]:
         primeira = next((l for l in aberta["texto"].splitlines() if l.strip()), "")
@@ -397,14 +568,22 @@ _SECOES_DO_METODO = (
     "Skills `review-plan`, `derive` e `implement`",
 )
 
+# `explicar <seção>`: as que o setup lia com `sed`/`grep` na norma (M4 do `0013`).
+_SECOES_AVULSAS = {
+    "huddle": "Huddle",
+    "camada-normativa": "Camada normativa",
+}
+
 
 def _explicar(args: argparse.Namespace) -> int:
-    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code."""
+    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code,
+    ou só a seção nomeada em `secao`."""
     import bootstrap
     import normas
 
     norma = bootstrap._fonte_norma()
-    for titulo, trecho in normas.secoes(norma, _SECOES_DO_METODO):
+    nomes = (_SECOES_AVULSAS[args.secao],) if args.secao else _SECOES_DO_METODO
+    for titulo, trecho in normas.secoes(norma, nomes):
         print(f"### {os.path.relpath(norma)} § {titulo}")
         print(trecho)
         print()
@@ -625,11 +804,26 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("unidade")
 
+    p = comando(
+        "guidelines-aplicaveis",
+        "imprime, pronta para 'Normas aplicáveis', a linha de cada guideline cujo paths: casa um "
+        "arquivo da tabela 'Arquivos' da unidade, e sob 'Avisos:' as que não dá para citar (0 sempre)",
+        _guidelines_aplicaveis,
+    )
+    p.add_argument("unidade")
+
     comando(
         "criar-guideline",
         "grava e registra uma guideline em .claude/rules/; lê do stdin JSON "
         "{nome, descricao, paths, corpo[, aguardando]} (1 se reprovada)",
         _criar_guideline,
+    )
+
+    comando(
+        "criar-principio",
+        "acrescenta um princípio a .claude/rules/principles.md, com teto de 5; lê do stdin JSON "
+        "{nome, enunciado, teste[, descricao]} (1 se reprovado)",
+        _criar_principio,
     )
 
     comando(
@@ -650,10 +844,38 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("tipo")
     p.add_argument("--autor", help="padrão: a pessoa da sessão")
+    p.add_argument(
+        "--evidencia",
+        help="origem da entrada, opcional: E-XX, L-XX, 'bloqueio: <regra>', 'gate: <comando>' ou 'revisão: <plano>'",
+    )
 
-    p = comando("huddle-fechar", "fecha uma entrada aberta com o destino (1 se o id não está aberto)", _huddle_fechar)
+    p = comando(
+        "huddle-fechar",
+        "fecha uma entrada aberta com o destino (1 se o id não está aberto); com destino 'método', "
+        "lê do stdin o texto genérico e grava .claude/log/metodo/M-XX.md antes de fechar (1 sem texto)",
+        _huddle_fechar,
+    )
     p.add_argument("id")
     p.add_argument("destino")
+
+    p = comando(
+        "log-resolver",
+        "apaga .claude/log/erros/<E-XX>.md com o destino que o resolveu: H-XX aberto no huddle da "
+        "pessoa, L-XX, 'método' (grava o M-XX antes) ou 'descartado: <motivo>' (1 se recusado, sem apagar)",
+        _log_resolver,
+    )
+    p.add_argument("id")
+    p.add_argument("destino")
+
+    comando("metodo-listar", "mostra inteiro cada .claude/log/metodo/M-XX.md pendente", _metodo_listar)
+
+    p = comando(
+        "metodo-levado",
+        "apaga o M-XX levado ao repositório do método e registra onde (1 se 'onde' vazio ou o M-XX não existe)",
+        _metodo_levado,
+    )
+    p.add_argument("id")
+    p.add_argument("onde")
 
     p = comando("huddle-concluir", "grava a data do huddle em last_huddle", _huddle_concluir)
     p.add_argument("--data", help="padrão: hoje")
@@ -663,7 +885,12 @@ def _parser() -> argparse.ArgumentParser:
 
     comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
 
-    comando("explicar", "imprime, da norma, as seções que sustentam o método Decode → Code", _explicar)
+    p = comando(
+        "explicar",
+        "imprime, da norma, as seções que sustentam o método Decode → Code, ou só a seção nomeada",
+        _explicar,
+    )
+    p.add_argument("secao", nargs="?", choices=sorted(_SECOES_AVULSAS))
 
     comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
 
@@ -709,13 +936,40 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+def _registrar(lista: list[str], codigo: int, saida: str, args: argparse.Namespace | None) -> None:
+    """Evento de toda chamada e, na saída 2, o `E-XX` (plano 0018, `D-05`, `D-14`). Nunca muda o
+    código nem o stderr: qualquer falha do log fica aqui."""
     try:
-        return args.handler(args)
+        import eventos
+        import lib
+
+        projeto = lib.repo_root()
+        alvo = next((str(getattr(args, k)) for k in ("unidade", "plano", "dir_plano") if getattr(args, k, None)), "")
+        eventos.registrar(projeto, {"classe": "comando", "comando": lista[:1], "codigo": codigo, "alvo": alvo})
+        if codigo == ERRO:
+            eventos.registrar_erro(projeto, lista, codigo, saida, alvo)
+    except Exception:
+        pass
+
+
+def main(argv: list[str] | None = None) -> int:
+    lista = list(sys.argv[1:] if argv is None else argv)
+    try:
+        args = _parser().parse_args(argv)
+    except SystemExit as saida:
+        if saida.code not in (0, None):  # erro de uso: o argparse já escreveu a mensagem em stderr
+            _registrar(lista, ERRO, f"erro de uso do argparse: dc.py {' '.join(lista)}", None)
+        raise
+    try:
+        codigo = args.handler(args)
     except Exception as erro:  # contrato: exceção vira código 2 e mensagem, nunca traceback
         print(f"erro: {type(erro).__name__}: {erro}", file=sys.stderr)
+        import traceback
+
+        _registrar(lista, ERRO, traceback.format_exc(), args)
         return ERRO
+    _registrar(lista, codigo, "", args)
+    return codigo
 
 
 if __name__ == "__main__":

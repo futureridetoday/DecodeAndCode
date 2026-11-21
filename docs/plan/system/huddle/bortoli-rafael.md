@@ -257,11 +257,45 @@ trabalho se perde — e porque não sei se é rascunho em curso ou sobra de algo
 
 A unidade 0009-03 fixa o valor "futureridetoday/DecodeAndCode" para marketplace.source.repo, mas empacotar.verificar recusa o nome do diretório do projeto de origem em qualquer arquivo do pacote, e config.json e lib.py viajam nele (test_empacotamento ficou vermelho). O executor gravou "futureridetoday/decodeandcode", que o GitHub resolve sem distinguir caixa, sem tocar empacotar.py (fora dos arquivos da unidade). Decidir: manter a caixa baixa, ou isentar a chave marketplace no verificador.
 
+### H-15 · `observação` · 2026-11-19 · Claude
+
+O guardrail fundador (modelo-dev-units.md, Hierarquia estrutural → Guardrail fundador, e o check "Há erros de arquitetura?" do modo review) diz que o projeto declara um grafo acíclico entre cores e que um script conta referências contra a seta. Não há onde declarar o grafo nem script que o conte: `grep grafo` nos scripts do método não acha nada. É a mesma classe do H-14 (a norma promete mecanismo que o código não tem), mas fica fora do fix-norma-config-claims, cuja métrica cobre só afirmações sobre config.json. Achado no review-plan desse plano, 2026-11-19. Decidir: corrigir o texto (o check é julgamento inteiro até existir mecanismo) ou planejar o mecanismo.
+
+### H-16 · `pergunta` · 2026-11-19 · Claude
+
+Na execução do 0012 declarei `plan_type: fix` nos dois esboços do `_inbox` sem decisão humana: `apply-plugin-review` (achados de revisão com solução, que também tem cara de `refactor` e `remove`, como o enxugamento do `ai-builder`) e `fix-setup-validation` (defeitos C1–C9 somados às melhorias M3–M7). O lint só pedia o campo presente. Confirmar ou trocar o tipo na aprovação de cada um; se `apply-plugin-review` mistura tipos, é sinal para dividi-lo.
+
+### H-17 · `observação` · 2026-11-19 · Claude
+
+Links relativos quebrados fora de plano, achados pela varredura do intake de fix-review-plan-claims (lint_skill._checar_links sobre docs/plan/**, 2026-11-19): `_inbox/_backlog.md` → `../../../scripts/move-md.py`; unidade `0001/19-planner-agent.md` → `../../system/huddle.md`; e o próprio arquivo de huddle `system/huddle/bortoli-rafael.md` → `../model/0001-.../0001-decode-and-code-foundation.md` e `../_inbox/_backlog.md` (profundidade errada depois da mudança para `huddle/`). Nenhum chega a uma revisão de plano, por isso não entraram no esboço — corrigir à mão ou descartar.
+
+### H-18 · `pergunta` · 2026-11-20 · Claude
+
+O esboço `apply-plugin-review` (rascunho de 2026-10-14, `grande`) continua no `_inbox` e cita `.claude/skills/decode-and-code/SKILL.md`, que não existe mais: a pasta virou compartilhada e não tem `SKILL.md`. A `D-06` dele (gates na norma, `principles.md` fora do pacote) já está em vigor. No intake de `setup-principles-resources`, ele foi o único esboço que apareceu na checagem de concorrência: a tarefa 16 dele reescreve todo `SKILL.md`. Esboço desatualizado no `_inbox` gera sinal falso de concorrência. Decidir: ele segue vivo, é reescrito sobre o estado atual, ou sai do `_inbox`?
+
+### H-19 · `revisitar` · 2026-11-20 · Claude
+
+O B-08 do `_inbox/_backlog.md` ("não neste projeto" para o aviso de setup) está travado pela premissa de que a recusa precisa ficar fora do repositório, porque nada do método escreve no projeto sem pedido (`L-10` do `0009`; `0001`, *Materializar não pode ser automático*). O esboço `norm-evolution-log` (intake de 2026-11-20) introduz uma pasta que se ignora sozinha, `.claude/log/` com `.gitignore` `*`, criada por script sem tocar o `.gitignore` do projeto. Se ele for aprovado, a recusa do B-08 pode morar num lugar desse tipo, gravada por um comando explícito da pessoa, não por hook. Ressalva: a `P-03` do esboço recomenda que o log só escreva em projeto com bootstrap, e o B-08 é justamente sobre projeto sem o método. Decidir: o B-08 continua travado, ou passa a ter onde guardar a recusa?
+
+### H-20 · `observação` · 2026-11-20 · Claude
+
+O esboço `setup-principles-resources` (intake de 2026-11-20) atribui ao humano duas coisas que vieram do Claude na conversa: a recomendação do `P-01` ("recomendação do humano") e a fonte do `R-02` ("documentação do Claude Code, citada pelo humano"). O pedido ao intake separava "DECISÕES DO HUMANO" de "PENDENTE DE DECISÃO (com a recomendação)", e mesmo assim a autoria se perdeu na passagem para o fork. Um caso só; se repetir, o intake precisa de uma regra de autoria (decisão do humano, recomendação do Claude, fato medido) no esboço.
+
+### H-21 · `padrão` · 2026-11-20 · Claude
+
+Segundo caso do que a H-20 registrou: o esboço `norm-evolution-log` (intake de 2026-11-20) diz, no `P-04`, que N = 2 planos fechados é "recomendação do humano, pendente de confirmação". A recomendação foi do Claude na conversa, e o humano não a confirmou. Os dois casos vieram de intakes da mesma conversa, com o pedido separando decisão do humano de recomendação. Com dois casos, a regra de autoria no intake (decisão do humano, recomendação do Claude, fato medido) passa a ter base.
+
+### H-22 · `observação` · 2026-11-21 · Claude
+
+A `H-10` do huddle do AmFlow (2026-10-01) registra um defeito do método, "o `backlog.projetar` do decode-and-code corta tarefa de várias linhas", e diz que a correção vai para o DecodeAndCode. Em 2026-11-21, 51 dias depois, ela não chegou: nenhum plano, backlog ou huddle daqui a cita. O defeito reproduz no `dev` atual: `backlog._tarefas` usa `_ITEM_TAREFA = ^-\s+\[( |x|X)\]\s+(.+?)\s*$` e devolve só a primeira linha de um item quebrado. A região de backlog projeta o texto truncado, mas a contagem e a situação saem certas. Achado no intake de `norm-evolution-evidence`, onde é o caso medido do gate A. Está fora do escopo daquele esboço, que trata o caminho, não este defeito. Decidir: plano `fix` próprio, item no `_backlog.md` ou descartar.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
 |---|---|---|---|
 | H-02 | `pergunta` | 2026-08-22 | **Confirmada, e a hipótese estava certa.** O plano decidia mecanismos e deixava três formas em aberto: a lista de princípios, o repositório onde vivia o entregável das unidades de prova, e onde vivia a configuração dos scripts. As três fecharam na revisão de 2026-08-22 — `D-03`, `D-11` e a reescrita das unidades `04` e `06`. A revisão achou cinco bloqueantes; três eram essa mesma coisa por ângulos diferentes |
+| H-14 | `divergência` | 2026-11-19 | plano [`0011-fix-norma-config-claims`](../../model/0011-fix-norma-config-claims.md) (norma corrigida; config de projeto como desenho adiado D-01 a D-03) |
+| H-13 | `divergência` | 2026-11-19 | plano 0009-onboard-new-project, Validação ponta a ponta → Resultado, parágrafo Sessão no app desktop (L-17 com contagem; L-04 segue aberta) |
 
 ---
 

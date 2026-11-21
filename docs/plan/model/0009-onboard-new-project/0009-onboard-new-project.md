@@ -221,6 +221,39 @@ todas as respostas no pedido e **sem nenhuma permissão simulada**. Medido: o JS
 tentativa, com o par provado; as etapas 0 a 6 rodaram só com a pré-aprovação da skill. A única
 recusa foi um `; echo "exit $?"` que o modelo acrescentou a um comando, fora do texto da skill.
 
+**Sessão interativa com o plugin instalado, 2026-11-17.** O humano rodou o setup num projeto novo
+(`teste-setup`: React, shadcn e Tailwind, sem `components/`) com o 2.3.1 instalado pelo marketplace,
+na ferramenta de perguntas. Relato dele: tudo como planejado, sem erro. Conferido nos arquivos, com
+o `dc.py` do plugin instalado: `setup-lint`, `huddle-lint`, `lint-guardrails` e o lint das duas
+guidelines aprovam; o escopo está habilitado; as quatro decisões estão no vocabulário (uma guideline
+aceita depois da edição guiada, uma aceita sem edição, um guardrail aceito e um rejeitado); as duas
+guidelines têm `paths_pending`; o hook não avisa mais; e o guardrail `cva-fora-do-tsx`, avaliado por
+`guardrail.decidir`, barra o `cva` no `.tsx` e libera o par separado. O relato não detalha onde o
+`systemMessage` apareceu nem quantas permissões foram pedidas, então a `L-04` segue aberta e a
+`L-17` não tem contagem; "sem erro" indica que nenhum pedido atrapalhou o fluxo.
+
+**Sessão no app desktop com o plugin instalado, relatada em 2026-11-18.** O humano rodou o setup com
+o 2.3.1 pelo app do Claude (sessão "Test Decode 2.3 via ui"), num projeto novo. Relato dele,
+confirmado em 2026-11-19:
+
+| Medida | Resultado |
+|---|---|
+| 1º turno | 49 passos sem nenhum pedido de permissão — a pré-aprovação da skill valeu |
+| Pergunta aberta | O modelo pediu em prosa a descrição do 2º guardrail, em vez da ferramenta de perguntas, e encerrou o turno |
+| 2º turno | A resposta abriu turno novo e a pré-aprovação caiu: **7** comandos `dc.py` pediram permissão, gravados no `.claude/settings.local.json` do projeto de teste — a contagem que faltava à `L-17` |
+| Leitura da norma | **2** pedidos de permissão por `sed`/`grep` na norma, para achar *Huddle* e *Camada normativa* |
+| Código do plugin | O modelo leu o código do plugin com `grep` para entender a saída do `setup-escopo` |
+
+O relato não diz onde o `systemMessage` apareceu no app, então a `L-04` segue aberta. Esses achados
+são a fonte de `C1`, `C3`, `M4` e `M7` do esboço `fix-setup-validation`.
+
+**Onde o aviso aparece no app, medido em 2026-11-19.** Sessão no app desktop, aberta neste
+repositório, que não tem `setup.md` — o hook que rodou é o `session_start.py` do próprio checkout,
+o mesmo código do pacote. O `additionalContext` chegou ao modelo, que mencionou o setup pendente no
+fim da primeira resposta. O `systemMessage` **não apareceu para a pessoa** em lugar nenhum da tela,
+conferido por ela. No app, portanto, a pessoa só fica sabendo do setup se o modelo disser; isso
+fecha a `L-04` para o app, e o terminal segue sem medição.
+
 ## Independência
 
 **Um plano, em três fases, e não três planos.** A Fase 2 compõe as funções da Fase 1, e a Fase 3
@@ -286,7 +319,7 @@ Tomadas no `derive` de 2026-11-15; a forma está nas unidades.
 | L-01 | **O gate A está satisfeito só em parte** | A prova usa projeto de exemplo, não terceiro real; a métrica é de entrega. A antecipação é decisão humana (`D-10`) |
 | L-02 | **O setup não começa sozinho** | Hook síncrono não abre o turno. `asyncRewake` acorda o Claude com saída 2, mas a doc não o mostra em `SessionStart` e trata a saída 2 como erro; medir na validação ponta a ponta antes de adotar |
 | L-03 | **A pertinência da sugestão não tem oráculo** | O lint garante estrutura, nunca que a guideline sugerida era boa. Só a sessão real e o uso medem |
-| L-04 | **Onde o `systemMessage` de `SessionStart` aparece não está na doc** | Mesma `L-02` do `wire-huddle-cycle` |
+| L-04 | **Onde o `systemMessage` de `SessionStart` aparece não está na doc** | Mesma `L-02` do `wire-huddle-cycle`. **Medida no app em 2026-11-19:** não aparece para a pessoa; só o `additionalContext` chega, ao modelo (*Validação ponta a ponta → Resultado*). No terminal segue sem medição |
 | L-05 | **Edição guiada sem teto de perguntas** | O pedido é "a quantidade necessária". O critério de parada — escopo, regra e exceção definidos — é julgamento, como o "dois exemplos claros" do `build-resource` |
 | L-06 | **A pré-aprovação vale no turno da skill** | Se o humano sair da ferramenta de perguntas para mensagem livre, os comandos seguintes pedem permissão. Se responder à ferramenta conta como "next message" não está na doc |
 | L-07 | **Escopo de projeto não instala nada nas outras máquinas** | Pela [doc](https://code.claude.com/docs/en/discover-plugins), commitar a habilitação "doesn't download it": cada colega instala uma vez por clone. Exigir em toda máquina é configuração da organização, fora do plugin. Se o Claude Code pede a instalação ao confiar na pasta não está na doc |

@@ -27,11 +27,15 @@ cabeçalhos em blocos de código, e um `###` de exemplo encerraria a seção ant
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import NamedTuple
 
 import lint_unidade
+import regioes
+import registry
+import rules
 
 _TITULO_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _NUMERACAO_RE = re.compile(r"^\d+\.\s+")
@@ -141,3 +145,49 @@ def secoes(arquivo: Path, nomes: tuple[str, ...]) -> list[tuple[str, str]]:
     if faltam:
         raise ValueError(f"seções ausentes em {arquivo}: {', '.join(faltam)}")
     return achados
+
+
+class Aplicavel(NamedTuple):
+    """Uma guideline cujo `paths:` casa um arquivo da unidade: a linha pronta, ou o aviso de por que não."""
+
+    nome: str
+    linha: str
+    aviso: str
+
+
+def aplicaveis(unidade: Path, raiz: Path) -> list[Aplicavel]:
+    """Guidelines de `<raiz>/.claude/rules/` que valem para os arquivos da tabela *Arquivos* da unidade.
+
+    Plano 0017, `L-03` da revisão. Os caminhos são os entre crases com `/` — os mesmos que o gate de
+    entrada exige —, sem o `:linha` do fim, e casam como texto (`rules.casa_caminho`), porque o
+    arquivo pode ainda não existir. Padrão fora do subconjunto que o `criar-guideline` grava não
+    entra no casamento; a guideline que só tem padrões assim volta com `aviso`. Para a que casa, a
+    `linha` é a de *Normas aplicáveis*, com o link relativo à unidade e o primeiro título do corpo
+    como seção; sem título, volta com `aviso`, porque a citação não resolveria.
+    """
+    secao = lint_unidade._secao(lint_unidade._corpo(unidade.read_text(encoding="utf-8")), "Arquivos") or ""
+    caminhos = [re.sub(r":\d+$", "", c.strip("`").removeprefix("./")) for c in lint_unidade._CAMINHO_RE.findall(secao)]
+
+    dir_rules = raiz / ".claude" / "rules"
+    achadas: list[Aplicavel] = []
+    for regra in sorted(dir_rules.glob("*.md")) if dir_rules.is_dir() else []:
+        if not registry._e_guideline(regra):
+            continue
+        padroes = rules._entradas_de_paths(regioes.ler_campo(regra, "paths") or "") or []
+        validos = [p for p in padroes if rules._problema_de_padrao(p) is None]
+        if not validos:
+            if padroes:
+                achadas.append(Aplicavel(regra.stem, "", f"nenhum padrão no subconjunto do criar-guideline: {padroes!r}"))
+            continue
+        if not any(rules.casa_caminho(p, c) for p in validos for c in caminhos):
+            continue
+        titulo = next(
+            (m[2] for m in map(_TITULO_RE.match, lint_unidade._corpo(regra.read_text(encoding="utf-8")).splitlines()) if m),
+            None,
+        )
+        if titulo is None:
+            achadas.append(Aplicavel(regra.stem, "", "a guideline não tem título para a citação resolver"))
+            continue
+        link = Path(os.path.relpath(regra.resolve(), unidade.resolve().parent)).as_posix()
+        achadas.append(Aplicavel(regra.stem, f"| {titulo} | [{regra.stem}]({link}), seção *{titulo}* |", ""))
+    return achadas

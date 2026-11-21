@@ -38,7 +38,16 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0007 | [add-norm-writers](model/0007-add-norm-writers.md) | model | add-norm-writers | — | concluído | 2026-11-15 |
 | 0008 | [wire-huddle-cycle](model/0008-wire-huddle-cycle.md) | model | wire-huddle-cycle | — | concluído | 2026-11-15 |
 | 0009 | [onboard-new-project](model/0009-onboard-new-project/0009-onboard-new-project.md) | model | onboard-new-project | — | concluído | 2026-11-15 |
-| 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | em desenvolvimento | 2026-11-17 |
+| 0010 | [fix-norma-entry-gate](model/0010-fix-norma-entry-gate.md) | model | fix-norma-entry-gate | — | concluído | 2026-11-17 |
+| 0011 | [fix-norma-config-claims](model/0011-fix-norma-config-claims.md) | model | fix-norma-config-claims | — | concluído | 2026-11-19 |
+| 0012 | [add-plan-type](model/0012-add-plan-type.md) | model | add-plan-type | — | concluído | 2026-11-19 |
+| 0013 | [fix-setup-validation](model/0013-fix-setup-validation.md) | model | fix-setup-validation | — | concluído | 2026-11-19 |
+| 0014 | [fix-review-plan-claims](model/0014-fix-review-plan-claims.md) | model | fix-review-plan-claims | — | concluído | 2026-11-19 |
+| 0015 | [add-plan-size-advice](model/0015-add-plan-size-advice.md) | model | add-plan-size-advice | — | concluído | 2026-11-20 |
+| 0016 | [setup-principles](model/0016-setup-principles.md) | model | setup-principles | — | concluído | 2026-11-20 |
+| 0017 | [setup-resources](model/0017-setup-resources.md) | model | setup-resources | — | concluído | 2026-11-20 |
+| 0018 | [norm-evolution-log](model/0018-norm-evolution-log.md) | model | norm-evolution-log | — | concluído | 2026-11-20 |
+| 0019 | [norm-evolution-evidence](model/0019-norm-evolution-evidence.md) | model | norm-evolution-evidence | — | concluído | 2026-11-21 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

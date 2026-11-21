@@ -9,7 +9,7 @@ description: |
   <example>
   Context: plano novo escrito no _inbox, ainda não aprovado
   user: "revise o plano docs/plan/_inbox/catalogo.md"
-  commentary: modo review — os seis checks, isolando o que o script cobre (concorrência, fontes citadas) do que exige julgamento
+  commentary: modo review — os seis checks, isolando o que o script cobre (concorrência, formato do plano) do que exige julgamento
   </example>
 
 disable-model-invocation: false
@@ -57,36 +57,18 @@ Os seis checks são os da norma (*Modo `review` — os seis checks*) — esta se
 1. **Determinístico, roda primeiro:**
    - **Nome** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`, com o stem do arquivo (`_inbox/<nome>.md` → `nome`).
    - **Concorrência** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" concorrencia <plano>` lê `core`/`module` do frontmatter do plano e varre a região `planos` de `_planos.md` por uma linha `em desenvolvimento` no mesmo core **ou** módulo (norma, *Avaliação de escopo*). Encontrada (código `1`), a linha inteira é a evidência citada no achado.
-   - **Fontes citadas** — cada link relativo do corpo do plano resolve em disco.
+   - **Formato** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>` confere as seções exigidas pelo porte e o `plan_type`. Cada problema apontado é achado `bloqueante`, origem `comando`.
    - Plano sem `core` no frontmatter: achado bloqueante — o `concorrencia` responde "não verificável" (código `1`), a concorrência fica registrada assim, e a revisão **não aborta**.
-2. **Independência** — audita a seção `## Independência` do plano contra o teste da norma ("A e B passam isolados?"). A presença por porte é do `lint-plano` (norma, *O que cada porte carrega*: exigida no grande, dispensada no médio, recusada no pequeno); aqui se audita o conteúdo quando a seção existe.
-3. **Tamanho como contexto** — unidades previstas, cores e módulos tocados, lidos da seção `## Escopo`. Relatar, nunca reprovar.
-4. **Julgamento restante** — erros conceituais, erros de arquitetura, adequação das fontes ao escopo.
+2. **Independência** — audita a seção `## Independência` do plano contra o teste da norma ("A e B passam isolados?"). A presença por porte é do `lint-plano`, no passo 1 (norma, *O que cada porte carrega*: exigida no grande, dispensada no médio, recusada no pequeno); aqui se audita o conteúdo quando a seção existe.
+3. **Tamanho e porte como contexto** — unidades previstas, cores e módulos tocados, lidos da seção `## Escopo`. Depois, uma linha `porte recomendado: <porte> — <porquê>`, pelas perguntas da norma (*O que cada porte carrega → Quando cada porte cabe*): cite a pergunta que decidiu e a evidência do plano — a decomposição em `## Escopo` (grande) ou `## Tarefas` (médio) ou, sem nenhuma das duas, a `## Solução` que mostra se há passos. Diferente do `plan_size` do esboço, o achado é `aviso`, origem `julgamento`, nunca `bloqueante`: reestruturar o plano para outro porte é decisão do humano. Relatar, nunca reprovar.
+4. **Julgamento restante** — erros conceituais, erros de arquitetura e as fontes citadas: abra cada uma, confira que existe e avalie se é a certa para o escopo. No check de padrões, o plano declara o oráculo do seu `plan_type`: o que conferir está na coluna *`review-plan` confere* da norma (*Tipo de plano*).
 5. **Lacunas** — cada uma nova entra como `L-XX`, sem tentar resolvê-la.
 6. **Relatório** — uma linha por achado: check, veredito (`bloqueante` | `aviso`) e origem (`comando` | `julgamento`). Sinalizar divisão não é reprovar — se o humano decide não dividir, o porquê fica registrado no plano, não neste relatório. Encerra sem aprovar — quem aprova é o humano.
 7. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime os gatilhos e o momento da norma (*Huddle*). O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
 
-Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `validar-nome`, `concorrencia`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `validar-nome`, `concorrencia`, `lint-plano`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
 
 ## Referências
 
 - Norma: `<plan_root>/system/modelo-dev-units.md` — `plan_root` é o do `config.json`, e
   `docs/plan` é só o default. Vive no projeto que usa a skill, e é lá que a skill a lê.
-
-## Começando um projeto do zero
-
-Um projeto que acabou de instalar o plugin não tem estrutura nenhuma sob `plan_root` — nem
-`_planos.md`, nem `_inbox/`, nem a norma que as skills do método citam. `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap [<projeto>]`
-cria o que falta (o padrão é o diretório atual), item a item e sem sobrescrever o que já existir:
-
-| Cria | Onde |
-|---|---|
-| `_planos.md`, com os marcadores e o cabeçalho da tabela | `<plan_root>/` |
-| `_inbox/` | `<plan_root>/` |
-| A norma-mecanismo, materializada de `reference/` (na pasta compartilhada `decode-and-code/`) ou do checkout | `<plan_root>/system/modelo-dev-units.md` |
-| `.claude/` | raiz do projeto |
-
-**Idempotente:** rodar de novo sobre um projeto que já tem parte disso não toca no que já está lá —
-inclusive a norma, se o projeto já a tiver editado.
-
-Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto: `bootstrap`.

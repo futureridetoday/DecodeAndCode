@@ -73,6 +73,74 @@ class TestDescobrir(unittest.TestCase):
         self.assertIn("## Já existe", texto)
         self.assertIn("Guardrails: sem-env", texto)
 
+    def test_formatar_cerca_o_trecho_e_o_titulo_dele_fica_dentro(self):
+        # M3 do 0013: `### <caminho>` colidia com os títulos do próprio trecho (`L-12` do 0009).
+        trecho = "# Projeto\n\n### Uso\n\n```bash\nnpm run dev\n```\n"
+        texto = descoberta.formatar({
+            "fontes": [{"caminho": "README.md", "trecho": trecho}],
+            "existentes": {"guidelines": [], "principios": [], "guardrails": [], "aviso": None},
+        })
+        self.assertIn("### README.md\n````\n# Projeto", texto)
+        abre = texto.index("````\n")
+        fecha = texto.index("\n````\n", abre + 1)
+        self.assertLess(abre, texto.index("### Uso"))
+        self.assertLess(texto.index("### Uso"), fecha)
+        self.assertLess(texto.index("```bash"), fecha)
+
+
+class TestRecursos(unittest.TestCase):
+    """Plano 0017 — skills, commands, agents e servidores MCP do projeto, sem trecho."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.p = Path(self._tmp.name).resolve()
+        claude = self.p / ".claude"
+        (claude / "skills" / "ui-builder").mkdir(parents=True)
+        (claude / "skills" / "ui-builder" / "SKILL.md").write_text(
+            "---\nname: ui-builder\ndescription: |\n  Cria componente do design system.\n  Use em src/components.\n\n"
+            "  <example>fora</example>\n---\n# corpo que não entra\n",
+            encoding="utf-8",
+        )
+        (claude / "skills" / "setup").mkdir()
+        (claude / "skills" / "setup" / "SKILL.md").write_text("---\nname: setup\ndescription: do método\n---\n", encoding="utf-8")
+        (claude / "commands" / "git").mkdir(parents=True)
+        (claude / "commands" / "git" / "ship.md").write_text("---\ndescription: 'Publica a branch'\n---\nx\n", encoding="utf-8")
+        (claude / "agents").mkdir()
+        (claude / "agents" / "revisor.md").write_text("---\nname: revisor\ndescription: Revisa PR\n---\nx\n", encoding="utf-8")
+        (self.p / ".mcp.json").write_text(json.dumps({"mcpServers": {"figma": {}, "db": {}}}), encoding="utf-8")
+
+    def test_lista_os_quatro_tipos_com_nome_e_descricao(self):
+        self.assertEqual(descoberta.descobrir(self.p)["recursos"], [
+            {"tipo": "skill", "nome": "ui-builder", "descricao": "Cria componente do design system. Use em src/components."},
+            {"tipo": "command", "nome": "git:ship", "descricao": "Publica a branch"},
+            {"tipo": "agent", "nome": "revisor", "descricao": "Revisa PR"},
+            {"tipo": "mcp", "nome": "db", "descricao": ""},
+            {"tipo": "mcp", "nome": "figma", "descricao": ""},
+        ])
+
+    def test_sem_frontmatter_usa_o_nome_do_arquivo(self):
+        (self.p / ".claude" / "agents" / "solto.md").write_text("só corpo\n", encoding="utf-8")
+        agentes = [r for r in descoberta.descobrir(self.p)["recursos"] if r["tipo"] == "agent"]
+        self.assertIn({"tipo": "agent", "nome": "solto", "descricao": ""}, agentes)
+
+    def test_mcp_malformado_vira_lista_vazia(self):
+        (self.p / ".mcp.json").write_text("{não é json", encoding="utf-8")
+        self.assertNotIn("mcp", [r["tipo"] for r in descoberta.descobrir(self.p)["recursos"]])
+
+    def test_projeto_sem_recursos(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = descoberta.descobrir(Path(d))
+        self.assertEqual(r["recursos"], [])
+        self.assertIn("## Recursos do projeto\n(nenhum)", descoberta.formatar(r))
+
+    def test_formatar_lista_o_recurso_sem_trecho(self):
+        texto = descoberta.formatar(descoberta.descobrir(self.p))
+        self.assertIn("- skill `ui-builder` — Cria componente do design system. Use em src/components.", texto)
+        self.assertIn("- mcp `figma`", texto)
+        self.assertNotIn("corpo que não entra", texto)
+        self.assertNotIn("<example>", texto)
+
 
 if __name__ == "__main__":
     unittest.main()

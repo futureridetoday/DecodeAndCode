@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -54,7 +55,9 @@ SUBCOMANDOS = (
     "handoff",
     "verificar",
     "normas",
+    "guidelines-aplicaveis",
     "criar-guideline",
+    "criar-principio",
     "adicionar-guardrail",
     "lint-guardrails",
     "huddle-iniciar",
@@ -66,6 +69,9 @@ SUBCOMANDOS = (
     "huddle-lint",
     "huddle-lint-relatorio",
     "huddle-migrar",
+    "log-resolver",
+    "metodo-listar",
+    "metodo-levado",
     "descobrir",
     "setup-iniciar",
     "setup-perfil",
@@ -126,6 +132,7 @@ plan_id: ""
 block: ""
 status: draft
 plan_size: grande
+plan_type: feature
 approved_by: Teste
 approved_at: 2026-10-15
 ---
@@ -639,6 +646,222 @@ class TestCriarGuideline(_ProjetoCase):
         r = self.dc("criar-guideline", entrada=json.dumps({"nome": "x"}))
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestCriarPrincipio(_ProjetoCase):
+    """Plano 0016 — `{nome, enunciado, teste}` pelo stdin, raiz pelo `cwd`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+
+    def entrada(self, **kw) -> str:
+        dados = {"nome": "Marca nova sem código novo", "enunciado": "Marca nova entra só por tokens.",
+                 "teste": "Adicionar uma marca muda só tokens vindos do Figma."}
+        dados.update(kw)
+        return json.dumps(dados)
+
+    def test_grava_na_raiz_do_projeto(self):
+        r = self.dc("criar-principio", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        alvo = self.projeto / ".claude" / "rules" / "principles.md"
+        self.assertEqual(Path(r.stdout.strip()).resolve(), alvo)
+        self.assertIn("## Marca nova sem código novo", alvo.read_text(encoding="utf-8"))
+
+    def test_repetido_e_codigo_1(self):
+        self.dc("criar-principio", entrada=self.entrada())
+        r = self.dc("criar-principio", entrada=self.entrada())
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertTrue(r.stdout.strip())
+
+    def test_json_sem_campo_e_codigo_2(self):
+        r = self.dc("criar-principio", entrada=json.dumps({"nome": "x"}))
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestLog(_ProjetoCase):
+    """Plano 0018 — o `main` registra toda chamada e a saída 2 vira `E-XX`; `log-resolver` o apaga."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.erros = self.projeto / ".claude" / "log" / "erros"
+
+    def eventos(self) -> list[dict]:
+        arquivo = self.projeto / ".claude" / "log" / "eventos.jsonl"
+        return [json.loads(l) for l in arquivo.read_text(encoding="utf-8").splitlines()]
+
+    def test_toda_chamada_vira_evento(self):
+        self.assertEqual(self.dc("validar-nome", "nome-bom").returncode, 0)
+        self.assertEqual(self.eventos()[-1]["comando"], ["validar-nome"])
+        self.assertEqual(self.eventos()[-1]["codigo"], 0)
+
+    def test_excecao_mantem_stderr_e_grava_e_xx_com_traceback(self):
+        r = self.dc("normas", "nao-existe.md")
+        self.assertEqual(r.returncode, 2)
+        self.assertEqual(r.stderr.count("\n"), 1)
+        self.assertSemTraceback(r)
+        texto = (self.erros / "E-01.md").read_text(encoding="utf-8")
+        self.assertIn("Traceback", texto)
+        self.assertIn('alvo: "nao-existe.md"', texto)
+
+    def test_erro_de_uso_do_argparse_grava_e_xx(self):
+        r = self.dc("normas")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("argparse", (self.erros / "E-01.md").read_text(encoding="utf-8"))
+
+    def test_log_que_nao_escreve_nao_muda_a_saida(self):
+        shutil.rmtree(self.projeto / ".claude" / "log")
+        (self.projeto / ".claude" / "log").write_text("arquivo no lugar da pasta", encoding="utf-8")
+        r = self.dc("normas", "nao-existe.md")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_projeto_sem_bootstrap_nao_ganha_log(self):
+        outro = self.projeto.parent / "sem-metodo"
+        (outro / ".claude").mkdir(parents=True)
+        (outro / "docs").mkdir()
+        self.assertEqual(_executar(outro, "validar-nome", "nome-bom").returncode, 0)
+        self.assertFalse((outro / ".claude" / "log").exists())
+
+    def test_log_resolver(self):
+        self.dc("normas", "nao-existe.md")
+        recusado = self.dc("log-resolver", "E-01", "metodo")
+        self.assertEqual(recusado.returncode, 1, recusado.stderr)
+        self.assertTrue((self.erros / "E-01.md").exists())
+        self.assertEqual(self.dc("log-resolver", "E-01", "H-01").returncode, 1)
+        self.dc("huddle-iniciar")
+        self.dc("huddle-abrir", "pergunta", entrada="Por que o normas falhou?")
+        r = self.dc("log-resolver", "E-01", "H-01")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.erros / "E-01.md").exists())
+
+    def test_pauta_resume_o_log_e_concluir_apaga_so_o_que_ela_mostrou(self):
+        self.dc("huddle-iniciar")
+        self.dc("normas", "nao-existe.md")
+        pauta = self.dc("huddle-pauta")
+        self.assertIn("## Log desde", pauta.stdout)
+        self.assertIn("comando normas, saída 2: 1", pauta.stdout)
+        self.assertIn("E-01 aberto desde", pauta.stdout)
+        self.dc("validar-nome", "depois-da-pauta")
+        r = self.dc("huddle-concluir")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        comandos = [e.get("comando") for e in self.eventos()]
+        self.assertNotIn(["normas"], comandos)
+        self.assertIn(["validar-nome"], comandos)
+        self.assertTrue((self.erros / "E-01.md").exists())
+
+
+class TestMetodo(_ProjetoCase):
+    """Plano 0019 — evidência no `huddle-abrir`, destino `método` no `huddle-fechar` e no
+    `log-resolver`, e a fila `metodo-listar` / `metodo-levado`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.huddle = self.raiz_planos / "system" / "huddle" / "ana-lima.md"
+        self.metodo = self.projeto / ".claude" / "log" / "metodo"
+
+    def abrir(self, evidencia: str, texto: str = "O lint corta a tarefa de várias linhas.") -> subprocess.CompletedProcess:
+        return self.dc("huddle-abrir", "padrão", "--evidencia", evidencia, entrada=texto)
+
+    def test_evidencia_no_fim_do_corpo_e_a_pauta_mostra_o_texto(self):
+        r = self.abrir("E-03")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("várias linhas.\n\nEvidência: E-03\n", self.huddle.read_text(encoding="utf-8"))
+        pauta = self.dc("huddle-pauta").stdout
+        self.assertIn("H-01 · padrão · ", pauta)
+        self.assertIn("O lint corta a tarefa", pauta)
+        self.assertNotIn("Evidência", pauta)
+        self.assertEqual(self.dc("huddle-lint").returncode, 0)
+
+    def test_evidencia_fora_do_vocabulario_e_codigo_1_sem_escrever(self):
+        self.dc("huddle-iniciar")
+        antes = self.huddle.read_text(encoding="utf-8")
+        r = self.abrir("palpite")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertEqual(self.huddle.read_text(encoding="utf-8"), antes)
+
+    def test_fechar_metodo_sem_texto_nao_fecha(self):
+        self.abrir("E-03")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn("### H-01", self.huddle.read_text(encoding="utf-8"))
+        self.assertFalse(self.metodo.exists())
+
+    def test_fechar_metodo_grava_m_xx_e_fecha(self):
+        self.abrir("E-03")
+        self.abrir("bloqueio: sem-segredo", texto="Outro.")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="O backlog corta tarefa de várias linhas.")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.dc("huddle-fechar", "H-02", "método", entrada="Genérico.").returncode, 0)
+        primeiro = (self.metodo / "M-01.md").read_text(encoding="utf-8")
+        for esperado in ('origem: "H-01"', 'evidencia: "E-03"', "O backlog corta tarefa"):
+            self.assertIn(esperado, primeiro)
+        self.assertIn('evidencia: ""', (self.metodo / "M-02.md").read_text(encoding="utf-8"))
+        self.assertNotIn("sem-segredo", (self.metodo / "M-02.md").read_text(encoding="utf-8"))
+        huddle = self.huddle.read_text(encoding="utf-8")
+        self.assertNotIn("### H-01", huddle)
+        self.assertRegex(huddle, r"\| H-01 \| `padrão` \| [\d-]+ \| método: M-01 \|")
+
+    def test_fechar_metodo_com_gravacao_falhando_nao_fecha(self):
+        self.abrir("E-03")
+        self.metodo.parent.mkdir(parents=True, exist_ok=True)
+        self.metodo.write_text("arquivo no lugar da pasta", encoding="utf-8")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn("### H-01", self.huddle.read_text(encoding="utf-8"))
+
+    def test_fechar_metodo_id_que_nao_esta_aberto(self):
+        self.dc("huddle-iniciar")
+        r = self.dc("huddle-fechar", "H-09", "método", entrada="Genérico.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertFalse(self.metodo.exists())
+
+    def test_log_resolver_metodo_listar_e_levar(self):
+        self.dc("normas", "nao-existe.md")
+        r = self.dc("log-resolver", "E-01", "método")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("método: M-01", r.stdout)
+        self.assertFalse((self.projeto / ".claude" / "log" / "erros" / "E-01.md").exists())
+        self.abrir("L-04")
+        self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+
+        listado = self.dc("metodo-listar")
+        self.assertEqual(listado.returncode, 0, listado.stderr)
+        self.assertIn("=== M-01", listado.stdout)
+        self.assertIn("=== M-02", listado.stdout)
+        self.assertIn('origem: "E-01"', listado.stdout)
+        self.assertNotIn(str(self.projeto), listado.stdout)
+        self.assertIn("M-01 (de E-01) pendente desde", self.dc("huddle-pauta").stdout)
+
+        self.assertEqual(self.dc("metodo-levado", "M-01", "  ").returncode, 1)
+        r = self.dc("metodo-levado", "M-01", "DecodeAndCode H-22")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.metodo / "M-01.md").exists())
+        self.assertEqual(self.dc("metodo-levado", "M-01", "de novo").returncode, 1)
+
+    def test_listar_vazio(self):
+        r = self.dc("metodo-listar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("nenhum M-XX pendente", r.stdout)
+
+    def test_log_fora_do_git(self):
+        self.dc("huddle-iniciar")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-qm", "c"], cwd=self.projeto, check=True)
+        self.abrir("E-03")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-qm", "c2"], cwd=self.projeto, check=True)
+        self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+        status = subprocess.run(["git", "status", "--porcelain"], cwd=self.projeto, capture_output=True, text=True).stdout
+        self.assertNotIn(".claude/log", status)
+        self.assertTrue((self.metodo / "M-01.md").exists())
 
 
 class TestAdicionarGuardrail(_ProjetoCase):

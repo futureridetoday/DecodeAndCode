@@ -98,7 +98,7 @@ Campos exigidos:
 
 ```
 System           → o repositório
-  Core           → fronteira de ownership: declarada por projeto, em `config.json`
+  Core           → fronteira de ownership: declarada pelo plano, no campo `core:`
     Module       → capability de domínio: auth, catalog, mcp
       Block      → variação/extensão aditiva (opcional): login-google
         Unit     → fatia vertical mínima verificável: AU-02
@@ -215,8 +215,48 @@ formaliza um invariante que já vale. Por ser **verificável por grep** — refe
 outro, contadas nas duas direções —, é o candidato natural a primeiro guardrail automatizado.
 
 > **O grafo é do projeto que instala, nunca do plugin.** O mecanismo — declarar o grafo e verificá-lo
-> por contagem — viaja; a instância não. Projeto que não declara grafo não ganha o check: ele volta a
-> ser julgamento, e o *Modo `review`* registra isso.
+> por contagem — **ainda não existe**: nenhum projeto consumidor declara grafo (gate A do plano
+> `0014-fix-review-plan-claims`). Até existir, o check de arquitetura do *Modo `review`* é julgamento.
+
+#### Princípio
+
+**Princípio e guideline separam-se por um teste, com dois recortes.** Princípio é sobre **como
+decidir**; guideline, sobre **o que decidir**.
+
+| Recorte | Pergunta | Não → | Sim → |
+|---|---|---|---|
+| O que viaja no plugin | Uma equipe competente pode rejeitar isso e ainda estar fazendo trabalho bom? | princípio do método | escolha técnica: não viaja |
+| O que é princípio do projeto | Uma equipe competente, trabalhando **neste** projeto, pode rejeitar isso? | princípio do projeto | guideline |
+
+O primeiro recorte mantém o plugin portátil: escolha técnica embutida seria arquitetura imposta a
+quem instala. O segundo é o que o setup aplica: "a marca fala com uma voz só" é rejeitável em
+abstrato, e não é para aquela marca. Origem do primeiro: plano `0001`, seção *Princípio e guideline
+separam-se por um teste*; do segundo: plano `0016`, `D-04`.
+
+**Formato.** Uma seção de `.claude/rules/principles.md`, que não declara `paths:` e por isso carrega
+em toda sessão: `## <nome>`, `**Enunciado:**` numa frase e `**Teste:**`, a condição verificável. O
+princípio gravado pelo setup leva só os dois; *Na prática* fica para o que entra por plano.
+
+**Teto: 5 princípios no projeto, ideal 3.** Cada um custa contexto em toda sessão. Conta-se a seção
+com `**Enunciado:**` em toda rule sem `paths:` de `.claude/rules/`, não o `##`: seção de fonte ou de
+protocolo não é princípio. `dc.py criar-principio` recusa o sexto.
+
+**Duas portas, ambas com aprovação humana.** Por plano, com unidade `norma` e a aprovação registrada
+no plano. Pelo setup, com a aprovação na conversa, gravado por `dc.py criar-principio`, que impõe
+formato e teto e só escreve o que passa em `lint_rule`. Fora dessas duas, `principles.md` não se
+edita. O guia é [`create-principle.md`](../../recursos/create-principle.md).
+
+**Os princípios do método, que o setup oferece.** Esta é a fonte do texto; o `principles.md` de
+quem os aceita é instância, cópia gravada pelo setup.
+
+| Nome | Enunciado | Teste |
+|---|---|---|
+| Código é custo | Código não é ativo: é responsabilidade que se paga em manutenção, superfície de bug e carga cognitiva, a cada linha que existe | Só existe se eliminar dor real e mensurável |
+| Subtração antes de adição | Toda solução se avalia na ordem remover, reduzir, reaproveitar, criar; a próxima só entra se a anterior não resolver | `remover > reduzir > reaproveitar > criar` |
+| Evidência acima de opinião | Decisão de projeto se sustenta em dado, não em preferência estética ou tendência de mercado | Decisão baseada em dado simples — medição, citação ou caso registrado —, não em estética |
+
+O *protocolo de exceção* acompanha os três neste repositório, mas não tem *Enunciado* nem *Teste*:
+não é princípio no formato acima, e o setup não o oferece.
 
 #### Guideline
 
@@ -250,15 +290,16 @@ feito isso — vira gate onde é estrutural, e relatório onde só a sessão rea
 `.claude/rules-off/` está sã — recusa isoladamente um `.md` em subdiretório de `rules/` (o matcher recursa, e o arquivo continua carregando), uma rule malformada em `rules/`, e
 uma guideline quebrada em `rules-off/`, porque ela volta a ser ligada um dia.
 
-`activation_notice.relatorio(caminho_log)` lê o log de uma sessão —
-`$TMPDIR/decode-and-code-activation-<session_id>.log`, escrito pelo hook `InstructionsLoaded` — e
-devolve uma linha por instrução carregada, com caminho, motivo e veredito:
+`activation_notice.relatorio(caminho_log, sessao)` lê o log de ativação —
+`.claude/log/eventos.jsonl` do projeto, onde o hook `InstructionsLoaded` grava com o `session_id`
+(*Log de uso*), filtrado pela `sessao` quando dada — e devolve uma linha por instrução carregada,
+com caminho, motivo e veredito:
 
 ```
 python3 -c "
 import sys; sys.path.insert(0, '<scripts-da-skill>')
 import activation_notice
-for linha in activation_notice.relatorio('<caminho-do-log>'):
+for linha in activation_notice.relatorio('.claude/log/eventos.jsonl', '<session_id>'):
     print(linha)
 "
 ```
@@ -536,7 +577,7 @@ forçar um seria fingir um oráculo que não existe.
 `norma` inverte a exigência de `test:` — passa a ser obrigatório **vazio**, no mesmo padrão de
 vocabulário fechado que já vale para o próprio `unit_type` — e ganha dois campos novos no
 frontmatter, ao lado de `unit_type`: `approved_by` e `approved_at`. Mesmo par, mesmo papel dos
-campos homônimos do plano (*Aprovação — três campos declarados pelo humano*, mais abaixo): o humano
+campos homônimos do plano (*Aprovação — quatro campos declarados pelo humano*, mais abaixo): o humano
 declara, o script só confere que a declaração existe.
 
 `verificacao.verificar` fecha uma unidade `norma` quando `lint_unidade` está limpo **e**
@@ -619,19 +660,20 @@ resolve a ambiguidade de para onde mover o arquivo na aprovação.
 > O alvo define onde o plano e suas unidades **vivem**, não a fronteira do que o código **toca**. Uma
 > unidade pode tocar arquivos de qualquer lugar — é o campo *Arquivos* que declara isso.
 
-### Aprovação — três campos declarados pelo humano
+### Aprovação — quatro campos declarados pelo humano
 
 A etapa de aprovação (*Fluxo completo*, etapa 3) deixa um artefato: o plano declara, no
-frontmatter, os três campos que só o humano pode preencher. `scaffold.aprovar` recusa a ausência de
+frontmatter, os quatro campos que só o humano pode preencher. `scaffold.aprovar` recusa a ausência de
 qualquer um — antes de mover o plano, antes de escrever qualquer coisa, inclusive em `dry_run`.
 
 | Campo | Valor | O que o gate faz |
 |---|---|---|
 | `plan_size` | `pequeno` \| `médio` \| `grande` | Recusa ausente **e** recusa valor fora do vocabulário |
+| `plan_type` | um dos sete de *Tipo de plano*, abaixo | Recusa ausente **e** recusa valor fora do vocabulário |
 | `approved_by` | nome de quem aprovou | Recusa ausente |
 | `approved_at` | `YYYY-MM-DD` | Recusa ausente, e recusa o que não for data ISO |
 
-Recusar `plan_size` fora do vocabulário não é julgar o porte: o gate segue sem opinar se `grande`
+Recusar `plan_size` ou `plan_type` fora do vocabulário não é julgar o porte nem o tipo: o gate segue sem opinar se `grande`
 era a escolha certa para este plano — isso é julgamento humano. O que ele recusa é o valor que não é
 escolha nenhuma, no mesmo padrão de vocabulário fechado que `unit_type` já usa.
 
@@ -713,11 +755,66 @@ correção de oito linhas não pague a estrutura de um plano de vinte unidades:
 é promessa de projeção: se nenhum script escreve ali, ela mente para sempre. E `## Independência`
 num plano sem decomposição responde a uma pergunta que ninguém fez.
 
+O porte define o formato; o que muda no oráculo e em quem executa é do tipo (*Tipo de plano*,
+abaixo).
+
 `lint_plano.lint` verifica exatamente esta tabela — leitura, nunca escrita. `plan_size` ausente,
 vazio ou fora do vocabulário entra na lista de problemas devolvida, e `lint_plano` **nunca
 levanta**: quem recusa a aprovação por causa de `plan_size` é `scaffold.aprovar` (*Aprovação*,
 acima), que é o gate. `lint_plano` também roda sobre plano ainda no `_inbox`, antes de existir
 aprovação nenhuma para recusar.
+
+#### Quando cada porte cabe
+
+A tabela acima diz o que cada porte **carrega**; esta diz **quando** cada um cabe. O critério é o que
+o porte muda a jusante, e as perguntas se respondem em ordem — a primeira que responde sim decide:
+
+| # | Pergunta | Sim → |
+|---|---|---|
+| 1 | O trabalho é uma mudança só, sem passos que valha projetar? | `pequeno` — sem decomposição e sem backlog |
+| 2 | Há passos, mas uma sessão os executa em sequência, sem cold-start? | `médio` — `## Tarefas`, executadas pela sessão que orquestra (*Fluxo completo*) |
+| 3 | Alguma parte precisa de cold-start isolado — não cabe no contexto de uma sessão, ou precisa de teste próprio por unidade com gate de saída? | `grande` — unidades derivadas, `implement` e, entre sessões, `_handoff.md` |
+
+**Contagem é contexto, não critério.** Unidades, tarefas e arquivos se sobrepõem entre portes em
+*Porte medido*: um médio fechou com 14 tarefas, um grande com 6 unidades, e um médio de cerca de 20
+arquivos (`D-14` do `0008`) coube numa sessão. O *porte provável* de *Tipo de plano* é ponto de
+partida; as perguntas o confirmam ou corrigem.
+
+Quem as aplica é o `intake`, ao propor o porte, e o `review-plan`, ao recomendá-lo — sempre como
+aviso (*Avaliação de escopo → O que a avaliação não faz*). A declaração continua do humano, na
+aprovação.
+
+### Tipo de plano
+
+`plan_type` declara que tipo de trabalho o plano é, num vocabulário fechado de sete (plano
+`0012-add-plan-type`). Existe porque cada tipo muda algo a jusante — o oráculo de entrega, o que o
+`review-plan` confere e, no grande, o que o `derive` faz e quem executa; tipo que não mudasse nada
+seria só rótulo. O intake propõe o tipo, com o porquê, e o humano o confirma na aprovação, junto com
+o porte. `lint_plano` reporta ausência e valor fora do vocabulário sem encerrar as demais
+checagens — o tipo não muda o schema do porte —, e `scaffold.aprovar` recusa os dois.
+
+O que **não** varia por tipo: o pequeno e o médio **nunca** passam pelo `implement` — a sessão que
+orquestra executa (*Fluxo completo*). As colunas *derive* e *quem executa* agem só no **grande**;
+nos outros portes o tipo muda o review e o oráculo de entrega.
+
+| Tipo | Oráculo de entrega | Porte provável | `review-plan` confere | `derive` (grande) | Quem executa (grande) |
+|---|---|---|---|---|---|
+| `fix` | O teste que reproduz o defeito, vermelho antes do código e verde depois | pequeno, médio | O defeito está medido e citado (`L-XX`, `H-XX`, incidente) e o teste que o reproduz está declarado | A mesma unidade leva o teste que reproduz e a correção — unidade só com o teste terminaria vermelha, e o gate de saída nunca a marcaria `verified`; o critério de aceite exige a execução vermelha antes do código | `implement`; o relatório mostra a execução vermelha, e o gate de saída, a verde |
+| `feature` | Teste declarado de cada unidade — o ciclo de referência | médio, grande | `## Independência` auditada com peso | Sem regra própria | `implement` |
+| `remove` | Suíte verde e diff com saldo **negativo** de linhas | pequeno, médio | A evidência de não uso está citada (busca, medição) | As unidades declaram em `test:` a suíte existente que cobre o que sai | `implement`; a revisão da entrega mede o saldo com `git diff --numstat` |
+| `refactor` | Suíte verde **sem alterar teste existente** | médio | O gate A cita a dor medida | Nenhuma unidade lista teste existente em *Arquivos* | `implement`; a revisão da entrega confere `git diff --stat` vazio nos testes existentes |
+| `norma` | Aprovação humana (`approved_by`/`approved_at`) | pequeno | Lista as seções da norma que mudam; nenhum arquivo de código | Só unidades `unit_type: norma` | `implement` — o gate de saída fecha a unidade `norma` pela aprovação humana, sem rodar teste (*Tipo de unidade*) |
+| `chore` | O artefato produzido existe e funciona (zip, release, CI verde) | médio | O artefato e o modo de conferi-lo estão nomeados | Sem regra própria | `implement` |
+| `spike` | A medição ou a decisão registrada — huddle, `## Decisões` ou outro plano | pequeno | A pergunta está escrita e o destino da resposta, nomeado; nenhum código de produção | Não se deriva `spike` grande | — |
+
+O porte provável é **recomendação** para o intake propor, não regra: o lint não cruza tipo com porte.
+
+O tipo não troca o modelo: `model:` é frontmatter estático de cada skill (*Modelos*). O que o tipo
+decide, no grande, é se a unidade vai ao `implement` ou fica com a sessão que orquestra.
+
+No grande, todo tipo que passa pelo `implement` com `unit_type: dev` precisa de teste com runner no
+mapa `runners` (*Bootstrap → O que não cria*). O oráculo de um `chore` grande, como o zip que
+instala, entra embrulhado num teste desses.
 
 ---
 
@@ -793,7 +890,9 @@ original invertido, e pior, porque a coordenação passa a ser entre documentos 
 
 - **Não impõe teto de unidades.** Tamanho é reportado como contexto — unidades previstas, módulos e
   cores tocados — nunca como critério de reprovação. Um número sem base empírica competiria com o
-  teste de independência e dividiria planos coesos.
+  teste de independência e dividiria planos coesos. O porte recomendado, pelo critério de *Quando
+  cada porte cabe*, também é **aviso**, nunca bloqueante: a declaração de `plan_size` continua do
+  humano (*Aprovação*).
 - **Não bloqueia a aprovação.** Quem aprova é o humano; um check que recusa vira obstáculo a
   contornar. Quando a avaliação sinaliza divisão e a decisão é não dividir, **o plano registra o
   porquê** — mesmo princípio das lacunas `L-XX`. O custo de justificar por escrito já filtra o
@@ -824,6 +923,10 @@ No `_inbox`, apenas o nome semântico:
 | **Qualificador** | opcional: fase, camada, variante | `l3`, `impl` |
 
 Restrições: kebab-case, **inglês**, 2–5 tokens, ≤ 64 caracteres, sem conectivos.
+
+A intenção no nome **não declara o tipo** do plano, e não precisa coincidir com ele: o tipo é o
+campo `plan_type` (*Tipo de plano*), e nenhum script compara os dois — `0011-fix-norma-config-claims`
+é do tipo `norma`.
 
 > **Por que inglês, se a documentação é pt-BR.** O nome do plano vira o `module` do frontmatter e o
 > nome da pasta no disco — e o `.claude/CLAUDE.md` § *Idioma e Nomenclatura* classifica módulo como
@@ -931,14 +1034,14 @@ Nem todos têm a mesma natureza; separar evita pedir julgamento onde cabe script
 
 | Check | Natureza | Como |
 |---|---|---|
-| **O plano precisa ser dividido?** | **Misto** | Script checa concorrência em `_planos.md` e reporta tamanho; julgamento audita a declaração de independência (ver *Avaliação de escopo*) |
-| Usou a documentação oficial adequada ao escopo? | **Misto** | Script confere se as fontes citadas existem; julgamento avalia se são as certas |
-| Há erros de arquitetura? | **Misto**, quando há grafo | Script conta referências contra a seta do grafo de cores (ver *Guardrail fundador*); sem grafo declarado, o check é julgamento inteiro |
+| **O plano precisa ser dividido?** | **Misto** | `concorrencia` checa `_planos.md`; julgamento relata o tamanho, recomenda o porte contra o declarado pelo critério de *Quando cada porte cabe* e audita a declaração de independência (ver *Avaliação de escopo*) |
+| Usou a documentação oficial adequada ao escopo? | Julgamento | O modelo abre cada fonte citada, confere que existe e avalia se é a certa |
+| Há erros de arquitetura? | Julgamento | A contagem contra a seta do grafo de cores (ver *Guardrail fundador*) ainda não tem mecanismo |
 | Há erros conceituais? | Julgamento | — |
 | Há lacunas em aberto? | Julgamento | Registrar como `L-XX` |
-| É compatível com os padrões do projeto? | **Misto** | Guardrails do `CLAUDE.md` são verificáveis; o resto é julgamento |
+| É compatível com os padrões do projeto? | **Misto** | `lint-plano` confere o formato por porte e o `plan_type`; os guardrails de `.claude/guardrails.json` se impõem em execução, pelo hook, e o julgamento confere que o plano não depende de violá-los nem às guidelines de `.claude/rules/` |
 
-Quatro dos seis têm parte automatizável. Sem extraí-la, a revisão vira leitura subjetiva — e leitura
+Dois dos seis têm parte automatizável. Sem extraí-la, a revisão vira leitura subjetiva — e leitura
 subjetiva é onde a variância volta.
 
 ### Os dois gates
@@ -1057,8 +1160,9 @@ projeto de antes, `<plan_root>/system/huddle.md`, passa para o da pessoa por `dc
 huddle não se partir em dois.
 
 **A propriedade que faz funcionar: nada ali é autoritativo enquanto está ali.** Uma entrada nasce
-aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, ou
-para o `## Decisões` de um plano — deixando uma linha em `## Fechadas` com data e destino. Não
+aberta, é discutida com o humano, e quando resolve **sai** — para a norma, para uma guideline, para
+o `## Decisões` de um plano, ou para o repositório do método — deixando uma linha em `## Fechadas`
+com data e destino. Não
 resolvida, é descartada com o motivo escrito. Um arquivo onde nada fecha só cresce; o tamanho certo
 é o do que está genuinamente em aberto.
 
@@ -1081,25 +1185,45 @@ valor que não é escolha nenhuma, nunca a escolha.
 | `revisitar` | Alternativa rejeitada cuja premissa pode ter mudado |
 | `observação` | Algo notado que ainda não virou afirmação |
 
+**Evidência, opcional.** A entrada que tem origem a declara numa linha no **fim** do corpo, para a
+pauta seguir mostrando a primeira linha do texto:
+
+```
+Evidência: E-03
+```
+
+O prefixo vem de um vocabulário fechado de cinco, as origens que o ciclo de evolução da norma conta
+(plano `0018`, `D-09`): `E-XX` (erro do log), `L-XX` (lacuna de plano), `bloqueio: <regra>`,
+`gate: <comando>` e `revisão: <plano>`. Depois do prefixo, o texto é livre. Entra por
+`huddle-abrir <tipo> --evidencia "<origem>"`, que recusa, sem escrever, o valor que não começa por
+um dos cinco. Entrada sem a linha continua válida, como todas as de antes do plano `0019`.
+
 Entrada fechada vira uma linha em `## Fechadas`, colunas `# | Tipo | Fechada em | Destino`.
+
+**Destino `método`.** Quando a entrada é sobre o próprio método — defeito, lacuna ou regra do
+plugin, não do projeto —, `huddle-fechar <H-XX> método` lê do stdin um texto **genérico**, sem nome
+de plano, módulo ou trecho do projeto, redigido na conversa e aprovado pela pessoa. Grava antes o
+`M-XX` (seção *Log de uso → Feedback ao método*) e só então fecha, com destino `método: M-XX`. Sem
+texto, ou com a gravação falhando, recusa com 1 e a entrada continua aberta.
 
 O frontmatter carrega três campos do mecanismo: `owner` (a pessoa), `last_huddle` (a data do último
 huddle, gravada por `huddle-concluir`) e `reminder_days` (a cada quantos dias o aviso de abertura
 lembra; `0` desliga; ausente ou inválido vale 7). `huddle.lint_arquivo` recusa `reminder_days` que
 não seja inteiro maior ou igual a zero.
 
-**Comandos** — tudo que é formato é script, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir <tipo>`
-(texto no stdin; próximo `H-XX` e data de hoje), `huddle-fechar <H-XX> "<destino>"`,
-`huddle-concluir`, `huddle-pauta` (abertas e commits desde o último huddle, no máximo 50),
-`huddle-fecho`, `huddle-lint`, `huddle-lint-relatorio` (relatório no stdin) e `huddle-migrar`.
+**Comandos** — tudo que é formato é script, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir <tipo>
+[--evidencia "<origem>"]` (texto no stdin; próximo `H-XX` e data de hoje), `huddle-fechar <H-XX>
+"<destino>"` (com `método`, o texto genérico no stdin), `huddle-concluir`, `huddle-pauta` (abertas
+e commits desde o último huddle, no máximo 50), `huddle-fecho`, `huddle-lint`,
+`huddle-lint-relatorio` (relatório no stdin) e `huddle-migrar`.
 
 ### Despejo — o invariante verificável
 
 **O mesmo `H-XX` não pode estar em `## Abertas` e na tabela de `## Fechadas` ao mesmo tempo** — é a
 promessa central do arquivo, e sem verificação um huddle onde nada fecha só cresce sem que ninguém
 note. `huddle.lint_arquivo(caminho)` prova isso, lista vazia quando sã: cabeçalho de entrada bem
-formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, e nenhum `H-XX`
-presente nas duas seções.
+formado — tipo dentro do vocabulário fechado —, `H-XX` único dentro de `## Abertas`, nenhum `H-XX`
+presente nas duas seções, e linha `Evidência:` só com um dos cinco prefixos.
 
 **Os cinco gatilhos de escrita não têm o mesmo oráculo**: *o executor decidiu algo que o
 humano não decidiu*, *duas fontes discordam*, *algo foi contornado em vez de corrigido*, *uma
@@ -1112,8 +1236,10 @@ se deveria ter escrito.
 Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
 escrita na hora seria natimorta. No fecho de **qualquer uma das cinco skills** — `intake`,
 `review-plan`, `derive`, `implement` e `setup` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
-subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto, e termina o
-relatório com uma linha que declara quantas entradas novas houve, com os ids:
+subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto — com
+`--evidencia "<origem>"` quando a entrada nasce de um erro do log, de uma lacuna, de um bloqueio, de
+um gate ou de uma revisão (*Formato e vocabulário fechado*) —, e termina o relatório com uma linha
+que declara quantas entradas novas houve, com os ids:
 
 ```
 entradas novas no huddle: 2 (H-12, H-13)
@@ -1142,8 +1268,9 @@ dias, e `/decode-and-code:huddle`. Silencioso em qualquer outro caso e em qualqu
 escreve. Só alcança quem abre o Claude Code.
 
 **A conversa é a skill `huddle`**, invocada pela pessoa (`disable-model-invocation: true`): roda a
-pauta e percorre as abertas uma a uma — decidir (destino em texto livre), promover, descartar com o
-motivo, manter —, e termina com `huddle-concluir`. **Promover é simples:** a proposta de guideline
+pauta e percorre as abertas uma a uma — decidir (destino em texto livre, ou `método` quando a
+entrada é sobre o próprio método), promover, descartar com o motivo, manter —, e termina com
+`huddle-concluir`. **Promover é simples:** a proposta de guideline
 ou guardrail é montada com a pessoa, aprovada na conversa e gravada por `dc.py criar-guideline` ou
 `dc.py adicionar-guardrail` (seção *Camada normativa*); a entrada fecha com o caminho gravado como
 destino.
@@ -1159,6 +1286,70 @@ caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em 
 > vazio, sim**. Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
 > empacotá-la entregaria a quem instala o registro de decisões de outro repositório — o invariante 2
 > quebrado no artefato mais pessoal do método. Quem instala roda `dc.py huddle-iniciar` e recebe o seu, vazio.
+
+---
+
+## Log de uso — o que o método registra sozinho
+
+Os gatilhos do huddle dependem de quem escreve (*Despejo*). O log é a parte que não depende:
+defeito do próprio método, gate que reprovou, guardrail que barrou e instrução que carregou ficam
+registrados por script, e o huddle os lê. É o primeiro item do ciclo de evolução da norma (plano
+`0018`); os seguintes — evidência, gatilho, caso por regra, contagem e saúde — leem daqui.
+
+**Onde mora.** Em `<projeto>/.claude/log/`, que carrega o próprio `.gitignore` (`*`), criado na
+primeira escrita: a pasta fica fora do git sem que nada edite o `.gitignore` do projeto. **Só em
+projeto com `<plan_root>/_planos.md`**, a marca do bootstrap — com o plugin no escopo de usuário, os
+hooks rodam em todo projeto aberto, e o log não pode ser o efeito colateral que *Materializar não
+pode ser automático* recusa. É a exceção declarada a essa regra: hook escreve só ali, numa pasta que
+o git ignora, e só em projeto que adotou o método.
+
+**Eventos.** `.claude/log/eventos.jsonl`, uma linha JSON por evento, com `data` e `classe`:
+
+| Classe | Quem grava | O que leva |
+|---|---|---|
+| `comando` | `dc.main`, em toda chamada | o subcomando, o código de saída e o alvo (plano ou unidade) |
+| `bloqueio` | hook `PreToolUse`, só quando nega | a regra e o nome da ferramenta — **nunca** valor de `tool_input`, que pode ter segredo |
+| `ativacao` | hook `InstructionsLoaded` | o anúncio de `activation_notice` e o `session_id` |
+| `erro` e `resolvido` | `eventos.registrar_erro` e `eventos.resolver` | o `E-XX` e, no segundo, o destino |
+| `levado` | `eventos.levado` | o `M-XX` e onde ele foi levado |
+
+**Erros.** A saída 2 do `dc.py` — exceção de um handler ou erro de uso do `argparse` — é defeito do
+método, e só ela vira `.claude/log/erros/E-XX.md`: o comando, o código, o fim da saída com o
+traceback, o alvo, o `HEAD`, o working tree como links e a versão do plugin. Saída 1 é o gate
+funcionando, e bloqueio pode ser acerto da regra: ficam só como evento. A numeração vem de
+`erros/.ultimo`, que só cresce e que nada apaga.
+
+**Validade.** O arquivo só recebe acréscimo, uma escrita por evento: os hooks rodam vários ao
+mesmo tempo, e reescrever perdia eventos (medido no `0018`). O evento sai quando a revisão o lê:
+`huddle-concluir` apaga os eventos até a última `huddle-pauta`, por posição — a única reescrita.
+Evento com mais de 14 dias some da leitura e sai do arquivo nessa mesma reescrita. O `E-XX`
+**só sai por resolução**, nunca por prazo: `dc.py log-resolver <E-XX> "<destino>"` o apaga, com
+destino `H-XX` aberto no huddle da pessoa, `L-XX`, `método` ou `descartado: <motivo>`. Com 7 dias
+sem resolução, ele aparece no aviso de abertura e na pauta do huddle. Nada se apaga à mão.
+
+**Feedback ao método.** O que é sobre o próprio método, e não sobre o projeto, espera em
+`.claude/log/metodo/M-XX.md` até a pessoa levá-lo ao repositório do método — à mão, porque o projeto
+pode ser de terceiro, e envio por script pediria credencial e rede (plano `0018`, `D-09`). Chegam
+lá dois caminhos:
+
+| Origem | Como | O que o `M-XX` leva |
+|---|---|---|
+| Entrada do huddle | `huddle-fechar <H-XX> método`, texto genérico no stdin (seção *Huddle*) | o texto, e a evidência só quando é `E-XX` ou `L-XX` — ids sem conteúdo; as outras três trazem nome do projeto e ficam de fora |
+| Erro do log | `log-resolver <E-XX> método` — nunca automático: o erro só sai por resolução | cópia mecânica: o subcomando sem os argumentos, o código, o fim da saída e a versão. Ficam de fora o `HEAD`, o working tree e o alvo — também de dentro da saída, onde vira `<alvo>` |
+
+Nos dois, o `M-XX` é gravado **antes** de a entrada fechar ou o `E-XX` sair; se a gravação falhar,
+nada fecha. A raiz do projeto vira `<projeto>`, e o diretório da pessoa vira `~`. Só isso é
+mecânico: nome de plano ou trecho de código no texto dependem da pessoa, que revisa cada `M-XX`
+inteiro, frontmatter e texto, em `dc.py metodo-listar`. A pauta do huddle lista os pendentes. O
+`M-XX` **só sai** por `dc.py metodo-levado <M-XX> "<onde>"`, que o apaga e registra o evento
+`levado`; nunca por prazo. A numeração vem de `metodo/.ultimo`, como a do `E-XX`. Como o log, o
+`M-XX` não é versionado e se perde com o clone — o preço de não pôr traceback no git.
+
+No próprio repositório do método, levar é abrir ali um `H-XX` ou registrar um `L-XX` no plano a que
+o defeito pertence, e então rodar `metodo-levado <M-XX> "<H-XX ou L-XX>"`.
+
+**Contrato.** O log nunca muda o que já existia: o código de saída e o stderr do `dc.py`, e a
+resposta dos hooks, são os mesmos com ou sem ele, e qualquer falha de escrita fica no próprio log.
 
 ---
 
@@ -1195,7 +1386,11 @@ Sem arquivo de template: o esqueleto vive em `_CONTEUDO_INICIAL`, como `porte.py
 ### O que não cria
 
 Runner de teste e `_inbox/_backlog.md` ficam de fora. São **instância do projeto que
-instala**, não estrutura do método — o projeto declara o seu runner em `runners`, no `config.json`.
+instala**, não estrutura do método — o projeto escreve o script do seu runner no caminho que o mapa
+`runners` declara, relativo à raiz. O mapa (extensão → script) vem do `config.json` do plugin, hoje
+`.py` e `.ts`; o projeto não o estende, e o gate de saída recusa teste de extensão fora dele
+(*"extensão de teste sem runner declarado"*). A config de projeto que o estenderia está desenhada e
+adiada no plano `0011-fix-norma-config-claims`, *Desenho adiado*.
 Criar um na casa de quem instala seria feature além do pedido, e é o invariante 2 aplicado à
 operação que mais tenta violá-lo: a que escreve num projeto alheio.
 
@@ -1227,16 +1422,25 @@ modelo pode propor depois de vê-lo.
 **As etapas.** 0, pré-condições: bootstrap se faltar o chão, e o plugin habilitado em
 `.claude/settings.json` (`setup-escopo`), para que o time inteiro trabalhe com as mesmas normas. 1,
 perfil: objetivo, escopo e stack, confirmados com a pessoa a partir do inventário que `descobrir`
-faz. 2 e 3, todas as guidelines e depois todos os guardrails, **uma sugestão por vez**, cada uma
-aprovada, editada ou rejeitada na conversa. 4, huddle da pessoa. 5, o método, explicado a partir do
-que `dc.py explicar` imprime. 6, `setup-concluir` e o fecho do huddle.
+faz. 2, os princípios. 3 e 4, todas as guidelines e depois todos os guardrails. Em 2, 3 e 4, **uma
+sugestão por vez**, cada uma aprovada, editada ou rejeitada na conversa. 5, huddle da pessoa. 6, o
+método, explicado a partir do que `dc.py explicar` imprime. 7, `setup-concluir` e o fecho do huddle.
 
-**Critério de sugestão.** Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos
-onde vale — a de caminho que ainda não existe se grava já, com `paths_pending`. Guardrail nasce de
-decisão explícita do time que desvia do padrão da stack, e barra o que uma escrita contém. Os guias
-pedem falha observada ou incidente, que projeto novo não tem. **O setup não sugere princípio**:
-princípio entra por plano com unidade `norma`, e achado com essa cara vira entrada `observação` no
-huddle.
+**Critério de sugestão.** Princípio, pelo segundo recorte do teste (*Camada normativa → Princípio*),
+dentro do teto: primeiro o **north star**, a partir do objetivo do perfil — *Enunciado*, o objetivo;
+*Teste*, a condição verificável que só aquele objetivo produz, nunca "a mudança aproxima o projeto do
+objetivo" —; depois os princípios do método, um por vez; depois os
+**extraídos**, que o projeto já afirma, com o arquivo citado; por último os **propostos**, inferidos
+e ligados ao objetivo. Cada sugestão mostra a origem e o teste aplicado; a rejeitada pelo teste cai
+para guideline. Projeto novo recebe o north star e os do método; os demais nascem pelo huddle. O que
+o `CLAUDE.md` ou o `.claude/CLAUDE.md` já afirma se registra como `existente`, sem cópia. Guideline
+nasce da stack e do objetivo do projeto, escopada pelos caminhos onde vale — a de caminho que ainda
+não existe se grava já, com `paths_pending`. Recurso do projeto ligado a caminhos (skill, command ou
+MCP que o `descobrir` lista) vira **guideline-ponte**, com título e o recurso a usar; o `derive` a
+cita pelo `dc.py guidelines-aplicaveis`, e o `implement` a recebe pelo `dc.py normas` — medido no
+plano `0017`, o subagente invoca a skill do projeto sem permissão extra. Guardrail nasce de decisão explícita do time que desvia
+do padrão da stack, e barra o que uma escrita contém. Os guias pedem falha observada ou incidente,
+que projeto novo não tem. O critério de princípio é do plano `0016`, que reabriu a `D-04` do `0009`.
 
 **O estado.** `<plan_root>/system/setup.md`, versionado: `completed_at` no frontmatter, `## Perfil` e
 `## Decisões`, uma linha por sugestão com chave, tipo, origem, resultado, destino ou motivo e data.
@@ -1258,8 +1462,8 @@ O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
 | # | Etapa | Executor | Resultado |
 |---|---|---|---|
 | 1 | Plano nasce | Opus | `docs/plan/_inbox/nome.md` |
-| 2 | Revisão | skill + script | Cinco checks |
-| 3 | **Aprovação** | **humano** | `plan_size`/`approved_by`/`approved_at` declarados no plano |
+| 2 | Revisão | skill + script | Seis checks |
+| 3 | **Aprovação** | **humano** | `plan_size`/`plan_type`/`approved_by`/`approved_at` declarados no plano |
 | 4 | Número atribuído | script | Próximo livre em `_planos.md` — 4 dígitos |
 | 5 | Estrutura criada | script | `docs/plan/<core>/<NNNN>-<nome>/` |
 | 5b | Plano movido e prefixado | script | `_inbox/<nome>.md` → `<NNNN>-<nome>/<NNNN>-<nome>.md` |

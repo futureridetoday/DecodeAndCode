@@ -71,6 +71,7 @@ class _BaseComRaizTemporaria(unittest.TestCase):
             "block": '""',
             "status": "draft",
             "plan_size": "pequeno",
+            "plan_type": "fix",
             "approved_by": "Bortoli",
             "approved_at": "2026-08-20",
         }
@@ -107,6 +108,23 @@ class TestCamposDeAprovacaoAusentesOuInvalidos(_BaseComRaizTemporaria):
     def test_plan_size_fora_do_vocabulario(self):
         plano = self._escrever_plano(plan_size="enorme")
         self._assert_recusa_sem_escrever(plano, "plan_size")
+
+    def test_plan_type_ausente(self):
+        plano = self._escrever_plano(plan_type=_OMITIR)
+        self._assert_recusa_sem_escrever(plano, "plan_type")
+
+    def test_plan_type_vazio(self):
+        plano = self._escrever_plano(plan_type='""')
+        self._assert_recusa_sem_escrever(plano, "plan_type")
+
+    def test_plan_type_fora_do_vocabulario(self):
+        """`perf` foi descartado de propósito (plano 0012): é `fix` com métrica."""
+        plano = self._escrever_plano(plan_type="perf")
+        self._assert_recusa_sem_escrever(plano, "plan_type")
+
+    def test_plan_type_fora_do_vocabulario_recusa_tambem_em_dry_run(self):
+        plano = self._escrever_plano(plan_type="perf")
+        self._assert_recusa_sem_escrever(plano, "plan_type", dry_run=True)
 
     def test_approved_by_ausente(self):
         plano = self._escrever_plano(approved_by=_OMITIR)

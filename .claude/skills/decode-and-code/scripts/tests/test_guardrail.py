@@ -103,10 +103,22 @@ class TestHookReal(unittest.TestCase):
         cls.hook = lib.repo_root() / ".claude" / "hooks" / "pre_tool_use.py"
         if not cls.hook.is_file():
             raise unittest.SkipTest(f"hook não encontrado: {cls.hook}")
+        # A regra real, num projeto descartável sem `_planos.md`: desde o plano 0018 o hook grava o
+        # bloqueio no log do projeto, e rodar contra este repositório escreveria nele.
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.projeto = Path(cls._tmp.name)
+        (cls.projeto / ".claude").mkdir()
+        (cls.projeto / ".claude" / "guardrails.json").write_text(
+            (lib.repo_root() / ".claude" / "guardrails.json").read_text(encoding="utf-8"), encoding="utf-8"
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
 
     def _rodar(self, tool_name: str, tool_input: dict) -> subprocess.CompletedProcess:
         payload = json.dumps({"tool_name": tool_name, "tool_input": tool_input})
-        ambiente = {**os.environ, "CLAUDE_PROJECT_DIR": str(lib.repo_root())}
+        ambiente = {**os.environ, "CLAUDE_PROJECT_DIR": str(self.projeto)}
         return subprocess.run(
             [sys.executable, str(self.hook)],
             input=payload,
@@ -341,6 +353,28 @@ class TestFalhaAberta(unittest.TestCase):
 
         self.assertIsNone(decisao)
         self.assertIsNotNone(aviso)
+
+
+class TestEditAvaliaSoOQueEntra(unittest.TestCase):
+    """C6 do plano `0013`: o `old_string` do `Edit` é o que sai do arquivo, não o que a escrita contém.
+
+    Medido nos três testes da validação do `0009` (`H-02`): o guardrail barrava o `Edit` que
+    removia o próprio problema, porque `_avaliar` juntava todo valor string de `tool_input`.
+    """
+
+    _REGRAS = [{"nome": "sem-cva", "ferramenta": "^(Write|Edit)$", "detector": r"cva\(",
+                "mensagem": "cva só no .styles.ts"}]
+
+    def _edit(self, old: str, new: str) -> dict:
+        return {"tool_name": "Edit",
+                "tool_input": {"file_path": "components/button.tsx", "old_string": old, "new_string": new}}
+
+    def test_edit_que_remove_o_problema_e_liberado(self):
+        self.assertIsNone(guardrail._avaliar(self._edit("const v = cva(", "const v = 1"), self._REGRAS))
+
+    def test_edit_que_introduz_o_problema_segue_recusado(self):
+        decisao = guardrail._avaliar(self._edit("const v = 1", "const v = cva("), self._REGRAS)
+        self.assertEqual(decisao["regra"], "sem-cva")
 
 
 class TestMecanismoSemInstancia(unittest.TestCase):

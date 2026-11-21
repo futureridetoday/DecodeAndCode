@@ -4,32 +4,35 @@
 Unidade 0001-05. `systemMessage` é descartado pelo Claude Code neste evento — medido em
 2026-08-24 contra `code.claude.com/docs/en/hooks`: "Claude Code discards their JSON output
 fields, such as systemMessage and continue. Use this event for audit logging, compliance
-tracking, or observability." O canal é exatamente esse uso: um arquivo de log por sessão, fora
-do repositório. Roda em todo carregamento de instrução — nada de I/O além de uma escrita de
-arquivo pequena (norma, *Restrições conhecidas*).
+tracking, or observability." O canal é exatamente esse uso. Roda em todo carregamento de
+instrução — nada de I/O além de uma escrita pequena (norma, *Restrições conhecidas*).
+
+Desde o plano 0018 (`D-05`) o anúncio vai para `.claude/log/eventos.jsonl` do projeto, com o
+`session_id`, e não mais para um arquivo por sessão em `gettempdir()`, que sumia com a sessão. O
+projeto vem de `CLAUDE_PROJECT_DIR`, como nos outros hooks; sem ele, ou em projeto sem bootstrap,
+nada se escreve (`D-16`).
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
-from tempfile import gettempdir
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "decode-and-code" / "scripts"))
 import activation_notice  # noqa: E402
+import eventos  # noqa: E402
 
 
 def main() -> int:
     try:
+        projeto = os.environ.get("CLAUDE_PROJECT_DIR")
         payload = json.loads(sys.stdin.read())
-        sessao = payload.get("session_id", "sem-sessao")
-
         anuncio = activation_notice.anunciar_instructions_loaded(payload)
-        if anuncio:
-            log = Path(gettempdir()) / f"decode-and-code-activation-{sessao}.log"
-            with log.open("a", encoding="utf-8") as arquivo:
-                arquivo.write(anuncio + "\n")
+        if projeto and anuncio:
+            sessao = payload.get("session_id", "sem-sessao")
+            eventos.registrar(Path(projeto), {"classe": "ativacao", "sessao": sessao, "anuncio": anuncio})
     except Exception:
         pass
     return 0

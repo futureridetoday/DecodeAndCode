@@ -4,7 +4,10 @@
 Unidade 0001-04. Toda a decisão vive em `guardrail.decidir`; este arquivo só lê o payload
 de stdin, resolve `.claude/guardrails.json` do projeto que iniciou a sessão, e escreve a
 resposta no formato que o hook espera. Roda em toda chamada de ferramenta — nada de I/O além
-da leitura do arquivo de regras, e nada de import pesado (norma, *Restrições conhecidas*).
+da leitura do arquivo de regras, e nada de import pesado (norma, *Restrições conhecidas*). A
+exceção é a recusa: só quando nega, o hook grava o bloqueio em `.claude/log/eventos.jsonl` (plano
+0018, `D-05`) — a regra e o nome da ferramenta, **nunca** valor de `tool_input`, que pode ter
+segredo. O `eventos` só é importado nesse caminho.
 
 `CLAUDE_PROJECT_DIR`, não `__file__`. Medido em 2026-09-04 contra o pacote instalado num
 projeto consumidor (AmFlow): `Path(__file__).resolve().parent.parent` acerta rodando da
@@ -62,7 +65,18 @@ def main() -> int:
             },
             sys.stdout,
         )
+        _registrar_bloqueio(payload, decisao["regra"])
     return 0
+
+
+def _registrar_bloqueio(payload: str, regra: str) -> None:
+    try:
+        import eventos
+
+        ferramenta = json.loads(payload).get("tool_name", "")
+        eventos.registrar(REGRAS.parent.parent, {"classe": "bloqueio", "regra": regra, "tool_name": ferramenta})
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

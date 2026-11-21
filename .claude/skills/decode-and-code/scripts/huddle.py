@@ -56,11 +56,39 @@ def caminho(projeto: Path, usuario: str) -> Path:
 # escolha nenhuma, nunca a escolha.
 TIPOS = ("pergunta", "divergência", "padrão", "revisitar", "observação")
 
+# Evidência — plano 0019, `D-07`: opcional, prefixo de um vocabulário fechado de cinco, as origens
+# da `D-09` do `0018`; depois do prefixo, texto livre. Fica numa linha no fim do corpo da entrada.
+EVIDENCIAS = ("E-XX", "L-XX", "bloqueio:", "gate:", "revisão:")
+_EVIDENCIA_RE = re.compile(r"^(?:[EL]-\d+\b.*|(?:bloqueio|gate|revisão):[ \t]*\S.*)$")
+_LINHA_EVIDENCIA_RE = re.compile(r"(?m)^Evidência:[ \t]*(.*?)[ \t]*$")
+
 _SECAO_RE = r"(?ms)^##\s+{}\s*$\n(.*?)(?=^##\s+|\Z)"
 _CABECALHO_ENTRADA_RE = re.compile(
     r"(?m)^###\s+(H-\d+)\s*·\s*`([^`]*)`\s*·\s*\d{4}-\d{2}-\d{2}\s*·\s*.+$"
 )
 _LINHA_FECHADAS_RE = re.compile(r"(?m)^\|\s*(H-\d+)\s*\|")
+_ENTRADA_RE = re.compile(
+    r"(?ms)^###\s+(H-\d+)\s*·\s*`([^`]*)`\s*·\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.+?)\s*$\n(.*?)(?=^###\s+|\Z)"
+)
+
+
+def evidencia_valida(valor: str) -> bool:
+    """`valor` começa por um dos cinco prefixos de `EVIDENCIAS` e cabe numa linha (`D-07`)."""
+    return "\n" not in valor and bool(_EVIDENCIA_RE.match(valor.strip()))
+
+
+def _entradas(abertas: str) -> list[dict]:
+    """Cada entrada de `## Abertas`: `{"id", "tipo", "data", "autor", "texto", "evidencia"}`.
+
+    `evidencia` é o valor da última linha `Evidência:` do corpo, ou `""`; `texto` é o corpo inteiro.
+    """
+    lidas = []
+    for m in _ENTRADA_RE.finditer(abertas):
+        corpo = m.group(5).strip()
+        linhas = _LINHA_EVIDENCIA_RE.findall(corpo)
+        lidas.append({"id": m.group(1), "tipo": m.group(2), "data": m.group(3), "autor": m.group(4),
+                      "texto": corpo, "evidencia": linhas[-1] if linhas else ""})
+    return lidas
 
 
 def _secao(texto: str, nome: str) -> str | None:
@@ -108,6 +136,11 @@ def lint_arquivo(caminho: Path) -> list[str]:
             problemas.append(
                 f"{h_id}: presente em '## Abertas' e na tabela de '## Fechadas' — despejo violado"
             )
+
+    for entrada in _entradas(abertas):
+        for valor in _LINHA_EVIDENCIA_RE.findall(entrada["texto"]):
+            if not evidencia_valida(valor):
+                problemas.append(f"{entrada['id']}: evidência fora do vocabulário fechado {EVIDENCIAS} — {valor!r}")
 
     return problemas
 
@@ -264,16 +297,20 @@ def _fim_da_secao(texto: str, nome: str) -> int:
     return m.end(1)
 
 
-def abrir(arquivo: Path, tipo: str, texto: str, autor: str) -> str:
+def abrir(arquivo: Path, tipo: str, texto: str, autor: str, evidencia: str | None = None) -> str:
     """Acrescenta uma entrada no fim de `## Abertas` e devolve o `H-XX` dela.
 
     Próximo id = maior `H-XX` de `## Abertas` e `## Fechadas` + 1; data de hoje. Cria o arquivo por
-    `iniciar` se faltar. Recusa com `ValueError`, sem escrever, tipo fora de `TIPOS` ou enquanto
+    `iniciar` se faltar. Com `evidencia`, o corpo termina numa linha `Evidência: <origem>` — no fim,
+    para a pauta seguir mostrando a primeira linha do texto (plano 0019, `D-07`). Recusa com
+    `ValueError`, sem escrever, tipo fora de `TIPOS`, evidência fora de `EVIDENCIAS` ou enquanto
     existir o arquivo único de projeto — o primeiro registro partiria o huddle em dois.
     """
     arquivo = Path(arquivo)
     if tipo not in TIPOS:
         raise ValueError(f"tipo fora do vocabulário fechado {TIPOS}: {tipo!r}")
+    if evidencia is not None and not evidencia_valida(evidencia):
+        raise ValueError(f"evidência fora do vocabulário fechado {EVIDENCIAS}: {evidencia!r}")
     if _arquivo_unico(arquivo).exists():
         raise ValueError(
             f"{_arquivo_unico(arquivo)} ainda existe — rode `dc.py huddle-migrar` antes de registrar"
@@ -283,13 +320,23 @@ def abrir(arquivo: Path, tipo: str, texto: str, autor: str) -> str:
 
     atual = arquivo.read_text(encoding="utf-8")
     h_id = f"H-{max(_ids(atual), default=0) + 1:02d}"
-    entrada = f"### {h_id} · `{tipo}` · {date.today().isoformat()} · {autor}\n\n{texto.strip()}\n\n"
+    corpo = texto.strip() + (f"\n\nEvidência: {evidencia.strip()}" if evidencia is not None else "")
+    entrada = f"### {h_id} · `{tipo}` · {date.today().isoformat()} · {autor}\n\n{corpo}\n\n"
     fim = _fim_da_secao(atual, "Abertas")
     antes = atual[:fim]
     if not antes.endswith("\n\n"):
         antes = antes.rstrip("\n") + "\n\n"
     arquivo.write_text(antes + entrada + atual[fim:], encoding="utf-8")
     return h_id
+
+
+def entrada(arquivo: Path, h_id: str) -> dict:
+    """A entrada aberta `h_id`, como em `_entradas` — `ValueError` se ela não está aberta."""
+    abertas = _secao(Path(arquivo).read_text(encoding="utf-8"), "Abertas") or ""
+    for lida in _entradas(abertas):
+        if lida["id"] == h_id:
+            return lida
+    raise ValueError(f"{h_id} não está em '## Abertas'")
 
 
 def fechar(arquivo: Path, h_id: str, destino: str) -> None:
@@ -353,16 +400,10 @@ def pauta(arquivo: Path, desde: str | None = None) -> dict:
     texto = arquivo.read_text(encoding="utf-8")
     desde = desde or _campo_sem_aspas(arquivo, "last_huddle") or _campo_sem_aspas(arquivo, "created")
 
-    abertas = []
-    corpo = _secao(texto, "Abertas") or ""
-    for m in re.finditer(
-        r"(?ms)^###\s+(H-\d+)\s*·\s*`([^`]*)`\s*·\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.+?)\s*$\n(.*?)(?=^###\s+|\Z)",
-        corpo,
-    ):
-        abertas.append(
-            {"id": m.group(1), "tipo": m.group(2), "data": m.group(3), "autor": m.group(4),
-             "texto": m.group(5).strip()}
-        )
+    abertas = [
+        {chave: valor for chave, valor in lida.items() if chave != "evidencia"}
+        for lida in _entradas(_secao(texto, "Abertas") or "")
+    ]
 
     commits: list[str] = []
     aviso = None

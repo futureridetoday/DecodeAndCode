@@ -92,6 +92,12 @@ class TestRecusas(_Case):
     def test_origem_fora_do_vocabulario(self):
         self.assertRecusa(origem="palpite")
         self.assertRecusa(origem="arquivo ")
+        self.assertRecusa(origem="extraído")
+
+    def test_origem_proposto_aceita(self):
+        """Plano 0016: princípio inferido do objetivo; o extraído usa 'arquivo <caminho>'."""
+        self.registrar(chave="north-star", tipo="princípio", origem="proposto", detalhe="principles.md")
+        self.assertIn("| north-star | princípio | proposto |", self.texto())
 
     def test_resultado_fora_do_vocabulario(self):
         self.assertRecusa(resultado="talvez")
@@ -112,6 +118,14 @@ class TestRecusas(_Case):
         with self.assertRaises(ValueError):
             self.registrar()
         self.assertEqual(self.texto(), antes)
+
+    def test_perfil_sem_linha_em_branco_duplicada(self):
+        # C8 do plano `0013`: medido nos três testes da validação do `0009`.
+        setup.perfil(self.arquivo, "a", "b", "c", "d")
+        setup.perfil(self.arquivo, "x", "y", "z", "w")
+        texto = self.texto()
+        self.assertNotIn("\n\n\n", texto)
+        self.assertIn("## Perfil\n\n- **Objetivo:** x\n", texto)
 
     def test_perfil_com_campo_vazio_nao_escreve(self):
         antes = self.texto()

@@ -6,7 +6,7 @@ description: Os três princípios inegociáveis do decode-and-code — código �
 # Princípios
 
 Carregados sempre — este arquivo não declara `paths:`. É o que os separa de guideline (norma,
-seção *Princípio e guideline separam-se por um teste*): **uma equipe competente pode rejeitar isso
+seção *Camada normativa → Princípio*): **uma equipe competente pode rejeitar isso
 e ainda estar fazendo trabalho bom?** Não, para os três abaixo — por isso são princípio, não
 escolha técnica.
 

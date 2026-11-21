@@ -38,7 +38,7 @@ como branch default; o segundo instala o plugin a partir dele.
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
 [Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-2.3.1.zip`).
+(`decode-and-code-2.4.0.zip`).
 
 ### Atualização
 
@@ -71,7 +71,7 @@ claude --plugin-dir dist/decode-and-code
 Ou direto do asset publicado, sem build local:
 
 ```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.3.1/decode-and-code-2.3.1.zip
+claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.4.0/decode-and-code-2.4.0.zip
 ```
 
 ## Como começar
@@ -148,8 +148,10 @@ norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e
 
 ### Como cada camada nasce
 
-- **Princípio** — entra como unidade de tipo `norma` (entrega prosa normativa, com aprovação
-  humana). Não se descobre em execução, e não muda por conveniência.
+- **Princípio** — entra por duas portas, ambas com aprovação humana: como unidade de tipo `norma`
+  (prosa normativa, aprovada no plano), ou pelo setup, aprovado na conversa e gravado por
+  `dc.py criar-principio`. Teto de 5 por projeto, ideal 3, só *Enunciado* e *Teste*: carrega em toda
+  sessão. Não se descobre em execução, e não muda por conveniência.
 - **Guideline e guardrail** — **se escolhem por evidência de falha, não por elegância.** Uma
   guideline nasce na primeira divergência observada entre duas execuções; um guardrail, quando um
   incidente mostra o limite que faltava. Por isso a instância vive no projeto que instala — um repo

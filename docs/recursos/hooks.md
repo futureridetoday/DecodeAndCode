@@ -17,7 +17,7 @@ skill sem decidir nada por conta própria:
 | Hook | Evento | O que faz |
 |---|---|---|
 | `pre_tool_use` | `PreToolUse` | Aplica o guardrail do projeto que instala — lê `.claude/guardrails.json` e pode **negar** uma chamada de ferramenta, com a regra e a mensagem no motivo |
-| `instructions_loaded` | `InstructionsLoaded` | Registra, num log por sessão fora do repositório, qual instrução carregou e o `load_reason` |
+| `instructions_loaded` | `InstructionsLoaded` | Registra em `.claude/log/eventos.jsonl` do projeto, ignorado pelo git, qual instrução carregou, o `load_reason` e a sessão |
 | `session_start` | `SessionStart` (`startup`) | Lembra a pessoa do huddle atrasado: com entrada aberta e `reminder_days` dias ou mais desde o último huddle, devolve `systemMessage` para ela e `additionalContext` para o modelo; nunca escreve |
 | `subagent_start` | `SubagentStart` | Anuncia por stderr, no transcript do próprio subagente, o `agent_type` e o `agent_id` que iniciaram |
 
@@ -54,10 +54,11 @@ o liga no próprio `settings.json`.
 Não se usa diretamente. Uma vez o plugin instalado e habilitado, os três que viajam disparam
 sozinhos (neste repositório, os quatro). O que o usuário faz com a saída deles:
 
-- **Ler o log de ativação** — `"$TMPDIR"decode-and-code-activation-<session_id>.log` — para
-  conferir que a norma e as guidelines certas carregaram. `activation_notice.relatorio(<log>)`
-  devolve o veredito por linha (escopo não respeitado, guideline que continua carregando fora de
-  escopo, colisão entre rules com `paths:`).
+- **Ler o log de ativação** — `.claude/log/eventos.jsonl` do projeto, classe `ativacao`, com o
+  `session_id` — para conferir que a norma e as guidelines certas carregaram.
+  `activation_notice.relatorio(<log>, <session_id>)` devolve o veredito por linha (escopo não
+  respeitado, guideline que continua carregando fora de escopo, colisão entre rules com `paths:`).
+  O mesmo log guarda os bloqueios do `pre_tool_use`; a norma, seção *Log de uso*, diz o resto.
 - **Escrever `.claude/guardrails.json`** no projeto que instala, para o `pre_tool_use` ter o que
   aplicar — o plugin carrega só o mecanismo, nunca as regras.
 
