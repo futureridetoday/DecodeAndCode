@@ -105,7 +105,12 @@ por vez, com três opções: **Aprovar**, **Editar** e **Rejeitar**.
   volta com **Aprovar**, **Editar** ou **Rejeitar**.
 
 Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos onde vale; o que o `CLAUDE.md`
-ou um linter já impõe não vira guideline. Guardrail nasce de decisão explícita do time que desvia do
+ou um linter já impõe não vira guideline. Recurso do projeto ligado a caminhos — skill, command ou MCP
+listado em *Recursos do projeto* no `descobrir` — vira **guideline-ponte**: `paths` onde ele vale, e corpo
+que começa por um título e diz qual recurso usar, como `# Interface` e "Componente novo em
+`src/components/` passa pela skill `ui-builder` do projeto". O título é o que o `derive` cita na unidade;
+a origem é `arquivo <caminho do recurso>`.
+Agent não entra em ponte: o `implement` roda em subagente, que não cria outro. Guardrail nasce de decisão explícita do time que desvia do
 padrão da stack, e barra o que uma escrita contém, por regex — pergunte pelas decisões e procure-as no
 inventário. Mostre a proposta inteira e grave só depois do **Aprovar**: guideline, o JSON
 `{nome, descricao, paths, corpo}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline` (com

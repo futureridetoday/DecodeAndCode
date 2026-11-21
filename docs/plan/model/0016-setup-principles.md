@@ -39,7 +39,7 @@ dependencies: []
 > 2026-11-15), por decisão do humano em 2026-11-20.
 >
 > **Dividido na revisão de 2026-11-20** (decisão do humano): a parte de recursos do projeto virou
-> [`setup-resources`](../_inbox/setup-resources.md), que vem depois deste.
+> [`setup-resources`](0017-setup-resources.md), que vem depois deste.
 
 ## Objetivo
 
