@@ -23,6 +23,7 @@ reaproveita `rules._entradas_de_paths` para não duplicar a leitura de glob.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -56,15 +57,39 @@ def anunciar_subagent_start(payload: dict) -> str | None:
 _LINHA_LOG_RE = re.compile(r"^instrução carregada: (?P<caminho>.+) \(load_reason=(?P<motivo>[^)]+)\)$")
 
 
-def relatorio(caminho_log: Path) -> list[str]:
-    """Lê o log de ativação de uma sessão e devolve uma linha por instrução, com o veredito.
+def _anuncios_do_log(texto: str, sessao: str | None) -> list[str]:
+    """Os anúncios de ativação de `eventos.jsonl` (plano 0018), da `sessao` quando dada."""
+    anuncios = []
+    for linha in texto.splitlines():
+        try:
+            evento = json.loads(linha)
+        except ValueError:
+            continue
+        if (
+            isinstance(evento, dict)
+            and evento.get("classe") == "ativacao"
+            and evento.get("anuncio")
+            and (sessao is None or evento.get("sessao") == sessao)
+        ):
+            anuncios.append(evento["anuncio"])
+    return anuncios
 
-    Levanta `FileNotFoundError` se `caminho_log` não existir — comportamento nativo de
-    `Path.read_text`. Linha que não casa o formato de `anunciar_instructions_loaded` entra
-    marcada como ilegível, nunca derruba a leitura das demais. Só leitura: sinaliza os três casos
-    da norma, seção *Validar a ativação*, nunca corrige nada que encontrar.
+
+def relatorio(caminho_log: Path, sessao: str | None = None) -> list[str]:
+    """Lê o log de ativação e devolve uma linha por instrução, com o veredito.
+
+    `caminho_log` é o `.claude/log/eventos.jsonl` do projeto (plano 0018), filtrado por `sessao`
+    quando dada; ou, como antes, um arquivo de texto com um anúncio por linha. Levanta
+    `FileNotFoundError` se `caminho_log` não existir — comportamento nativo de `Path.read_text`.
+    Linha que não casa o formato de `anunciar_instructions_loaded` entra marcada como ilegível,
+    nunca derruba a leitura das demais. Só leitura: sinaliza os três casos da norma, seção
+    *Validar a ativação*, nunca corrige nada que encontrar.
     """
-    linhas = [l for l in Path(caminho_log).read_text(encoding="utf-8").splitlines() if l.strip()]
+    texto = Path(caminho_log).read_text(encoding="utf-8")
+    if Path(caminho_log).suffix == ".jsonl":
+        linhas = _anuncios_do_log(texto, sessao)
+    else:
+        linhas = [l for l in texto.splitlines() if l.strip()]
     analisadas = [(_LINHA_LOG_RE.match(linha), linha) for linha in linhas]
 
     caminhos_com_paths = sorted(

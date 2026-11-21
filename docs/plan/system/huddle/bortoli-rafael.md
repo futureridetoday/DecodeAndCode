@@ -281,6 +281,10 @@ O B-08 do `_inbox/_backlog.md` ("não neste projeto" para o aviso de setup) est�
 
 O esboço `setup-principles-resources` (intake de 2026-11-20) atribui ao humano duas coisas que vieram do Claude na conversa: a recomendação do `P-01` ("recomendação do humano") e a fonte do `R-02` ("documentação do Claude Code, citada pelo humano"). O pedido ao intake separava "DECISÕES DO HUMANO" de "PENDENTE DE DECISÃO (com a recomendação)", e mesmo assim a autoria se perdeu na passagem para o fork. Um caso só; se repetir, o intake precisa de uma regra de autoria (decisão do humano, recomendação do Claude, fato medido) no esboço.
 
+### H-21 · `padrão` · 2026-11-20 · Claude
+
+Segundo caso do que a H-20 registrou: o esboço `norm-evolution-log` (intake de 2026-11-20) diz, no `P-04`, que N = 2 planos fechados é "recomendação do humano, pendente de confirmação". A recomendação foi do Claude na conversa, e o humano não a confirmou. Os dois casos vieram de intakes da mesma conversa, com o pedido separando decisão do humano de recomendação. Com dois casos, a regra de autoria no intake (decisão do humano, recomendação do Claude, fato medido) passa a ter base.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |

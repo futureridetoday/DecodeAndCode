@@ -290,15 +290,16 @@ feito isso — vira gate onde é estrutural, e relatório onde só a sessão rea
 `.claude/rules-off/` está sã — recusa isoladamente um `.md` em subdiretório de `rules/` (o matcher recursa, e o arquivo continua carregando), uma rule malformada em `rules/`, e
 uma guideline quebrada em `rules-off/`, porque ela volta a ser ligada um dia.
 
-`activation_notice.relatorio(caminho_log)` lê o log de uma sessão —
-`$TMPDIR/decode-and-code-activation-<session_id>.log`, escrito pelo hook `InstructionsLoaded` — e
-devolve uma linha por instrução carregada, com caminho, motivo e veredito:
+`activation_notice.relatorio(caminho_log, sessao)` lê o log de ativação —
+`.claude/log/eventos.jsonl` do projeto, onde o hook `InstructionsLoaded` grava com o `session_id`
+(*Log de uso*), filtrado pela `sessao` quando dada — e devolve uma linha por instrução carregada,
+com caminho, motivo e veredito:
 
 ```
 python3 -c "
 import sys; sys.path.insert(0, '<scripts-da-skill>')
 import activation_notice
-for linha in activation_notice.relatorio('<caminho-do-log>'):
+for linha in activation_notice.relatorio('.claude/log/eventos.jsonl', '<session_id>'):
     print(linha)
 "
 ```
@@ -1261,6 +1262,48 @@ caminho escrito; sobre um `destino` que já existe, devolve `None` sem tocar em 
 > vazio, sim**. Entrada aberta é a conversa entre o humano e o modelo **daquele** projeto;
 > empacotá-la entregaria a quem instala o registro de decisões de outro repositório — o invariante 2
 > quebrado no artefato mais pessoal do método. Quem instala roda `dc.py huddle-iniciar` e recebe o seu, vazio.
+
+---
+
+## Log de uso — o que o método registra sozinho
+
+Os gatilhos do huddle dependem de quem escreve (*Despejo*). O log é a parte que não depende:
+defeito do próprio método, gate que reprovou, guardrail que barrou e instrução que carregou ficam
+registrados por script, e o huddle os lê. É o primeiro item do ciclo de evolução da norma (plano
+`0018`); os seguintes — evidência, gatilho, caso por regra, contagem e saúde — leem daqui.
+
+**Onde mora.** Em `<projeto>/.claude/log/`, que carrega o próprio `.gitignore` (`*`), criado na
+primeira escrita: a pasta fica fora do git sem que nada edite o `.gitignore` do projeto. **Só em
+projeto com `<plan_root>/_planos.md`**, a marca do bootstrap — com o plugin no escopo de usuário, os
+hooks rodam em todo projeto aberto, e o log não pode ser o efeito colateral que *Materializar não
+pode ser automático* recusa. É a exceção declarada a essa regra: hook escreve só ali, numa pasta que
+o git ignora, e só em projeto que adotou o método.
+
+**Eventos.** `.claude/log/eventos.jsonl`, uma linha JSON por evento, com `data` e `classe`:
+
+| Classe | Quem grava | O que leva |
+|---|---|---|
+| `comando` | `dc.main`, em toda chamada | o subcomando, o código de saída e o alvo (plano ou unidade) |
+| `bloqueio` | hook `PreToolUse`, só quando nega | a regra e o nome da ferramenta — **nunca** valor de `tool_input`, que pode ter segredo |
+| `ativacao` | hook `InstructionsLoaded` | o anúncio de `activation_notice` e o `session_id` |
+| `erro` e `resolvido` | `eventos.registrar_erro` e `eventos.resolver` | o `E-XX` e, no segundo, o destino |
+
+**Erros.** A saída 2 do `dc.py` — exceção de um handler ou erro de uso do `argparse` — é defeito do
+método, e só ela vira `.claude/log/erros/E-XX.md`: o comando, o código, o fim da saída com o
+traceback, o alvo, o `HEAD`, o working tree como links e a versão do plugin. Saída 1 é o gate
+funcionando, e bloqueio pode ser acerto da regra: ficam só como evento. A numeração vem de
+`erros/.ultimo`, que só cresce e que nada apaga.
+
+**Validade.** O arquivo só recebe acréscimo, uma escrita por evento: os hooks rodam vários ao
+mesmo tempo, e reescrever perdia eventos (medido no `0018`). O evento sai quando a revisão o lê:
+`huddle-concluir` apaga os eventos até a última `huddle-pauta`, por posição — a única reescrita.
+Evento com mais de 14 dias some da leitura e sai do arquivo nessa mesma reescrita. O `E-XX`
+**só sai por resolução**, nunca por prazo: `dc.py log-resolver <E-XX> "<destino>"` o apaga, com
+destino `H-XX` aberto no huddle da pessoa, `L-XX` ou `descartado: <motivo>`. Com 7 dias sem
+resolução, ele aparece no aviso de abertura e na pauta do huddle. Nada se apaga à mão.
+
+**Contrato.** O log nunca muda o que já existia: o código de saída e o stderr do `dc.py`, e a
+resposta dos hooks, são os mesmos com ou sem ele, e qualquer falha de escrita fica no próprio log.
 
 ---
 

@@ -49,6 +49,15 @@ class TestSecoes(unittest.TestCase):
 class TestExplicarSecao(unittest.TestCase):
     """M4 do 0013: `explicar <seção>` imprime só aquela seção, e o modelo não abre a norma com `sed`."""
 
+    def setUp(self):
+        # `dc.main` roda aqui no processo, a partir do checkout: `lib.repo_root()` acha este
+        # repositório, e o log do plano 0018 gravaria nele. O log não é o que este teste prova.
+        from unittest import mock
+
+        patcher = mock.patch.object(dc, "_registrar")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def _rodar(self, *argv: str) -> str:
         import contextlib
         import io

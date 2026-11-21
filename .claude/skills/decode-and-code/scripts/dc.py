@@ -326,6 +326,27 @@ def _pessoa() -> tuple[Path, str, Path]:
     return raiz, usuario, huddle.caminho(raiz, usuario)
 
 
+def _log_resolver(args: argparse.Namespace) -> int:
+    """Apaga o `E-XX` com o destino que o resolveu (plano 0018, `D-08`, `D-15`)."""
+    import re
+
+    import eventos
+    import huddle
+    import lib
+
+    abertas = None
+    if args.destino.strip().startswith("H-"):
+        _, _, arquivo = _pessoa()
+        texto = arquivo.read_text(encoding="utf-8") if arquivo.is_file() else ""
+        abertas = set(re.findall(r"(?m)^###\s+(H-\d+)\b", huddle._secao(texto, "Abertas") or ""))
+    motivo = eventos.resolver(lib.repo_root(), args.id, args.destino, abertas)
+    if motivo:
+        print(motivo)
+        return REPROVADO
+    print(f"{args.id} resolvido: {args.destino.strip()}")
+    return OK
+
+
 def _ler_texto_do_stdin(comando: str) -> str:
     texto = "" if sys.stdin.isatty() else sys.stdin.read()
     if not texto.strip():
@@ -372,21 +393,64 @@ def _huddle_concluir(args: argparse.Namespace) -> int:
     import huddle
     from datetime import date
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
     data = args.data or date.today().isoformat()
     huddle.concluir(arquivo, data)
     print(f"last_huddle: {data}")
+    _consumir_log(raiz)
     return OK
+
+
+def _consumir_log(raiz: Path) -> None:
+    """Apaga os eventos até a última `huddle-pauta` — o que a conversa já leu (plano 0018, `D-08`)."""
+    import eventos
+
+    lidos = eventos.eventos(raiz)
+    marcas = [i for i, e in enumerate(lidos) if e.get("classe") == "comando" and e.get("comando") == ["huddle-pauta"]]
+    if marcas:
+        saiu = eventos.consumir(raiz, marcas[-1] + 1)
+        print(f"log: {saiu} evento(s) lido(s) na pauta, apagado(s)")
+
+
+def _resumo_log(raiz: Path, desde: str) -> list[str]:
+    """As linhas de log da pauta: contagem por classe desde `desde` e os `E-XX` abertos (plano 0018)."""
+    from collections import Counter
+    from datetime import date
+
+    import eventos
+
+    contagem: Counter = Counter()
+    for e in eventos.eventos(raiz):
+        if str(e.get("data", ""))[:10] < desde:
+            continue
+        classe = e.get("classe")
+        if classe == "comando":
+            nome = (e.get("comando") or ["?"])[0]
+            contagem[f"comando {nome}" + (f", saída {e.get('codigo')}" if e.get("codigo") else "")] += 1
+        elif classe == "bloqueio":
+            contagem[f"bloqueio {e.get('regra')}"] += 1
+    atrasados = set(eventos.atrasados(raiz, date.today()))
+    linhas = [f"- {chave}: {n}" for chave, n in sorted(contagem.items())]
+    linhas += [
+        f"- {id_erro} aberto desde {data[:10]}" + (f" — há {eventos.ALARME_DIAS} dias ou mais" if id_erro in atrasados else "")
+        for id_erro, data in eventos.erros(raiz)
+    ]
+    return linhas
 
 
 def _huddle_pauta(args: argparse.Namespace) -> int:
     import huddle
 
-    _, _, arquivo = _pessoa()
+    raiz, _, arquivo = _pessoa()
     if not arquivo.exists():
         print(f"sem huddle: {arquivo}")
         return OK
     pauta = huddle.pauta(arquivo, args.desde)
+    log = _resumo_log(raiz, pauta["desde"])
+    if log:
+        print(f"## Log desde {pauta['desde']}")
+        print("\n".join(log))
+        print()
     print(f"## Abertas ({len(pauta['abertas'])})")
     for aberta in pauta["abertas"]:
         primeira = next((l for l in aberta["texto"].splitlines() if l.strip()), "")
@@ -713,6 +777,15 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("id")
     p.add_argument("destino")
 
+    p = comando(
+        "log-resolver",
+        "apaga .claude/log/erros/<E-XX>.md com o destino que o resolveu: H-XX aberto no huddle da "
+        "pessoa, L-XX ou 'descartado: <motivo>' (1 se recusado, sem apagar)",
+        _log_resolver,
+    )
+    p.add_argument("id")
+    p.add_argument("destino")
+
     p = comando("huddle-concluir", "grava a data do huddle em last_huddle", _huddle_concluir)
     p.add_argument("--data", help="padrão: hoje")
 
@@ -772,13 +845,40 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+def _registrar(lista: list[str], codigo: int, saida: str, args: argparse.Namespace | None) -> None:
+    """Evento de toda chamada e, na saída 2, o `E-XX` (plano 0018, `D-05`, `D-14`). Nunca muda o
+    código nem o stderr: qualquer falha do log fica aqui."""
     try:
-        return args.handler(args)
+        import eventos
+        import lib
+
+        projeto = lib.repo_root()
+        alvo = next((str(getattr(args, k)) for k in ("unidade", "plano", "dir_plano") if getattr(args, k, None)), "")
+        eventos.registrar(projeto, {"classe": "comando", "comando": lista[:1], "codigo": codigo, "alvo": alvo})
+        if codigo == ERRO:
+            eventos.registrar_erro(projeto, lista, codigo, saida, alvo)
+    except Exception:
+        pass
+
+
+def main(argv: list[str] | None = None) -> int:
+    lista = list(sys.argv[1:] if argv is None else argv)
+    try:
+        args = _parser().parse_args(argv)
+    except SystemExit as saida:
+        if saida.code not in (0, None):  # erro de uso: o argparse já escreveu a mensagem em stderr
+            _registrar(lista, ERRO, f"erro de uso do argparse: dc.py {' '.join(lista)}", None)
+        raise
+    try:
+        codigo = args.handler(args)
     except Exception as erro:  # contrato: exceção vira código 2 e mensagem, nunca traceback
         print(f"erro: {type(erro).__name__}: {erro}", file=sys.stderr)
+        import traceback
+
+        _registrar(lista, ERRO, traceback.format_exc(), args)
         return ERRO
+    _registrar(lista, codigo, "", args)
+    return codigo
 
 
 if __name__ == "__main__":

@@ -46,3 +46,4 @@ dependencies: []
 | [0015-add-plan-size-advice](../model/0015-add-plan-size-advice.md) | pequeno | — | não declarado | — | 2026-11-20 |
 | [0016-setup-principles](../model/0016-setup-principles.md) | médio | 7 | não declarado | — | 2026-11-20 |
 | [0017-setup-resources](../model/0017-setup-resources.md) | médio | 7 | não declarado | — | 2026-11-20 |
+| [0018-norm-evolution-log](../model/0018-norm-evolution-log.md) | médio | 8 | não declarado | — | 2026-11-20 |

@@ -7,7 +7,7 @@ description: Primeiro de seis planos do ciclo de evolução da norma — o log d
 tags: [decode-and-code, norma, huddle, log, guardrail, evolucao]
 
 # alvo
-plan_id: ""
+plan_id: "0018"
 plan_size: médio
 plan_type: feature
 core: model
@@ -17,11 +17,11 @@ block: ""
 # history
 author: Claude
 created: 2026-11-20
-status: draft
+status: done
 version: 1.0.0
 updated: ""
-approved_by: ""
-approved_at: ""
+approved_by: "Bortoli Rafael"
+approved_at: "2026-11-20"
 
 # system
 scope: project
@@ -43,7 +43,7 @@ dependencies: []
 ## Objetivo
 
 **Clarificar.** Defeito do próprio método (saída 2 do `dc.py`) e bloqueio de guardrail em uso real
-não deixam registro: `dc.py.main` só imprime em stderr (`dc.py:725-731`), o hook `PreToolUse` só
+não deixam registro: `dc.py.main` só imprime em stderr, o hook `PreToolUse` só
 responde ao Claude Code (`pre_tool_use.py`), e o log de ativação vai para `gettempdir()`, um por
 sessão (`instructions_loaded.py:30`). O huddle e o repositório do método só sabem do que alguém
 lembra de contar. **Métricas:**
@@ -98,6 +98,9 @@ Tomadas pelo humano (Bortoli) em conversa em 2026-11-20. São decisões, não hi
 | D-11 | **Item 4.** O par proibido/permitido do guardrail generaliza-se para guideline e princípio: situação, erro sem a regra, acerto com ela. Serve também para remover: roda-se o caso **sem** a regra e, se o modelo acerta sozinho, a regra sai |
 | D-12 | **Item 5.** Um script lê `eventos.jsonl`: regras que nunca ativam, que nunca barram, que se sobrepõem |
 | D-13 | **Item 6.** Saúde da norma é a segunda parte da skill `huddle` — um ritual só, sem cerimônia nova: podar, combinar e promover, com o caso de cada regra como prova de que nada se perdeu |
+| D-14 | **Aceita a recomendação do `P-01`: só a saída 2 gera `E-XX`**, inclusive o erro de uso do `argparse`, e o `E-XX` leva o fim do traceback. Saída 1 e bloqueio ficam como evento. Decidida pelo humano em 2026-11-20, antes da execução |
+| D-15 | **Aceita a recomendação do `P-02`: `método` não é destino do `log-resolver` antes do item 2.** Decidida pelo humano em 2026-11-20 |
+| D-16 | **Aceita a recomendação do `P-03`: o log só escreve em projeto com `<plan_root>/_planos.md`.** Decidida pelo humano em 2026-11-20 |
 
 > **Ressalva do humano.** Os cinco gatilhos de escrita do huddle não são observáveis por script
 > (norma, *Despejo*): a qualidade do sinal depende de quem escreve, e a retrospectiva no fecho do
@@ -105,30 +108,34 @@ Tomadas pelo humano (Bortoli) em conversa em 2026-11-20. São decisões, não hi
 
 ### Pendentes de decisão
 
+`P-01` a `P-03` foram decididos pelo humano na aprovação e viraram `D-14` a `D-16`; `P-05`, pela
+própria aprovação deste plano como o primeiro de seis. `P-04` é do item 3. O texto fica como
+registro do que se perguntou.
+
 | # | Pergunta | Recomendação |
 |---|---|---|
-| P-01 | Quais classes geram `E-XX`? A `D-06` diz "um por erro" e a `D-07` define três classes | **Só a saída 2**, inclusive o erro de uso do `argparse`, que também sai com 2 e é levantado **antes** do `try` (`dc.py:726`): skill que escreve o comando errado é defeito do método. Saída 1 é o gate funcionando — o fluxo prevê reprovar, corrigir e rodar de novo —, e bloqueio pode ser acerto da regra; com `E-XX`, cada um pediria um `log-resolver`. Os dois ficam como evento, e a pauta os resume. O `E-XX` leva também o fim do traceback, que o `main` hoje suprime: é a evidência de que quem corrige o método precisa |
+| P-01 | Quais classes geram `E-XX`? A `D-06` diz "um por erro" e a `D-07` define três classes | **Só a saída 2**, inclusive o erro de uso do `argparse`, que também sai com 2 e é levantado **antes** do `try` (`parse_args`, na primeira linha de `dc.main`): skill que escreve o comando errado é defeito do método. Saída 1 é o gate funcionando — o fluxo prevê reprovar, corrigir e rodar de novo —, e bloqueio pode ser acerto da regra; com `E-XX`, cada um pediria um `log-resolver`. Os dois ficam como evento, e a pauta os resume. O `E-XX` leva também o fim do traceback, que o `main` hoje suprime: é a evidência de que quem corrige o método precisa |
 | P-02 | `método` como destino do `log-resolver` antes do item 2? | **Não; entra com o item 2.** `log-resolver` apaga o `E-XX`, e hoje nada guarda o que foi para `método`: a evidência sumiria antes de existir o comando que a leva ao repositório do método. Até lá, o destino é um `H-XX`, que o item 2 poderá fechar como `método` |
 | P-03 | O log escreve em projeto que não adotou o método? | **Não.** Com o plugin no escopo de usuário, o `InstructionsLoaded` roda em todo projeto aberto (`L-10` do `0009`) e criaria `.claude/log/` em repositório que nunca pediu o método — o efeito colateral silencioso que o `0001` recusa (*Materializar não pode ser automático*). Condição: `<plan_root>/_planos.md` existe, a marca do bootstrap; um `stat`, compatível com hook |
-| P-04 | `N` do gatilho de evolução (item 3) | **2 planos fechados** — recomendação do humano, pendente de confirmação. Decide-se no plano do item 3 |
+| P-04 | `N` do gatilho de evolução (item 3) | **2 planos fechados** — recomendação do Claude na conversa, que o humano não confirmou (`H-21`). Decide-se no plano do item 3 |
 | P-05 | Um plano ou seis, e o nome | **Seis, nesta ordem** (*Independência*). Este é `norm-evolution-log`; os seguintes levam o prefixo `norm-evolution-` |
 
 ## Tarefas
 
-- [ ] Norma, seção nova *Log de uso* depois de *Huddle*: onde mora, o `.gitignore` que se cria sozinho, o formato do evento e do `E-XX`, as três classes, a validade e o `log-resolver`. *Validar a ativação* troca o caminho em `$TMPDIR` pelo `eventos.jsonl`, filtrado pela sessão, e `docs/recursos/hooks.md` também. A exceção ao *Materializar não pode ser automático* fica escrita: hook escreve só em `.claude/log/`, ignorado pelo git, e só em projeto com bootstrap (`P-03`)
-- [ ] `eventos.py`, com teste: `registrar(projeto, evento)` acrescenta a linha, cria `.claude/log/` e o `.gitignore` na primeira escrita e descarta evento com mais de 14 dias; `registrar_erro(...)` escreve o próximo `E-XX.md` com os campos da `D-06` (`HEAD` e working tree por `git`, só nesse caminho; versão do `plugin.json`), e a numeração nunca reutiliza um id já resolvido; `resolver(projeto, id, destino)` confere o destino no vocabulário e apaga o arquivo. Nenhuma das três levanta para quem chama
-- [ ] `dc.py.main`: registra o evento de toda chamada e, na saída 2, o `E-XX` — exceção do handler e erro de uso do `argparse` (`P-01`). Código de saída e stderr não mudam, e falha do log não muda nenhum dos dois
-- [ ] `dc.py log-resolver <E-XX> "<destino>"`, com teste: `H-XX` presente no huddle da pessoa, `L-XX` ou `descartado: <motivo>`; qualquer outro sai com 1, sem apagar. Registra um evento `resolvido` com o destino
-- [ ] Hooks: `pre_tool_use.py` registra `{classe: bloqueio, regra, tool_name, data}` só quando nega, sem nada de `tool_input`; `instructions_loaded.py` grava em `eventos.jsonl` com o `session_id`; `activation_notice.relatorio` lê de lá, filtrando a sessão. As docstrings que dizem "nada de I/O além da leitura" mudam junto
-- [ ] Superfície: `session_start.aviso` acrescenta os `E-XX` com 7 dias ou mais, sem mudar a precedência do aviso de setup; `huddle.pauta` mostra esses `E-XX` e um resumo dos eventos desde o último huddle, por classe e comando; `huddle-concluir` apaga os eventos até a última `huddle-pauta`, que o próprio log registra. O passo 1 do `huddle/SKILL.md` cita o resumo
-- [ ] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote com `eventos.py`; `lint_skill` sem problema no `huddle`
-- [ ] Remedição (*Remedição*)
+- [x] Norma, seção nova *Log de uso* depois de *Huddle*: onde mora, o `.gitignore` que se cria sozinho, o formato do evento e do `E-XX`, as três classes, a validade e o `log-resolver`. *Validar a ativação* troca o caminho em `$TMPDIR` pelo `eventos.jsonl`, filtrado pela sessão, e `docs/recursos/hooks.md` também. A exceção ao *Materializar não pode ser automático* fica escrita: hook escreve só em `.claude/log/`, ignorado pelo git, e só em projeto com bootstrap (`P-03`)
+- [x] `eventos.py`, com teste: `registrar(projeto, evento)` acrescenta a linha, cria `.claude/log/` e o `.gitignore` na primeira escrita e descarta evento com mais de 14 dias; `registrar_erro(...)` escreve o próximo `E-XX.md` com os campos da `D-06` (`HEAD` e working tree por `git`, só nesse caminho; versão do `plugin.json`), e a numeração nunca reutiliza um id já resolvido: vem de `.claude/log/erros/.ultimo`, um inteiro que só cresce, gravado junto com o `E-XX` e que nem o `log-resolver` nem o `huddle-concluir` apagam; `resolver(projeto, id, destino)` confere o destino no vocabulário e apaga o arquivo. Nenhuma das três levanta para quem chama
+- [x] `dc.py.main`: registra o evento de toda chamada e, na saída 2, o `E-XX` — exceção do handler e erro de uso do `argparse` (`P-01`). Código de saída e stderr não mudam, e falha do log não muda nenhum dos dois
+- [x] `dc.py log-resolver <E-XX> "<destino>"`, com teste: `H-XX` presente no huddle da pessoa, `L-XX` ou `descartado: <motivo>`; qualquer outro sai com 1, sem apagar. Registra um evento `resolvido` com o destino
+- [x] Hooks: `pre_tool_use.py` registra `{classe: bloqueio, regra, tool_name, data}` só quando nega, sem nada de `tool_input`; `instructions_loaded.py` grava em `eventos.jsonl` com o `session_id`; `activation_notice.relatorio` lê de lá, filtrando a sessão. As docstrings que dizem "nada de I/O além da leitura" mudam junto
+- [x] Superfície: `session_start.aviso` acrescenta os `E-XX` com 7 dias ou mais, sem mudar a precedência do aviso de setup; `huddle.pauta` mostra esses `E-XX` e um resumo dos eventos desde o último huddle, por classe e comando; `huddle-concluir` apaga os eventos até a última `huddle-pauta`, que o próprio log registra. O passo 1 do `huddle/SKILL.md` cita o resumo
+- [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote com `eventos.py`; `lint_skill` sem problema no `huddle`
+- [x] Remedição (*Remedição*)
 
 ## Oráculo
 
 | Alvo | Como se sabe que funcionou |
 |---|---|
-| `eventos.py` | Teste: a primeira escrita cria a pasta com `.gitignore` `*`, e o `git status` do repositório de teste não a mostra; evento de 15 dias some na escrita seguinte; `E-XX` traz os campos da `D-06`; resolvido o `E-01`, o erro seguinte é `E-02`; destino fora do vocabulário é recusado sem apagar |
+| `eventos.py` | Teste: a primeira escrita cria a pasta com `.gitignore` `*`, e o `git status` do repositório de teste não a mostra; evento de 15 dias some na escrita seguinte; `E-XX` traz os campos da `D-06`; resolvido o `E-01` e apagados todos os eventos, o erro seguinte é `E-02`; destino fora do vocabulário é recusado sem apagar |
 | `dc.py.main` | Teste: handler que levanta → saída 2, o mesmo stderr de antes e um `E-XX` com o traceback; erro de uso do `argparse` → `E-XX`; `.claude/log/` sem permissão de escrita → saída 2 do mesmo jeito |
 | Hooks | Teste: o evento de bloqueio não contém nenhum valor de `tool_input`; projeto sem `_planos.md` não ganha `.claude/log/` (`P-03`) |
 | Superfície | Teste: `aviso` com `E-XX` de 8 dias o menciona, com 6 não; `huddle-concluir` apaga só os eventos que a pauta mostrou |
@@ -136,10 +143,48 @@ Tomadas pelo humano (Bortoli) em conversa em 2026-11-20. São decisões, não hi
 ## Remedição
 
 Num projeto de prova com o pacote novo e o bootstrap feito: forçar uma saída 2 do `dc.py`, um
-bloqueio de guardrail e uma sessão nova. Esperado: as três classes em `eventos.jsonl`, um `E-XX` com
+bloqueio de guardrail e uma sessão nova **interativa**, no app ou no CLI, que toque um arquivo do
+escopo de uma guideline — não em `claude -p`, onde a *Medição* do `0017` não viu o
+`InstructionsLoaded` gravar nada (`L-04`). Esperado: as três classes em `eventos.jsonl`, um `E-XX` com
 traceback, `HEAD` e versão do plugin, `.claude/log/` fora do `git status`, e, com a data do `E-XX`
 recuada 8 dias, o aviso de abertura e a pauta mencionando-o. Num projeto **sem** bootstrap, a mesma
 sessão não cria `.claude/log/`.
+
+### Resultado — 2026-11-20
+
+Pacote construído por `empacotar.construir` no scratchpad da sessão que orquestrou (`verificar`
+sem problema), num projeto descartável com bootstrap, um guardrail `sem-console-log` e uma guideline
+com `paths: ["src/**/*"]`. Claude Code 2.1.327.
+
+| Alvo | Resultado |
+|---|---|
+| Saída 2 | `dc.py normas nao-existe.md` saiu 2 com o mesmo stderr de antes; `E-01.md` com o traceback, o alvo, o `HEAD` e a versão `2.3.1` |
+| Bloqueio | Numa sessão `claude -p`, o `Write` com `console.log` foi negado e o evento `bloqueio` gravado com a regra e `Write` — nada do `tool_input` |
+| `git status` | Limpo: `.claude/log/` ignorado pelo próprio `.gitignore` |
+| Alarme de 7 dias | Com a data do `E-01` recuada 8 dias e o setup concluído, o aviso de abertura o nomeia, e a `huddle-pauta` mostra `## Log desde …` com as contagens por classe e o `E-01` "há 7 dias ou mais" |
+| Sem bootstrap | A mesma sessão em `claude -p`, num projeto sem `_planos.md`, não criou `.claude/log/` |
+| Ativação em `-p` | Na sessão `-p`, a leitura de `src/a.ts`, no escopo da guideline, não gerou evento `ativacao` — o mesmo silêncio da *Medição* do `0017` |
+| Ativação no app, 1ª rodada | Sessão nova no app, neste repositório, pelo humano: **o hook dispara em sessão interativa** — o `CLAUDE.md` chegou ao log com `session_start`. O `principles.md`, carregado na mesma abertura (o transcript o lista), **não chegou**: perdido pela corrida abaixo. O `scripts.md` não carregou porque a sessão contou as linhas com `wc -l`, sem `Read` — falha do roteiro do teste, não do hook |
+| Ativação no app, 2ª rodada | Depois da correção da corrida, outra sessão nova, com `Read` de um `.py`: os três chegaram — `principles.md` e `CLAUDE.md` com `session_start`, `scripts.md` com `path_glob_match` —, e `activation_notice.relatorio(eventos.jsonl, <sessão>)` deu `ok` nos três |
+
+**Achados da execução**, corrigidos nela:
+
+- **Corrida entre hooks.** O `registrar` lia, filtrava os vencidos e reescrevia o arquivo inteiro;
+  o `InstructionsLoaded` dispara um processo por instrução, ao mesmo tempo, e um apagava o evento
+  do outro. Reproduzido com 10 hooks simultâneos: 6, 10 e 4 sobreviveram em três rodadas. Passou a
+  só acrescentar, uma escrita `O_APPEND` por evento, como a `D-05` já dizia; o vencido some da
+  leitura e sai na reescrita do `consumir`. Depois: 10 de 10 nas três rodadas, e um teste com 20
+  hooks simultâneos.
+
+- `consumir` passou a apagar **por posição**, não por data: os eventos do mesmo segundo caíam dos
+  dois lados da marca da `huddle-pauta`, e o teste pegou o `huddle-concluir` apagando o que veio
+  depois dela.
+- A suíte gravava no log deste repositório: `test_explicar` roda `dc.main` no processo, e o
+  `TestHookReal` rodava o hook contra este repositório. O primeiro passou a mockar `dc._registrar`;
+  o segundo usa uma cópia da regra real num projeto descartável. O `E-01` que o teste deixou aqui
+  saiu por `log-resolver`, como `descartado`.
+- `eventos.resolver` devolve o motivo da recusa em vez de levantar, para cumprir "nenhuma das três
+  levanta"; o `huddle-pauta` monta o resumo no `dc.py`, e o `huddle.pauta` não mudou.
 
 ## Próximos planos
 
@@ -150,7 +195,7 @@ com o dado do que veio antes.
 |---|---|---|---|---|
 | 2 | `norm-evolution-evidence` | `D-09` | este plano (`E-XX`, saída 2) | `P-02` se resolve aqui |
 | 3 | `norm-evolution-trigger` | `D-10` | em parte deste (bloqueios na retrospectiva) | `P-04`. A transição para `concluído` já tem ponto de gancho: `backlog.projetar` chama `porte.registrar` nela |
-| 4 | `norm-evolution-cases` | `D-11` | nenhum | **A base é metade do que se supõe:** `guardrail.adicionar` prova a regra pelo par e **descarta** o par — `.claude/guardrails.json` guarda só `nome`, `ferramenta`, `detector` e `mensagem`. E o caso de princípio não pode morar no texto do princípio, que carrega em toda sessão e que o esboço `setup-principles` quer compacto (`D-05` de lá) |
+| 4 | `norm-evolution-cases` | `D-11` | nenhum | **A base é metade do que se supõe:** `guardrail.adicionar` prova a regra pelo par e **descarta** o par — `.claude/guardrails.json` guarda só `nome`, `ferramenta`, `detector` e `mensagem`. E o caso de princípio não pode morar no texto do princípio, que carrega em toda sessão e que o plano `0016` mantém compacto (`D-05` de lá) |
 | 5 | `norm-evolution-count` | `D-12` | este plano | **Tensão com a `D-08`:** o evento sai no `huddle-concluir`, então a contagem enxerga no máximo o intervalo entre dois huddles, com teto de 14 dias. "Nunca ativa" numa janela dessas é sinal fraco; janela maior pede guardar um agregado, que a `D-08` não prevê |
 | 6 | `norm-evolution-health` | `D-13` | 4 e 5 | — |
 
@@ -164,10 +209,9 @@ pede validar cada item antes de escalar**, e o desenho do seguinte pode mudar co
 (*Próximos planos*, linhas 4 e 5): desenhá-los agora, num plano só, fixaria decisão sobre premissa
 ainda não medida. A ordem é do humano; o item 4 é o único que poderia andar antes.
 
-**Concorrência.** Nenhum plano `em desenvolvimento` em `_planos.md`. No `_inbox`,
-`setup-principles` e `setup-resources` também tocam o `dc.py` (um comando novo cada) e a norma, em
-seções diferentes (*Camada normativa*, *Setup*): se algum deles entrar em desenvolvimento junto com
-este, o `_parser` do `dc.py` é o ponto de colisão. O `apply-plugin-review` está desatualizado (`H-18`).
+**Concorrência.** Nenhum plano `em desenvolvimento` em `_planos.md`. Os planos `0016` e `0017`, que
+também tocaram o `_parser` do `dc.py` e a norma, estão concluídos. No `_inbox` resta o
+`apply-plugin-review`, desatualizado (`H-18`).
 
 ## Lacunas
 
@@ -175,17 +219,29 @@ este, o `_parser` do `dc.py` é o ponto de colisão. O `apply-plugin-review` est
 |---|---|---|
 | L-01 | **O ganho do log não tem medição antes do uso** | As métricas medem a cobertura do registro. Se ele muda alguma decisão só se vê no primeiro huddle com eventos, e no item 2 |
 | L-02 | **Saída 1 e bloqueio, só como evento, somem no huddle seguinte ou em 14 dias** | Se `P-01` for aceita, um padrão de reprovação que atravessa dois huddles não deixa rastro. O item 5 é quem diz se isso faz falta |
+| L-03 | **A numeração do `E-XX` depende de estado que a `D-08` apaga** | A tarefa 2 pede que a numeração nunca reutilize um id já resolvido, mas o `log-resolver` apaga o arquivo, e o evento `resolvido` sai no `huddle-concluir` ou em 14 dias. Depois disso nada guarda o maior id já usado, e o próximo erro pode voltar a ser `E-01`. O plano não diz onde fica o contador (revisão de 2026-11-20). **Fechada em 2026-11-20**, antes da aprovação: o contador é `.claude/log/erros/.ultimo`, que só cresce e que nada apaga (tarefa 2), e o *Oráculo* prova a numeração depois de apagados todos os eventos |
+| L-04 | **Não se sabe se o `InstructionsLoaded` dispara em `claude -p` nem no fork** | A *Medição* do `0017` rodou o `implement` em `-p` e nenhum `decode-and-code-activation-*.log` foi gravado, com uma guideline cujo `paths:` casava o arquivo tocado. A tarefa 5 move esse registro para `eventos.jsonl`, e a *Remedição* conta com ele numa "sessão nova"; se ela rodar em `-p`, pode não ver nada sem que o log esteja errado (revisão de 2026-11-20). **Tratada na *Remedição*:** a sessão nova é interativa. Segue aberta a pergunta de fundo — se o hook dispara em `-p` e no fork —, que a remedição responde para o caso interativo. **Fechada em 2026-11-20 para a sessão interativa:** no app, o hook dispara e grava `session_start` e `path_glob_match` (*Resultado*, 2ª rodada). Em `-p`, nas duas medições deste dia, nenhum evento de ativação; no fork, não medido. Isso não bloqueia o método, que entrega a norma ao `implement` pelo `dc.py normas` |
 
 ## Fonte
 
 - [`modelo-dev-units.md`](../system/modelo-dev-units.md), *Huddle*, *Camada normativa* (*Validar a ativação*), *Porte medido*, *Avaliação de escopo*, *Quando cada porte cabe*, *Fluxo completo*
-- [`0009-onboard-new-project.md`](../model/0009-onboard-new-project/0009-onboard-new-project.md), `D-05` e `L-10`
-- [`0013-fix-setup-validation.md`](../model/0013-fix-setup-validation.md), C6
-- [`0001-decode-and-code-foundation.md`](../model/0001-decode-and-code-foundation/0001-decode-and-code-foundation.md), *Materializar não pode ser automático* e *Restrições conhecidas*
-- [`setup-principles.md`](../model/0016-setup-principles.md), `D-05`
-- `.claude/skills/decode-and-code/scripts/dc.py:725-731`, `huddle.py`, `guardrail.py`, `porte.py`, `backlog.py`, `activation_notice.py`; `.claude/hooks/pre_tool_use.py`, `instructions_loaded.py`, `session_start.py`; `.claude/skills/huddle/SKILL.md`
+- [`0009-onboard-new-project.md`](0009-onboard-new-project/0009-onboard-new-project.md), `D-05` e `L-10`
+- [`0013-fix-setup-validation.md`](0013-fix-setup-validation.md), C6
+- [`0001-decode-and-code-foundation.md`](0001-decode-and-code-foundation/0001-decode-and-code-foundation.md), *Materializar não pode ser automático* e *Restrições conhecidas*
+- [`setup-principles.md`](0016-setup-principles.md), `D-05`
+- `.claude/skills/decode-and-code/scripts/dc.py` (`main`), `huddle.py`, `guardrail.py`, `porte.py`, `backlog.py`, `activation_notice.py`; `.claude/hooks/pre_tool_use.py`, `instructions_loaded.py`, `session_start.py`; `.claude/skills/huddle/SKILL.md`
 
 ## Backlog
 
 <!-- backlog:start -->
+- [x] Norma, seção nova *Log de uso* depois de *Huddle*: onde mora, o `.gitignore` que se cria sozinho, o formato do evento e do `E-XX`, as três classes, a validade e o `log-resolver`. *Validar a ativação* troca o caminho em `$TMPDIR` pelo `eventos.jsonl`, filtrado pela sessão, e `docs/recursos/hooks.md` também. A exceção ao *Materializar não pode ser automático* fica escrita: hook escreve só em `.claude/log/`, ignorado pelo git, e só em projeto com bootstrap (`P-03`)
+- [x] `eventos.py`, com teste: `registrar(projeto, evento)` acrescenta a linha, cria `.claude/log/` e o `.gitignore` na primeira escrita e descarta evento com mais de 14 dias; `registrar_erro(...)` escreve o próximo `E-XX.md` com os campos da `D-06` (`HEAD` e working tree por `git`, só nesse caminho; versão do `plugin.json`), e a numeração nunca reutiliza um id já resolvido: vem de `.claude/log/erros/.ultimo`, um inteiro que só cresce, gravado junto com o `E-XX` e que nem o `log-resolver` nem o `huddle-concluir` apagam; `resolver(projeto, id, destino)` confere o destino no vocabulário e apaga o arquivo. Nenhuma das três levanta para quem chama
+- [x] `dc.py.main`: registra o evento de toda chamada e, na saída 2, o `E-XX` — exceção do handler e erro de uso do `argparse` (`P-01`). Código de saída e stderr não mudam, e falha do log não muda nenhum dos dois
+- [x] `dc.py log-resolver <E-XX> "<destino>"`, com teste: `H-XX` presente no huddle da pessoa, `L-XX` ou `descartado: <motivo>`; qualquer outro sai com 1, sem apagar. Registra um evento `resolvido` com o destino
+- [x] Hooks: `pre_tool_use.py` registra `{classe: bloqueio, regra, tool_name, data}` só quando nega, sem nada de `tool_input`; `instructions_loaded.py` grava em `eventos.jsonl` com o `session_id`; `activation_notice.relatorio` lê de lá, filtrando a sessão. As docstrings que dizem "nada de I/O além da leitura" mudam junto
+- [x] Superfície: `session_start.aviso` acrescenta os `E-XX` com 7 dias ou mais, sem mudar a precedência do aviso de setup; `huddle.pauta` mostra esses `E-XX` e um resumo dos eventos desde o último huddle, por classe e comando; `huddle-concluir` apaga os eventos até a última `huddle-pauta`, que o próprio log registra. O passo 1 do `huddle/SKILL.md` cita o resumo
+- [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote com `eventos.py`; `lint_skill` sem problema no `huddle`
+- [x] Remedição (*Remedição*)
+
+8 de 8 tarefas concluídas · atualizado em 2026-11-20
 <!-- backlog:end -->
