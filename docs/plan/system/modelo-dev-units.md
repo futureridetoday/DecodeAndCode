@@ -1346,7 +1346,10 @@ e ligados ao objetivo. Cada sugestão mostra a origem e o teste aplicado; a reje
 para guideline. Projeto novo recebe o north star e os do método; os demais nascem pelo huddle. O que
 o `CLAUDE.md` ou o `.claude/CLAUDE.md` já afirma se registra como `existente`, sem cópia. Guideline
 nasce da stack e do objetivo do projeto, escopada pelos caminhos onde vale — a de caminho que ainda
-não existe se grava já, com `paths_pending`. Guardrail nasce de decisão explícita do time que desvia
+não existe se grava já, com `paths_pending`. Recurso do projeto ligado a caminhos (skill, command ou
+MCP que o `descobrir` lista) vira **guideline-ponte**, com título e o recurso a usar; o `derive` a
+cita pelo `dc.py guidelines-aplicaveis`, e o `implement` a recebe pelo `dc.py normas` — medido no
+plano `0017`, o subagente invoca a skill do projeto sem permissão extra. Guardrail nasce de decisão explícita do time que desvia
 do padrão da stack, e barra o que uma escrita contém. Os guias pedem falha observada ou incidente,
 que projeto novo não tem. O critério de princípio é do plano `0016`, que reabriu a `D-04` do `0009`.
 

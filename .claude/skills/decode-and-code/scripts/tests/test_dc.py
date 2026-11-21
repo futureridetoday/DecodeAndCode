@@ -54,6 +54,7 @@ SUBCOMANDOS = (
     "handoff",
     "verificar",
     "normas",
+    "guidelines-aplicaveis",
     "criar-guideline",
     "criar-principio",
     "adicionar-guardrail",

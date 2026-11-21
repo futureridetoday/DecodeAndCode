@@ -188,6 +188,22 @@ def _problema_de_padrao(padrao: str) -> str | None:
     return None
 
 
+def casa_caminho(padrao: str, caminho: str) -> bool:
+    """`caminho` (texto, relativo à raiz) casa `padrao`, no subconjunto de `_problema_de_padrao`.
+
+    Plano 0017. Segmento a segmento: `**` vale zero ou mais diretórios, e os demais curingas não
+    atravessam `/`. Casa o texto, não o disco — o arquivo da unidade pode ainda não existir.
+    """
+    def _casa(p: list[str], c: list[str]) -> bool:
+        if not p:
+            return not c
+        if p[0] == "**":
+            return any(_casa(p[1:], c[i:]) for i in range(len(c) + 1))
+        return bool(c) and fnmatch.fnmatchcase(c[0], p[0]) and _casa(p[1:], c[1:])
+
+    return _casa(padrao.split("/"), caminho.strip("/").split("/"))
+
+
 def criar_guideline(
     raiz: Path,
     nome: str,

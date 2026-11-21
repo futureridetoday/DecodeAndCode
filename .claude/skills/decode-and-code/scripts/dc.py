@@ -195,6 +195,24 @@ def _verificar(args: argparse.Namespace) -> int:
     return REPROVADO
 
 
+def _guidelines_aplicaveis(args: argparse.Namespace) -> int:
+    import lib
+    import normas
+
+    achadas = normas.aplicaveis(Path(args.unidade), lib.repo_root())
+    linhas = [a.linha for a in achadas if a.linha]
+    avisos = [a for a in achadas if a.aviso]
+    if not achadas:
+        print("nenhuma guideline casa os arquivos da unidade")
+    for linha in linhas:
+        print(linha)
+    if avisos:
+        print("Avisos:")
+        for a in avisos:
+            print(f"{a.nome} — {a.aviso}")
+    return OK
+
+
 def _normas(args: argparse.Namespace) -> int:
     import normas
 
@@ -647,6 +665,14 @@ def _parser() -> argparse.ArgumentParser:
         "imprime o conteúdo das seções que a unidade cita em 'Normas aplicáveis' e lista, sob "
         "'Não resolvidas:', as linhas que não resolveu (0 sempre que a unidade tem a seção)",
         _normas,
+    )
+    p.add_argument("unidade")
+
+    p = comando(
+        "guidelines-aplicaveis",
+        "imprime, pronta para 'Normas aplicáveis', a linha de cada guideline cujo paths: casa um "
+        "arquivo da tabela 'Arquivos' da unidade, e sob 'Avisos:' as que não dá para citar (0 sempre)",
+        _guidelines_aplicaveis,
     )
     p.add_argument("unidade")
 
