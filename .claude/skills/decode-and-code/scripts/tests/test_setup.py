@@ -92,6 +92,12 @@ class TestRecusas(_Case):
     def test_origem_fora_do_vocabulario(self):
         self.assertRecusa(origem="palpite")
         self.assertRecusa(origem="arquivo ")
+        self.assertRecusa(origem="extraído")
+
+    def test_origem_proposto_aceita(self):
+        """Plano 0016: princípio inferido do objetivo; o extraído usa 'arquivo <caminho>'."""
+        self.registrar(chave="north-star", tipo="princípio", origem="proposto", detalhe="principles.md")
+        self.assertIn("| north-star | princípio | proposto |", self.texto())
 
     def test_resultado_fora_do_vocabulario(self):
         self.assertRecusa(resultado="talvez")

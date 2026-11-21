@@ -1,13 +1,13 @@
 # setup
 
-Versão 1.0.0 · skill
+Versão 1.1.0 · skill
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
 ## O que é
 
 A skill que conduz o **primeiro uso** do método num projeto: põe o plugin no escopo do projeto,
-entende objetivo, escopo e stack, sugere guidelines e guardrails uma por vez, inicia o huddle da
+entende objetivo, escopo e stack, sugere princípios, guidelines e guardrails uma por vez, inicia o huddle da
 pessoa e explica o método. Roda em Opus, na conversa principal (sem `context: fork`), porque a
 ferramenta de perguntas não existe em subagente. O modelo pode propor e iniciar depois de ver o aviso
 de abertura; o primeiro passo é sempre a confirmação de que o setup é desejado agora.
@@ -24,14 +24,16 @@ escopo diferente, ou nenhum, e trabalhar com normas diferentes.
 - **Aviso.** O hook `SessionStart` propõe o setup enquanto `<plan_root>/system/setup.md` não tem
   `completed_at` — mesmo com o plugin só no escopo de usuário. Nunca escreve; enquanto o setup está
   pendente, o aviso de huddle não aparece.
-- **Etapas.** 0 pré-condições (bootstrap, plugin em `.claude/settings.json`); 1 perfil; 2 guidelines;
-  3 guardrails; 4 huddle da pessoa; 5 o método, a partir de `dc.py explicar`; 6 `setup-concluir` e o
-  fecho do huddle.
+- **Etapas.** 0 pré-condições (bootstrap, plugin em `.claude/settings.json`); 1 perfil; 2 princípios;
+  3 guidelines; 4 guardrails; 5 huddle da pessoa; 6 o método, a partir de `dc.py explicar`;
+  7 `setup-concluir` e o fecho do huddle.
 - **Uma sugestão por vez**, com **Aprovar**, **Editar** (livre ou guiada) ou **Rejeitar**. Nada é
   gravado antes do sim da pessoa.
-- **Critério.** Guideline nasce da stack e do objetivo; guardrail, de decisão explícita do time que
-  desvia do padrão da stack. O setup não sugere princípio: achado com essa cara vira entrada
-  `observação` no huddle.
+- **Critério.** Princípio, no teto de 5 (ideal 3): o **north star**, tirado do objetivo; os três
+  princípios do método; e, em projeto em andamento, os **extraídos** do que o projeto já afirma e os
+  **propostos**, ligados ao objetivo. Cada sugestão mostra o teste aplicado — uma equipe competente,
+  trabalhando neste projeto, pode rejeitá-lo? —, e a que não passa cai para guideline. Guideline nasce
+  da stack e do objetivo; guardrail, de decisão explícita do time que desvia do padrão da stack.
 - **Estado.** `<plan_root>/system/setup.md`, versionado, com o perfil e uma linha por decisão.
   O setup é retomável: o que já foi decidido não volta.
 - **Escreve só** no que o bootstrap cria, em `.claude/settings.json`, `.claude/rules/`,
@@ -39,24 +41,28 @@ escopo diferente, ou nenhum, e trabalhar com normas diferentes.
 
 ## Como usar
 
-- `/decode-and-code:setup` — percorre as etapas 0 a 6.
+- `/decode-and-code:setup` — percorre as etapas 0 a 7.
 - Projeto que já tem rules, princípios ou guardrails: cada um é registrado como `existente`, e o
-  setup segue só com o que é novo.
-- Projeto com o arquivo de huddle da pessoa já criado: a etapa 4 só explica. Com o arquivo único
+  setup segue só com o que é novo. Princípio que o `CLAUDE.md` já afirma também: já carrega, não se
+  copia.
+- Projeto com o arquivo de huddle da pessoa já criado: a etapa 5 só explica. Com o arquivo único
   antigo, propõe `dc.py huddle-migrar`.
 - A conversa e as rules geradas seguem o idioma da pessoa.
 
 ## Exemplos de uso
 
 - Ao abrir a sessão num projeto novo, o aviso diz que o setup está pendente. A pessoa roda
-  `/decode-and-code:setup`; a skill habilita o plugin no projeto, confirma "design system em
-  React com Tailwind", propõe "variantes com `cva`" como guideline e a pessoa aprova; propõe um
+  `/decode-and-code:setup`; a skill habilita o plugin no projeto, confirma "design system
+  multimarcas em React com Tailwind, tokens vindos do Figma", propõe o north star "marca nova não
+  exige código novo", com o teste "adicionar uma marca muda só tokens vindos do Figma", e a pessoa
+  aprova; propõe "variantes com `cva`" como guideline e a pessoa aprova; propõe um
   guardrail para uma decisão do time e a pessoa rejeita. No fim, `setup.md` tem `completed_at`.
 
 ## Fundamentação
 
 Norma, seção *Setup — o primeiro uso*, em [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md).
-Plano [`0009-onboard-new-project`](../plan/model/0009-onboard-new-project/0009-onboard-new-project.md).
+Plano [`0009-onboard-new-project`](../plan/model/0009-onboard-new-project/0009-onboard-new-project.md);
+a etapa de princípios, plano [`0016-setup-principles`](../plan/model/0016-setup-principles.md).
 
 ## Limites
 

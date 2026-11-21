@@ -248,6 +248,23 @@ def _criar_guideline(args: argparse.Namespace) -> int:
     return OK
 
 
+def _criar_principio(args: argparse.Namespace) -> int:
+    import lib
+    import rules
+
+    dados = _ler_json_do_stdin("criar-principio", ("nome", "enunciado", "teste"))
+    try:
+        alvo = rules.criar_principio(
+            lib.repo_root(), dados["nome"], dados["enunciado"], dados["teste"],
+            descricao=str(dados.get("descricao", "")),
+        )
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
 def _adicionar_guardrail(args: argparse.Namespace) -> int:
     import guardrail
     import lib
@@ -638,6 +655,13 @@ def _parser() -> argparse.ArgumentParser:
         "grava e registra uma guideline em .claude/rules/; lê do stdin JSON "
         "{nome, descricao, paths, corpo[, aguardando]} (1 se reprovada)",
         _criar_guideline,
+    )
+
+    comando(
+        "criar-principio",
+        "acrescenta um princípio a .claude/rules/principles.md, com teto de 5; lê do stdin JSON "
+        "{nome, enunciado, teste[, descricao]} (1 se reprovado)",
+        _criar_principio,
     )
 
     comando(

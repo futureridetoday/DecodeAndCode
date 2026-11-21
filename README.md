@@ -148,8 +148,10 @@ norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e
 
 ### Como cada camada nasce
 
-- **Princípio** — entra como unidade de tipo `norma` (entrega prosa normativa, com aprovação
-  humana). Não se descobre em execução, e não muda por conveniência.
+- **Princípio** — entra por duas portas, ambas com aprovação humana: como unidade de tipo `norma`
+  (prosa normativa, aprovada no plano), ou pelo setup, aprovado na conversa e gravado por
+  `dc.py criar-principio`. Teto de 5 por projeto, ideal 3, só *Enunciado* e *Teste*: carrega em toda
+  sessão. Não se descobre em execução, e não muda por conveniência.
 - **Guideline e guardrail** — **se escolhem por evidência de falha, não por elegância.** Uma
   guideline nasce na primeira divergência observada entre duas execuções; um guardrail, quando um
   incidente mostra o limite que faltava. Por isso a instância vive no projeto que instala — um repo

@@ -20,7 +20,7 @@ import lib
 import regioes
 
 TIPOS = ("guideline", "guardrail", "princípio")
-ORIGENS = ("stack", "decisão do time", "existente")
+ORIGENS = ("stack", "decisão do time", "existente", "proposto")
 RESULTADOS = ("aceita", "rejeitada", "existente")
 
 _SECAO_RE = r"(?ms)^##\s+{}[ \t]*$\n(.*?)(?=^##\s+|\Z)"

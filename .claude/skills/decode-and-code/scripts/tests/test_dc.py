@@ -55,6 +55,7 @@ SUBCOMANDOS = (
     "verificar",
     "normas",
     "criar-guideline",
+    "criar-principio",
     "adicionar-guardrail",
     "lint-guardrails",
     "huddle-iniciar",
@@ -638,6 +639,38 @@ class TestCriarGuideline(_ProjetoCase):
 
     def test_json_sem_campo_e_codigo_2(self):
         r = self.dc("criar-guideline", entrada=json.dumps({"nome": "x"}))
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+
+class TestCriarPrincipio(_ProjetoCase):
+    """Plano 0016 — `{nome, enunciado, teste}` pelo stdin, raiz pelo `cwd`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+
+    def entrada(self, **kw) -> str:
+        dados = {"nome": "Marca nova sem código novo", "enunciado": "Marca nova entra só por tokens.",
+                 "teste": "Adicionar uma marca muda só tokens vindos do Figma."}
+        dados.update(kw)
+        return json.dumps(dados)
+
+    def test_grava_na_raiz_do_projeto(self):
+        r = self.dc("criar-principio", entrada=self.entrada())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        alvo = self.projeto / ".claude" / "rules" / "principles.md"
+        self.assertEqual(Path(r.stdout.strip()).resolve(), alvo)
+        self.assertIn("## Marca nova sem código novo", alvo.read_text(encoding="utf-8"))
+
+    def test_repetido_e_codigo_1(self):
+        self.dc("criar-principio", entrada=self.entrada())
+        r = self.dc("criar-principio", entrada=self.entrada())
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertTrue(r.stdout.strip())
+
+    def test_json_sem_campo_e_codigo_2(self):
+        r = self.dc("criar-principio", entrada=json.dumps({"nome": "x"}))
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
 

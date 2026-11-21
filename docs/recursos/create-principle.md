@@ -1,6 +1,6 @@
 # Criar um princípio
 
-Versão 1.0.0 · guia de uso
+Versão 1.1.0 · guia de uso
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
@@ -10,9 +10,13 @@ Guia de procedimento. As definições das camadas estão na norma
 
 ## Quando criar
 
-Um princípio passa no teste que o separa de guideline: **uma equipe competente pode rejeitar isto e
-ainda estar fazendo trabalho bom?** Se a resposta é **não**, é princípio. Se é **sim**, é guideline
-— pare aqui e veja [`create-guideline.md`](create-guideline.md).
+Um princípio passa no teste que o separa de guideline: **uma equipe competente, trabalhando neste
+projeto, pode rejeitar isto?** Se a resposta é **não**, é princípio do projeto. Se é **sim**, é
+guideline — pare aqui e veja [`create-guideline.md`](create-guideline.md). O teste sem o recorte
+"neste projeto" decide outra coisa, o que viaja no plugin; os dois estão na norma, *Camada normativa
+→ Princípio*.
+
+**Teto: 5 princípios no projeto, ideal 3.** Cada um carrega em toda sessão.
 
 Princípio é a direção e o porquê, estável. Não se descobre em execução, e não muda por
 conveniência: criar um é decisão deliberada, e rara.
@@ -25,9 +29,17 @@ um princípio é **adicionar uma seção** a
 
 ## Como criar
 
+Duas portas, ambas com aprovação humana:
+
+- **Pelo setup**, que sugere o north star, os princípios do método e, em projeto em andamento, os
+  extraídos e os propostos. O aprovado na conversa é gravado por `dc.py criar-principio`
+  (JSON `{nome, enunciado, teste}` pelo stdin), que escreve só *Enunciado* e *Teste*, recusa o sexto
+  princípio e o nome repetido, e só grava o que passa em `rules.lint_rule`.
+- **Por plano**, no passo a passo abaixo.
+
 1. **Passa pelo modelo.** Princípio é norma — entra por um plano, como unidade de tipo `norma`
    (entrega prosa normativa), com **aprovação humana** registrada. Não se edita `principles.md`
-   direto fora desse fluxo.
+   direto fora das duas portas.
 2. **Escreva a seção** no formato das que já existem:
    - `## <Nome do princípio>`
    - **Enunciado:** uma frase que diz o que o princípio afirma.
@@ -58,7 +70,8 @@ um princípio é **adicionar uma seção** a
 - **Não criar arquivo novo** em `.claude/rules/` para um princípio — ele carregaria como rule
   independente sem `paths:`; o lugar é uma seção em `principles.md`.
 - **Não colocar `paths:`** — com escopo de arquivo, deixa de ser princípio.
-- **Não editar `principles.md` fora de um plano aprovado** — é norma, e norma tem gate humano.
+- **Não editar `principles.md` fora das duas portas** — plano aprovado ou setup —, porque é norma, e
+  norma tem gate humano.
 - **Nada específico de um projeto que instala vira princípio do método.** O `principles.md` deste
   repositório é a instância dele; um projeto que instala escreve os seus (o mecanismo viaja, o
   conteúdo não).
