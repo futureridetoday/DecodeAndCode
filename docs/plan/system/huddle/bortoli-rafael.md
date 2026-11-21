@@ -269,6 +269,18 @@ Na execução do 0012 declarei `plan_type: fix` nos dois esboços do `_inbox` se
 
 Links relativos quebrados fora de plano, achados pela varredura do intake de fix-review-plan-claims (lint_skill._checar_links sobre docs/plan/**, 2026-11-19): `_inbox/_backlog.md` → `../../../scripts/move-md.py`; unidade `0001/19-planner-agent.md` → `../../system/huddle.md`; e o próprio arquivo de huddle `system/huddle/bortoli-rafael.md` → `../model/0001-.../0001-decode-and-code-foundation.md` e `../_inbox/_backlog.md` (profundidade errada depois da mudança para `huddle/`). Nenhum chega a uma revisão de plano, por isso não entraram no esboço — corrigir à mão ou descartar.
 
+### H-18 · `pergunta` · 2026-11-20 · Claude
+
+O esboço `apply-plugin-review` (rascunho de 2026-10-14, `grande`) continua no `_inbox` e cita `.claude/skills/decode-and-code/SKILL.md`, que não existe mais: a pasta virou compartilhada e não tem `SKILL.md`. A `D-06` dele (gates na norma, `principles.md` fora do pacote) já está em vigor. No intake de `setup-principles-resources`, ele foi o único esboço que apareceu na checagem de concorrência: a tarefa 16 dele reescreve todo `SKILL.md`. Esboço desatualizado no `_inbox` gera sinal falso de concorrência. Decidir: ele segue vivo, é reescrito sobre o estado atual, ou sai do `_inbox`?
+
+### H-19 · `revisitar` · 2026-11-20 · Claude
+
+O B-08 do `_inbox/_backlog.md` ("não neste projeto" para o aviso de setup) está travado pela premissa de que a recusa precisa ficar fora do repositório, porque nada do método escreve no projeto sem pedido (`L-10` do `0009`; `0001`, *Materializar não pode ser automático*). O esboço `norm-evolution-log` (intake de 2026-11-20) introduz uma pasta que se ignora sozinha, `.claude/log/` com `.gitignore` `*`, criada por script sem tocar o `.gitignore` do projeto. Se ele for aprovado, a recusa do B-08 pode morar num lugar desse tipo, gravada por um comando explícito da pessoa, não por hook. Ressalva: a `P-03` do esboço recomenda que o log só escreva em projeto com bootstrap, e o B-08 é justamente sobre projeto sem o método. Decidir: o B-08 continua travado, ou passa a ter onde guardar a recusa?
+
+### H-20 · `observação` · 2026-11-20 · Claude
+
+O esboço `setup-principles-resources` (intake de 2026-11-20) atribui ao humano duas coisas que vieram do Claude na conversa: a recomendação do `P-01` ("recomendação do humano") e a fonte do `R-02` ("documentação do Claude Code, citada pelo humano"). O pedido ao intake separava "DECISÕES DO HUMANO" de "PENDENTE DE DECISÃO (com a recomendação)", e mesmo assim a autoria se perdeu na passagem para o fork. Um caso só; se repetir, o intake precisa de uma regra de autoria (decisão do humano, recomendação do Claude, fato medido) no esboço.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
