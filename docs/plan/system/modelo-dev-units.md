@@ -218,6 +218,46 @@ outro, contadas nas duas direções —, é o candidato natural a primeiro guard
 > por contagem — **ainda não existe**: nenhum projeto consumidor declara grafo (gate A do plano
 > `0014-fix-review-plan-claims`). Até existir, o check de arquitetura do *Modo `review`* é julgamento.
 
+#### Princípio
+
+**Princípio e guideline separam-se por um teste, com dois recortes.** Princípio é sobre **como
+decidir**; guideline, sobre **o que decidir**.
+
+| Recorte | Pergunta | Não → | Sim → |
+|---|---|---|---|
+| O que viaja no plugin | Uma equipe competente pode rejeitar isso e ainda estar fazendo trabalho bom? | princípio do método | escolha técnica: não viaja |
+| O que é princípio do projeto | Uma equipe competente, trabalhando **neste** projeto, pode rejeitar isso? | princípio do projeto | guideline |
+
+O primeiro recorte mantém o plugin portátil: escolha técnica embutida seria arquitetura imposta a
+quem instala. O segundo é o que o setup aplica: "a marca fala com uma voz só" é rejeitável em
+abstrato, e não é para aquela marca. Origem do primeiro: plano `0001`, seção *Princípio e guideline
+separam-se por um teste*; do segundo: plano `0016`, `D-04`.
+
+**Formato.** Uma seção de `.claude/rules/principles.md`, que não declara `paths:` e por isso carrega
+em toda sessão: `## <nome>`, `**Enunciado:**` numa frase e `**Teste:**`, a condição verificável. O
+princípio gravado pelo setup leva só os dois; *Na prática* fica para o que entra por plano.
+
+**Teto: 5 princípios no projeto, ideal 3.** Cada um custa contexto em toda sessão. Conta-se a seção
+com `**Enunciado:**` em toda rule sem `paths:` de `.claude/rules/`, não o `##`: seção de fonte ou de
+protocolo não é princípio. `dc.py criar-principio` recusa o sexto.
+
+**Duas portas, ambas com aprovação humana.** Por plano, com unidade `norma` e a aprovação registrada
+no plano. Pelo setup, com a aprovação na conversa, gravado por `dc.py criar-principio`, que impõe
+formato e teto e só escreve o que passa em `lint_rule`. Fora dessas duas, `principles.md` não se
+edita. O guia é [`create-principle.md`](../../recursos/create-principle.md).
+
+**Os princípios do método, que o setup oferece.** Esta é a fonte do texto; o `principles.md` de
+quem os aceita é instância, cópia gravada pelo setup.
+
+| Nome | Enunciado | Teste |
+|---|---|---|
+| Código é custo | Código não é ativo: é responsabilidade que se paga em manutenção, superfície de bug e carga cognitiva, a cada linha que existe | Só existe se eliminar dor real e mensurável |
+| Subtração antes de adição | Toda solução se avalia na ordem remover, reduzir, reaproveitar, criar; a próxima só entra se a anterior não resolver | `remover > reduzir > reaproveitar > criar` |
+| Evidência acima de opinião | Decisão de projeto se sustenta em dado, não em preferência estética ou tendência de mercado | Decisão baseada em dado simples — medição, citação ou caso registrado —, não em estética |
+
+O *protocolo de exceção* acompanha os três neste repositório, mas não tem *Enunciado* nem *Teste*:
+não é princípio no formato acima, e o setup não o oferece.
+
 #### Guideline
 
 Manifesto — campos exigidos e o que cada um decide:
@@ -1293,16 +1333,22 @@ modelo pode propor depois de vê-lo.
 **As etapas.** 0, pré-condições: bootstrap se faltar o chão, e o plugin habilitado em
 `.claude/settings.json` (`setup-escopo`), para que o time inteiro trabalhe com as mesmas normas. 1,
 perfil: objetivo, escopo e stack, confirmados com a pessoa a partir do inventário que `descobrir`
-faz. 2 e 3, todas as guidelines e depois todos os guardrails, **uma sugestão por vez**, cada uma
-aprovada, editada ou rejeitada na conversa. 4, huddle da pessoa. 5, o método, explicado a partir do
-que `dc.py explicar` imprime. 6, `setup-concluir` e o fecho do huddle.
+faz. 2, os princípios. 3 e 4, todas as guidelines e depois todos os guardrails. Em 2, 3 e 4, **uma
+sugestão por vez**, cada uma aprovada, editada ou rejeitada na conversa. 5, huddle da pessoa. 6, o
+método, explicado a partir do que `dc.py explicar` imprime. 7, `setup-concluir` e o fecho do huddle.
 
-**Critério de sugestão.** Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos
-onde vale — a de caminho que ainda não existe se grava já, com `paths_pending`. Guardrail nasce de
-decisão explícita do time que desvia do padrão da stack, e barra o que uma escrita contém. Os guias
-pedem falha observada ou incidente, que projeto novo não tem. **O setup não sugere princípio**:
-princípio entra por plano com unidade `norma`, e achado com essa cara vira entrada `observação` no
-huddle.
+**Critério de sugestão.** Princípio, pelo segundo recorte do teste (*Camada normativa → Princípio*),
+dentro do teto: primeiro o **north star**, a partir do objetivo do perfil — *Enunciado*, o objetivo;
+*Teste*, a condição verificável que só aquele objetivo produz, nunca "a mudança aproxima o projeto do
+objetivo" —; depois os princípios do método, um por vez; depois os
+**extraídos**, que o projeto já afirma, com o arquivo citado; por último os **propostos**, inferidos
+e ligados ao objetivo. Cada sugestão mostra a origem e o teste aplicado; a rejeitada pelo teste cai
+para guideline. Projeto novo recebe o north star e os do método; os demais nascem pelo huddle. O que
+o `CLAUDE.md` ou o `.claude/CLAUDE.md` já afirma se registra como `existente`, sem cópia. Guideline
+nasce da stack e do objetivo do projeto, escopada pelos caminhos onde vale — a de caminho que ainda
+não existe se grava já, com `paths_pending`. Guardrail nasce de decisão explícita do time que desvia
+do padrão da stack, e barra o que uma escrita contém. Os guias pedem falha observada ou incidente,
+que projeto novo não tem. O critério de princípio é do plano `0016`, que reabriu a `D-04` do `0009`.
 
 **O estado.** `<plan_root>/system/setup.md`, versionado: `completed_at` no frontmatter, `## Perfil` e
 `## Decisões`, uma linha por sugestão com chave, tipo, origem, resultado, destino ou motivo e data.

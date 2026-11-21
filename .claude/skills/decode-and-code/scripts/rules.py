@@ -239,6 +239,72 @@ def criar_guideline(
     return destino
 
 
+TETO_PRINCIPIOS = 5
+_ENUNCIADO_RE = re.compile(r"(?m)^\*\*Enunciado:\*\*")
+_TITULO_RE = re.compile(r"(?m)^##[ \t]+(.+?)[ \t]*$")
+_DESCRICAO_PRINCIPIOS = "Princípios do projeto: como decidir. Carrega sempre, em toda sessão."
+
+
+def _rules_de_principio(dir_rules: Path) -> list[Path]:
+    """`.md` direto em `dir_rules` sem `paths:` — onde o teto conta (norma, *Princípio*)."""
+    if not dir_rules.is_dir():
+        return []
+    return [p for p in sorted(dir_rules.glob("*.md")) if not registry._e_guideline(p)]
+
+
+def criar_principio(raiz: Path, nome: str, enunciado: str, teste: str, descricao: str = "") -> Path:
+    """Acrescenta `## <nome>`, *Enunciado* e *Teste* a `<raiz>/.claude/rules/principles.md`.
+
+    Plano 0016. Cria o arquivo com frontmatter se faltar — `descricao` vale só aí, e vazia usa a
+    padrão. O teto conta as seções com `**Enunciado:**` em toda rule sem `paths:`, não os `##`:
+    seção de fonte ou de protocolo não é princípio. Levanta `ValueError` para campo vazio ou em mais
+    de uma linha, nome repetido entre os títulos dessas rules, teto atingido ou arquivo que reprova
+    em `lint_rule`; em todos os casos, nada muda no disco.
+    """
+    campos = {"nome": nome, "enunciado": enunciado, "teste": teste}
+    for chave, valor in campos.items():
+        if not valor.strip():
+            raise ValueError(f"princípio com '{chave}' vazio")
+        if "\n" in valor.strip():
+            raise ValueError(f"princípio com '{chave}' em mais de uma linha: {valor!r}")
+    nome, enunciado, teste = (valor.strip() for valor in campos.values())
+
+    dir_rules = raiz / ".claude" / "rules"
+    existentes = _rules_de_principio(dir_rules)
+    textos = [p.read_text(encoding="utf-8") for p in existentes]
+    total = sum(len(_ENUNCIADO_RE.findall(texto)) for texto in textos)
+    if total >= TETO_PRINCIPIOS:
+        raise ValueError(f"teto de {TETO_PRINCIPIOS} princípios atingido: há {total}")
+    titulos = {t.casefold() for texto in textos for t in _TITULO_RE.findall(texto)}
+    if nome.casefold() in titulos:
+        raise ValueError(f"princípio já existe: {nome!r}")
+
+    destino = dir_rules / "principles.md"
+    if destino.exists():
+        atual = destino.read_text(encoding="utf-8").rstrip("\n") + "\n"
+    else:
+        descricao = descricao.strip() or _DESCRICAO_PRINCIPIOS
+        atual = (
+            "---\n"
+            f"name: {json.dumps('principles')}\n"
+            f"description: {json.dumps(descricao, ensure_ascii=False)}\n"
+            "---\n"
+        )
+    texto = atual + f"\n## {nome}\n\n**Enunciado:** {enunciado}\n\n**Teste:** {teste}\n"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        provisorio = Path(tmp) / "principles.md"
+        provisorio.write_text(texto, encoding="utf-8")
+        problemas = lint_rule(provisorio)
+        if registry._e_guideline(provisorio):
+            problemas.append("principles.md declara 'paths:' — com escopo, deixa de ser princípio")
+        if problemas:
+            raise ValueError("; ".join(problemas))
+        dir_rules.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(provisorio), destino)
+    return destino
+
+
 def auditar_arvore() -> list[str]:
     """Varre `.claude/rules/` e `.claude/rules-off/` da raiz real — lista vazia quando a árvore
     está sã.

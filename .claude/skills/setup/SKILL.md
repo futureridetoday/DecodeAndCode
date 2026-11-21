@@ -2,14 +2,14 @@
 # ── claude code — campos nativos ──────────────────────────────────────────────
 name: setup
 description: |
-  Conduz o primeiro uso do método no projeto: pré-condições, perfil, guidelines, guardrails, huddle e o princípio Decode → Code, uma sugestão por vez, com toda escrita aprovada na conversa.
+  Conduz o primeiro uso do método no projeto: pré-condições, perfil, princípios, guidelines, guardrails, huddle e o princípio Decode → Code, uma sugestão por vez, com toda escrita aprovada na conversa.
 
   Use when a pessoa instala o método num projeto, ou quando o aviso de abertura diz que o setup está pendente.
 
   <example>
   Context: o aviso de abertura disse que o setup do projeto está pendente
   user: "/decode-and-code:setup"
-  commentary: confirma que o setup é desejado agora e percorre as etapas 0 a 6, gravando cada decisão pelo dc.py
+  commentary: confirma que o setup é desejado agora e percorre as etapas 0 a 7, gravando cada decisão pelo dc.py
   </example>
 
 disable-model-invocation: false
@@ -49,7 +49,7 @@ Toda escrita passa pelos comandos do `dc.py` e só acontece depois do sim da pes
 que sai `1` volta para a pessoa com o motivo, e o fluxo continua da sugestão em que parou.
 
 **Toda pergunta vai pela ferramenta de perguntas, inclusive a aberta**: exemplos como opções, e o texto
-livre como saída. Não encerre o turno antes da etapa 6. Pergunta em prosa encerra o turno, e no turno
+livre como saída. Não encerre o turno antes da etapa 7. Pergunta em prosa encerra o turno, e no turno
 seguinte a liberação do `allowed-tools` não vale mais: cada comando do `dc.py` volta a pedir permissão.
 
 Para o que a norma diz, use `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar`, com ou sem seção; não leia o
@@ -72,7 +72,28 @@ uma cerca; não os releia. Confirme objetivo, escopo e stack, uma pergunta por v
 do inventário e o texto livre como saída. Grave o JSON `{objetivo, escopo, stack, confirmacao}` em
 arquivo, como descrito em *JSON pelo stdin*, e passe-o a `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil`.
 
-**2 e 3 — Guidelines, depois guardrails.** Antes de sugerir, rode
+**2 — Princípios.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar camada-normativa`: a subseção
+*Princípio* traz o teste, o formato, o teto e os princípios do método — não os reescreva de memória. O
+teto é 5, ideal 3, contando os que já existem; atingido, siga para a etapa 3. Sugira nesta ordem, uma
+por vez, com as opções da etapa 3:
+
+1. O **north star**, do objetivo do perfil: *Enunciado*, o objetivo numa frase curta; *Teste*, a
+   condição verificável que só este objetivo produz — o que uma mudança precisa mostrar para
+   aproximá-lo, como "adicionar uma marca muda só tokens" —, nunca "a mudança aproxima o projeto do
+   objetivo". Origem `proposto`.
+2. Os **princípios do método**, da tabela da norma. Origem `arquivo <plan_root>/system/modelo-dev-units.md`.
+3. Em projeto em andamento, os **extraídos**: o que o projeto já afirma, com o arquivo citado e origem
+   `arquivo <caminho>`. O que o `CLAUDE.md` ou o `.claude/CLAUDE.md` afirma já carrega: registre como
+   `existente`, sem gravar.
+4. Em projeto em andamento, os **propostos**: inferidos e ligados ao objetivo. Origem `proposto`.
+
+Em projeto novo, só os passos 1 e 2: os demais nascem pelo huddle. Cada sugestão mostra a origem e o
+teste aplicado — uma equipe competente, trabalhando neste projeto, pode rejeitá-lo? — e por que passou.
+Se não passa, diga por que e leve-a à etapa 3 como guideline. Grave o aprovado com o JSON
+`{nome, enunciado, teste}`, cada campo numa linha, para
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-principio`, e registre com `tipo: princípio`, como na etapa 3.
+
+**3 e 4 — Guidelines, depois guardrails.** Antes de sugerir, rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-decididas`: o que já está lá não volta, e o que está em
 `existentes` no `descobrir` se registra como `existente`. Todas as guidelines antes dos guardrails, uma
 por vez, com três opções: **Aprovar**, **Editar** e **Rejeitar**.
@@ -94,26 +115,23 @@ formato de *Formato do guardrail*. `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar
 o que a norma diz da guideline. Cada resultado vai para `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-registrar`, com o JSON
 `{chave, tipo, origem, resultado, detalhe}`. O `setup-registrar` aceita só um vocabulário fechado, e valor
 fora dele sai `1`: `tipo` é `guideline`, `guardrail` ou `princípio`; `origem` é `stack`, `decisão do time`,
-`existente` ou `arquivo <caminho>`; `resultado` é `aceita`, `rejeitada` ou `existente`. Sugestão editada e
-depois aprovada é `aceita` — não existe `editada`. Achado com cara de princípio, e não de guideline ou
-guardrail, vira entrada `observação` no huddle e se registra com `tipo: princípio`, `resultado: rejeitada`
-e o id `H-XX` no `detalhe`; se o projeto ainda tem o arquivo único antigo, o `huddle-abrir` recusa, e você
-propõe o `huddle-migrar` da etapa 4 antes de registrar.
+`existente`, `proposto` ou `arquivo <caminho>`; `resultado` é `aceita`, `rejeitada` ou `existente`.
+Sugestão editada e depois aprovada é `aceita` — não existe `editada`.
 
-**4 — Huddle.** Se o projeto ainda tem o arquivo único antigo, proponha
+**5 — Huddle.** Se o projeto ainda tem o arquivo único antigo, proponha
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-migrar` e rode-o com o sim; senão rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-iniciar`, ou apenas explique se o arquivo da pessoa já existe.
 A partir do que `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar huddle` imprime, explique o que é o huddle,
 o que dispara uma entrada, que cada pessoa tem o seu, que a pessoa e o Claude registram nele, o lembrete
 semanal e como ajustar `reminder_days`, e que um item pode ser promovido a guideline ou guardrail.
 
-**5 — O método.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar` e explique Decode e Code a partir
+**6 — O método.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar` e explique Decode e Code a partir
 do que ele imprime, sem texto próprio que possa divergir: Decode é pensar antes de construir (Clarificar,
 Evitar, Reduzir, os gates A e B e o porte do plano); Code é o que o plugin faz hoje, com `derive`
 decompondo e `implement` executando cada unidade em cold-start, e quem orquestra revisando a entrega
 antes de versionar.
 
-**6 — Concluir.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-concluir`. Diga o que vai para o git:
+**7 — Concluir.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-concluir`. Diga o que vai para o git:
 `.claude/settings.json`, `.claude/rules/`, `.claude/guardrails.json`, o que o bootstrap criou em
 `<plan_root>/`, o `setup.md` e o arquivo de huddle da pessoa. E diga o que é pessoal:
 `.claude/settings.local.json` guarda as permissões que a pessoa concedeu e não vai para o git — o setup
@@ -129,7 +147,7 @@ chamada por entrada. A mensagem final passa por
 ### JSON pelo stdin, por arquivo
 
 O Claude Code recusa heredoc com JSON ("Contains brace with quote character"). Para `setup-perfil`,
-`setup-registrar`, `criar-guideline` e `adicionar-guardrail`, grave o JSON com a ferramenta `Write` num
+`setup-registrar`, `criar-principio`, `criar-guideline` e `adicionar-guardrail`, grave o JSON com a ferramenta `Write` num
 arquivo temporário fora do projeto (o scratchpad da sessão) e passe-o com `<`, na forma que o
 `allowed-tools` casa: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>`. O `huddle-abrir`
 lê texto, não JSON, e segue como nas outras skills.
@@ -164,5 +182,5 @@ Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` li
 projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem
 trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `bootstrap`,
 `setup-escopo`, `setup-iniciar`, `descobrir`, `setup-perfil`, `setup-decididas`, `setup-registrar`,
-`criar-guideline`, `adicionar-guardrail`, `huddle-migrar`, `huddle-iniciar`, `explicar`, `setup-concluir`,
+`criar-principio`, `criar-guideline`, `adicionar-guardrail`, `huddle-migrar`, `huddle-iniciar`, `explicar`, `setup-concluir`,
 `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
