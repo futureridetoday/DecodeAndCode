@@ -70,6 +70,8 @@ SUBCOMANDOS = (
     "huddle-lint-relatorio",
     "huddle-migrar",
     "log-resolver",
+    "metodo-listar",
+    "metodo-levado",
     "descobrir",
     "setup-iniciar",
     "setup-perfil",
@@ -727,7 +729,7 @@ class TestLog(_ProjetoCase):
 
     def test_log_resolver(self):
         self.dc("normas", "nao-existe.md")
-        recusado = self.dc("log-resolver", "E-01", "método")
+        recusado = self.dc("log-resolver", "E-01", "metodo")
         self.assertEqual(recusado.returncode, 1, recusado.stderr)
         self.assertTrue((self.erros / "E-01.md").exists())
         self.assertEqual(self.dc("log-resolver", "E-01", "H-01").returncode, 1)
@@ -751,6 +753,115 @@ class TestLog(_ProjetoCase):
         self.assertNotIn(["normas"], comandos)
         self.assertIn(["validar-nome"], comandos)
         self.assertTrue((self.erros / "E-01.md").exists())
+
+
+class TestMetodo(_ProjetoCase):
+    """Plano 0019 — evidência no `huddle-abrir`, destino `método` no `huddle-fechar` e no
+    `log-resolver`, e a fila `metodo-listar` / `metodo-levado`."""
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        self.huddle = self.raiz_planos / "system" / "huddle" / "ana-lima.md"
+        self.metodo = self.projeto / ".claude" / "log" / "metodo"
+
+    def abrir(self, evidencia: str, texto: str = "O lint corta a tarefa de várias linhas.") -> subprocess.CompletedProcess:
+        return self.dc("huddle-abrir", "padrão", "--evidencia", evidencia, entrada=texto)
+
+    def test_evidencia_no_fim_do_corpo_e_a_pauta_mostra_o_texto(self):
+        r = self.abrir("E-03")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("várias linhas.\n\nEvidência: E-03\n", self.huddle.read_text(encoding="utf-8"))
+        pauta = self.dc("huddle-pauta").stdout
+        self.assertIn("H-01 · padrão · ", pauta)
+        self.assertIn("O lint corta a tarefa", pauta)
+        self.assertNotIn("Evidência", pauta)
+        self.assertEqual(self.dc("huddle-lint").returncode, 0)
+
+    def test_evidencia_fora_do_vocabulario_e_codigo_1_sem_escrever(self):
+        self.dc("huddle-iniciar")
+        antes = self.huddle.read_text(encoding="utf-8")
+        r = self.abrir("palpite")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertEqual(self.huddle.read_text(encoding="utf-8"), antes)
+
+    def test_fechar_metodo_sem_texto_nao_fecha(self):
+        self.abrir("E-03")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn("### H-01", self.huddle.read_text(encoding="utf-8"))
+        self.assertFalse(self.metodo.exists())
+
+    def test_fechar_metodo_grava_m_xx_e_fecha(self):
+        self.abrir("E-03")
+        self.abrir("bloqueio: sem-segredo", texto="Outro.")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="O backlog corta tarefa de várias linhas.")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.dc("huddle-fechar", "H-02", "método", entrada="Genérico.").returncode, 0)
+        primeiro = (self.metodo / "M-01.md").read_text(encoding="utf-8")
+        for esperado in ('origem: "H-01"', 'evidencia: "E-03"', "O backlog corta tarefa"):
+            self.assertIn(esperado, primeiro)
+        self.assertIn('evidencia: ""', (self.metodo / "M-02.md").read_text(encoding="utf-8"))
+        self.assertNotIn("sem-segredo", (self.metodo / "M-02.md").read_text(encoding="utf-8"))
+        huddle = self.huddle.read_text(encoding="utf-8")
+        self.assertNotIn("### H-01", huddle)
+        self.assertRegex(huddle, r"\| H-01 \| `padrão` \| [\d-]+ \| método: M-01 \|")
+
+    def test_fechar_metodo_com_gravacao_falhando_nao_fecha(self):
+        self.abrir("E-03")
+        self.metodo.parent.mkdir(parents=True, exist_ok=True)
+        self.metodo.write_text("arquivo no lugar da pasta", encoding="utf-8")
+        r = self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn("### H-01", self.huddle.read_text(encoding="utf-8"))
+
+    def test_fechar_metodo_id_que_nao_esta_aberto(self):
+        self.dc("huddle-iniciar")
+        r = self.dc("huddle-fechar", "H-09", "método", entrada="Genérico.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertFalse(self.metodo.exists())
+
+    def test_log_resolver_metodo_listar_e_levar(self):
+        self.dc("normas", "nao-existe.md")
+        r = self.dc("log-resolver", "E-01", "método")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("método: M-01", r.stdout)
+        self.assertFalse((self.projeto / ".claude" / "log" / "erros" / "E-01.md").exists())
+        self.abrir("L-04")
+        self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+
+        listado = self.dc("metodo-listar")
+        self.assertEqual(listado.returncode, 0, listado.stderr)
+        self.assertIn("=== M-01", listado.stdout)
+        self.assertIn("=== M-02", listado.stdout)
+        self.assertIn('origem: "E-01"', listado.stdout)
+        self.assertNotIn(str(self.projeto), listado.stdout)
+        self.assertIn("M-01 (de E-01) pendente desde", self.dc("huddle-pauta").stdout)
+
+        self.assertEqual(self.dc("metodo-levado", "M-01", "  ").returncode, 1)
+        r = self.dc("metodo-levado", "M-01", "DecodeAndCode H-22")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.metodo / "M-01.md").exists())
+        self.assertEqual(self.dc("metodo-levado", "M-01", "de novo").returncode, 1)
+
+    def test_listar_vazio(self):
+        r = self.dc("metodo-listar")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("nenhum M-XX pendente", r.stdout)
+
+    def test_log_fora_do_git(self):
+        self.dc("huddle-iniciar")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-qm", "c"], cwd=self.projeto, check=True)
+        self.abrir("E-03")
+        subprocess.run(["git", "add", "-A"], cwd=self.projeto, check=True)
+        subprocess.run(["git", "commit", "-qm", "c2"], cwd=self.projeto, check=True)
+        self.dc("huddle-fechar", "H-01", "método", entrada="Genérico.")
+        status = subprocess.run(["git", "status", "--porcelain"], cwd=self.projeto, capture_output=True, text=True).stdout
+        self.assertNotIn(".claude/log", status)
+        self.assertTrue((self.metodo / "M-01.md").exists())
 
 
 class TestAdicionarGuardrail(_ProjetoCase):

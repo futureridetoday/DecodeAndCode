@@ -285,6 +285,10 @@ O esboço `setup-principles-resources` (intake de 2026-11-20) atribui ao humano 
 
 Segundo caso do que a H-20 registrou: o esboço `norm-evolution-log` (intake de 2026-11-20) diz, no `P-04`, que N = 2 planos fechados é "recomendação do humano, pendente de confirmação". A recomendação foi do Claude na conversa, e o humano não a confirmou. Os dois casos vieram de intakes da mesma conversa, com o pedido separando decisão do humano de recomendação. Com dois casos, a regra de autoria no intake (decisão do humano, recomendação do Claude, fato medido) passa a ter base.
 
+### H-22 · `observação` · 2026-11-21 · Claude
+
+A `H-10` do huddle do AmFlow (2026-10-01) registra um defeito do método, "o `backlog.projetar` do decode-and-code corta tarefa de várias linhas", e diz que a correção vai para o DecodeAndCode. Em 2026-11-21, 51 dias depois, ela não chegou: nenhum plano, backlog ou huddle daqui a cita. O defeito reproduz no `dev` atual: `backlog._tarefas` usa `_ITEM_TAREFA = ^-\s+\[( |x|X)\]\s+(.+?)\s*$` e devolve só a primeira linha de um item quebrado. A região de backlog projeta o texto truncado, mas a contagem e a situação saem certas. Achado no intake de `norm-evolution-evidence`, onde é o caso medido do gate A. Está fora do escopo daquele esboço, que trata o caminho, não este defeito. Decidir: plano `fix` próprio, item no `_backlog.md` ou descartar.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |

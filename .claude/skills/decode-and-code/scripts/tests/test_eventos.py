@@ -112,7 +112,7 @@ class TestResolver(_Projeto):
         self.arquivo = self.p / ".claude" / "log" / "erros" / "E-01.md"
 
     def test_destino_fora_do_vocabulario_nao_apaga(self):
-        for destino in ("método", "descartado:", "H-", "qualquer"):
+        for destino in ("metodo", "método: M-01", "descartado:", "H-", "qualquer"):
             with self.subTest(destino=destino):
                 self.assertIn("vocabulário", eventos.resolver(self.p, "E-01", destino))
         self.assertTrue(self.arquivo.exists())
@@ -128,6 +128,81 @@ class TestResolver(_Projeto):
 
     def test_id_inexistente(self):
         self.assertIn("não encontrado", eventos.resolver(self.p, "E-07", "L-01"))
+
+
+class TestMetodo(_Projeto):
+    """Plano 0019 — o `M-XX`: gravado do huddle ou do `E-XX`, listado, e só sai por `levado`."""
+
+    def test_campos_e_evidencia_so_e_xx_ou_l_xx(self):
+        for evidencia, esperada in (("E-03 do derive", "E-03"), ("L-04", "L-04"),
+                                    ("bloqueio: sem-segredo", ""), ("", "")):
+            with self.subTest(evidencia=evidencia):
+                id_metodo = eventos.registrar_metodo(self.p, "H-01", "Texto genérico.", evidencia, agora=AGORA)
+                arquivo = self.p / ".claude" / "log" / "metodo" / f"{id_metodo}.md"
+                self.assertEqual(eventos._campo(arquivo, "evidencia"), esperada)
+                self.assertEqual(eventos._campo(arquivo, "origem"), "H-01")
+                self.assertIn("Texto genérico.", arquivo.read_text(encoding="utf-8"))
+                self.assertNotIn("sem-segredo", arquivo.read_text(encoding="utf-8"))
+
+    def test_projeto_sem_bootstrap_nao_grava(self):
+        (self.p / "docs" / "plan" / "_planos.md").unlink()
+        self.assertIsNone(eventos.registrar_metodo(self.p, "H-01", "x"))
+
+    def test_falha_de_escrita_devolve_none(self):
+        (self.p / ".claude" / "log").mkdir()
+        (self.p / ".claude" / "log" / "metodo").write_text("arquivo no lugar da pasta", encoding="utf-8")
+        self.assertIsNone(eventos.registrar_metodo(self.p, "H-01", "x"))
+
+    def test_listar_e_levar_sem_reusar_id(self):
+        eventos.registrar_metodo(self.p, "H-01", "a", agora=AGORA)
+        eventos.registrar_metodo(self.p, "E-02", "b", agora=AGORA)
+        self.assertEqual([(m["id"], m["origem"]) for m in eventos.metodos(self.p)], [("M-01", "H-01"), ("M-02", "E-02")])
+        self.assertIsNone(eventos.levado(self.p, "M-01", "DecodeAndCode H-22"))
+        self.assertIsNone(eventos.levado(self.p, "M-02", "L-07"))
+        self.assertEqual(eventos.metodos(self.p), [])
+        self.assertEqual(eventos.eventos(self.p)[-2], {**eventos.eventos(self.p)[-2], "classe": "levado", "id": "M-01", "onde": "DecodeAndCode H-22"})
+        self.assertEqual(eventos.registrar_metodo(self.p, "H-03", "c"), "M-03")
+
+    def test_levado_recusa_sem_apagar(self):
+        eventos.registrar_metodo(self.p, "H-01", "a")
+        self.assertIn("onde", eventos.levado(self.p, "M-01", "   "))
+        self.assertIn("formato", eventos.levado(self.p, "E-01", "x"))
+        self.assertIn("não encontrado", eventos.levado(self.p, "M-09", "x"))
+        self.assertEqual(len(eventos.metodos(self.p)), 1)
+
+
+class TestResolverParaMetodo(_Projeto):
+    """Plano 0019, `D-05` e `D-06` — o `E-XX` vira `M-XX` sem caminho absoluto, alvo, HEAD nem working tree."""
+
+    def setUp(self):
+        super().setUp()
+        self.git_init()
+        (self.p / "solto.txt").write_text("x", encoding="utf-8")
+        self.home = Path.home()
+        saida = (f'Traceback (most recent call last):\n  File "{self.p}/docs/x.py", line 1\n'
+                 f'  File "{self.home}/.claude/plugins/dc.py", line 9\nValueError: falhou\n'
+                 f"FileNotFoundError: '{self.p}/docs/plan/model/0007-x/01.md'")
+        eventos.registrar_erro(self.p, ["normas", "docs/plan/model/0007-x/01.md"], 2, saida, "docs/plan/model/0007-x/01.md", AGORA)
+        self.erro = self.p / ".claude" / "log" / "erros" / "E-01.md"
+
+    def test_m_xx_sem_caminho_absoluto_alvo_head_nem_working_tree(self):
+        self.assertIsNone(eventos.resolver(self.p, "E-01", "método"))
+        self.assertFalse(self.erro.exists())
+        [metodo] = eventos.metodos(self.p)
+        texto = metodo["arquivo"].read_text(encoding="utf-8")
+        self.assertEqual(metodo["origem"], "E-01")
+        for ausente in (str(self.p), str(self.home), "0007-x", "head:", "alvo:", "solto.txt", "Working tree"):
+            self.assertNotIn(ausente, texto)
+        for presente in ('"<projeto>/docs/x.py"', '"~/.claude/plugins/dc.py"', "ValueError: falhou", "`dc.py normas`", "Saída 2",
+                         "'<projeto>/<alvo>'"):
+            self.assertIn(presente, texto)
+        self.assertRegex(texto, r'versao: "\d+\.\d+\.\d+')
+        self.assertEqual(eventos.eventos(self.p, AGORA)[-1]["destino"], "método: M-01")
+
+    def test_gravacao_falhando_mantem_o_e_xx(self):
+        (self.p / ".claude" / "log" / "metodo").write_text("arquivo no lugar da pasta", encoding="utf-8")
+        self.assertIn("continua aberto", eventos.resolver(self.p, "E-01", "método"))
+        self.assertTrue(self.erro.exists())
 
 
 if __name__ == "__main__":
