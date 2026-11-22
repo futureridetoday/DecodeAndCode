@@ -48,3 +48,4 @@ dependencies: []
 | [0017-setup-resources](../model/0017-setup-resources.md) | médio | 7 | não declarado | — | 2026-11-20 |
 | [0018-norm-evolution-log](../model/0018-norm-evolution-log.md) | médio | 8 | não declarado | — | 2026-11-20 |
 | [0019-norm-evolution-evidence](../model/0019-norm-evolution-evidence.md) | médio | 7 | não declarado | — | 2026-11-21 |
+| [0020-add-norm-rethink](../model/0020-add-norm-rethink.md) | médio | 10 | não declarado | — | 2026-11-22 |

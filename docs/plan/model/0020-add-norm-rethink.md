@@ -17,7 +17,7 @@ block: ""
 # history
 author: Claude
 created: 2026-11-22
-status: approved
+status: done
 version: 1.0.0
 updated: ""
 approved_by: "Bortoli Rafael"
@@ -125,7 +125,7 @@ arquivo só, que só recebe acréscimo. Nenhum hook novo, nenhuma mudança no fo
 - [x] `dc.py`, com teste: `archive <principle|guideline|guardrail> <name>` com o motivo no stdin, que sai com 1 sem motivo, sem `user.name` ou com nome desconhecido; `restore <principle|guideline|guardrail> <name>`, que sai com 1 se o item não está arquivado ou não passa no que o escritor exige; `--replace` nos três escritores; `rethink-start` e `rethink-record` com JSON pelo stdin; o `explicar` aceita a seção para onde o `P-01` move o texto compartilhado do setup (`L-06`)
 - [x] Skill `rethink/` (`SKILL.md` e a cópia do `dc.py`), em `lib.SKILLS`; o `setup/SKILL.md` perde o texto que foi para a norma e passa a imprimi-lo por `explicar`, e o `huddle/SKILL.md` cita a instrução de JSON pelo stdin de lá; `lint_skill` sem problema nas três, e o teste que confere as cópias do `dc.py`. A tabela *Recursos Instalados* do `.claude/CLAUDE.md`; o guia `docs/recursos/rethink.md`; *Como editar* e *Como arquivar* em `create-principle.md`, `create-guideline.md` e `create-guardrail.md`; o README, com o `rethink` e a *Atualização* do plugin lado a lado (`P-08`)
 - [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
-- [ ] Remedição (*Remedição*)
+- [x] Remedição (*Remedição*)
 
 ## Oráculo
 
@@ -176,6 +176,41 @@ considerando o que foi decidido, e a rejeitada de volta com a data e o motivo; o
 seção do dia; o arquivado em `.claude/archive/`, fora do log de ativação; e o `dc.py normas` da
 unidade listando a guideline nas não resolvidas, se ela foi arquivada.
 
+### Resultado — 2026-11-22
+
+Pacote construído por `empacotar.construir` em `~/Code/rethink-remedicao-pkg`, fora de qualquer
+projeto (`verificar` sem problema). Projeto descartável `~/Code/rethink-remedicao`, com git e
+bootstrap, e o estado do rumo antigo gravado pelo `dc.py` do pacote e commitado: o perfil, o north
+star, a guideline `paleta-azul` em `App/Theme/**/*`, o guardrail `cor-fixa-na-view`, a sugestão
+`animacoes-ludicas` rejeitada por "design sóbrio" e a unidade `0001-01`, em `spec`, que cita a
+guideline. A sessão foi **interativa no terminal**, aberta pelo humano com `claude --plugin-dir`, com a
+ferramenta de perguntas; o pacote do `--plugin-dir` prevaleceu sobre o 2.0.0 instalado. Conferido
+pelo `git diff` do projeto contra o commit do estado antigo e pelo transcript da sessão.
+
+| Esperado | Resultado |
+|---|---|
+| Perfil reescrito | **Ok**: objetivo e escopo novos, por `setup-perfil` |
+| Revisão na ordem, um item por vez, com Manter, Editar ou Arquivar | **Ok**: "Princípio 1/1", depois guideline e guardrail, cada um com as três opções e o que o rumo novo muda nele |
+| North star editado com o mesmo nome | **Não exercitado.** A skill recomendou *Editar* ("o nome fica; o texto precisa mudar"), e o humano respondeu *Manter*. Registrado `mantido`, e no fecho a skill abriu o `H-01`, `divergência`, no huddle do humano: princípio e perfil discordam. O `--replace` de princípio está provado só pela suíte (tarefas 3 e 7) |
+| Guideline azul arquivada | **Ok**: em `.claude/archive/rules/paleta-azul.md`, com `archived_at`, `archived_by` e `reason`, e fora do `registry.json` |
+| Sugestões novas considerando o decidido | **Ok**: princípio `Mostrar sem julgar`, guidelines `paleta-laranja` (no lugar da azul) e `voz-divertida`; o guardrail, mantido com motivo |
+| Rejeitada de volta com data e motivo | **Ok**: `animacoes-ludicas` voltou com a rejeição do setup à vista, e foi criada |
+| `rethink.md` com a seção do dia | **Ok**: data, autor, o que mudou e sete linhas, todas com motivo |
+| Arquivado fora do log de ativação | **Ok, prova fraca**: a sessão não abriu arquivo de `App/Theme/`, então nenhuma guideline casou por caminho; o log tem só `session_start`. A não carga de `.claude/archive/` está medida na *Medição* |
+| `dc.py normas` da unidade | **Ok**: a guideline em `Não resolvidas:`, com "arquivada em 2026-11-22 por Bortoli: <motivo>" |
+
+**Outras observações.** Nenhuma leitura de norma ou de código do plugin com `grep` ou `sed`: tudo
+pelo `explicar`. Para achar as unidades que citam os itens, a skill rodou `grep` duas vezes pelo
+`Bash`, fora do `allowed-tools`, em vez da ferramenta `Grep` que o `SKILL.md` indica (`L-08`). Pedidos
+de permissão: o transcript não os registra, e não foram contados. Das duas divergências que a skill
+ofereceu registrar no fecho, o humano escolheu uma; "código e unidade azuis" ficou sem entrada.
+
+**Achado da execução.** O primeiro pacote foi construído em `dist/decode-and-code/`, dentro deste
+repositório. Rodado de lá, o `dc.py` achou este repositório pelo `__file__` (`lib.repo_root`) e gravou
+nele um princípio e um `setup.md` — desfeitos na hora, sem commit; seis linhas de comando ficaram
+no `.claude/log/eventos.jsonl` daqui. O mesmo vale para o caminho que o README documenta,
+`claude --plugin-dir dist/decode-and-code` (`L-07`).
+
 ## Independência
 
 **[Claude]** O teste da norma (*Avaliação de escopo*) aplicado às duas partes que o pedido nomeia.
@@ -203,6 +238,8 @@ do setup, que este plano também toca. Nenhum item do `_backlog.md` cobre este t
 | L-04 | **Subcomandos em duas línguas** | **[Claude]** Os novos em inglês (`D-02`) convivem com os existentes em português até outro plano renomeá-los |
 | L-05 | **Item arquivado que volta a valer só renasce com outro nome** | **[Claude]** A `D-04` deixa o rejeitado voltar, mas o plano não trata o arquivado que volta a ser relevante — o stakeholder que volta ao azul. Com o nome reservado (`P-04`) e sem `restore` (`P-05`), ele volta como item novo com outro nome: a unidade antiga que citava o nome original continua sem resolver, e o histórico do item se parte em dois. O `rethink` também não diz se sugere um arquivado de volta, como faz com o rejeitado (revisão de 2026-11-22). **Endereçada na revisão**, se o humano aceitar o `P-05` revisto e o `P-03`: `restore` volta ao escopo e o `rethink` sugere o arquivado que volta a valer |
 | L-06 | **O `explicar` não tem a seção que o `P-01` passa a imprimir** | **[medido]** `_SECOES_AVULSAS` do `dc.py` aceita só `huddle` e `camada-normativa`. O `P-01` move para a norma, seção *Setup*, a conversa de uma sugestão e os três formatos, para as duas skills imprimirem por `explicar`, mas nenhuma tarefa amplia o `explicar` para a seção nova. A leitura em si é segura em projeto já instalado: `bootstrap._fonte_norma` lê primeiro a `reference/` do pacote, não a cópia da norma do projeto **[medido]** (revisão de 2026-11-22). **Endereçada na revisão:** a tarefa do `dc.py` passa a ampliar o `explicar` |
+| L-07 | **O pacote em `dist/` escreve neste repositório** | **[medido]** Na remedição, o `dc.py` do pacote construído em `dist/decode-and-code/` resolveu a raiz por `__file__` e achou este repositório, não o projeto do `cwd`: `lib.repo_root` tenta o `__file__` antes do `cwd`, e `dist/` fica dentro do checkout. O README, *Para desenvolver ou testar sem instalar*, manda justamente `claude --plugin-dir dist/decode-and-code`: quem seguir isso num outro projeto grava a norma dele aqui. Contornado na remedição com o pacote fora de qualquer projeto. Fora do escopo deste plano |
+| L-08 | **A skill buscou citações com `grep` pelo `Bash`** | **[medido]** O passo 2 do `rethink/SKILL.md` diz "procure com `Grep`"; na sessão, o modelo rodou `grep -rn` duas vezes pelo `Bash`, que o `allowed-tools` não libera. Não muda o resultado; pode custar pedido de permissão, que não foi contado |
 
 ## Fonte
 
@@ -227,7 +264,7 @@ do setup, que este plano também toca. Nenhum item do `_backlog.md` cobre este t
 - [x] `dc.py`, com teste: `archive <principle|guideline|guardrail> <name>` com o motivo no stdin, que sai com 1 sem motivo, sem `user.name` ou com nome desconhecido; `restore <principle|guideline|guardrail> <name>`, que sai com 1 se o item não está arquivado ou não passa no que o escritor exige; `--replace` nos três escritores; `rethink-start` e `rethink-record` com JSON pelo stdin; o `explicar` aceita a seção para onde o `P-01` move o texto compartilhado do setup (`L-06`)
 - [x] Skill `rethink/` (`SKILL.md` e a cópia do `dc.py`), em `lib.SKILLS`; o `setup/SKILL.md` perde o texto que foi para a norma e passa a imprimi-lo por `explicar`, e o `huddle/SKILL.md` cita a instrução de JSON pelo stdin de lá; `lint_skill` sem problema nas três, e o teste que confere as cópias do `dc.py`. A tabela *Recursos Instalados* do `.claude/CLAUDE.md`; o guia `docs/recursos/rethink.md`; *Como editar* e *Como arquivar* em `create-principle.md`, `create-guideline.md` e `create-guardrail.md`; o README, com o `rethink` e a *Atualização* do plugin lado a lado (`P-08`)
 - [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
-- [ ] Remedição (*Remedição*)
+- [x] Remedição (*Remedição*)
 
-9 de 10 tarefas concluídas · atualizado em 2026-11-22
+10 de 10 tarefas concluídas · atualizado em 2026-11-22
 <!-- backlog:end -->
