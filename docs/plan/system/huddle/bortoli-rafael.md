@@ -289,6 +289,14 @@ Segundo caso do que a H-20 registrou: o esboço `norm-evolution-log` (intake de 
 
 A `H-10` do huddle do AmFlow (2026-10-01) registra um defeito do método, "o `backlog.projetar` do decode-and-code corta tarefa de várias linhas", e diz que a correção vai para o DecodeAndCode. Em 2026-11-21, 51 dias depois, ela não chegou: nenhum plano, backlog ou huddle daqui a cita. O defeito reproduz no `dev` atual: `backlog._tarefas` usa `_ITEM_TAREFA = ^-\s+\[( |x|X)\]\s+(.+?)\s*$` e devolve só a primeira linha de um item quebrado. A região de backlog projeta o texto truncado, mas a contagem e a situação saem certas. Achado no intake de `norm-evolution-evidence`, onde é o caso medido do gate A. Está fora do escopo daquele esboço, que trata o caminho, não este defeito. Decidir: plano `fix` próprio, item no `_backlog.md` ou descartar.
 
+### H-23 · `observação` · 2026-11-22 · Claude
+
+**Um `bootstrap` rodado de dentro de `scripts/` sequestra a raiz de todos os comandos seguintes.** No intake de 2026-11-22, o `dc.py bootstrap` rodado com o `cwd` em `.claude/skills/decode-and-code/scripts/` criou ali `docs/plan/` (com `_planos.md`, `_inbox/` e `system/`) e `.claude/log/` antes de falhar por não achar a norma-mecanismo. Como `lib.repo_root()` procura a raiz primeiro a partir do próprio arquivo, `scripts/` passou a ter as duas marcas (`.claude/` e `docs/`) e virou a raiz de todo comando do `dc.py`, em silêncio: o `huddle-fecho` saiu 2 e o `concorrencia` leu um `_planos.md` vazio. Limpo à mão. Duas perguntas: o `bootstrap` deveria checar tudo antes de escrever, como o `empacotar.construir`? E o `repo_root` deveria recusar uma raiz dentro do próprio pacote?
+
+### H-24 · `observação` · 2026-11-22 · Claude
+
+**`registry.ligar` e `registry.desligar` não têm subcomando no `dc.py`.** A norma (*Camada normativa*, ~linha 320) diz que ligar e desligar uma guideline "é operação, não edição de arquivo", mas o `dc.py` não expõe nenhuma das duas: só código Python as alcança. Notado pelo intake do `add-norm-update`, em 2026-11-22, porque o arquivamento do `update` tangencia o `rules-off/`.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
