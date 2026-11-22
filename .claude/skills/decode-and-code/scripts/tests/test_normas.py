@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import fixtures
 import lib
 import normas
+import rules
 
 _DOCUMENTO = """\
 ---
@@ -228,6 +229,56 @@ class TestFormasDeLinha(_SinteticoCase):
     def test_caminho_do_link_e_relativo_a_unidade_e_nao_ao_cwd(self):
         (entrada,), _ = self.resolver(f"| Alfa | {_LINK}, seção *Alfa* |")
         self.assertEqual(entrada.arquivo, self.documento)
+
+
+class TestArquivada(_SinteticoCase):
+    """Plano 0020, tarefa 5: alvo ausente que está em `.claude/archive/` diz quando, quem e por quê."""
+
+    _GUIDELINE = "| Paleta | [`paleta-azul.md`](../.claude/rules/paleta-azul.md), seção *Paleta* |"
+    _PRINCIPIO = "| North star | [`principles.md`](../.claude/rules/principles.md), seção *North star* |"
+
+    def setUp(self):
+        super().setUp()
+        (self.raiz / "App").mkdir()
+        (self.raiz / "App" / "cores.swift").write_text("x", encoding="utf-8")
+        rules.criar_guideline(self.raiz, "paleta-azul", "Vale no tema.", ["App/**/*"], "# Paleta\n\nAzul.")
+        rules.criar_principio(self.raiz, "Simples", "Menos é mais.", "Uma tela por tarefa.")
+        rules.criar_principio(self.raiz, "North star", "Ajudar a economizar.", "Mostra o que poupou.")
+
+    def test_guideline_arquivada_diz_data_autor_e_motivo(self):
+        rules.archive_guideline(self.raiz, "paleta-azul", "Marca laranja.", "Pessoa", data="2026-11-22")
+        self.assertEqual(
+            self.um_motivo(self._GUIDELINE), "arquivada em 2026-11-22 por Pessoa: Marca laranja."
+        )
+
+    def test_secao_de_principio_arquivada_diz_data_autor_e_motivo(self):
+        rules.archive_principle(self.raiz, "North star", "Rumo novo.", "Pessoa", data="2026-11-22")
+        self.assertEqual(self.um_motivo(self._PRINCIPIO), "arquivada em 2026-11-22 por Pessoa: Rumo novo.")
+
+    def test_as_duas_na_mesma_unidade(self):
+        rules.archive_guideline(self.raiz, "paleta-azul", "Marca laranja.", "Pessoa", data="2026-11-22")
+        rules.archive_principle(self.raiz, "North star", "Rumo novo.", "Pessoa", data="2026-11-22")
+        _, nao_resolvidas = self.resolver(self._GUIDELINE, self._PRINCIPIO)
+        self.assertEqual(
+            [n.motivo for n in nao_resolvidas],
+            ["arquivada em 2026-11-22 por Pessoa: Marca laranja.", "arquivada em 2026-11-22 por Pessoa: Rumo novo."],
+        )
+
+    def test_principio_arquivado_com_o_arquivo_de_origem_removido(self):
+        rules.archive_principle(self.raiz, "Simples", "Redundante.", "Pessoa", data="2026-11-22")
+        rules.archive_principle(self.raiz, "North star", "Rumo novo.", "Pessoa", data="2026-11-22")
+        self.assertFalse((self.raiz / ".claude" / "rules" / "principles.md").exists())
+        self.assertEqual(self.um_motivo(self._PRINCIPIO), "arquivada em 2026-11-22 por Pessoa: Rumo novo.")
+
+    def test_nao_arquivada_continua_com_o_motivo_de_antes(self):
+        linha = "| X | [`outra.md`](../.claude/rules/outra.md), seção *X* |"
+        self.assertEqual(self.um_motivo(linha), "arquivo ausente")
+        linha = "| X | [`principles.md`](../.claude/rules/principles.md), seção *Omega* |"
+        self.assertEqual(self.um_motivo(linha), "seção não encontrada: Omega")
+
+    def test_citada_e_presente_continua_resolvendo(self):
+        resolvidas, nao_resolvidas = self.resolver(self._GUIDELINE, self._PRINCIPIO)
+        self.assertEqual(([e.secao for e in resolvidas], nao_resolvidas), (["Paleta", "North star"], []))
 
 
 class TestErros(_SinteticoCase):

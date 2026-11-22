@@ -18,7 +18,9 @@ normativa*. O trecho vai do título até o próximo de nível igual ou maior, e 
 
 Não chegam ao executor, e vão para as não resolvidas: linha sem link, link sem seção reconhecida
 (`[texto](caminho)` solto, ou só o id de uma decisão, que é linha de tabela e não título), arquivo
-ausente e seção inexistente. É ele que as relata como insuficiência da unidade.
+ausente e seção inexistente. É ele que as relata como insuficiência da unidade. Quando o alvo
+ausente está em `.claude/archive/` (plano 0020), o motivo passa a ser "arquivada em <data> por
+<quem>: <motivo>", para o arquivamento não parecer link quebrado.
 
 Reaproveita `lint_unidade._corpo` e `_secao`: o frontmatter fora, e `## Normas aplicáveis` lida do mesmo
 jeito que o gate de entrada a lê. Título dentro de cerca de código não conta — a norma exemplifica
@@ -27,6 +29,7 @@ cabeçalhos em blocos de código, e um `###` de exemplo encerraria a seção ant
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
@@ -79,6 +82,8 @@ def resolver(unidade: Path) -> tuple[list[Entrada], list[NaoResolvida]]:
     for linha in _linhas_de_dados(secao):
         alvo = _alvo(linha, unidade.parent, anterior)
         achado = _buscar(*alvo) if isinstance(alvo, tuple) else alvo
+        if isinstance(achado, str) and isinstance(alvo, tuple):
+            achado = _arquivada(*alvo) or achado
         if isinstance(achado, str):
             nao_resolvidas.append(NaoResolvida(linha, achado))
             anterior = None
@@ -86,6 +91,41 @@ def resolver(unidade: Path) -> tuple[list[Entrada], list[NaoResolvida]]:
             resolvidas.append(Entrada(alvo[0], *achado))
             anterior = alvo
     return resolvidas, nao_resolvidas
+
+
+_CAMPOS_ARQUIVADO = ("archived_at", "archived_by", "reason")
+_CAMPO_DE_SECAO_RE = r"(?m)^\*\*{}:\*\* (.+)$"
+
+
+def _arquivada(arquivo: Path, nome: str) -> str | None:
+    """Motivo "arquivada em <data> por <quem>: <motivo>" quando o alvo ausente está no arquivo.
+
+    Plano 0020, tarefa 5. Só para o que vive em `.claude/rules/`: a contraparte é
+    `.claude/archive/rules/<mesmo nome>`. Guideline arquivada é o arquivo inteiro, com os três campos
+    no frontmatter; princípio arquivado é uma seção de `principles.md`, com os três campos em linhas
+    `**campo:**`. None quando não há contraparte arquivada — o motivo de antes fica.
+    """
+    if arquivo.parent.name != "rules" or arquivo.parent.parent.name != ".claude":
+        return None
+    arquivado = arquivo.parent.parent / "archive" / "rules" / arquivo.name
+    if not arquivado.is_file():
+        return None
+
+    if not arquivo.is_file() and registry._e_guideline(arquivado):
+        try:
+            campos = [json.loads(regioes.ler_campo(arquivado, c) or "null") for c in _CAMPOS_ARQUIVADO]
+        except (ValueError, json.JSONDecodeError):
+            return None
+    else:
+        achado = _buscar(arquivado, nome)
+        if not isinstance(achado, tuple):
+            return None
+        casados = [re.search(_CAMPO_DE_SECAO_RE.format(c), achado[1]) for c in _CAMPOS_ARQUIVADO]
+        campos = [m[1].strip() if m else None for m in casados]
+    if not all(campos):
+        return None
+    data, autor, motivo = campos
+    return f"arquivada em {data} por {autor}: {motivo}"
 
 
 def _linhas_de_dados(secao: str) -> list[str]:
