@@ -30,6 +30,7 @@ import json
 import re
 import shutil
 import tempfile
+from datetime import date
 from pathlib import Path
 
 import lib
@@ -204,6 +205,11 @@ def casa_caminho(padrao: str, caminho: str) -> bool:
     return _casa(padrao.split("/"), caminho.strip("/").split("/"))
 
 
+def _dir_arquivo(raiz: Path) -> Path:
+    """`.claude/archive/rules/` — fora do que o Claude Code carrega (plano 0020, *Medição*)."""
+    return raiz / ".claude" / "archive" / "rules"
+
+
 def criar_guideline(
     raiz: Path,
     nome: str,
@@ -211,14 +217,19 @@ def criar_guideline(
     paths: list[str],
     corpo: str,
     aguardando: bool = False,
+    replace: bool = False,
 ) -> Path:
     """Grava `<raiz>/.claude/rules/<nome>.md` só se a guideline passar em `lint_guideline`.
 
     `name` e `description` vão com escape JSON, que é YAML válido; cada entrada de `paths`, entre
     aspas duplas. Com `aguardando=True`, grava `paths_pending: true` e o casamento no disco é
     dispensado (`D-08`). Levanta `ValueError` para entrada ou guideline inválida e
-    `FileExistsError` se o nome já existe em `rules/` ou `rules-off/` — nos dois casos, nada fica
-    no disco.
+    `FileExistsError` se o nome já existe em `rules/` ou `rules-off/`, ou está arquivado (plano
+    0020, nome reservado) — nos dois casos, nada fica no disco.
+
+    Com `replace=True` (plano 0020), a guideline precisa existir em `rules/` ou `rules-off/`, e a
+    versão nova a substitui no mesmo lugar, só depois de passar no lint; senão `ValueError`, e a
+    antiga fica intacta.
     """
     if not _NOME_GUIDELINE_RE.match(nome):
         raise ValueError(f"nome de guideline fora de kebab-case ASCII: {nome!r}")
@@ -229,9 +240,15 @@ def criar_guideline(
         raise ValueError("; ".join(problemas))
 
     dir_rules = raiz / ".claude" / "rules"
-    for existente in (dir_rules / f"{nome}.md", raiz / ".claude" / "rules-off" / f"{nome}.md"):
-        if existente.exists():
-            raise FileExistsError(f"guideline já existe: {existente}")
+    atual = registry._localizar(dir_rules, nome)
+    if replace:
+        if atual is None or not registry._e_guideline(atual):
+            raise ValueError(f"guideline {nome!r} não existe para substituir")
+    else:
+        if (_dir_arquivo(raiz) / f"{nome}.md").exists():
+            raise FileExistsError(f"guideline arquivada, o nome fica reservado: {nome!r}")
+        if atual is not None:
+            raise FileExistsError(f"guideline já existe: {atual}")
 
     frontmatter = [
         f"name: {json.dumps(nome)}",
@@ -248,10 +265,13 @@ def criar_guideline(
         problemas = lint_guideline(provisorio, raiz=raiz)
         if problemas:
             raise ValueError("; ".join(problemas))
-        dir_rules.mkdir(parents=True, exist_ok=True)
-        destino = dir_rules / f"{nome}.md"
+        destino = atual if replace else dir_rules / f"{nome}.md"
+        destino.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(provisorio), destino)
-    registry.registrar(raiz, nome)
+    if replace:
+        registry._reprojetar(dir_rules, nome)
+    else:
+        registry.registrar(raiz, nome)
     return destino
 
 
@@ -268,14 +288,20 @@ def _rules_de_principio(dir_rules: Path) -> list[Path]:
     return [p for p in sorted(dir_rules.glob("*.md")) if not registry._e_guideline(p)]
 
 
-def criar_principio(raiz: Path, nome: str, enunciado: str, teste: str, descricao: str = "") -> Path:
+def criar_principio(
+    raiz: Path, nome: str, enunciado: str, teste: str, descricao: str = "", replace: bool = False
+) -> Path:
     """Acrescenta `## <nome>`, *Enunciado* e *Teste* a `<raiz>/.claude/rules/principles.md`.
 
     Plano 0016. Cria o arquivo com frontmatter se faltar — `descricao` vale só aí, e vazia usa a
     padrão. O teto conta as seções com `**Enunciado:**` em toda rule sem `paths:`, não os `##`:
     seção de fonte ou de protocolo não é princípio. Levanta `ValueError` para campo vazio ou em mais
-    de uma linha, nome repetido entre os títulos dessas rules, teto atingido ou arquivo que reprova
-    em `lint_rule`; em todos os casos, nada muda no disco.
+    de uma linha, nome repetido entre os títulos dessas rules, nome arquivado (plano 0020, nome
+    reservado), teto atingido ou arquivo que reprova em `lint_rule`; em todos os casos, nada muda no
+    disco.
+
+    Com `replace=True` (plano 0020), o princípio precisa existir, e a seção dele é trocada no mesmo
+    arquivo e no mesmo lugar pelo *Enunciado* e *Teste* novos; o teto não conta a versão antiga.
     """
     campos = {"nome": nome, "enunciado": enunciado, "teste": teste}
     for chave, valor in campos.items():
@@ -284,18 +310,37 @@ def criar_principio(raiz: Path, nome: str, enunciado: str, teste: str, descricao
         if "\n" in valor.strip():
             raise ValueError(f"princípio com '{chave}' em mais de uma linha: {valor!r}")
     nome, enunciado, teste = (valor.strip() for valor in campos.values())
+    secao_nova = f"## {nome}\n\n**Enunciado:** {enunciado}\n\n**Teste:** {teste}\n"
 
     dir_rules = raiz / ".claude" / "rules"
     existentes = _rules_de_principio(dir_rules)
     textos = [p.read_text(encoding="utf-8") for p in existentes]
     total = sum(len(_ENUNCIADO_RE.findall(texto)) for texto in textos)
-    if total >= TETO_PRINCIPIOS:
-        raise ValueError(f"teto de {TETO_PRINCIPIOS} princípios atingido: há {total}")
     titulos = {t.casefold() for texto in textos for t in _TITULO_RE.findall(texto)}
-    if nome.casefold() in titulos:
-        raise ValueError(f"princípio já existe: {nome!r}")
 
-    destino = dir_rules / "principles.md"
+    if replace:
+        achado = _localizar_principio(existentes, nome)
+        if achado is None:
+            raise ValueError(f"princípio {nome!r} não existe para substituir")
+        destino, texto_atual, inicio, fim = achado
+        separador = "\n" if texto_atual[fim:] else ""
+        texto = texto_atual[:inicio] + secao_nova + separador + texto_atual[fim:]
+    else:
+        if total >= TETO_PRINCIPIOS:
+            raise ValueError(f"teto de {TETO_PRINCIPIOS} princípios atingido: há {total}")
+        if nome.casefold() in titulos:
+            raise ValueError(f"princípio já existe: {nome!r}")
+        if nome.casefold() in _titulos_arquivados(raiz):
+            raise ValueError(f"princípio arquivado, o nome fica reservado: {nome!r}")
+        destino = dir_rules / "principles.md"
+        texto = _anexar_secao(destino, secao_nova, descricao)
+
+    _gravar_principios(destino, texto)
+    return destino
+
+
+def _anexar_secao(destino: Path, secao: str, descricao: str = "") -> str:
+    """Texto de `destino` com `secao` no fim — com o frontmatter padrão se o arquivo falta."""
     if destino.exists():
         atual = destino.read_text(encoding="utf-8").rstrip("\n") + "\n"
     else:
@@ -306,18 +351,197 @@ def criar_principio(raiz: Path, nome: str, enunciado: str, teste: str, descricao
             f"description: {json.dumps(descricao, ensure_ascii=False)}\n"
             "---\n"
         )
-    texto = atual + f"\n## {nome}\n\n**Enunciado:** {enunciado}\n\n**Teste:** {teste}\n"
+    return atual + "\n" + secao
 
+
+def _gravar_principios(destino: Path, texto: str) -> None:
+    """Grava `texto` em `destino` só se ele passar em `lint_rule` sem `paths:` — `ValueError` senão."""
     with tempfile.TemporaryDirectory() as tmp:
-        provisorio = Path(tmp) / "principles.md"
+        provisorio = Path(tmp) / destino.name
         provisorio.write_text(texto, encoding="utf-8")
         problemas = lint_rule(provisorio)
         if registry._e_guideline(provisorio):
-            problemas.append("principles.md declara 'paths:' — com escopo, deixa de ser princípio")
+            problemas.append(f"{destino.name} declara 'paths:' — com escopo, deixa de ser princípio")
+        if problemas:
+            raise ValueError("; ".join(problemas))
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(provisorio), destino)
+
+
+def _secoes(texto: str) -> list[tuple[str, int, int]]:
+    """`(título, início, fim)` de cada `## ` de `texto`; a seção vai até o próximo `## ` ou o fim."""
+    achados = list(_TITULO_RE.finditer(texto))
+    fins = [m.start() for m in achados[1:]] + [len(texto)]
+    return [(m.group(1), m.start(), fim) for m, fim in zip(achados, fins)]
+
+
+def _localizar_principio(arquivos: list[Path], nome: str) -> tuple[Path, str, int, int] | None:
+    """`(arquivo, texto, início, fim)` da seção `## <nome>` com *Enunciado* — None se não há."""
+    for arquivo in arquivos:
+        texto = arquivo.read_text(encoding="utf-8")
+        for titulo, inicio, fim in _secoes(texto):
+            if titulo.casefold() == nome.casefold() and _ENUNCIADO_RE.search(texto[inicio:fim]):
+                return arquivo, texto, inicio, fim
+    return None
+
+
+def _titulos_arquivados(raiz: Path) -> set[str]:
+    arquivo = _dir_arquivo(raiz) / "principles.md"
+    if not arquivo.is_file():
+        return set()
+    return {t.casefold() for t in _TITULO_RE.findall(arquivo.read_text(encoding="utf-8"))}
+
+
+# Arquivar e restaurar — plano 0020, norma *Camada normativa → Editar e arquivar*.
+
+_CABECALHO_ARQUIVO_PRINCIPIOS = (
+    "# Princípios arquivados\n\n"
+    "Não carrega: a pasta `.claude/archive/` fica fora do que o Claude Code lê. Escrito só por "
+    "`dc.py archive` e `dc.py restore`.\n"
+)
+_CAMPOS_PRINCIPIO_RE = re.compile(
+    r"\n\n\*\*archived_at:\*\* [^\n]*\n\n\*\*archived_by:\*\* [^\n]*\n\n\*\*reason:\*\* [^\n]*\n\Z"
+)
+_CAMPOS_GUIDELINE = ("archived_at", "archived_by", "reason")
+
+
+def _campos_do_arquivamento(motivo: str, autor: str, data: str | None) -> tuple[str, str, str]:
+    """`(data, autor, motivo)` em uma linha cada — `ValueError` se o autor ou o motivo é vazio."""
+    motivo = " ".join(motivo.split())
+    autor = " ".join(autor.split())
+    if not motivo:
+        raise ValueError("arquivar exige motivo")
+    if not autor:
+        raise ValueError("arquivar exige quem arquiva (git config user.name)")
+    return data or date.today().isoformat(), autor, motivo
+
+
+def archive_principle(raiz: Path, nome: str, motivo: str, autor: str, data: str | None = None) -> Path:
+    """Move a seção do princípio `nome` para `.claude/archive/rules/principles.md`, com os três campos.
+
+    Procura em toda rule sem `paths:` de `.claude/rules/`; a seção precisa ter *Enunciado*. O arquivo
+    de origem que fica sem corpo sai do disco, porque rule vazia reprova em `lint_rule`. Levanta
+    `ValueError`, sem escrever, para princípio desconhecido, motivo ou autor vazio. Devolve o
+    caminho do arquivo de arquivo.
+    """
+    data, autor, motivo = _campos_do_arquivamento(motivo, autor, data)
+    dir_rules = raiz / ".claude" / "rules"
+    achado = _localizar_principio(_rules_de_principio(dir_rules), nome)
+    if achado is None:
+        titulos = [t for p in _rules_de_principio(dir_rules) for t, _, _ in _secoes(p.read_text(encoding="utf-8"))]
+        if any(t.casefold() == nome.casefold() for t in titulos):
+            raise ValueError(f"a seção {nome!r} não é princípio: não tem **Enunciado:**")
+        raise ValueError(f"princípio desconhecido: {nome!r}")
+    origem, texto, inicio, fim = achado
+
+    secao = texto[inicio:fim].rstrip("\n")
+    arquivada = f"{secao}\n\n**archived_at:** {data}\n\n**archived_by:** {autor}\n\n**reason:** {motivo}\n"
+    destino = _dir_arquivo(raiz) / "principles.md"
+    atual = destino.read_text(encoding="utf-8") if destino.is_file() else _CABECALHO_ARQUIVO_PRINCIPIOS
+    restante = (texto[:inicio] + texto[fim:]).rstrip("\n") + "\n"
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(atual.rstrip("\n") + "\n\n" + arquivada, encoding="utf-8")
+    if _corpo(restante).strip():
+        origem.write_text(restante, encoding="utf-8")
+    else:
+        origem.unlink()
+    return destino
+
+
+def restore_principle(raiz: Path, nome: str) -> Path:
+    """Devolve o princípio arquivado `nome` a `.claude/rules/principles.md`, sem os três campos.
+
+    Só se ele passar de novo no que `criar_principio` exige: o teto e `lint_rule`. Levanta
+    `ValueError` se não está arquivado ou não passa — e o arquivo de arquivo fica como estava.
+    """
+    arquivo = _dir_arquivo(raiz) / "principles.md"
+    texto = arquivo.read_text(encoding="utf-8") if arquivo.is_file() else ""
+    achado = next(((i, f) for t, i, f in _secoes(texto) if t.casefold() == nome.casefold()), None)
+    if achado is None:
+        raise ValueError(f"princípio {nome!r} não está arquivado")
+    inicio, fim = achado
+    secao = _CAMPOS_PRINCIPIO_RE.sub("\n", texto[inicio:fim].rstrip("\n") + "\n")
+
+    dir_rules = raiz / ".claude" / "rules"
+    existentes = _rules_de_principio(dir_rules)
+    total = sum(len(_ENUNCIADO_RE.findall(p.read_text(encoding="utf-8"))) for p in existentes)
+    if total >= TETO_PRINCIPIOS:
+        raise ValueError(f"teto de {TETO_PRINCIPIOS} princípios atingido: há {total}")
+    if _localizar_principio(existentes, nome) is not None:
+        raise ValueError(f"princípio já existe: {nome!r}")
+
+    destino = dir_rules / "principles.md"
+    _gravar_principios(destino, _anexar_secao(destino, secao))
+    arquivo.write_text((texto[:inicio] + texto[fim:]).rstrip("\n") + "\n", encoding="utf-8")
+    return destino
+
+
+def _com_campos(texto: str, campos: dict[str, str]) -> str:
+    """`texto` com `campos` como as últimas linhas do frontmatter, em escape JSON."""
+    linhas = texto.split("\n")
+    fecho = linhas.index("---", 1)
+    novas = [f"{chave}: {json.dumps(valor, ensure_ascii=False)}" for chave, valor in campos.items()]
+    return "\n".join(linhas[:fecho] + novas + linhas[fecho:])
+
+
+def _sem_campos(texto: str) -> str:
+    """O inverso de `_com_campos` para os três campos do arquivamento."""
+    linhas = texto.split("\n")
+    fecho = linhas.index("---", 1)
+    frontmatter = [l for l in linhas[:fecho] if not l.startswith(tuple(f"{c}:" for c in _CAMPOS_GUIDELINE))]
+    return "\n".join(frontmatter + linhas[fecho:])
+
+
+def archive_guideline(raiz: Path, nome: str, motivo: str, autor: str, data: str | None = None) -> Path:
+    """Move a guideline `nome`, de `rules/` ou `rules-off/`, para `.claude/archive/rules/`.
+
+    Ganha `archived_at`, `archived_by` e `reason` no frontmatter, e o `registry.json` é reprojetado
+    sem ela. Levanta `ValueError`, sem escrever, para nome desconhecido, princípio, motivo ou autor
+    vazio. Devolve o caminho no arquivo.
+    """
+    data, autor, motivo = _campos_do_arquivamento(motivo, autor, data)
+    dir_rules = raiz / ".claude" / "rules"
+    origem = registry._localizar(dir_rules, nome)
+    if origem is None:
+        raise registry._nome_desconhecido(dir_rules, nome)
+    if not registry._e_guideline(origem):
+        raise ValueError(f"{nome!r} não é guideline, sem 'paths:' — princípio se arquiva por seção")
+
+    destino = _dir_arquivo(raiz) / origem.name
+    texto = _com_campos(origem.read_text(encoding="utf-8"), {"archived_at": data, "archived_by": autor, "reason": motivo})
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(texto, encoding="utf-8")
+    origem.unlink()
+    registry._reprojetar(dir_rules, nome)
+    return destino
+
+
+def restore_guideline(raiz: Path, nome: str) -> Path:
+    """Devolve a guideline arquivada `nome` a `.claude/rules/`, sem os três campos, e a registra.
+
+    Só se ela passar de novo em `lint_guideline`. Levanta `ValueError` se não está arquivada, se o
+    nome está ocupado ou se reprova — e o arquivo de arquivo fica como estava.
+    """
+    arquivada = _dir_arquivo(raiz) / f"{nome}.md"
+    if not arquivada.is_file():
+        raise ValueError(f"guideline {nome!r} não está arquivada")
+    dir_rules = raiz / ".claude" / "rules"
+    if registry._localizar(dir_rules, nome) is not None:
+        raise ValueError(f"guideline já existe: {nome!r}")
+
+    texto = _sem_campos(arquivada.read_text(encoding="utf-8"))
+    with tempfile.TemporaryDirectory() as tmp:
+        provisorio = Path(tmp) / arquivada.name
+        provisorio.write_text(texto, encoding="utf-8")
+        problemas = lint_guideline(provisorio, raiz=raiz)
         if problemas:
             raise ValueError("; ".join(problemas))
         dir_rules.mkdir(parents=True, exist_ok=True)
+        destino = dir_rules / arquivada.name
         shutil.move(str(provisorio), destino)
+    arquivada.unlink()
+    registry.registrar(raiz, nome)
     return destino
 
 
