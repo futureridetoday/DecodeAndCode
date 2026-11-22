@@ -241,10 +241,12 @@ princípio gravado pelo setup leva só os dois; *Na prática* fica para o que en
 com `**Enunciado:**` em toda rule sem `paths:` de `.claude/rules/`, não o `##`: seção de fonte ou de
 protocolo não é princípio. `dc.py criar-principio` recusa o sexto.
 
-**Duas portas, ambas com aprovação humana.** Por plano, com unidade `norma` e a aprovação registrada
+**Três portas, todas com aprovação humana.** Por plano, com unidade `norma` e a aprovação registrada
 no plano. Pelo setup, com a aprovação na conversa, gravado por `dc.py criar-principio`, que impõe
-formato e teto e só escreve o que passa em `lint_rule`. Fora dessas duas, `principles.md` não se
-edita. O guia é [`create-principle.md`](../../recursos/create-principle.md).
+formato e teto e só escreve o que passa em `lint_rule`. Pelo `rethink`, depois de uma mudança de
+rumo, com a aprovação na conversa e os mesmos escritores, mais o `--replace` e o `archive`
+(*Editar e arquivar*). Fora dessas três, `principles.md` não se edita. O guia é
+[`create-principle.md`](../../recursos/create-principle.md).
 
 **Os princípios do método, que o setup oferece.** Esta é a fonte do texto; o `principles.md` de
 quem os aceita é instância, cópia gravada pelo setup.
@@ -279,6 +281,60 @@ de 547 linhas, majoritariamente normativo com uma seção de procedimento, descr
 checklist de front-end, mas só entrava em contexto se alguém o invocasse — como guideline com
 `paths: ["app/**"]`, ativaria sempre que um arquivo daquele escopo fosse tocado, sem depender de
 lembrança.
+
+#### Editar e arquivar
+
+Princípio, guideline e guardrail entram pelas mesmas três portas (*Princípio*): plano, setup e
+`rethink`. O setup só cria; editar e arquivar item que já existe é do plano e do `rethink`, sempre
+pelos comandos abaixo e nunca à mão. A origem é o plano `0020`.
+
+**Editar mantém nome e lugar.** `criar-principio`, `criar-guideline` e `adicionar-guardrail` aceitam
+`--replace`: a versão nova passa pela mesma validação da criação — `lint_rule` e o teto,
+`lint_guideline`, a prova do par — **antes** de a antiga sair, e a troca é atômica. Se a versão nova
+reprova, o comando sai `1` e o disco fica como estava. Quem cita o item recebe o texto novo; a
+versão anterior fica no git e numa linha do histórico do `rethink`. Trocar o nome não é editar: é
+arquivar o antigo e criar o novo.
+
+**Arquivar move, nunca apaga.** Planos antigos podem citar o item, e por isso ele sai do que o Claude
+Code carrega e do que o hook lê, mas o texto continua no repositório, inteiro.
+`dc.py archive <principle|guideline|guardrail> <name>`, com o motivo no stdin, faz o movimento:
+
+| Camada | Sai de | Vai para |
+|---|---|---|
+| Princípio | a seção de `.claude/rules/principles.md` | `.claude/archive/rules/principles.md` |
+| Guideline | `.claude/rules/<nome>.md`, e o `registry.json` é reprojetado | `.claude/archive/rules/<nome>.md` |
+| Guardrail | a regra de `.claude/guardrails.json` | `.claude/archive/guardrails.json`, com a mesma forma |
+
+O arquivado leva três campos: `archived_at` (a data), `archived_by` (a identidade do huddle,
+`git config user.name`) e `reason` (o motivo, obrigatório). Na guideline e no guardrail, são chaves
+do frontmatter e do objeto da regra; na seção de princípio, três linhas depois do *Teste*, no
+formato `**archived_at:** <data>`. O guardrail vai sem o par proibido/permitido, porque o
+`guardrails.json` não o guarda. Arquivar princípio libera uma vaga no teto.
+
+**A pasta de arquivo não carrega.** Medido no plano `0020`, *Medição*: numa sessão nova no app, a
+guideline em `.claude/archive/rules/` não chegou ao log de ativação, e o controle em
+`.claude/rules/`, com o mesmo `paths`, chegou. A pasta nunca recebe arquivo chamado `CLAUDE.md`,
+que carrega em subdiretório quando a sessão toca um arquivo dali. Desligar (`rules-off/`) não é
+arquivar: a desligada volta a ser ligada um dia, e por isso o `auditar_arvore` ainda exige que o
+`paths` dela case arquivo existente; a arquivada não passa por esse lint.
+
+**O nome arquivado fica reservado.** Os três escritores recusam criar item com o nome de um
+arquivado; sem isso, a referência antiga apontaria em silêncio para outra regra. O item que volta a
+valer volta pelo `restore`, com o mesmo nome.
+
+**`restore` é o inverso.** `dc.py restore <principle|guideline|guardrail> <name>` tira o item do
+arquivo, remove os três campos e o devolve ao lugar, só se ele passar de novo no que o escritor
+exige: `lint_rule` e o teto para princípio, `lint_guideline` para guideline, e a prova do par para
+guardrail, com um par novo no stdin, já que o arquivado não guarda o antigo. Se não passar, sai `1` e
+o arquivo de arquivo fica como estava.
+
+**A unidade que cita item arquivado.** O `dc.py normas` a lista em `Não resolvidas:`, com o motivo
+"arquivada em <data> por <quem>: <motivo>", para o arquivamento não parecer link quebrado; o
+`implement` para e relata, como em qualquer norma não resolvida. Unidade já verificada não é
+tocada: o arquivamento não reabre o que passou.
+
+**O que não existe: apagar.** Nenhum comando remove item da norma. O arquivo de arquivo e o
+histórico do `rethink` são instância do projeto e não viajam no plugin.
 
 #### Validar a ativação
 
@@ -1454,6 +1510,104 @@ fala e gera as rules no idioma da pessoa.
 
 O detalhe do fluxo está no plano `0009-onboard-new-project`; o guia de uso, em
 `docs/recursos/setup.md`.
+
+### Conversa de uma sugestão — o que o setup e o `rethink` compartilham
+
+As duas skills conduzem a mesma conversa e escrevem pelos mesmos comandos; esta subseção é a fonte
+única do que elas repetiriam, e cada uma a imprime por `dc.py explicar`. O huddle cita daqui o
+*JSON pelo stdin*. A origem é o plano `0020`, `D-07`.
+
+#### As opções
+
+Uma sugestão por vez, cada uma com a proposta inteira à vista, pela ferramenta de perguntas. Item
+novo tem três opções: **Aprovar**, **Editar** e **Rejeitar**. Item existente, no `rethink`, tem
+**Manter**, **Editar** e **Arquivar**.
+
+- **Aprovar** grava e registra; **Rejeitar** registra, com o motivo se a pessoa der um.
+- **Editar** abre uma segunda pergunta: **Edição livre** (a pessoa diz o que mudar, pelo texto livre,
+  e a skill aplica; só ajuda a redigir se ela pedir) ou **Edição guiada** (perguntas uma por vez,
+  cada uma com sugestões derivadas das anteriores, até escopo, regra e exceção estarem definidos). A
+  versão editada volta com as mesmas três opções.
+- Nada se grava antes do sim, e comando que sai `1` volta para a pessoa com o motivo; a conversa
+  continua da sugestão em que parou.
+
+#### JSON pelo stdin, por arquivo
+
+O Claude Code recusa heredoc com JSON ("Contains brace with quote character"). Para os comandos que
+leem JSON — `setup-perfil`, `setup-registrar`, `criar-principio`, `criar-guideline`,
+`adicionar-guardrail`, `restore` de guardrail, `rethink-start` e `rethink-record` —, grave o JSON com a
+ferramenta `Write` num arquivo temporário fora do projeto (o scratchpad da sessão) e passe-o com `<`,
+na forma que o `allowed-tools` casa: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>`. O
+`huddle-abrir` e o `archive` leem texto, não JSON.
+
+#### Padrões de `paths`
+
+O `criar-guideline` recusa duas formas: arquivo da raiz pelo nome e chaves. Arquivo da raiz entra
+como `**/<arquivo>` (`**/tailwind.config.ts`, não `tailwind.config.ts`), e cada extensão vai num
+padrão próprio (`src/**/*.ts` e `src/**/*.tsx`, não `src/**/*.{ts,tsx}`).
+
+#### Formato do guardrail
+
+O JSON do `adicionar-guardrail` é `{regra, proibido, permitido}`:
+
+- `regra` tem quatro campos, todos texto não vazio: `nome` (kebab-case), `ferramenta` (regex sobre o
+  nome da ferramenta, ex.: `^(Write|Edit)$`), `detector` (regex) e `mensagem`.
+- O `detector` casa o texto dos valores de `tool_input` que são texto, unidos por quebra de linha:
+  num `Write`, o caminho e o conteúdo; num `Edit`, o caminho e o trecho novo — o antigo fica de fora,
+  para que o `Edit` que remove o problema passe. Não há campo de caminho: a restrição de pasta vai
+  dentro do próprio regex.
+- Para "na pasta X, nunca Y", o detector casa o caminho absoluto e o relativo e atravessa linhas:
+  `(?s)(^|/)X/.*Y`. Prove os dois no par: um `proibido` com caminho relativo e o `permitido` fora de
+  `X`.
+- `proibido` e `permitido` têm a forma do payload do hook, `{tool_name, tool_input}`; o comando recusa
+  a regra que não nega o `proibido` ou que nega o `permitido`.
+
+---
+
+## Rethink — repensar a norma depois de uma mudança de rumo
+
+Quando o projeto muda de rumo — outro objetivo, outra marca, outro público —, princípios, guidelines e
+guardrails continuam dizendo o rumo antigo em toda sessão. Rodar o setup de novo não revisa: ele pula
+o que já foi decidido e só cria. O `rethink` é a terceira porta da camada normativa (*Princípio*): a
+skill `rethink`, invocada só pela pessoa, com `/decode-and-code:rethink`, na conversa principal e com a
+ferramenta de perguntas, como o setup, e em Opus. O plano de origem é o `0020`.
+
+**Pré-condição.** O setup concluído: sem `setup.md` com `completed_at`, o `rethink` manda para o setup.
+
+**Passo 0 — o que mudou.** Vem no argumento do comando, ou numa pergunta só. Julgar cada item pede o
+rumo novo. Se o objetivo mudou, o perfil do `setup.md` é reescrito por `setup-perfil`, e o north star,
+que nasce do objetivo, é o primeiro item da revisão. `rethink-start` abre a seção do dia no histórico
+com o que mudou.
+
+**A revisão dos existentes.** Na ordem princípios → guidelines → guardrails, um item por vez, com
+**Manter**, **Editar** ou **Arquivar** (*Conversa de uma sugestão*). O `descobrir` lista o que existe.
+Editar grava pelo `--replace`, e Arquivar, pelo `archive`, com o motivo que a pessoa der (*Camada
+normativa → Editar e arquivar*). Cada decisão vai para o histórico na hora, por `rethink-record`, para
+que a conversa interrompida não perca o que já foi decidido.
+
+**As sugestões novas.** Depois dos existentes, a skill lê os arquivos do projeto, considera o que foi
+mantido, editado e arquivado, e sugere itens novos para as três camadas, com o critério do setup
+(*Setup*, *Critério de sugestão*) e as opções de item novo. O teto de 5 princípios vale como no setup.
+
+**O que volta.** Ao contrário do setup, o `rethink` não filtra o que está em `setup-decididas`. O
+rejeitado que ainda vale pode ser sugerido de novo, mostrando quando e por que foi rejeitado, lido das
+linhas `rejeitada` do `setup.md` e do histórico. O arquivado que volta a valer também, mostrando
+quando e por que foi arquivado, e volta pelo `restore`, com o mesmo nome.
+
+**O histórico.** `<plan_root>/system/rethink.md`, versionado, escrito só por script, com o esqueleto
+no próprio script. Uma seção por `rethink`: a data, quem decidiu, o que mudou e uma linha por item, com
+camada, nome, decisão e motivo. A decisão tem vocabulário fechado — `mantido`, `editado`, `arquivado`,
+`restaurado`, `criado` ou `rejeitado` —, e valor fora dele sai `1`. O histórico só recebe acréscimo;
+nada o carrega em contexto, e nenhum hook o lê.
+
+**O que escreve, e o que não.** Escreve em `.claude/rules/`, em `.claude/archive/`, em
+`guardrails.json`, no `## Perfil` do `setup.md` (só por `setup-perfil`), no `rethink.md` e no arquivo de
+huddle da pessoa. **Nunca** no `CLAUDE.md` nem no `AGENTS.md`, como o setup. O formato do `setup.md`
+não muda.
+
+**O que o `rethink` não faz.** Não dispara sozinho: sugerir quando rodá-lo é o gatilho automático
+da série `norm-evolution` (plano `0018`, *Próximos planos*, item 3). Não renomeia item, não guarda o
+par do guardrail e não apaga nada.
 
 ---
 
