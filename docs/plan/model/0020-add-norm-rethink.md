@@ -116,7 +116,7 @@ arquivo só, que só recebe acréscimo. Nenhum hook novo, nenhuma mudança no fo
 
 ## Tarefas
 
-- [ ] Medir, antes do resto, se o Claude Code carrega `.claude/archive/` (`P-04`, `L-02`): num projeto de prova, uma guideline em `.claude/archive/rules/` cujo `paths` casa um arquivo que a sessão toca, e, como controle positivo, outra em `.claude/rules/` com o mesmo `paths`; o humano abre a sessão nova **no app** — em `claude -p` o `InstructionsLoaded` não dispara **[medido]** (`0017`, `0018`) —, e `activation_notice.relatorio` sobre o `eventos.jsonl` mostra qual carregou. **A execução para aqui até o humano rodar a sessão.** Se a arquivada carregar, trocar a pasta por `<plan_root>/system/archive/` nas tarefas abaixo
+- [x] Medir, antes do resto, se o Claude Code carrega `.claude/archive/` (`P-04`, `L-02`): num projeto de prova, uma guideline em `.claude/archive/rules/` cujo `paths` casa um arquivo que a sessão toca, e, como controle positivo, outra em `.claude/rules/` com o mesmo `paths`; o humano abre a sessão nova **no app** — em `claude -p` o `InstructionsLoaded` não dispara **[medido]** (`0017`, `0018`) —, e `activation_notice.relatorio` sobre o `eventos.jsonl` mostra qual carregou. **A execução para aqui até o humano rodar a sessão.** Se a arquivada carregar, trocar a pasta por `<plan_root>/system/archive/` nas tarefas abaixo
 - [ ] Norma: em *Camada normativa*, a terceira porta (o `rethink`) para princípio, guideline e guardrail, e uma subseção *Editar e arquivar* com a pasta de arquivo, os três campos, o nome reservado, o que acontece com a unidade que cita o arquivado, o `restore` e o que não existe (apagar); seção nova *Rethink* depois de *Setup*, com o passo 0, a ordem da revisão, as sugestões novas, o rejeitado que volta e o histórico; em *Setup*, a conversa de uma sugestão e os três formatos que as duas skills compartilham (`P-01`); onde o setup e o `rethink` escrevem
 - [ ] `rules.py`, com teste: arquivar princípio (a seção sai de `principles.md` e entra no arquivo de arquivo com os três campos) e guideline (o arquivo se move, ganha os três campos e o `registry.json` é reprojetado); restaurar os dois, que volta com o mesmo nome só se passar no lint e, para princípio, no teto; `--replace` de princípio e de guideline, recusando sem tocar o disco se a versão nova reprovar; `criar_principio` e `criar_guideline` recusam nome arquivado
 - [ ] `guardrail.py`, com teste: arquivar regra (sai do `guardrails.json`, entra no arquivo de arquivo com os três campos; o hook deixa de negar o caso dela); restaurar com um par novo, provado antes de voltar; `adicionar` com substituição, que prova a regra nova pelo par antes de trocar; nome arquivado recusado
@@ -138,6 +138,30 @@ arquivo só, que só recebe acréscimo. Nenhum hook novo, nenhuma mudança no fo
 | Restaurar | Teste: o item volta ao lugar com o mesmo nome e sem os três campos; princípio acima do teto, guideline que reprova no lint ou guardrail sem par válido saem com 1 e o arquivo de arquivo fica como estava |
 | Histórico | Teste: `rethink-start` e `rethink-record` escrevem a seção e as linhas; o `setup.md` só muda pelo `setup-perfil` |
 | Skill | `lint_skill` sem problema; `disable-model-invocation: true`; a cópia do `dc.py` idêntica às outras |
+
+## Medição
+
+### `.claude/archive/` carrega? — 2026-11-22
+
+Projeto descartável `~/Code/rethink-archive-probe`, com bootstrap (`dc.py bootstrap`), `src/app.ts`
+e duas guidelines com `paths: ["src/**/*"]`: `.claude/rules/probe-control.md`, o controle
+positivo, e `.claude/archive/rules/probe-archived.md`, com `archived_at`, `archived_by` e `reason`.
+O `InstructionsLoaded` é o hook deste repositório, ligado pelo `.claude/settings.json` do projeto de
+prova, porque o plugin instalado na máquina é o 2.0.0, anterior ao `eventos.jsonl` (`0018`). Antes
+da sessão, um disparo simulado do hook gravou o evento e o `activation_notice.relatorio` o leu com
+`ok`. O evento simulado foi apagado. A sessão nova foi aberta pelo humano **no app** e leu
+`src/app.ts` com `Read`. O CLI local é o 2.1.326; a versão do app não foi conferida.
+
+| Instrução | `load_reason` | Veredito |
+|---|---|---|
+| `~/.claude/CLAUDE.md` | `session_start` | ok |
+| `.claude/rules/probe-control.md` | `path_glob_match` | ok |
+| `.claude/archive/rules/probe-archived.md` | — | **não carregou** |
+
+Sessão `dabfa907-db01-4323-aead-cacd088f8866`, `activation_notice.relatorio` sobre o
+`eventos.jsonl` do projeto de prova. **[medido]** O controle carregou pelo mesmo `paths` e pela
+mesma leitura; a arquivada, não. A `D-10` fica com `.claude/archive/`, e as tarefas seguintes não
+trocam de pasta.
 
 ## Remedição
 
@@ -174,7 +198,7 @@ do setup, que este plano também toca. Nenhum item do `_backlog.md` cobre este t
 | # | Lacuna | Detalhe |
 |---|---|---|
 | L-01 | **Sem caso real de mudança de rumo** | **[medido]** O gate A passa por exceção. Quando o primeiro caso real aparecer, aqui ou num projeto que usa o método, ele entra aqui como evidência, com o que o `rethink` resolveu ou não |
-| L-02 | **Não medido se o Claude Code carrega `.claude/archive/`** | **[medido]** Só a documentação diz que não; é a primeira tarefa. O `rules-off/`, mesma forma de pasta irmã, foi medido sem carregar (norma, *Validar a ativação*), mas analogia não é medição **[Claude]** |
+| L-02 | **Não medido se o Claude Code carrega `.claude/archive/`** | **[medido]** Só a documentação diz que não; é a primeira tarefa. O `rules-off/`, mesma forma de pasta irmã, foi medido sem carregar (norma, *Validar a ativação*), mas analogia não é medição **[Claude]**. **Fechada em 2026-11-22:** numa sessão nova no app, a guideline em `.claude/archive/rules/` não carregou, e o controle em `.claude/rules/`, com o mesmo `paths`, carregou (*Medição*) |
 | L-03 | **O guardrail arquivado perde a prova** | **[medido]** O par proibido/permitido não é guardado em lugar nenhum. Quem quiser a regra de volta precisa de um par novo. O item 4 da série (`norm-evolution-cases`) é quem guarda o par |
 | L-04 | **Subcomandos em duas línguas** | **[Claude]** Os novos em inglês (`D-02`) convivem com os existentes em português até outro plano renomeá-los |
 | L-05 | **Item arquivado que volta a valer só renasce com outro nome** | **[Claude]** A `D-04` deixa o rejeitado voltar, mas o plano não trata o arquivado que volta a ser relevante — o stakeholder que volta ao azul. Com o nome reservado (`P-04`) e sem `restore` (`P-05`), ele volta como item novo com outro nome: a unidade antiga que citava o nome original continua sem resolver, e o histórico do item se parte em dois. O `rethink` também não diz se sugere um arquivado de volta, como faz com o rejeitado (revisão de 2026-11-22). **Endereçada na revisão**, se o humano aceitar o `P-05` revisto e o `P-03`: `restore` volta ao escopo e o `rethink` sugere o arquivado que volta a valer |
@@ -194,4 +218,16 @@ do setup, que este plano também toca. Nenhum item do `_backlog.md` cobre este t
 ## Backlog
 
 <!-- backlog:start -->
+- [x] Medir, antes do resto, se o Claude Code carrega `.claude/archive/` (`P-04`, `L-02`): num projeto de prova, uma guideline em `.claude/archive/rules/` cujo `paths` casa um arquivo que a sessão toca, e, como controle positivo, outra em `.claude/rules/` com o mesmo `paths`; o humano abre a sessão nova **no app** — em `claude -p` o `InstructionsLoaded` não dispara **[medido]** (`0017`, `0018`) —, e `activation_notice.relatorio` sobre o `eventos.jsonl` mostra qual carregou. **A execução para aqui até o humano rodar a sessão.** Se a arquivada carregar, trocar a pasta por `<plan_root>/system/archive/` nas tarefas abaixo
+- [ ] Norma: em *Camada normativa*, a terceira porta (o `rethink`) para princípio, guideline e guardrail, e uma subseção *Editar e arquivar* com a pasta de arquivo, os três campos, o nome reservado, o que acontece com a unidade que cita o arquivado, o `restore` e o que não existe (apagar); seção nova *Rethink* depois de *Setup*, com o passo 0, a ordem da revisão, as sugestões novas, o rejeitado que volta e o histórico; em *Setup*, a conversa de uma sugestão e os três formatos que as duas skills compartilham (`P-01`); onde o setup e o `rethink` escrevem
+- [ ] `rules.py`, com teste: arquivar princípio (a seção sai de `principles.md` e entra no arquivo de arquivo com os três campos) e guideline (o arquivo se move, ganha os três campos e o `registry.json` é reprojetado); restaurar os dois, que volta com o mesmo nome só se passar no lint e, para princípio, no teto; `--replace` de princípio e de guideline, recusando sem tocar o disco se a versão nova reprovar; `criar_principio` e `criar_guideline` recusam nome arquivado
+- [ ] `guardrail.py`, com teste: arquivar regra (sai do `guardrails.json`, entra no arquivo de arquivo com os três campos; o hook deixa de negar o caso dela); restaurar com um par novo, provado antes de voltar; `adicionar` com substituição, que prova a regra nova pelo par antes de trocar; nome arquivado recusado
+- [ ] `normas.py`, com teste: alvo ausente que está no arquivo vira "arquivada em <data> por <quem>: <motivo>" nas não resolvidas
+- [ ] `rethink.py` novo, com teste: `start` cria o `rethink.md` com o esqueleto se faltar e abre a seção do dia com o que mudou; `record` acrescenta uma linha com decisão de vocabulário fechado e recusa, sem escrever, valor fora dele ou motivo vazio onde ele é exigido
+- [ ] `dc.py`, com teste: `archive <principle|guideline|guardrail> <name>` com o motivo no stdin, que sai com 1 sem motivo, sem `user.name` ou com nome desconhecido; `restore <principle|guideline|guardrail> <name>`, que sai com 1 se o item não está arquivado ou não passa no que o escritor exige; `--replace` nos três escritores; `rethink-start` e `rethink-record` com JSON pelo stdin; o `explicar` aceita a seção para onde o `P-01` move o texto compartilhado do setup (`L-06`)
+- [ ] Skill `rethink/` (`SKILL.md` e a cópia do `dc.py`), em `lib.SKILLS`; o `setup/SKILL.md` perde o texto que foi para a norma e passa a imprimi-lo por `explicar`, e o `huddle/SKILL.md` cita a instrução de JSON pelo stdin de lá; `lint_skill` sem problema nas três, e o teste que confere as cópias do `dc.py`. A tabela *Recursos Instalados* do `.claude/CLAUDE.md`; o guia `docs/recursos/rethink.md`; *Como editar* e *Como arquivar* em `create-principle.md`, `create-guideline.md` e `create-guardrail.md`; o README, com o `rethink` e a *Atualização* do plugin lado a lado (`P-08`)
+- [ ] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
+- [ ] Remedição (*Remedição*)
+
+1 de 10 tarefa concluída · atualizado em 2026-11-22
 <!-- backlog:end -->
