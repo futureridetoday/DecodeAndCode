@@ -257,7 +257,7 @@ def _criar_guideline(args: argparse.Namespace) -> int:
     try:
         alvo = rules.criar_guideline(
             lib.repo_root(), dados["nome"], dados["descricao"], dados["paths"], dados["corpo"],
-            aguardando=bool(dados.get("aguardando", False)),
+            aguardando=bool(dados.get("aguardando", False)), replace=args.replace,
         )
     except (ValueError, FileExistsError) as erro:
         print(erro)
@@ -274,7 +274,7 @@ def _criar_principio(args: argparse.Namespace) -> int:
     try:
         alvo = rules.criar_principio(
             lib.repo_root(), dados["nome"], dados["enunciado"], dados["teste"],
-            descricao=str(dados.get("descricao", "")),
+            descricao=str(dados.get("descricao", "")), replace=args.replace,
         )
     except ValueError as erro:
         print(erro)
@@ -289,11 +289,106 @@ def _adicionar_guardrail(args: argparse.Namespace) -> int:
 
     dados = _ler_json_do_stdin("adicionar-guardrail", ("regra", "proibido", "permitido"))
     try:
-        alvo = guardrail.adicionar(lib.repo_root(), dados["regra"], dados["proibido"], dados["permitido"])
+        alvo = guardrail.adicionar(
+            lib.repo_root(), dados["regra"], dados["proibido"], dados["permitido"], replace=args.replace
+        )
     except ValueError as erro:
         print(erro)
         return REPROVADO
     print(alvo)
+    return OK
+
+
+# Editar, arquivar e restaurar — plano 0020, norma *Camada normativa → Editar e arquivar*.
+
+_CAMADAS = ("principle", "guideline", "guardrail")
+
+
+def _quem_decide(raiz: Path) -> str:
+    """`git config user.name` como está — `ValueError` com a instrução quando falta (`huddle.usuario`)."""
+    import subprocess
+
+    import huddle
+
+    huddle.usuario(raiz)
+    return subprocess.run(
+        ["git", "config", "user.name"], cwd=raiz, capture_output=True, text=True
+    ).stdout.strip()
+
+
+def _archive(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+    import rules
+
+    raiz = lib.repo_root()
+    motivo = "" if sys.stdin.isatty() else sys.stdin.read()
+    if not motivo.strip():
+        print("archive lê o motivo do stdin, e ele é obrigatório")
+        return REPROVADO
+    arquivar = {
+        "principle": rules.archive_principle,
+        "guideline": rules.archive_guideline,
+        "guardrail": guardrail.archive,
+    }[args.camada]
+    try:
+        alvo = arquivar(raiz, args.nome, motivo, _quem_decide(raiz))
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _restore(args: argparse.Namespace) -> int:
+    import guardrail
+    import lib
+    import rules
+
+    raiz = lib.repo_root()
+    if args.camada == "guardrail":
+        # Fora do `try`: stdin vazio ou incompleto é erro de uso, código 2, como nos outros comandos.
+        dados = _ler_json_do_stdin("restore guardrail", ("proibido", "permitido"))
+    try:
+        if args.camada == "guardrail":
+            alvo = guardrail.restore(raiz, args.nome, dados["proibido"], dados["permitido"])
+        elif args.camada == "principle":
+            alvo = rules.restore_principle(raiz, args.nome)
+        else:
+            alvo = rules.restore_guideline(raiz, args.nome)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _rethink_start(args: argparse.Namespace) -> int:
+    import lib
+    import rethink
+
+    dados = _ler_json_do_stdin("rethink-start", ("mudanca",))
+    raiz = lib.repo_root()
+    try:
+        alvo = rethink.start(raiz, str(dados["mudanca"]), _quem_decide(raiz))
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(alvo)
+    return OK
+
+
+def _rethink_record(args: argparse.Namespace) -> int:
+    import lib
+    import rethink
+
+    dados = _ler_json_do_stdin("rethink-record", ("camada", "nome", "decisao", "motivo"))
+    try:
+        rethink.record(lib.repo_root(), dados["camada"], str(dados["nome"]), dados["decisao"], str(dados["motivo"]))
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"registrada: {dados['camada']} {dados['nome']} {dados['decisao']}")
     return OK
 
 
@@ -572,6 +667,8 @@ _SECOES_DO_METODO = (
 _SECOES_AVULSAS = {
     "huddle": "Huddle",
     "camada-normativa": "Camada normativa",
+    # O que o setup e o `rethink` compartilham (plano 0020, `D-07`, `L-06`).
+    "conversa": "Conversa de uma sugestão",
 }
 
 
@@ -812,25 +909,60 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("unidade")
 
-    comando(
+    substituir = "troca a existente de mesmo nome, no mesmo lugar, só se a nova passar (1 se não existe)"
+
+    p = comando(
         "criar-guideline",
         "grava e registra uma guideline em .claude/rules/; lê do stdin JSON "
         "{nome, descricao, paths, corpo[, aguardando]} (1 se reprovada)",
         _criar_guideline,
     )
+    p.add_argument("--replace", action="store_true", help=substituir)
 
-    comando(
+    p = comando(
         "criar-principio",
         "acrescenta um princípio a .claude/rules/principles.md, com teto de 5; lê do stdin JSON "
         "{nome, enunciado, teste[, descricao]} (1 se reprovado)",
         _criar_principio,
     )
+    p.add_argument("--replace", action="store_true", help=substituir)
 
-    comando(
+    p = comando(
         "adicionar-guardrail",
         "acrescenta uma regra a .claude/guardrails.json provada pelo par; lê do stdin JSON "
         "{regra, proibido, permitido} (1 se reprovada)",
         _adicionar_guardrail,
+    )
+    p.add_argument("--replace", action="store_true", help=substituir)
+
+    p = comando(
+        "archive",
+        "move o item para .claude/archive/ com archived_at, archived_by (git user.name) e reason; lê o "
+        "motivo do stdin (1 sem motivo, sem user.name ou com nome desconhecido)",
+        _archive,
+    )
+    p.add_argument("camada", choices=_CAMADAS)
+    p.add_argument("nome")
+
+    p = comando(
+        "restore",
+        "devolve o item arquivado com o mesmo nome, só se passar de novo no escritor; guardrail lê do "
+        "stdin JSON {proibido, permitido} (1 se não está arquivado ou não passa)",
+        _restore,
+    )
+    p.add_argument("camada", choices=_CAMADAS)
+    p.add_argument("nome")
+
+    comando(
+        "rethink-start",
+        "abre a seção do rethink em <plan_root>/system/rethink.md; lê do stdin JSON {mudanca} (1 se recusado)",
+        _rethink_start,
+    )
+
+    comando(
+        "rethink-record",
+        "acrescenta uma decisão ao rethink.md; lê do stdin JSON {camada, nome, decisao, motivo} (1 se recusada)",
+        _rethink_record,
     )
 
     comando("lint-guardrails", "valida .claude/guardrails.json do projeto (1 se tem problema)", _lint_guardrails)

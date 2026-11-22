@@ -59,6 +59,10 @@ SUBCOMANDOS = (
     "criar-guideline",
     "criar-principio",
     "adicionar-guardrail",
+    "archive",
+    "restore",
+    "rethink-start",
+    "rethink-record",
     "lint-guardrails",
     "huddle-iniciar",
     "huddle-abrir",
@@ -896,6 +900,147 @@ class TestAdicionarGuardrail(_ProjetoCase):
         r = self.dc("adicionar-guardrail", entrada="")
         self.assertEqual(r.returncode, 2)
         self.assertSemTraceback(r)
+
+
+class TestEditarArquivar(_ProjetoCase):
+    """Plano 0020, tarefa 7 — `--replace`, `archive`, `restore`, `rethink-start` e `rethink-record`."""
+
+    REGRA = TestAdicionarGuardrail.REGRA
+    PROIBIDO = {"tool_name": "Write", "tool_input": {"content": '<a className="x"/>'}}
+    PERMITIDO = {"tool_name": "Write", "tool_input": {"content": "<A/>"}}
+
+    def setUp(self):
+        super().setUp()
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"], ["config", "user.email", "a@a"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True)
+        (self.projeto / "src").mkdir()
+        (self.projeto / "src" / "a.ts").write_text("x", encoding="utf-8")
+        self.rules = self.projeto / ".claude" / "rules"
+        self.arquivo = self.projeto / ".claude" / "archive"
+
+    def ok(self, *args: str, entrada: str | None = None) -> subprocess.CompletedProcess:
+        r = self.dc(*args, entrada=entrada)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r
+
+    def principio(self, enunciado="Ajudar a economizar.", *flags):
+        dados = {"nome": "North star", "enunciado": enunciado, "teste": "Mostra o que poupou."}
+        return self.dc("criar-principio", *flags, entrada=json.dumps(dados))
+
+    def guideline(self, corpo="# Paleta\n\nAzul.", *flags):
+        dados = {"nome": "paleta", "descricao": "Vale no src.", "paths": ["src/**/*"], "corpo": corpo}
+        return self.dc("criar-guideline", *flags, entrada=json.dumps(dados))
+
+    def guardrail(self, *flags, **regra):
+        dados = {"regra": {**self.REGRA, **regra}, "proibido": self.PROIBIDO, "permitido": self.PERMITIDO}
+        return self.dc("adicionar-guardrail", *flags, entrada=json.dumps(dados))
+
+    def test_replace_nos_tres_escritores(self):
+        self.assertEqual(self.principio().returncode, 0)
+        self.assertEqual(self.guideline().returncode, 0)
+        self.assertEqual(self.guardrail().returncode, 0)
+
+        self.assertEqual(self.principio("Consciência das compras.", "--replace").returncode, 0)
+        self.assertEqual(self.guideline("# Paleta\n\nLaranja.", "--replace").returncode, 0)
+        self.assertEqual(self.guardrail("--replace", mensagem="Estilo no tema.").returncode, 0)
+
+        self.assertIn("Consciência das compras.", (self.rules / "principles.md").read_text(encoding="utf-8"))
+        self.assertIn("Laranja.", (self.rules / "paleta.md").read_text(encoding="utf-8"))
+        regras = json.loads((self.projeto / ".claude" / "guardrails.json").read_text(encoding="utf-8"))["regras"]
+        self.assertEqual([r["mensagem"] for r in regras], ["Estilo no tema."])
+
+    def test_replace_de_item_inexistente_e_codigo_1(self):
+        for r in (self.principio("x", "--replace"), self.guideline("# P\n\nx", "--replace"),
+                  self.guardrail("--replace")):
+            with self.subTest(saida=r.stdout):
+                self.assertEqual(r.returncode, 1, r.stderr)
+
+    def test_archive_das_tres_camadas_com_o_user_name(self):
+        self.principio()
+        self.guideline()
+        self.guardrail()
+        for camada, nome in (("principle", "North star"), ("guideline", "paleta"), ("guardrail", "sem-classname")):
+            with self.subTest(camada=camada):
+                self.ok("archive", camada, nome, entrada="Rumo novo.\n")
+        self.assertIn("**archived_by:** Ana Lima", (self.arquivo / "rules" / "principles.md").read_text(encoding="utf-8"))
+        self.assertIn('archived_by: "Ana Lima"', (self.arquivo / "rules" / "paleta.md").read_text(encoding="utf-8"))
+        morta = json.loads((self.arquivo / "guardrails.json").read_text(encoding="utf-8"))["regras"][0]
+        self.assertEqual((morta["archived_by"], morta["reason"]), ("Ana Lima", "Rumo novo."))
+
+    def test_archive_sem_motivo_e_codigo_1(self):
+        self.guideline()
+        r = self.dc("archive", "guideline", "paleta", entrada="  \n")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertTrue((self.rules / "paleta.md").exists())
+
+    def test_archive_com_nome_desconhecido_e_codigo_1(self):
+        r = self.dc("archive", "guardrail", "nao-existe", entrada="Motivo.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertSemTraceback(r)
+
+    def test_archive_sem_user_name_e_codigo_1(self):
+        self.guideline()
+        subprocess.run(["git", "config", "--unset", "user.name"], cwd=self.projeto, check=True)
+        ambiente = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+        with mock.patch.dict(os.environ, ambiente):
+            r = self.dc("archive", "guideline", "paleta", entrada="Motivo.")
+        self.assertEqual(r.returncode, 1, r.stderr)
+        self.assertIn("git config user.name", r.stdout)
+        self.assertTrue((self.rules / "paleta.md").exists())
+
+    def test_camada_fora_da_lista_e_erro_de_uso(self):
+        self.assertEqual(self.dc("archive", "regra", "x", entrada="Motivo.").returncode, 2)
+
+    def test_restore_das_tres_camadas(self):
+        self.principio()
+        self.guideline()
+        self.guardrail()
+        for camada, nome in (("principle", "North star"), ("guideline", "paleta"), ("guardrail", "sem-classname")):
+            self.ok("archive", camada, nome, entrada="Rumo novo.")
+        self.ok("restore", "principle", "North star")
+        self.ok("restore", "guideline", "paleta")
+        self.ok("restore", "guardrail", "sem-classname",
+                entrada=json.dumps({"proibido": self.PROIBIDO, "permitido": self.PERMITIDO}))
+        self.assertIn("## North star", (self.rules / "principles.md").read_text(encoding="utf-8"))
+        self.assertTrue((self.rules / "paleta.md").exists())
+        regras = json.loads((self.projeto / ".claude" / "guardrails.json").read_text(encoding="utf-8"))["regras"]
+        self.assertEqual([r["nome"] for r in regras], ["sem-classname"])
+
+    def test_restore_do_que_nao_esta_arquivado_ou_nao_passa_e_codigo_1(self):
+        self.assertEqual(self.dc("restore", "guideline", "paleta").returncode, 1)
+        self.guardrail()
+        self.ok("archive", "guardrail", "sem-classname", entrada="Motivo.")
+        par_invertido = json.dumps({"proibido": self.PERMITIDO, "permitido": self.PROIBIDO})
+        self.assertEqual(self.dc("restore", "guardrail", "sem-classname", entrada=par_invertido).returncode, 1)
+
+    def test_restore_de_guardrail_sem_par_e_codigo_2(self):
+        r = self.dc("restore", "guardrail", "sem-classname", entrada="")
+        self.assertEqual(r.returncode, 2)
+        self.assertSemTraceback(r)
+
+    def test_rethink_start_e_record(self):
+        self.ok("rethink-start", entrada=json.dumps({"mudanca": "Marca laranja."}))
+        self.ok("rethink-record", entrada=json.dumps(
+            {"camada": "guideline", "nome": "paleta", "decisao": "arquivado", "motivo": "Marca laranja."}
+        ))
+        texto = (self.raiz_planos / "system" / "rethink.md").read_text(encoding="utf-8")
+        self.assertRegex(texto, r"## \d{4}-\d{2}-\d{2} · Ana Lima\n\n\*\*O que mudou:\*\* Marca laranja\.")
+        self.assertTrue(texto.endswith("| guideline | paleta | arquivado | Marca laranja. |\n"))
+
+    def test_rethink_record_fora_do_vocabulario_e_codigo_1(self):
+        self.ok("rethink-start", entrada=json.dumps({"mudanca": "Marca laranja."}))
+        r = self.dc("rethink-record", entrada=json.dumps(
+            {"camada": "guideline", "nome": "paleta", "decisao": "editada", "motivo": ""}
+        ))
+        self.assertEqual(r.returncode, 1, r.stderr)
+
+    def test_rethink_json_incompleto_e_codigo_2(self):
+        for comando in ("rethink-start", "rethink-record"):
+            with self.subTest(comando=comando):
+                r = self.dc(comando, entrada=json.dumps({}))
+                self.assertEqual(r.returncode, 2)
+                self.assertSemTraceback(r)
 
 
 class TestLintGuardrails(_ProjetoCase):
