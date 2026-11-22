@@ -101,17 +101,8 @@ def lint_arquivo(caminho: Path) -> list[str]:
     return problemas
 
 
-def adicionar(raiz: Path, regra: dict, proibido: dict, permitido: dict) -> Path:
-    """Acrescenta `regra` a `<raiz>/.claude/guardrails.json` só se ela se provar pelo par.
-
-    A regra candidata é avaliada **sozinha** (`D-03`): `decidir` precisa negar `proibido` com a
-    própria regra e liberar `permitido`. Avaliada junto das existentes, uma regra anterior que já
-    negasse o caso faria a prova passar sem a candidata casar nada. `proibido` e `permitido` têm a
-    forma do payload do hook (`tool_name`, `tool_input`). Cria o arquivo se faltar. Levanta
-    `ValueError` — sem escrever nada — para regra malformada, prova que falha, nome repetido ou
-    arquivo existente que não passa em `lint_arquivo`. Devolve o caminho do arquivo.
-    """
-    arquivo = raiz / ".claude" / "guardrails.json"
+def _provar(regra: dict, proibido: dict, permitido: dict) -> None:
+    """`ValueError` se `regra`, avaliada **sozinha** (`D-03`), não nega `proibido` ou nega `permitido`."""
     with tempfile.TemporaryDirectory() as tmp:
         sozinha = Path(tmp) / "candidata.json"
         sozinha.write_text(json.dumps({"regras": [regra]}, ensure_ascii=False), encoding="utf-8")
@@ -126,17 +117,19 @@ def adicionar(raiz: Path, regra: dict, proibido: dict, permitido: dict) -> Path:
         if aviso or liberado:
             raise ValueError(f"a regra {regra['nome']!r} nega o caso permitido")
 
-    if arquivo.exists():
-        problemas = lint_arquivo(arquivo)
-        if problemas:
-            raise ValueError(f"{arquivo} já está malformado: " + "; ".join(problemas))
-        dados = json.loads(arquivo.read_text(encoding="utf-8"))
-    else:
-        dados = {"regras": []}
-    if any(r["nome"] == regra["nome"] for r in dados["regras"]):
-        raise ValueError(f"já existe regra com o nome {regra['nome']!r}")
 
-    dados["regras"].append(regra)
+def _ler(arquivo: Path) -> dict:
+    """Conteúdo de um arquivo de regras que passa em `lint_arquivo` — `{"regras": []}` se falta."""
+    if not arquivo.exists():
+        return {"regras": []}
+    problemas = lint_arquivo(arquivo)
+    if problemas:
+        raise ValueError(f"{arquivo} já está malformado: " + "; ".join(problemas))
+    return json.loads(arquivo.read_text(encoding="utf-8"))
+
+
+def _gravar(arquivo: Path, dados: dict) -> None:
+    """Grava `dados` em `arquivo` só se o resultado passar em `lint_arquivo`."""
     texto = json.dumps(dados, ensure_ascii=False, indent=2) + "\n"
     with tempfile.TemporaryDirectory() as tmp:
         resultado = Path(tmp) / "guardrails.json"
@@ -146,4 +139,95 @@ def adicionar(raiz: Path, regra: dict, proibido: dict, permitido: dict) -> Path:
             raise ValueError("resultado reprovado: " + "; ".join(problemas))
     arquivo.parent.mkdir(parents=True, exist_ok=True)
     arquivo.write_text(texto, encoding="utf-8")
+
+
+def _arquivo_morto(raiz: Path) -> Path:
+    """`.claude/archive/guardrails.json` — o hook só lê `.claude/guardrails.json` (plano 0020)."""
+    return raiz / ".claude" / "archive" / "guardrails.json"
+
+
+def adicionar(raiz: Path, regra: dict, proibido: dict, permitido: dict, replace: bool = False) -> Path:
+    """Acrescenta `regra` a `<raiz>/.claude/guardrails.json` só se ela se provar pelo par.
+
+    A regra candidata é avaliada **sozinha** (`D-03`): `decidir` precisa negar `proibido` com a
+    própria regra e liberar `permitido`. Avaliada junto das existentes, uma regra anterior que já
+    negasse o caso faria a prova passar sem a candidata casar nada. `proibido` e `permitido` têm a
+    forma do payload do hook (`tool_name`, `tool_input`). Cria o arquivo se faltar. Levanta
+    `ValueError` — sem escrever nada — para regra malformada, prova que falha, nome repetido, nome
+    arquivado (plano 0020, nome reservado) ou arquivo existente que não passa em `lint_arquivo`.
+    Devolve o caminho do arquivo.
+
+    Com `replace=True` (plano 0020), a regra com o mesmo nome precisa existir, e a nova toma o
+    lugar dela na lista, só depois de se provar pelo par.
+    """
+    arquivo = raiz / ".claude" / "guardrails.json"
+    _provar(regra, proibido, permitido)
+    dados = _ler(arquivo)
+    posicao = next((i for i, r in enumerate(dados["regras"]) if r["nome"] == regra["nome"]), None)
+    if replace:
+        if posicao is None:
+            raise ValueError(f"regra {regra['nome']!r} não existe para substituir")
+        dados["regras"][posicao] = regra
+    else:
+        if posicao is not None:
+            raise ValueError(f"já existe regra com o nome {regra['nome']!r}")
+        if any(r.get("nome") == regra["nome"] for r in _ler(_arquivo_morto(raiz))["regras"]):
+            raise ValueError(f"regra arquivada, o nome fica reservado: {regra['nome']!r}")
+        dados["regras"].append(regra)
+    _gravar(arquivo, dados)
+    return arquivo
+
+
+_CAMPOS_DO_ARQUIVAMENTO = ("archived_at", "archived_by", "reason")
+
+
+def archive(raiz: Path, nome: str, motivo: str, autor: str, data: str | None = None) -> Path:
+    """Move a regra `nome` de `.claude/guardrails.json` para `.claude/archive/guardrails.json`.
+
+    Plano 0020. Ganha `archived_at`, `archived_by` e `reason`; o par proibido/permitido não vai,
+    porque o `guardrails.json` não o guarda. Levanta `ValueError`, sem escrever, para nome
+    desconhecido, motivo ou autor vazio. Devolve o caminho do arquivo de arquivo.
+    """
+    from rules import _campos_do_arquivamento  # fora do topo: o hook importa este módulo
+
+    data, autor, motivo = _campos_do_arquivamento(motivo, autor, data)
+    arquivo = raiz / ".claude" / "guardrails.json"
+    dados = _ler(arquivo)
+    regra = next((r for r in dados["regras"] if r["nome"] == nome), None)
+    if regra is None:
+        existentes = ", ".join(r["nome"] for r in dados["regras"]) or "nenhuma"
+        raise ValueError(f"regra desconhecida: {nome!r} — existem: {existentes}")
+
+    morto = _arquivo_morto(raiz)
+    arquivadas = _ler(morto)
+    arquivadas["regras"].append({**regra, "archived_at": data, "archived_by": autor, "reason": motivo})
+    dados["regras"].remove(regra)
+    _gravar(morto, arquivadas)
+    _gravar(arquivo, dados)
+    return morto
+
+
+def restore(raiz: Path, nome: str, proibido: dict, permitido: dict) -> Path:
+    """Devolve a regra arquivada `nome` ao `.claude/guardrails.json`, sem os três campos.
+
+    Plano 0020. O arquivado não guarda o par, então a regra volta só depois de se provar por um par
+    novo, como no `adicionar`. Levanta `ValueError` se não está arquivada, se o nome está ocupado
+    ou se a prova falha — e o arquivo de arquivo fica como estava. Devolve o caminho do arquivo.
+    """
+    morto = _arquivo_morto(raiz)
+    arquivadas = _ler(morto)
+    guardada = next((r for r in arquivadas["regras"] if r.get("nome") == nome), None)
+    if guardada is None:
+        raise ValueError(f"regra {nome!r} não está arquivada")
+    regra = {k: v for k, v in guardada.items() if k not in _CAMPOS_DO_ARQUIVAMENTO}
+    _provar(regra, proibido, permitido)
+
+    arquivo = raiz / ".claude" / "guardrails.json"
+    dados = _ler(arquivo)
+    if any(r["nome"] == nome for r in dados["regras"]):
+        raise ValueError(f"já existe regra com o nome {nome!r}")
+    dados["regras"].append(regra)
+    arquivadas["regras"].remove(guardada)
+    _gravar(arquivo, dados)
+    _gravar(morto, arquivadas)
     return arquivo
