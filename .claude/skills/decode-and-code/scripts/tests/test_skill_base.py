@@ -3,7 +3,7 @@
 
 Cobre o que `lint_skill.lint()` já verifica — frontmatter completo e o modo declarado no corpo — e
 o que ele não vê: a topologia de `D-01`. São as skills de `lib.SKILLS` — uma por modo, o `intake`, que antecede
-o ciclo, o `huddle` e o `setup` —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
+o ciclo, o `huddle`, o `setup` e o `rethink` —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
 elas compartilham, sem `SKILL.md`. O texto do corpo de cada modo não é testado: palavra no markdown
 protege redação, não comportamento, e o que o corpo cita do `dc.py` é conferido por `test_dc.py`.
 
@@ -105,6 +105,15 @@ TOPOLOGIA = {
         "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
+    # Plano 0020, tarefa 8: o rethink revisa a norma depois de uma mudança de rumo. Só a pessoa o
+    # invoca (`D-07`), como o huddle; sem `context`, pela mesma razão do setup.
+    "rethink": {
+        "modo": "rethink",
+        "model": "opus",
+        "disable-model-invocation": "true",
+        "context": None,
+        "allowed-tools": ALLOWED_TOOLS,
+    },
 }
 
 
@@ -147,7 +156,7 @@ class TestSkillBase(unittest.TestCase):
                     self.assertEqual(regioes.ler_campo(SKILLS / nome / "SKILL.md", campo), valor)
 
     def test_so_as_skills_em_fork_declaram_agent(self):
-        for nome in ("review-plan", "derive", "huddle", "setup"):
+        for nome in ("review-plan", "derive", "huddle", "setup", "rethink"):
             with self.subTest(skill=nome):
                 self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
 

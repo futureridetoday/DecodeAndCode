@@ -59,6 +59,11 @@ usar o painel `/plugin` → aba Installed, que sinaliza *update available*.
 Mudança que fica só no repositório (`README.md`, `docs/`, `docs/plan/`) não entra no pacote e não
 exige nada de quem instalou.
 
+**Atualizar o plugin não é repensar a norma.** Os comandos acima trocam a versão do **método**. Quando
+é o **projeto** que muda de rumo — outro objetivo, outra marca, outro público —, o que se revisa são os
+princípios, as guidelines e os guardrails dele: `/decode-and-code:rethink`. Guia:
+[`docs/recursos/rethink.md`](docs/recursos/rethink.md).
+
 ### Para desenvolver ou testar sem instalar
 
 Depois de `empacotar.construir()` (ver *Como este repositório se relaciona com o pacote*), que
@@ -98,11 +103,12 @@ princípio, uma guideline, um guardrail.
 | skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
 | skill | `huddle` | Conduz o huddle da pessoa — percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém; só por invocação explícita (Opus) | [huddle.md](docs/recursos/huddle.md) |
 | skill | `setup` | Conduz o primeiro uso do método no projeto — escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez, huddle e o método; o aviso de abertura o propõe (Opus) | [setup.md](docs/recursos/setup.md) |
+| skill | `rethink` | Repensa a norma do projeto depois de uma mudança de rumo — revisa cada princípio, guideline e guardrail (manter, editar ou arquivar), sugere os novos e registra cada decisão; só por invocação explícita (Opus) | [rethink.md](docs/recursos/rethink.md) |
 | skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
 | hooks | 4 hooks, 3 no pacote | Guardrail do projeto (`PreToolUse`), log de norma/guidelines (`InstructionsLoaded`) e lembrete do huddle (`SessionStart`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
-| guia de uso | Criar um princípio | Quando e como adicionar uma seção a `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
-| guia de uso | Criar uma guideline | Quando e como criar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
-| guia de uso | Criar um guardrail | Quando e como adicionar uma regra a `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
+| guia de uso | Criar um princípio | Quando e como adicionar, editar ou arquivar uma seção de `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
+| guia de uso | Criar uma guideline | Quando e como criar, editar ou arquivar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
+| guia de uso | Criar um guardrail | Quando e como adicionar, editar ou arquivar uma regra de `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
 
 O plugin carrega o **mecanismo**. Guardrail e guideline são do projeto que instala — o método os
 materializa lá, e nunca viaja com os deste repositório.
@@ -148,14 +154,17 @@ norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e
 
 ### Como cada camada nasce
 
-- **Princípio** — entra por duas portas, ambas com aprovação humana: como unidade de tipo `norma`
-  (prosa normativa, aprovada no plano), ou pelo setup, aprovado na conversa e gravado por
-  `dc.py criar-principio`. Teto de 5 por projeto, ideal 3, só *Enunciado* e *Teste*: carrega em toda
+- **Princípio** — entra por três portas, todas com aprovação humana: como unidade de tipo `norma`
+  (prosa normativa, aprovada no plano), pelo setup, aprovado na conversa e gravado por
+  `dc.py criar-principio`, ou pelo `rethink`, depois de uma mudança de rumo. Teto de 5 por projeto, ideal 3, só *Enunciado* e *Teste*: carrega em toda
   sessão. Não se descobre em execução, e não muda por conveniência.
 - **Guideline e guardrail** — **se escolhem por evidência de falha, não por elegância.** Uma
   guideline nasce na primeira divergência observada entre duas execuções; um guardrail, quando um
   incidente mostra o limite que faltava. Por isso a instância vive no projeto que instala — um repo
   novo é greenfield e não tem incidente nenhum.
+- **Editar e arquivar também são operação, nas três camadas.** Editar mantém nome e lugar
+  (`--replace`); arquivar move o item para `.claude/archive/`, fora do que o Claude Code carrega, com
+  data, autor e motivo, e o nome fica reservado. Nada se apaga: planos antigos podem citá-lo.
 - **Ligar e desligar guideline é operação de arquivo, não edição.** Mover entre `.claude/rules/` e
   o irmão `.claude/rules-off/` (fora do que o Claude Code carrega); o `registry.json` que acompanha
   é projeção, nunca fonte.
@@ -190,7 +199,7 @@ discutida, e quando resolve **sai** — para a norma, uma guideline ou um guardr
   abre uma entrada.
 - **Ser lembrado.** O hook `SessionStart` avisa ao abrir a sessão quando há entrada aberta e o
   último huddle foi há `reminder_days` dias ou mais (7 por padrão; `0` desliga), campo do seu arquivo.
-- **O modelo registra no fecho.** As cinco skills que registram terminam rodando `dc.py huddle-fecho`,
+- **O modelo registra no fecho.** As seis skills que registram terminam rodando `dc.py huddle-fecho`,
   registram o que ficou aberto e declaram `entradas novas no huddle: N (H-XX, …)` — obrigatória
   mesmo com `N` igual a zero —, conferida por `dc.py huddle-lint-relatorio`.
 - **Projeto com o arquivo único antigo** (`<plan_root>/system/huddle.md`): `dc.py huddle-migrar`
@@ -201,7 +210,7 @@ Guia: [`docs/recursos/huddle.md`](docs/recursos/huddle.md). Formato, gatilhos e 
 
 ## Como este repositório se relaciona com o pacote
 
-`.claude/` é a **fonte** — as seis skills e a pasta compartilhada `decode-and-code/` (scripts), os
+`.claude/` é a **fonte** — as sete skills e a pasta compartilhada `decode-and-code/` (scripts), os
 hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
 **gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
 que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,

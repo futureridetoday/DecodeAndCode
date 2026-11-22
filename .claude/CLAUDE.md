@@ -46,9 +46,10 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 ## Arquitetura
 
 - `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
-  determinismo) e `config.json`. Ao lado dela, as seis skills: uma por modo — `review-plan/`,
+  determinismo) e `config.json`. Ao lado dela, as sete skills: uma por modo — `review-plan/`,
   `derive/` e `implement/` —, `intake/`, que antecede o ciclo, `huddle/`, que conduz a conversa
-  da pessoa sobre o que ficou em aberto, e `setup/`, que conduz o primeiro uso. O método não tem agent
+  da pessoa sobre o que ficou em aberto, `setup/`, que conduz o primeiro uso, e `rethink/`, que
+  revisa a norma depois de uma mudança de rumo. O método não tem agent
 - `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
   [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
   subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
@@ -74,6 +75,7 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 | `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
 | `huddle` | skill | Conduz o huddle da pessoa da sessão: percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém. Só por invocação explícita. Opus |
 | `setup` | skill | Conduz o primeiro uso do método no projeto: escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez com aprovação na conversa, huddle e o princípio Decode → Code. Na conversa principal. Opus |
+| `rethink` | skill | Repensa princípios, guidelines e guardrails depois de uma mudança de rumo: revisa cada item existente (Manter, Editar, Arquivar), sugere os novos e registra cada decisão em `rethink.md`. Só por invocação explícita. Na conversa principal. Opus |
 | `session_start` | hook | `SessionStart` (`startup`): lembra a pessoa do huddle atrasado e, antes dele, do setup pendente. Viaja no pacote |
 | `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
 

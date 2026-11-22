@@ -391,8 +391,8 @@ inteiro. Os guias [`create-guideline.md`](../../recursos/create-guideline.md) e
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
-si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as seis skills
-(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake`, o `huddle` e o `setup`) e a pasta
+si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as sete skills
+(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake`, o `huddle`, o `setup` e o `rethink`) e a pasta
 compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
@@ -1290,8 +1290,8 @@ se deveria ter escrito.
 ### Momento — no fecho, e a linha de fecho é obrigatória mesmo em zero
 
 Não no instante em que a observação acontece: metade se resolve dentro da própria sessão, e entrada
-escrita na hora seria natimorta. No fecho de **qualquer uma das cinco skills** — `intake`,
-`review-plan`, `derive`, `implement` e `setup` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
+escrita na hora seria natimorta. No fecho de **qualquer uma das seis skills** — `intake`,
+`review-plan`, `derive`, `implement`, `setup` e `rethink` —, o último passo roda `dc.py huddle-fecho`, que imprime esta
 subseção e a anterior, registra por `dc.py huddle-abrir` o que continuou aberto — com
 `--evidencia "<origem>"` quando a entrada nasce de um erro do log, de uma lacuna, de um bloqueio, de
 um gate ou de uma revisão (*Formato e vocabulário fechado*) —, e termina o relatório com uma linha

@@ -669,6 +669,9 @@ _SECOES_AVULSAS = {
     "camada-normativa": "Camada normativa",
     # O que o setup e o `rethink` compartilham (plano 0020, `D-07`, `L-06`).
     "conversa": "Conversa de uma sugestão",
+    # O `rethink` lê o próprio fluxo e o critério de sugestão do setup (plano 0020, tarefa 8).
+    "rethink": "Rethink",
+    "setup": "Setup",
 }
 
 

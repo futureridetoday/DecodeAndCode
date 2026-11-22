@@ -1,6 +1,6 @@
 # Criar um guardrail
 
-Versão 1.0.0 · guia de uso
+Versão 1.1.0 · guia de uso
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
@@ -64,6 +64,24 @@ repetir um `nome`.
 deixa passar o que ele existe para pegar. Escreva um caso da chamada **proibida** e um da
 **permitida**, e confira que o regex separa os dois — foi a inversão exata que o incidente `H-09`
 custou (bloqueava `truncate -s 0 arquivo.log`, liberava `psql -c "alter table ..."`).
+
+## Como editar
+
+Mesmo comando da criação, com `--replace`: `dc.py adicionar-guardrail --replace`, o mesmo JSON. A
+regra com o mesmo `nome` precisa existir; a nova toma **o mesmo lugar** na lista, só depois de se
+provar pelo par — senão sai `1` e a antiga fica.
+
+## Como arquivar
+
+`dc.py archive guardrail <nome>`. A regra sai de `.claude/guardrails.json` para
+`.claude/archive/guardrails.json`, com `archived_at`, `archived_by` e `reason`, e o hook deixa de
+negar o caso dela. O par proibido/permitido não vai junto: o `guardrails.json` não o guarda.
+Arquivar **move, nunca apaga**: planos antigos podem citar o item. O motivo vai no stdin, e
+`archived_by` é o `git config user.name`. O nome arquivado fica **reservado** — criar outro item com
+ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não resolvidas:` com
+"arquivada em <data> por <quem>: <motivo>". Para trazer de volta, com o mesmo nome:
+`dc.py restore guardrail <nome>`, com um par novo pelo stdin, o JSON `{proibido, permitido}`: a
+regra só volta depois de se provar por ele. Norma, *Camada normativa → Editar e arquivar*.
 
 ## Como validar
 
