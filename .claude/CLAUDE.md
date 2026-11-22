@@ -88,7 +88,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 - `state` e `verified_at` nunca se editam à mão — são projetados por script a partir do teste
 - Nunca editar o miolo entre marcadores (`<!-- backlog:start -->`, `<!-- planos:start -->`) — é
   projeção, e será sobrescrita
-- Português brasileiro na documentação; identificadores em inglês
+- Idioma e nomenclatura seguem [`voice-and-language.md`](rules/voice-and-language.md) — pt-BR na
+  documentação e no chat, identificadores em inglês
 
 **Git**
 - `dev` é o branch default e recebe todo o trabalho normal — plano, doc e código entram por PR para `dev`
