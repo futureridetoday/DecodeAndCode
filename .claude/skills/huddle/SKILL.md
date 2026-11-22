@@ -28,8 +28,8 @@ project: DecodeAndCode
 author: Bortoli
 created: 2026-11-15
 status: draft
-version: 1.1.0
-updated: "2026-11-21"
+version: 1.2.0
+updated: "2026-11-22"
 scope: project
 auto_load: false
 tags: [decode-and-code, skill, huddle]
@@ -68,8 +68,9 @@ Argumentos: $ARGUMENTS
      `{nome, descricao, paths, corpo}` (e `aguardando: true` se o caminho ainda não existe) para
      `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline`. Guardrail: o JSON
      `{regra, proibido, permitido}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`.
-     Heredoc com JSON o Claude Code recusa: grave o JSON com `Write` num arquivo fora do projeto e
-     passe-o com `<` — `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline < <arquivo>`.
+     O JSON vai por arquivo, como diz *JSON pelo stdin* na norma
+     (`python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar conversa`, que traz também os padrões de `paths`
+     e o formato do guardrail): `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline < <arquivo>`.
      Código `1` traz o motivo da recusa: ajuste com a pessoa e tente de novo. Gravado, feche com
      `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<guideline ou guardrail>: <caminho>"`.
    - **Levar ao método** — quando a entrada é sobre o próprio método, não sobre o projeto. Redija
@@ -103,4 +104,4 @@ Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` li
 diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem
 tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando.
 Subcomandos: `huddle-pauta`, `huddle-fechar`, `huddle-concluir`, `huddle-abrir`, `huddle-migrar`,
-`log-resolver`, `metodo-listar`, `metodo-levado`, `criar-guideline` e `adicionar-guardrail`.
+`log-resolver`, `metodo-listar`, `metodo-levado`, `criar-guideline`, `adicionar-guardrail` e `explicar`.

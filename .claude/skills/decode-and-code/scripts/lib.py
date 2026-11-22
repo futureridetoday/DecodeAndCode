@@ -64,9 +64,10 @@ PLAN_TYPES_VALIDOS = ("fix", "feature", "remove", "refactor", "norma", "chore", 
 MODOS = ("review-plan", "derive", "implement")
 
 # As skills que viajam no pacote (`empacotar`): os três modos, o `intake`, que antecede o ciclo, o
-# `huddle`, que conduz a conversa da pessoa (plano 0008), e o `setup`, que conduz o primeiro uso
-# (plano 0009) — seis skills, e as três últimas não são modo da norma. Acrescentar skill é editar só aqui.
-SKILLS = MODOS + ("intake", "huddle", "setup")
+# `huddle`, que conduz a conversa da pessoa (plano 0008), o `setup`, que conduz o primeiro uso
+# (plano 0009), e o `rethink`, que revisa a norma depois de uma mudança de rumo (plano 0020) — sete
+# skills, e as quatro últimas não são modo da norma. Acrescentar skill é editar só aqui.
+SKILLS = MODOS + ("intake", "huddle", "setup", "rethink")
 
 _config_cache: dict | None = None
 

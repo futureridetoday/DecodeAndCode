@@ -77,8 +77,9 @@ class TestExplicarSecao(unittest.TestCase):
                 self.assertTrue(texto.startswith(cabecalhos[0]))
                 self.assertIn(f"§ {prefixo}", cabecalhos[0].replace("3. ", ""))
 
-    def test_huddle_e_camada_normativa_existem(self):
-        self.assertEqual(set(dc._SECOES_AVULSAS), {"huddle", "camada-normativa"})
+    def test_secoes_avulsas_existem(self):
+        # `conversa`: o texto que o setup e o `rethink` compartilham (plano 0020, `L-06`).
+        self.assertEqual(set(dc._SECOES_AVULSAS), {"huddle", "camada-normativa", "conversa", "rethink", "setup"})
 
     def test_sem_secao_continua_imprimindo_as_quatro_do_metodo(self):
         texto = self._rodar()

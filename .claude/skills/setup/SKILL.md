@@ -26,8 +26,8 @@ project: DecodeAndCode
 author: Claude
 created: 2026-11-16
 status: draft
-version: 1.0.0
-updated: "2026-11-20"
+version: 1.1.0
+updated: "2026-11-22"
 scope: project
 auto_load: false
 tags: [decode-and-code, skill, setup]
@@ -53,7 +53,10 @@ livre como saída. Não encerre o turno antes da etapa 7. Pergunta em prosa ence
 seguinte a liberação do `allowed-tools` não vale mais: cada comando do `dc.py` volta a pedir permissão.
 
 Para o que a norma diz, use `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar`, com ou sem seção; não leia o
-código do plugin nem a norma com `grep` ou `sed`.
+código do plugin nem a norma com `grep` ou `sed`. Antes da etapa 1, rode
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar conversa`: as opções de cada sugestão, as duas edições e os
+formatos de entrada dos comandos — *JSON pelo stdin*, *Padrões de `paths`* e *Formato do guardrail* —
+estão lá, e esta skill não os repete.
 
 ## Etapas
 
@@ -96,13 +99,8 @@ Se não passa, diga por que e leve-a à etapa 3 como guideline. Grave o aprovado
 **3 e 4 — Guidelines, depois guardrails.** Antes de sugerir, rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-decididas`: o que já está lá não volta, e o que está em
 `existentes` no `descobrir` se registra como `existente`. Todas as guidelines antes dos guardrails, uma
-por vez, com três opções: **Aprovar**, **Editar** e **Rejeitar**.
-
-- **Aprovar** grava e registra; **Rejeitar** registra, com o motivo se a pessoa der um.
-- **Editar** abre uma segunda pergunta: **Edição livre** (a pessoa diz o que mudar, pelo texto livre, e
-  você aplica; só ajuda a redigir se ela pedir) ou **Edição guiada** (perguntas uma por vez, cada uma com
-  sugestões derivadas das anteriores, até escopo, regra e exceção estarem definidos). A versão editada
-  volta com **Aprovar**, **Editar** ou **Rejeitar**.
+por vez, com as opções de item novo de *Conversa de uma sugestão*: **Aprovar**, **Editar** e
+**Rejeitar**.
 
 Guideline nasce da stack e do objetivo do projeto, escopada pelos caminhos onde vale; o que o `CLAUDE.md`
 ou um linter já impõe não vira guideline. Recurso do projeto ligado a caminhos — skill, command ou MCP
@@ -148,35 +146,6 @@ chamada por entrada. A mensagem final passa por
 `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
 
 ## Referência
-
-### JSON pelo stdin, por arquivo
-
-O Claude Code recusa heredoc com JSON ("Contains brace with quote character"). Para `setup-perfil`,
-`setup-registrar`, `criar-principio`, `criar-guideline` e `adicionar-guardrail`, grave o JSON com a ferramenta `Write` num
-arquivo temporário fora do projeto (o scratchpad da sessão) e passe-o com `<`, na forma que o
-`allowed-tools` casa: `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-perfil < <arquivo>`. O `huddle-abrir`
-lê texto, não JSON, e segue como nas outras skills.
-
-### Padrões de `paths`
-
-O `criar-guideline` recusa duas formas: arquivo da raiz pelo nome e chaves. Arquivo da raiz entra como
-`**/<arquivo>` (`**/tailwind.config.ts`, não `tailwind.config.ts`), e cada extensão vai num padrão próprio
-(`src/**/*.ts` e `src/**/*.tsx`, não `src/**/*.{ts,tsx}`).
-
-### Formato do guardrail
-
-O JSON do `adicionar-guardrail` é `{regra, proibido, permitido}`:
-
-- `regra` tem quatro campos, todos texto não vazio: `nome` (kebab-case), `ferramenta` (regex sobre o nome
-  da ferramenta, ex.: `^(Write|Edit)$`), `detector` (regex) e `mensagem`.
-- O `detector` casa o texto dos valores de `tool_input` que são texto, unidos por quebra de linha: num
-  `Write`, o caminho e o conteúdo; num `Edit`, o caminho e o trecho novo — o antigo fica de fora, para
-  que o `Edit` que remove o problema passe. Não há campo de caminho: a restrição de pasta vai dentro do
-  próprio regex.
-- Para "na pasta X, nunca Y", o detector casa o caminho absoluto e o relativo e atravessa linhas:
-  `(?s)(^|/)X/.*Y`. Prove os dois no par: um `proibido` com caminho relativo e o `permitido` fora de `X`.
-- `proibido` e `permitido` têm a forma do payload do hook, `{tool_name, tool_input}`; o comando recusa a
-  regra que não nega o `proibido` ou que nega o `permitido`.
 
 ### Tipos do huddle
 

@@ -1,6 +1,6 @@
 # Criar uma guideline
 
-Versão 1.0.0 · guia de uso
+Versão 1.1.0 · guia de uso
 
 [← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
 
@@ -60,6 +60,24 @@ reprovada. O que cada campo pede:
 
 O registro em `.claude/rules/registry.json` é feito pelo comando. É **projeção**, não fonte:
 reporta divergência com o disco, nunca decide por ele.
+
+## Como editar
+
+Mesmo comando da criação, com `--replace`: `dc.py criar-guideline --replace`, o mesmo JSON. A
+guideline precisa existir em `rules/` ou `rules-off/`; a versão nova a substitui **no mesmo
+lugar**, com o mesmo nome, só se passar em `lint_guideline` — senão sai `1` e a antiga fica.
+Trocar o nome não é editar — é arquivar a antiga e criar a nova.
+
+## Como arquivar
+
+`dc.py archive guideline <nome>`. O arquivo sai de `rules/` (ou de `rules-off/`) para
+`.claude/archive/rules/`, ganha `archived_at`, `archived_by` e `reason` no frontmatter, e o
+`registry.json` é reprojetado sem ela. Arquivar não é desligar: a desligada volta um dia e por isso
+passa no lint; a arquivada sai da norma. Arquivar **move, nunca apaga**: planos antigos podem citar o item. O motivo vai no stdin, e
+`archived_by` é o `git config user.name`. O nome arquivado fica **reservado** — criar outro item com
+ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não resolvidas:` com
+"arquivada em <data> por <quem>: <motivo>". Para trazer de volta, com o mesmo nome:
+`dc.py restore guideline <nome>`, que exige de novo `lint_guideline`. Norma, *Camada normativa → Editar e arquivar*.
 
 ## Como validar
 
