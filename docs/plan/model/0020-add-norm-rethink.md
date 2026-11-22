@@ -124,7 +124,7 @@ arquivo só, que só recebe acréscimo. Nenhum hook novo, nenhuma mudança no fo
 - [x] `rethink.py` novo, com teste: `start` cria o `rethink.md` com o esqueleto se faltar e abre a seção do dia com o que mudou; `record` acrescenta uma linha com decisão de vocabulário fechado e recusa, sem escrever, valor fora dele ou motivo vazio onde ele é exigido
 - [x] `dc.py`, com teste: `archive <principle|guideline|guardrail> <name>` com o motivo no stdin, que sai com 1 sem motivo, sem `user.name` ou com nome desconhecido; `restore <principle|guideline|guardrail> <name>`, que sai com 1 se o item não está arquivado ou não passa no que o escritor exige; `--replace` nos três escritores; `rethink-start` e `rethink-record` com JSON pelo stdin; o `explicar` aceita a seção para onde o `P-01` move o texto compartilhado do setup (`L-06`)
 - [x] Skill `rethink/` (`SKILL.md` e a cópia do `dc.py`), em `lib.SKILLS`; o `setup/SKILL.md` perde o texto que foi para a norma e passa a imprimi-lo por `explicar`, e o `huddle/SKILL.md` cita a instrução de JSON pelo stdin de lá; `lint_skill` sem problema nas três, e o teste que confere as cópias do `dc.py`. A tabela *Recursos Instalados* do `.claude/CLAUDE.md`; o guia `docs/recursos/rethink.md`; *Como editar* e *Como arquivar* em `create-principle.md`, `create-guideline.md` e `create-guardrail.md`; o README, com o `rethink` e a *Atualização* do plugin lado a lado (`P-08`)
-- [ ] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
+- [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
 - [ ] Remedição (*Remedição*)
 
 ## Oráculo
@@ -226,8 +226,8 @@ do setup, que este plano também toca. Nenhum item do `_backlog.md` cobre este t
 - [x] `rethink.py` novo, com teste: `start` cria o `rethink.md` com o esqueleto se faltar e abre a seção do dia com o que mudou; `record` acrescenta uma linha com decisão de vocabulário fechado e recusa, sem escrever, valor fora dele ou motivo vazio onde ele é exigido
 - [x] `dc.py`, com teste: `archive <principle|guideline|guardrail> <name>` com o motivo no stdin, que sai com 1 sem motivo, sem `user.name` ou com nome desconhecido; `restore <principle|guideline|guardrail> <name>`, que sai com 1 se o item não está arquivado ou não passa no que o escritor exige; `--replace` nos três escritores; `rethink-start` e `rethink-record` com JSON pelo stdin; o `explicar` aceita a seção para onde o `P-01` move o texto compartilhado do setup (`L-06`)
 - [x] Skill `rethink/` (`SKILL.md` e a cópia do `dc.py`), em `lib.SKILLS`; o `setup/SKILL.md` perde o texto que foi para a norma e passa a imprimi-lo por `explicar`, e o `huddle/SKILL.md` cita a instrução de JSON pelo stdin de lá; `lint_skill` sem problema nas três, e o teste que confere as cópias do `dc.py`. A tabela *Recursos Instalados* do `.claude/CLAUDE.md`; o guia `docs/recursos/rethink.md`; *Como editar* e *Como arquivar* em `create-principle.md`, `create-guideline.md` e `create-guardrail.md`; o README, com o `rethink` e a *Atualização* do plugin lado a lado (`P-08`)
-- [ ] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
+- [x] `scripts/test-python.sh` verde, inteiro; `empacotar.verificar` e o ciclo instalado aprovam o pacote, sem `.claude/archive/` nem `rethink.md` dentro dele
 - [ ] Remedição (*Remedição*)
 
-8 de 10 tarefas concluídas · atualizado em 2026-11-22
+9 de 10 tarefas concluídas · atualizado em 2026-11-22
 <!-- backlog:end -->
