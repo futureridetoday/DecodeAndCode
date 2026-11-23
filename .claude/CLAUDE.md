@@ -26,14 +26,6 @@ dependencies: []
 
 # DecodeAndCode — Instruções do Projeto
 
-## Identidade
-
-| Campo | Valor |
-|---|---|
-| Tipo de projeto | AI Builder |
-| Segmento de mercado | — |
-| Categoria de mercado | — |
-
 ## Visão Geral
 
 Plugin Claude Code que empacota o método **decode-and-code**: a norma em camadas (princípio,
