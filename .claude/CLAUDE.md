@@ -44,7 +44,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 - `.claude/rules/` — guideline entra com `paths:`; sem `paths:`, carrega sempre
 - `.claude/hooks/` — os quatro hooks do `settings.json`; `pre_tool_use.py` aplica
   `.claude/guardrails.json`. Uso registrado em `.claude/log/` (gitignorado)
-- `docs/plan/` — planos e unidades; `docs/plan/system/` — norma, política de linguagem, `huddle/`
+- `docs/plan/` — planos aprovados em `model/`, indexados em `_planos.md`; `docs/plan/system/` —
+  norma do método (`modelo-dev-units.md`, empacotada no plugin), política de linguagem, `huddle/`
 - `docs/recursos/` — uma descrição por recurso do plugin
 - Fontes do plugin: `_fontes()` em `empacotar.py`, manifesto em `.claude/plugin.json`. A raiz
   carrega só o marketplace (`.claude-plugin/marketplace.json`, `source: archive`: zip em GitHub
@@ -70,7 +71,8 @@ pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 
 **Git**
 - `dev` é o branch default e recebe todo o trabalho normal — plano, doc e código entram por PR para `dev`
-- `main` é produção: só recebe promoção de `dev` no release (merge + tag), nunca commit direto
+- `main` é produção: só recebe promoção de `dev` no release, nunca commit direto — passos em
+  `README.md`, seção *Procedimento de release*
 - PRs exigem revisão manual — convenção, não regra no GitHub
 - Force push proibido em `main`; em `dev` é permitido
 
