@@ -84,6 +84,10 @@ claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/do
 1. **Instale no escopo do projeto**, não só no de usuário: assim cada colega que clonar o repositório
    trabalha com as mesmas guidelines e guardrails. A skill `setup` propõe gravar isso em
    `.claude/settings.json` (`dc.py setup-escopo`); cada pessoa ainda instala o plugin uma vez por clone.
+   Confiar na pasta registra o marketplace, mas não instala o plugin. Num projeto com a habilitação
+   já commitada, `/plugin install decode-and-code@future-ride-today` dentro da sessão instala no
+   escopo do projeto; pelo terminal, o padrão é o escopo de usuário — use
+   `claude plugin install decode-and-code@future-ride-today --scope project`.
 2. **Rode `/decode-and-code:setup`** — a primeira coisa a fazer. Ao abrir a sessão num projeto sem
    setup concluído, o aviso de abertura o propõe. A skill entende o projeto, sugere guidelines e
    guardrails uma por vez (aprovar, editar ou rejeitar), inicia o seu huddle e explica o método. Guia:
