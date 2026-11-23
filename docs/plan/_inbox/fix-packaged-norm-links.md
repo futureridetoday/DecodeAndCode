@@ -97,7 +97,7 @@ corrige no build. Nenhum arquivo novo no pacote, nenhuma mudança no `bootstrap`
 ## Solução
 
 **[Claude]** `_copiar_norma` passa o corpo da norma copiada por uma reescrita: **todo** link
-markdown relativo fora de bloco de código vira outra coisa (ver `P-01`). Link absoluto (`http://`,
+markdown relativo fora de bloco de código vira URL absoluta do GitHub, presa à tag da versão (`D-01`). Link absoluto (`http://`,
 `https://`, `mailto:`) e âncora pura (`#...`) passam intactos, e o que está dentro de bloco de código
 também, porque é exemplo.
 
@@ -122,13 +122,17 @@ Toca: `empacotar.py` (`_copiar_norma`, a função de reescrita e a de bloco de c
 
 ## Decisões
 
+| # | Decisão | Autoria |
+|---|---|---|
+| D-01 | **O link reescrito vira URL absoluta do GitHub, presa à tag da versão** (`blob/v<versão>/...`), não texto sem link. Fecha o `P-01` | **[humano]**, 2026-11-23 |
+
 ### Pendentes de decisão
 
 Todas **[Claude]**.
 
 | # | Pergunta | Recomendação |
 |---|---|---|
-| P-01 | O link reescrito vira URL ou texto? | **URL absoluta do GitHub, presa à tag da versão**: `https://github.com/futureridetoday/DecodeAndCode/blob/v<versão>/docs/recursos/create-guideline.md`, com a versão lida do `plugin.json`. Motivos: a pessoa que instala continua chegando ao guia; o conteúdo da tag é o que corresponde à norma daquela versão; e `verificar` já aceita o `repo` do marketplace, que retira do texto antes de buscar marcador de instância (`empacotar.py:356-364`) **[medido]**. **[medido]** A tag `v2.4.0` existe no `origin` e contém `docs/recursos/create-guideline.md`. **Custo em tokens:** cada URL tem 60 caracteres a mais que o link relativo, cerca de 240 caracteres no total, numa norma de 102.384 bytes: em torno de 0,2%, e só quando a norma é lida. **Alternativa:** texto sem link (`create-guideline.md`, no repositório do método), que tira cerca de 100 caracteres e não depende da tag existir, mas perde o caminho até o guia |
+| P-01 | O link reescrito vira URL ou texto? | **Decidida em `D-01`: URL.** Recomendação original: **URL absoluta do GitHub, presa à tag da versão**: `https://github.com/futureridetoday/DecodeAndCode/blob/v<versão>/docs/recursos/create-guideline.md`, com a versão lida do `plugin.json`. Motivos: a pessoa que instala continua chegando ao guia; o conteúdo da tag é o que corresponde à norma daquela versão; e `verificar` já aceita o `repo` do marketplace, que retira do texto antes de buscar marcador de instância (`empacotar.py:356-364`) **[medido]**. **[medido]** A tag `v2.4.0` existe no `origin` e contém `docs/recursos/create-guideline.md`. **Custo em tokens:** cada URL tem 60 caracteres a mais que o link relativo, cerca de 240 caracteres no total, numa norma de 102.384 bytes: em torno de 0,2%, e só quando a norma é lida. **Alternativa:** texto sem link (`create-guideline.md`, no repositório do método), que tira cerca de 100 caracteres e não depende da tag existir, mas perde o caminho até o guia |
 | P-02 | E se a tag ainda não existir quando o zip é construído? | **Aceitar.** O zip é asset do Release, e o Release é a tag: a URL resolve quando o pacote fica público. Entre o build e a publicação, ninguém instala. Se a ordem do release mudar, o teste não pega isso; fica registrado aqui |
 | P-03 | `language-policy.md` (`:1144`) recebe o mesmo tratamento? | **Sim, pela mesma regra.** A frase descreve os scripts do próprio plugin (Python 3.10, stdlib, `unittest`), o que é verdade para quem instala também. Tratar por exceção seria uma segunda regra |
 | P-04 | E os projetos que já instalaram (`L-02`)? | **Fora do escopo deste plano, registrado.** A correção chega a todo projeto que fizer o bootstrap depois dela. Quem já tem a cópia em `<plan_root>/system/` continua com os quatro links mortos depois do `/plugin update`, porque o `bootstrap` não sobrescreve a norma existente (`bootstrap.py:115-117`) e o `dc.py` lê primeiro a cópia do projeto (`dc.py:642`) **[medido]**. Como a norma do projeto se atualiza quando o plugin muda é uma pergunta maior que estes quatro links, e não cabe num `fix` pequeno |
@@ -150,7 +154,7 @@ Todas **[Claude]**.
   de mudar o código).
 - `test_link_relativo_reescrito_aponta_para_a_tag_da_versao`: numa fonte sintética com um link
   `../../recursos/x.md#secao`, a cópia tem a URL com
-  `blob/v<versão do plugin.json>/docs/recursos/x.md#secao` (ou o texto, se `P-01` decidir texto).
+  `blob/v<versão do plugin.json>/docs/recursos/x.md#secao` (`D-01`).
 - `test_link_dentro_de_bloco_de_codigo_passa_intacto`: o exemplo `01-handler-auth.md` dentro de
   bloco cercado chega igual.
 - `verificar() == []` sobre o pacote real continua passando, o que prova que a URL não é acusada como
