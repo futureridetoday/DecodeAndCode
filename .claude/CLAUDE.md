@@ -93,23 +93,6 @@ pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 - Decisões arquiteturais exigem aprovação prévia
 - Ações que afetam mais de 5 arquivos exigem apresentação de plano antes de executar
 
-## Relação com o AmFlow
-
-Os dois repositórios têm papéis distintos, e confundi-los é o que produz drift:
-
-| Repositório | Papel |
-|---|---|
-| `DecodeAndCode` | Onde o método é **desenvolvido**. Única cópia editável |
-| `AmFlow` | Onde o método é **provado**. Primeiro consumidor real, e campo de prova das guidelines e guardrails — é lá que existem os incidentes registrados |
-
-A skill `dev-units` do AmFlow está **congelada desde 2026-08-22**: somente uso, nenhuma escrita.
-Correção descoberta durante o desenvolvimento entra aqui. Se o AmFlow precisar dela antes da
-conclusão, entra lá como cherry-pick registrado como tal.
-
-> **Por que o campo de prova fica no AmFlow.** Guardrail e guideline se escolhem por evidência de
-> falha, não por elegância. Repo novo é greenfield e não tem incidente nenhum — as unidades entregam
-> o **mecanismo** aqui e a **instância de prova** contra o AmFlow.
-
 ## Trabalho novo passa pelo modelo
 
 | # | Etapa | Quem |
