@@ -67,8 +67,6 @@ pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 - `state` e `verified_at` nunca se editam à mão — são projetados por script a partir do teste
 - Nunca editar o miolo entre marcadores (`<!-- backlog:start -->`, `<!-- planos:start -->`) — é
   projeção, e será sobrescrita
-- Idioma e nomenclatura seguem [`voice-and-language.md`](rules/voice-and-language.md) — pt-BR na
-  documentação e no chat, identificadores em inglês
 
 **Git**
 - `dev` é o branch default e recebe todo o trabalho normal — plano, doc e código entram por PR para `dev`
@@ -92,7 +90,3 @@ pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 
 Quem executa uma unidade **entrega arquivos e relatório, não commita**. Se a execução revelar que a
 unidade estava insuficiente, a correção é **da unidade**, registrada como lacuna `L-XX` no plano.
-
-## Linguagem
-
-Os scripts seguem a [norma de linguagem](../docs/plan/system/language-policy.md).
