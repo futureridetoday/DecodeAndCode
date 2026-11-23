@@ -45,26 +45,21 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 
 ## Arquitetura
 
-- `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
-  determinismo) e `config.json`. Ao lado dela, as sete skills: uma por modo — `review-plan/`,
-  `derive/` e `implement/` —, `intake/`, que antecede o ciclo, `huddle/`, que conduz a conversa
-  da pessoa sobre o que ficou em aberto, `setup/`, que conduz o primeiro uso, e `rethink/`, que
-  revisa a norma depois de uma mudança de rumo. O método não tem agent
-- `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
-  [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
-  subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
-  decodificação e os gates A e B moram na norma, que viaja com o plugin
-- `docs/plan/` — planos e unidades, destino de todo trabalho novo
-- `docs/plan/system/` — fundação: norma, política de linguagem, `huddle/` (um arquivo por pessoa)
-- `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
-  `empacotar.construir` copia (`D-10` do plano `0004`: a raiz do repositório carrega só o
-  marketplace, nunca o plugin)
-- `.claude-plugin/marketplace.json` — o catálogo do marketplace `future-ride-today` (owner
-  `Future Ride Today`); a entrada do plugin referencia `source: archive` — zip anexado a um
-  GitHub Release, não caminho no clone (`D-11` do plano `0004`)
-- `dist/decode-and-code/` — staging **gitignorado**: `empacotar.construir` o escreve do zero a
-  cada build. O que se distribui é o zip que `empacotar.empacotar_zip` produz dali, publicado
-  como asset de Release
+- `.claude/skills/` — `decode-and-code/`, pasta compartilhada sem `SKILL.md` (`scripts/`, todo
+  determinismo, e `config.json`), e as sete skills: os modos `review-plan`, `derive` e
+  `implement`; `intake`, antes do ciclo; `huddle`, sobre o que ficou em aberto; `setup`, primeiro
+  uso; `rethink`, revisão da norma após mudança de rumo. Sem agent
+- `.claude/rules/` — guideline entra com `paths:`; sem `paths:`, carrega sempre
+- `.claude/hooks/` — os quatro hooks do `settings.json`; `pre_tool_use.py` aplica
+  `.claude/guardrails.json`. Uso registrado em `.claude/log/` (gitignorado)
+- `docs/plan/` — planos e unidades; `docs/plan/system/` — norma, política de linguagem, `huddle/`
+- `docs/recursos/` — uma descrição por recurso do plugin
+- Fontes do plugin: `_fontes()` em `empacotar.py`, manifesto em `.claude/plugin.json`. A raiz
+  carrega só o marketplace (`.claude-plugin/marketplace.json`, `source: archive`: zip em GitHub
+  Release — `D-10` e `D-11` do plano `0004`)
+- `dist/decode-and-code/` — staging gitignorado, reescrito a cada build
+- Testes: `scripts/test-python.sh` roda a suíte inteira, inclusive o lint das skills; o CI
+  (`.github/workflows/ci.yml`) roda em Python 3.10 fixo
 
 ## Recursos Instalados
 
