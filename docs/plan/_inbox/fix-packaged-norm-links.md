@@ -58,6 +58,12 @@ que não resolvem dentro do pacote. Três são exemplos dentro de blocos de cód
 vezes: no pacote e na cópia que `bootstrap` materializa em `<plan_root>/system/` no projeto que
 instala (`bootstrap.py:95-100`), onde nem `docs/recursos/` nem `language-policy.md` existem.
 
+**[medido]** Remedido na revisão de 2026-11-23: `empacotar.construir` para um diretório temporário e
+varredura de todo `.md` do pacote com a regex de `test_normas_system.py:33`, ignorando blocos de
+código e links `http`, `mailto:` e `#`. Resultado: só os quatro links da tabela, todos em
+`reference/modelo-dev-units.md`; nenhum `SKILL.md` nem outro `.md` do pacote tem link relativo sem
+alvo.
+
 **[medido]** O repositório não acusa, porque `test_normas_system.py:93`
 (`test_todo_link_relativo_resolve_em_disco`) resolve os links da **fonte**, em
 `docs/plan/system/`, onde os quatro alvos existem. Nenhum teste olha os links da norma **empacotada**.
@@ -86,21 +92,32 @@ corrige no build. Nenhum arquivo novo no pacote, nenhuma mudança no `bootstrap`
 | Gate | Resposta |
 |---|---|
 | **A — necessidade real** | **[medido]** Quatro links mortos no pacote 2.4.0 distribuído, medidos no build de 2026-11-23. O defeito está no artefato que se publica, não numa hipótese |
-| **B — mínimo viável** | **[Claude]** Cortado: verificar links de outros arquivos do pacote (`SKILL.md`, `hooks/`), porque nenhum foi medido com link morto e entram quando forem medidos (o mesmo critério do `.DS_Store`, `L-32`); empacotar os guias; mudar o `bootstrap`; mexer em `test_normas_system.py`, que continua provando a fonte. **Não cortado:** o teste sobre o pacote, porque sem ele o defeito volta no próximo link |
+| **B — mínimo viável** | **[Claude]** Cortado: verificar links de outros arquivos do pacote (`SKILL.md`, `hooks/`), porque a medição da revisão não achou link morto em nenhum deles **[medido]**, e entram quando um for medido (o mesmo critério do `.DS_Store`, `L-32`); empacotar os guias; mudar o `bootstrap`; mexer em `test_normas_system.py`, que continua provando a fonte. **Não cortado:** o teste sobre o pacote, porque sem ele o defeito volta no próximo link |
 
 ## Solução
 
-**[Claude]** `_copiar_norma` passa o corpo da norma copiada por uma reescrita: todo link markdown
-relativo, **fora de bloco de código**, cujo alvo não está no pacote, vira outra coisa (ver `P-01`).
-Link absoluto (`http://`, `https://`, `mailto:`) e âncora (`#...`) passam intactos, e o que está
-dentro de bloco de código também, porque é exemplo, a mesma regra de `_sem_blocos_de_codigo` em
-`test_normas_system.py:51`.
+**[Claude]** `_copiar_norma` passa o corpo da norma copiada por uma reescrita: **todo** link
+markdown relativo fora de bloco de código vira outra coisa (ver `P-01`). Link absoluto (`http://`,
+`https://`, `mailto:`) e âncora pura (`#...`) passam intactos, e o que está dentro de bloco de código
+também, porque é exemplo.
 
-A regra é genérica, não uma lista dos quatro: o alvo se resolve a partir de
-`docs/plan/system/` na fonte, e o link se reescreve qualquer que seja. Assim o quinto link já sai
-certo.
+**Todo, e não só o que não resolve no pacote.** A norma é o único arquivo de `reference/`, e o
+`bootstrap` a copia para `<plan_root>/system/` no projeto que instala (`bootstrap.py:86-100`). Um link
+que resolvesse ao lado dela em `reference/` morreria na cópia. Por isso nenhum link relativo fica.
 
-Toca: `empacotar.py` (`_copiar_norma` e uma função nova) e `tests/test_empacotamento.py`. A fonte
+A regra é genérica, não uma lista dos quatro: o alvo se resolve a partir de `docs/plan/system/` na
+fonte, vira caminho relativo à raiz do repositório, e o fragmento (`x.md#secao`) é mantido na URL.
+Assim o quinto link já sai certo.
+
+**Uma fonte para "bloco de código é exemplo".** Hoje a regra mora em `_sem_blocos_de_codigo`
+(`test_normas_system.py:51`). A função passa para `empacotar.py`, que precisa dela em runtime de
+build, e `test_normas_system.py` passa a importá-la de lá, em vez de manter uma cópia (invariante
+"uma fonte por fato"). O comportamento não muda: a cerca de quatro crases em
+`modelo-dev-units.md:1037-1043` não tem cerca interna, e não há link dentro de código inline na
+norma **[medido]**.
+
+Toca: `empacotar.py` (`_copiar_norma`, a função de reescrita e a de bloco de código),
+`tests/test_empacotamento.py` e `tests/test_normas_system.py` (só o import). A fonte
 `modelo-dev-units.md` não muda.
 
 ## Decisões
@@ -114,24 +131,33 @@ Todas **[Claude]**.
 | P-01 | O link reescrito vira URL ou texto? | **URL absoluta do GitHub, presa à tag da versão**: `https://github.com/futureridetoday/DecodeAndCode/blob/v<versão>/docs/recursos/create-guideline.md`, com a versão lida do `plugin.json`. Motivos: a pessoa que instala continua chegando ao guia; o conteúdo da tag é o que corresponde à norma daquela versão; e `verificar` já aceita o `repo` do marketplace, que retira do texto antes de buscar marcador de instância (`empacotar.py:356-364`) **[medido]**. **[medido]** A tag `v2.4.0` existe no `origin` e contém `docs/recursos/create-guideline.md`. **Custo em tokens:** cada URL tem 60 caracteres a mais que o link relativo, cerca de 240 caracteres no total, numa norma de 102.384 bytes: em torno de 0,2%, e só quando a norma é lida. **Alternativa:** texto sem link (`create-guideline.md`, no repositório do método), que tira cerca de 100 caracteres e não depende da tag existir, mas perde o caminho até o guia |
 | P-02 | E se a tag ainda não existir quando o zip é construído? | **Aceitar.** O zip é asset do Release, e o Release é a tag: a URL resolve quando o pacote fica público. Entre o build e a publicação, ninguém instala. Se a ordem do release mudar, o teste não pega isso; fica registrado aqui |
 | P-03 | `language-policy.md` (`:1144`) recebe o mesmo tratamento? | **Sim, pela mesma regra.** A frase descreve os scripts do próprio plugin (Python 3.10, stdlib, `unittest`), o que é verdade para quem instala também. Tratar por exceção seria uma segunda regra |
+| P-04 | E os projetos que já instalaram (`L-02`)? | **Fora do escopo deste plano, registrado.** A correção chega a todo projeto que fizer o bootstrap depois dela. Quem já tem a cópia em `<plan_root>/system/` continua com os quatro links mortos depois do `/plugin update`, porque o `bootstrap` não sobrescreve a norma existente (`bootstrap.py:115-117`) e o `dc.py` lê primeiro a cópia do projeto (`dc.py:642`) **[medido]**. Como a norma do projeto se atualiza quando o plugin muda é uma pergunta maior que estes quatro links, e não cabe num `fix` pequeno |
+
+## Lacunas
+
+| # | Lacuna | Destino |
+|---|---|---|
+| L-01 | O esboço não dizia o que acontece com o fragmento de um link relativo (`x.md#secao`) | Resolvida nesta versão: a URL mantém o fragmento (*Solução*) |
+| L-02 | Projetos que já instalaram não recebem a correção: a cópia da norma em `<plan_root>/system/` não é sobrescrita | Fora do escopo (`P-04`); fica como pergunta para um plano próprio sobre atualização da norma materializada |
 
 ## Oráculo
 
 `tests/test_empacotamento.py`:
 
-- `test_norma_empacotada_nao_tem_link_relativo_sem_alvo`: depois de `construir`, todo link relativo
-  fora de bloco de código em `reference/modelo-dev-units.md` resolve para um arquivo dentro do
-  pacote. **Falha contra o código atual**, com os quatro links da tabela acima (a medir no início da
-  execução, antes de mudar o código).
+- `test_norma_empacotada_nao_tem_link_relativo`: depois de `construir`,
+  `reference/modelo-dev-units.md` não tem nenhum link relativo fora de bloco de código. **Falha
+  contra o código atual**, com os quatro links da tabela acima (a medir no início da execução, antes
+  de mudar o código).
 - `test_link_relativo_reescrito_aponta_para_a_tag_da_versao`: numa fonte sintética com um link
-  `../../recursos/x.md`, a cópia tem a URL com `blob/v<versão do plugin.json>/docs/recursos/x.md`
-  (ou o texto, se `P-01` decidir texto).
+  `../../recursos/x.md#secao`, a cópia tem a URL com
+  `blob/v<versão do plugin.json>/docs/recursos/x.md#secao` (ou o texto, se `P-01` decidir texto).
 - `test_link_dentro_de_bloco_de_codigo_passa_intacto`: o exemplo `01-handler-auth.md` dentro de
   bloco cercado chega igual.
 - `verificar() == []` sobre o pacote real continua passando, o que prova que a URL não é acusada como
   instância.
 
-`test_normas_system.py` não muda e continua verde: a fonte não é tocada.
+`test_normas_system.py` muda só no import da função de bloco de código e continua verde: a fonte da
+norma não é tocada.
 
 Critério de saída: suíte inteira verde (`bash scripts/test-python.sh`).
 
