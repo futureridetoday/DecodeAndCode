@@ -68,16 +68,8 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 
 ## Recursos Instalados
 
-| Recurso | Tipo | Descrição |
-|---|---|---|
-| `review-plan` | skill | Revisa um plano antes da aprovação, com os seis checks da norma — parte por script, parte por julgamento. Opus |
-| `derive` | skill | Deriva a estrutura e as unidades de um plano aprovado. Só por invocação explícita. Opus |
-| `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
-| `huddle` | skill | Conduz o huddle da pessoa da sessão: percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém. Só por invocação explícita. Opus |
-| `setup` | skill | Conduz o primeiro uso do método no projeto: escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez com aprovação na conversa, huddle e o princípio Decode → Code. Na conversa principal. Opus |
-| `rethink` | skill | Repensa princípios, guidelines e guardrails depois de uma mudança de rumo: revisa cada item existente (Manter, Editar, Arquivar), sugere os novos e registra cada decisão em `rethink.md`. Só por invocação explícita. Na conversa principal. Opus |
-| `session_start` | hook | `SessionStart` (`startup`): lembra a pessoa do huddle atrasado e, antes dele, do setup pendente. Viaja no pacote |
-| `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
+Descrição, modelo e modo de invocação: frontmatter de cada `SKILL.md`. Hooks que viajam no
+pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 
 ## Restrições
 
