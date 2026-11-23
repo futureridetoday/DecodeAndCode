@@ -40,14 +40,11 @@ Python e Node nativos — ninguém instala runtime nem configura nada via termin
 
 ---
 
-## 2. O critério de escolha já é norma
+## 2. O critério de escolha
 
-Quando usar código e quando usar markdown está definido em
-[`CLAUDE.md` — seção *Linguagem*](../../../.claude/CLAUDE.md): código quando o resultado é
-previsível e a repetibilidade é essencial; markdown quando a instrução exige julgamento, tom ou
-raciocínio contextual.
-
-Esta norma não recopia esse critério — apenas o aplica aos scripts, que é o domínio dela.
+Código quando o resultado é previsível e a repetibilidade é essencial; markdown quando a instrução
+exige julgamento, tom ou raciocínio contextual. Esta norma aplica o critério aos scripts, que é o
+domínio dela.
 
 A consequência prática: **função e ferramenta podem ser código, não prompt**. Um script entrega o
 mesmo resultado a cada execução; um markdown entrega o que o modelo interpretar naquela vez. Onde
@@ -121,6 +118,5 @@ Deliberado — a ausência é a política:
 
 - Norma operativa de script: [`scripts.md`](../../../.claude/rules/scripts.md)
 - Evidência: [`estudo-runtime-e-dependencias.md`](estudo-runtime-e-dependencias.md)
-- Critério código ↔ markdown: [`.claude/CLAUDE.md`](../../../.claude/CLAUDE.md)
 - Sondas reprodutíveis: `github.com/rafaelbortoli/cowork-runtime-test`
 - Precedente oficial: `github.com/anthropics/knowledge-work-plugins` · `github.com/anthropics/skills`

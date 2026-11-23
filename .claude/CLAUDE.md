@@ -26,14 +26,6 @@ dependencies: []
 
 # DecodeAndCode — Instruções do Projeto
 
-## Identidade
-
-| Campo | Valor |
-|---|---|
-| Tipo de projeto | AI Builder |
-| Segmento de mercado | — |
-| Categoria de mercado | — |
-
 ## Visão Geral
 
 Plugin Claude Code que empacota o método **decode-and-code**: a norma em camadas (princípio,
@@ -45,39 +37,27 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 
 ## Arquitetura
 
-- `.claude/skills/decode-and-code/` — pasta compartilhada, sem `SKILL.md`: `scripts/` (todo
-  determinismo) e `config.json`. Ao lado dela, as sete skills: uma por modo — `review-plan/`,
-  `derive/` e `implement/` —, `intake/`, que antecede o ciclo, `huddle/`, que conduz a conversa
-  da pessoa sobre o que ficou em aberto, `setup/`, que conduz o primeiro uso, e `rethink/`, que
-  revisa a norma depois de uma mudança de rumo. O método não tem agent
-- `.claude/rules/` — a camada normativa: guideline por arquivo entra com `paths:`;
-  [`principles.md`](rules/principles.md) carrega sempre, sem `paths:` — código é custo,
-  subtração antes de adição, evidência acima de opinião e protocolo de exceção; o fluxo de
-  decodificação e os gates A e B moram na norma, que viaja com o plugin
-- `docs/plan/` — planos e unidades, destino de todo trabalho novo
-- `docs/plan/system/` — fundação: norma, política de linguagem, `huddle/` (um arquivo por pessoa)
-- `.claude/plugin.json` — o manifesto **fonte** do plugin, ao lado das outras fontes que
-  `empacotar.construir` copia (`D-10` do plano `0004`: a raiz do repositório carrega só o
-  marketplace, nunca o plugin)
-- `.claude-plugin/marketplace.json` — o catálogo do marketplace `future-ride-today` (owner
-  `Future Ride Today`); a entrada do plugin referencia `source: archive` — zip anexado a um
-  GitHub Release, não caminho no clone (`D-11` do plano `0004`)
-- `dist/decode-and-code/` — staging **gitignorado**: `empacotar.construir` o escreve do zero a
-  cada build. O que se distribui é o zip que `empacotar.empacotar_zip` produz dali, publicado
-  como asset de Release
+- `.claude/skills/` — `decode-and-code/`, pasta compartilhada sem `SKILL.md` (`scripts/`, todo
+  determinismo, e `config.json`), e as sete skills: os modos `review-plan`, `derive` e
+  `implement`; `intake`, antes do ciclo; `huddle`, sobre o que ficou em aberto; `setup`, primeiro
+  uso; `rethink`, revisão da norma após mudança de rumo. Sem agent
+- `.claude/rules/` — guideline entra com `paths:`; sem `paths:`, carrega sempre
+- `.claude/hooks/` — os quatro hooks do `settings.json`; `pre_tool_use.py` aplica
+  `.claude/guardrails.json`. Uso registrado em `.claude/log/` (gitignorado)
+- `docs/plan/` — planos aprovados em `model/`, indexados em `_planos.md`; `docs/plan/system/` —
+  norma do método (`modelo-dev-units.md`, empacotada no plugin), política de linguagem, `huddle/`
+- `docs/recursos/` — uma descrição por recurso do plugin
+- Fontes do plugin: `_fontes()` em `empacotar.py`, manifesto em `.claude/plugin.json`. A raiz
+  carrega só o marketplace (`.claude-plugin/marketplace.json`, `source: archive`: zip em GitHub
+  Release — `D-10` e `D-11` do plano `0004`)
+- `dist/decode-and-code/` — staging gitignorado, reescrito a cada build
+- Testes: `scripts/test-python.sh` roda a suíte inteira, inclusive o lint das skills; o CI
+  (`.github/workflows/ci.yml`) roda em Python 3.10 fixo
 
 ## Recursos Instalados
 
-| Recurso | Tipo | Descrição |
-|---|---|---|
-| `review-plan` | skill | Revisa um plano antes da aprovação, com os seis checks da norma — parte por script, parte por julgamento. Opus |
-| `derive` | skill | Deriva a estrutura e as unidades de um plano aprovado. Só por invocação explícita. Opus |
-| `implement` | skill | Implementa uma unidade já derivada em cold-start, num subagent isolado (`context: fork`). Sonnet |
-| `huddle` | skill | Conduz o huddle da pessoa da sessão: percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém. Só por invocação explícita. Opus |
-| `setup` | skill | Conduz o primeiro uso do método no projeto: escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez com aprovação na conversa, huddle e o princípio Decode → Code. Na conversa principal. Opus |
-| `rethink` | skill | Repensa princípios, guidelines e guardrails depois de uma mudança de rumo: revisa cada item existente (Manter, Editar, Arquivar), sugere os novos e registra cada decisão em `rethink.md`. Só por invocação explícita. Na conversa principal. Opus |
-| `session_start` | hook | `SessionStart` (`startup`): lembra a pessoa do huddle atrasado e, antes dele, do setup pendente. Viaja no pacote |
-| `intake` | skill | Percorre a escada de menor intervenção antes de o plano nascer: resolve com um recurso isolado ou grava o esboço mínimo em `_inbox/`, para o `review-plan`. Em fork. Opus |
+Descrição, modelo e modo de invocação: frontmatter de cada `SKILL.md`. Hooks que viajam no
+pacote: `_EVENTOS_DO_PACOTE` em `empacotar.py`.
 
 ## Restrições
 
@@ -88,35 +68,17 @@ camada normativa nasce aqui, sem as premissas do AmFlow.
 - `state` e `verified_at` nunca se editam à mão — são projetados por script a partir do teste
 - Nunca editar o miolo entre marcadores (`<!-- backlog:start -->`, `<!-- planos:start -->`) — é
   projeção, e será sobrescrita
-- Idioma e nomenclatura seguem [`voice-and-language.md`](rules/voice-and-language.md) — pt-BR na
-  documentação e no chat, identificadores em inglês
 
 **Git**
 - `dev` é o branch default e recebe todo o trabalho normal — plano, doc e código entram por PR para `dev`
-- `main` é produção: só recebe promoção de `dev` no release (merge + tag), nunca commit direto
+- `main` é produção: só recebe promoção de `dev` no release, nunca commit direto — passos em
+  `README.md`, seção *Procedimento de release*
 - PRs exigem revisão manual — convenção, não regra no GitHub
 - Force push proibido em `main`; em `dev` é permitido
 
 **Autonomia**
 - Decisões arquiteturais exigem aprovação prévia
 - Ações que afetam mais de 5 arquivos exigem apresentação de plano antes de executar
-
-## Relação com o AmFlow
-
-Os dois repositórios têm papéis distintos, e confundi-los é o que produz drift:
-
-| Repositório | Papel |
-|---|---|
-| `DecodeAndCode` | Onde o método é **desenvolvido**. Única cópia editável |
-| `AmFlow` | Onde o método é **provado**. Primeiro consumidor real, e campo de prova das guidelines e guardrails — é lá que existem os incidentes registrados |
-
-A skill `dev-units` do AmFlow está **congelada desde 2026-08-22**: somente uso, nenhuma escrita.
-Correção descoberta durante o desenvolvimento entra aqui. Se o AmFlow precisar dela antes da
-conclusão, entra lá como cherry-pick registrado como tal.
-
-> **Por que o campo de prova fica no AmFlow.** Guardrail e guideline se escolhem por evidência de
-> falha, não por elegância. Repo novo é greenfield e não tem incidente nenhum — as unidades entregam
-> o **mecanismo** aqui e a **instância de prova** contra o AmFlow.
 
 ## Trabalho novo passa pelo modelo
 
@@ -130,7 +92,3 @@ conclusão, entra lá como cherry-pick registrado como tal.
 
 Quem executa uma unidade **entrega arquivos e relatório, não commita**. Se a execução revelar que a
 unidade estava insuficiente, a correção é **da unidade**, registrada como lacuna `L-XX` no plano.
-
-## Linguagem
-
-Os scripts seguem a [norma de linguagem](../docs/plan/system/language-policy.md).
