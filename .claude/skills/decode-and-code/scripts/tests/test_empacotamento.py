@@ -351,6 +351,30 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertTrue(alvo.is_file())
         self.assertEqual(alvo.read_text(encoding="utf-8"), "# norma — mecanismo sintético\n")
 
+    def test_link_relativo_reescrito_aponta_para_a_tag_da_versao(self):
+        """Plano `0021`, `D-01` e `L-01` — URL presa à tag do `plugin.json`, com o fragmento mantido."""
+        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").write_text(
+            "O guia é [`x.md`](../../recursos/x.md#secao), e [fora](https://exemplo.org/y.md) fica.\n",
+            encoding="utf-8",
+        )
+        empacotar.construir(self.destino)
+        texto = (self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md").read_text(
+            encoding="utf-8"
+        )
+        repo = lib.config()["marketplace"]["source"]["repo"]
+        self.assertIn(f"[`x.md`](https://github.com/{repo}/blob/v1.0.0/docs/recursos/x.md#secao)", texto)
+        self.assertIn("[fora](https://exemplo.org/y.md)", texto)
+
+    def test_link_dentro_de_bloco_de_codigo_passa_intacto(self):
+        """Plano `0021` — link em bloco cercado é exemplo, e chega igual."""
+        bloco = "```markdown\n| [0007-01](01-handler-auth.md) | Handler | `verified` |\n```\n"
+        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").write_text(bloco, encoding="utf-8")
+        empacotar.construir(self.destino)
+        texto = (self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(texto, bloco)
+
     def test_move_md_viaja_dentro_do_scripts_da_skill(self):
         """`0004-04` — o `move-md` mora na skill e `_copiar_skill` já o leva, sem função própria."""
         empacotar.construir(self.destino)
@@ -588,6 +612,23 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertTrue(norma.is_file())
             self.assertTrue(move_md.is_file())
             self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
+            self.assertEqual(empacotar.verificar(destino), [])
+
+    def test_norma_empacotada_nao_tem_link_relativo(self):
+        """Plano `0021` — contra o repositório real: a norma vai para `reference/` e, depois, para
+        `<plan_root>/system/` do projeto que instala, e link relativo não resolve em nenhum dos dois."""
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+
+            norma = destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
+            fora_de_bloco = empacotar._sem_blocos_de_codigo(norma.read_text(encoding="utf-8"))
+            relativos = [
+                alvo
+                for alvo in empacotar._LINK_RE.findall(fora_de_bloco)
+                if not alvo.startswith(("http://", "https://", "mailto:", "#"))
+            ]
+            self.assertEqual(relativos, [])
             self.assertEqual(empacotar.verificar(destino), [])
 
     def test_hooks_json_gerado_cita_o_plugin_root_entre_aspas(self):

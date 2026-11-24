@@ -27,10 +27,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import lib
+from empacotar import _LINK_RE, _sem_blocos_de_codigo
 
 _SYSTEM_DIR = lib.plan_root() / "system"
-
-_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 
 # Instância do AmFlow que o `language-policy.md` e o `estudo-runtime-e-dependencias.md`
 # não podem carregar — a norma cita como vinculantes só o que está aqui (§ *Contrato*
@@ -46,19 +45,6 @@ _MARCAS_AMFLOW = (
     "smoke-tests.py",
     "hard-memory",
 )
-
-
-def _sem_blocos_de_codigo(texto: str) -> str:
-    """Remove o miolo de blocos ```...``` — exemplo/template não é link a resolver."""
-    fora = []
-    dentro = False
-    for linha in texto.splitlines():
-        if linha.lstrip().startswith("```"):
-            dentro = not dentro
-            continue
-        if not dentro:
-            fora.append(linha)
-    return "\n".join(fora)
 
 
 def _corpo_normativo(texto: str) -> str:

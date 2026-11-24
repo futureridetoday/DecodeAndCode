@@ -57,6 +57,9 @@ _SCRIPT_DO_HOOK_RE = re.compile(re.escape(_ANCORA_PROJETO) + r"/([\w.-]+\.py)")
 
 _PROJECT_RE = re.compile(r"(?m)^project:.*$")
 
+# Link markdown `[texto](alvo)`; o grupo 1 é o alvo. Fonte única: `test_normas_system` a importa daqui.
+_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+
 # Os campos de frontmatter de skill que a documentação oficial lista (`code.claude.com/docs/en/skills`,
 # conferida em 2026-10-16) — a **única** lista (`P-10`). O que a fonte declara fora dela não viaja.
 _CAMPOS_OFICIAIS = frozenset(
@@ -138,13 +141,14 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
         shutil.rmtree(destino)
     destino.mkdir(parents=True)
 
-    nome_plugin = json.loads(fontes["manifesto"].read_text(encoding="utf-8"))["name"]
+    manifesto = json.loads(fontes["manifesto"].read_text(encoding="utf-8"))
+    nome_plugin = manifesto["name"]
 
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
     escritos.extend(_copiar_skill(fontes["compartilhada"], destino))
     for nome in lib.SKILLS:
         escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino))
-    escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin))
+    escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin, manifesto["version"]))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))
     escritos.append(_escrever_hooks_json(hooks, destino))
     return escritos
@@ -229,7 +233,57 @@ def _declarar_o_plugin(arquivo: Path, nome_plugin: str) -> None:
     arquivo.write_text(_PROJECT_RE.sub(f"project: {nome_plugin}", texto, count=1), encoding="utf-8")
 
 
-def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
+def _linhas_com_marca_de_codigo(texto: str) -> list[tuple[str, bool]]:
+    """Cada linha de `texto` com `True` quando é cerca ```...``` ou está dentro de uma.
+
+    Fonte única da regra "bloco de código é exemplo, não link a resolver": `_sem_blocos_de_codigo`
+    e `_reescrever_links_relativos` a usam, e `test_normas_system` importa a primeira (plano `0021`).
+    """
+    marcadas = []
+    dentro = False
+    for linha in texto.splitlines(keepends=True):
+        if linha.lstrip().startswith("```"):
+            dentro = not dentro
+            marcadas.append((linha, True))
+            continue
+        marcadas.append((linha, dentro))
+    return marcadas
+
+
+def _sem_blocos_de_codigo(texto: str) -> str:
+    """Remove o miolo de blocos ```...``` — exemplo/template não é link a resolver."""
+    return "\n".join(linha.rstrip("\r\n") for linha, codigo in _linhas_com_marca_de_codigo(texto) if not codigo)
+
+
+def _reescrever_links_relativos(texto: str, origem: Path, versao: str) -> str:
+    """Troca todo link relativo fora de bloco de código por URL do GitHub presa à tag `v<versao>`.
+
+    Plano `0021`: a norma é o único arquivo de `reference/`, e o `bootstrap` a copia para
+    `<plan_root>/system/` no projeto que instala — link relativo não resolve em nenhum dos dois
+    lugares. O alvo se resolve a partir de `origem` (o arquivo-fonte no repositório) e vira caminho
+    relativo à raiz; o fragmento é mantido (`L-01`). Link absoluto, `mailto:` e âncora pura passam
+    intactos. Alvo fora do repositório levanta `ValueError` — build que falha alto, não link mentiroso.
+    """
+    raiz = lib.repo_root().resolve()
+    base = f"https://github.com/{lib.config()['marketplace']['source']['repo']}/blob/v{versao}/"
+
+    def _trocar(achado: re.Match) -> str:
+        alvo = achado.group(1)
+        if alvo.startswith(("http://", "https://", "mailto:", "#")):
+            return achado.group(0)
+        caminho, separador, fragmento = alvo.partition("#")
+        relativo = (origem.parent / caminho).resolve().relative_to(raiz).as_posix()
+        inicio, fim = achado.span(1)
+        texto_link = achado.group(0)
+        return texto_link[: inicio - achado.start()] + base + relativo + separador + fragmento + texto_link[fim - achado.start() :]
+
+    return "".join(
+        linha if codigo else _LINK_RE.sub(_trocar, linha)
+        for linha, codigo in _linhas_com_marca_de_codigo(texto)
+    )
+
+
+def _copiar_norma(origem: Path, destino: Path, nome_plugin: str, versao: str) -> Path:
     """Leva a norma-mecanismo para `reference/`, ao lado da skill — unidade `0004-04`.
 
     `bootstrap.iniciar` materializa de lá quando o método roda de um pacote instalado (as skills já
@@ -242,10 +296,16 @@ def _copiar_norma(origem: Path, destino: Path, nome_plugin: str) -> Path:
     declara no próprio frontmatter o nome do repositório que a produziu, e `verificar` acusa: a mesma
     classe de vazamento da `L-31`, medida nesta unidade num arquivo que ainda não existia quando
     aquela lacuna foi escrita.
+
+    Os links relativos do corpo passam por `_reescrever_links_relativos` (plano `0021`): sem isso,
+    quem instala recebe links para arquivos que o pacote não leva.
     """
     alvo = destino / "skills" / "decode-and-code" / "reference" / origem.name
     alvo.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(origem, alvo)
+    alvo.write_text(
+        _reescrever_links_relativos(alvo.read_text(encoding="utf-8"), origem, versao), encoding="utf-8"
+    )
     _declarar_o_plugin(alvo, nome_plugin)
     return alvo
 
