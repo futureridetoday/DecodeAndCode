@@ -50,6 +50,8 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0019 | [norm-evolution-evidence](model/0019-norm-evolution-evidence.md) | model | norm-evolution-evidence | — | concluído | 2026-11-21 |
 | 0020 | [add-norm-rethink](model/0020-add-norm-rethink.md) | model | add-norm-rethink | — | concluído | 2026-11-22 |
 | 0021 | [fix-packaged-norm-links](model/0021-fix-packaged-norm-links.md) | model | fix-packaged-norm-links | — | concluído | 2026-11-23 |
+| 0022 | [persona-spike](model/0022-persona-spike.md) | model | persona-spike | — | concluído | 2026-11-23 |
+| 0023 | [persona-ablation-spike](model/0023-persona-ablation-spike.md) | model | persona-ablation-spike | — | em desenvolvimento | 2026-11-23 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver
