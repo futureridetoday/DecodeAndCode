@@ -10,7 +10,7 @@ tags: [codex, redesign, foundation, clean-architecture, decode-and-code]
 author: Bortoli
 created: 2026-11-24
 status: draft
-version: 1.12.0
+version: 1.15.0
 updated: ""
 
 # system
@@ -61,7 +61,7 @@ correto e compatível com o projeto, como se o autor fizesse parte do time desde
 
 | Camada | O que guarda | Onde mora | Quem altera |
 |---|---|---|---|
-| Codex | o método: fluxos por tipo, artefatos, contratos, gates e referências de produto | só no plugin, versionado com ele; nunca é copiado para o projeto | só quem mantém o plugin, a cada versão |
+| Codex | o método: workflows por tipo, artefatos, contratos, gates e referências de produto | só no plugin, versionado com ele; nunca é copiado para o projeto | só quem mantém o plugin, a cada versão |
 | Foundation | o padrão de código do projeto e o mapa dos recursos do projeto pelo nome | em `<plan_root>/system/`, lida pelo decode e pelo derive quando precisam | o projeto, pelas portas do DC (setup, rethink e plano), sempre com aprovação |
 
 Princípios, guidelines, guardrails, perfil, decisões, planos e huddle continuam funcionando onde
@@ -72,32 +72,32 @@ são do projeto: o DC os cita pelo nome e nunca os copia nem edita (decisão 12)
 
 A norma é substituída por completo pelo codex, inclusive nos projetos que já usam o DC (decisão 13).
 
-### Fluxo
+### Workflow
 
-O tipo do plano escolhe o fluxo. Por enquanto são dois: o de correção, para `fix`, e o de produto,
-para os demais tipos. Outros tipos podem ganhar fluxo próprio depois.
+O tipo do plano escolhe o workflow. Por enquanto são dois: o de correção, para `fix`, e o de produto,
+para os demais tipos. Outros tipos podem ganhar workflow próprio depois.
 
-#### Entrada, comum aos dois fluxos
+#### Entrada, comum aos dois workflows
 
 | # | Etapa | Quem | O que sai |
 |---|---|---|---|
 | 1 | Entrada: um pedido, blocos de texto para juntar ou um insight para discutir | usuário e Claude | um pedido único, ou uma conversa que termina sem plano |
-| 2 | Tipo do plano, pela lista de tipos que o próprio DC mantém | Claude identifica, com as perguntas que precisar, e declara com o motivo; o usuário pode corrigir | o objetivo do plano claro para os dois, e o fluxo que ele segue |
+| 2 | Tipo do plano, pela lista de tipos que o próprio DC mantém | Claude identifica, com as perguntas que precisar, e declara com o motivo; o usuário pode corrigir | o objetivo do plano claro para os dois, e o workflow que ele segue |
 
-#### Fluxo de correção (`fix`)
+#### Workflow de correção (`fix`)
 
 O decode da correção é enxuto: identificar o problema e criar a correção, sem gastar milhares de
 tokens para corrigir uma palavra. Se o diagnóstico mostrar que a correção não é pequena, ela passa
-para o fluxo de produto.
+para o workflow de produto.
 
 | # | Etapa | Quem | O que sai |
 |---|---|---|---|
-| C1 | Diagnóstico: localizar e reproduzir o problema | Claude | plano mínimo registrado: o plano pequeno de hoje, com três seções fixas (o problema e como reproduzi-lo, a correção, e como verificar) |
+| C1 | Diagnóstico: localizar e reproduzir o problema | Claude | plano mínimo registrado: o plano pequeno com uma única tarefa, que traz o problema e como reproduzi-lo, a correção e como verificar (decisão 9) |
 | C2 | Aprovação | usuário | correção aprovada |
 | C3 | **Code** (hoje `implement`), com as skills e os recursos do projeto | Claude | a correção |
 | C4 | Teste: o teste que reproduz o defeito falha antes da correção e passa depois | Claude ou usuário | correção verificada |
 
-#### Fluxo de produto (demais tipos)
+#### Workflow de produto (demais tipos)
 
 | # | Etapa | Quem | O que sai |
 |---|---|---|---|
@@ -106,21 +106,25 @@ para o fluxo de produto.
 | P3 | Revisão: escrever as histórias, refinar (viabilidade técnica, compatibilidade, infra, erros, lacunas e decisões em aberto) e quebrar em tarefas | Claude, no papel de PM e Tech Lead | plano técnico, com tarefas ou unidades conforme o porte |
 | P4 | Aprovação do plano técnico | usuário | plano técnico aprovado; é aqui que o plano recebe número |
 | P5 | Derive (só médio e grande) | Claude | cada unidade com contexto, memória e o padrão de código do projeto |
-| P6 | **Code** (hoje `implement`), com as skills e os recursos do projeto | Claude | no pequeno, as tarefas na mesma sessão; no médio e no grande, uma unidade por vez |
+| P6 | **Code** (hoje `implement`), com as skills e os recursos do projeto | Claude | no pequeno, as tarefas na mesma sessão; no médio e no grande, uma unidade por vez, numa sessão nova |
 | P7 | Teste e aprovação da entrega | Claude ou o usuário testa; o usuário aprova | a próxima unidade só começa depois que a anterior for aprovada |
 | P8 | Teste do plano inteiro, quando ele tem mais de uma unidade | Claude ou o usuário | só roda depois que todas as unidades forem concluídas |
 
-#### Porte, no fluxo de produto
+#### Porte, no workflow de produto
 
 | Porte | Estrutura | Passa pelo derive? | Como executa |
 |---|---|---|---|
 | Pequeno | lista de tarefas | não | na mesma sessão, logo após a aprovação do plano técnico |
-| Médio | 1 unidade | sim | a unidade, aprovada ao final |
-| Grande | 2 ou mais unidades | sim | uma unidade por vez, cada uma depois da aprovação da anterior |
+| Médio | 1 unidade | sim | a unidade, numa sessão nova, aprovada ao final |
+| Grande | 2 ou mais unidades | sim | uma unidade por vez, numa sessão nova, cada uma depois da aprovação da anterior |
+
+São três portes, e só três: o plano mínimo da correção é o pequeno com uma única tarefa, não um
+quarto porte. No médio e no grande, o DC recomenda executar numa sessão nova: a unidade traz o que
+precisa para o cold-start, e começar sem o histórico da conversa economiza tokens.
 
 **Unidade.** Uma lista de tarefas que, no fim, entrega um pacote concreto e documentado, que agrega
-valor ao todo e é minimamente mensurável e testável, pelo Claude ou pelo usuário. Tem no máximo 8
-passos; acima disso, ela se divide, e o médio passa a grande.
+valor ao todo e é minimamente mensurável e testável, pelo Claude ou pelo usuário. Tem as tarefas
+necessárias para entregar esse pacote; não há limite de tarefas por unidade (decisão 3).
 
 #### O paralelo com produto digital
 
@@ -162,7 +166,7 @@ versão que resolve 80% (Reduzir).
 
 #### O que muda em relação ao DC de hoje
 
-- **O tipo vem antes do decode**, porque é ele que escolhe o fluxo, e Claude pode fazer as perguntas
+- **O tipo vem antes do decode**, porque é ele que escolhe o workflow, e Claude pode fazer as perguntas
   necessárias para identificá-lo. Hoje o intake propõe o tipo junto com o plano.
 - **A unidade fecha com a aprovação do usuário**, além do teste. O mecanismo já existe na unidade do
   tipo `norma` (`rule` no formato novo), que fecha pelos campos `approved_by` e `approved_at`.
@@ -206,12 +210,12 @@ Funcionalidade nova do DC entra como módulo. O contrato começa mínimo, na ver
 | Manifesto | um `module.json` na raiz da pasta, com `name`, `version`, `description` e `requires` (a versão do núcleo e os módulos de que depende); fica fora do `SKILL.md`, porque um módulo pode ter nenhuma ou várias skills |
 | Descoberta | o núcleo procura as pastas que têm `module.json`, e só elas viajam no pacote; sem lista central, e a garantia de não vazar skill de desenvolvimento continua |
 | Fronteira | o núcleo nunca importa um módulo; o módulo usa o núcleo e só os módulos que declara em `requires`, e um lint confere os imports |
-| O que um módulo acrescenta | skills, subcomandos do `dc.py` registrados pelo próprio módulo e o capítulo do codex; hooks e tipos de plano com fluxo próprio ficam para depois |
+| O que um módulo acrescenta | skills, subcomandos do `dc.py` registrados pelo próprio módulo e o capítulo do codex; hooks e tipos de plano com workflow próprio ficam para depois |
 | Quem inclui e remove | só quem mantém o plugin; o projeto que usa o DC não liga nem desliga módulo |
 | Remover | apagar a pasta; a suíte do núcleo continua passando, e nenhum outro módulo o importa sem declarar |
 | Versão | o núcleo recusa um módulo que exige outra versão dele, e diz por quê |
 
-O primeiro módulo é o fluxo de correção: funcionalidade nova do redesign, pequena e separada do
+O primeiro módulo é o workflow de correção: funcionalidade nova do redesign, pequena e separada do
 resto, que testa o contrato sem mexer no que já funciona.
 
 ### Compatibilidade e migração
@@ -248,9 +252,13 @@ decidida, o item diz qual.
 ### 3. O médio muda de significado
 
 - **Decidido em 2026-11-24:** todo plano novo declara a versão do formato, e o limite de 8 passos por
-  unidade continua (seção 1, *Porte, no fluxo de produto* e *Compatibilidade e migração*). Com o
+  unidade continua (seção 1, *Porte, no workflow de produto* e *Compatibilidade e migração*). Com o
   limite, 4 dos 12 médios já fechados teriam virado grandes. `lint_plano`, `scaffold.aprovar` e
   `backlog.projetar` passam a ler a versão do formato.
+- **Revisto em 2026-11-24:** o limite de 8 passos sai. A unidade tem as tarefas necessárias para
+  entregar um pacote testável que agrega valor ao produto (seção 1, *Unidade*). O plugin ainda
+  aplica o teto, no lint da unidade e no teste dele; o teto sai do código na execução do redesign,
+  junto com a troca da norma pelo codex, para os dois não divergirem.
 
 ### 4. "O plano precisa ser testado"
 
@@ -260,8 +268,8 @@ decidida, o item diz qual.
 ### 5. Correção ou feature, contra os sete tipos de hoje
 
 - **Decidido em 2026-11-24:** a identificação do tipo continua como o DC já faz, e a lista de tipos
-  é a que o próprio DC mantém; o codex não a repete. O tipo escolhe o fluxo: `fix` segue o de
-  correção, os demais seguem o de produto (seção 1, *Entrada, comum aos dois fluxos*).
+  é a que o próprio DC mantém; o codex não a repete. O tipo escolhe o workflow: `fix` segue o de
+  correção, os demais seguem o de produto (seção 1, *Entrada, comum aos dois workflows*).
 - **Para depois:** dos 10 planos que declaram `plan_type`, só `feature` (6), `fix` (2) e `norma` (2)
   apareceram; `remove`, `refactor`, `chore` e `spike` nunca foram usados.
 
@@ -302,7 +310,9 @@ decidida, o item diz qual.
 ### 9. A correção gera plano registrado?
 
 - **Decidido em 2026-11-24:** sim. O plano mínimo é o plano pequeno de hoje, com três seções fixas,
-  e a correção que não for pequena passa para o fluxo de produto (seção 1, *Fluxo de correção*).
+  e a correção que não for pequena passa para o workflow de produto (seção 1, *Workflow de correção*).
+- **Revisto em 2026-11-24:** o plano mínimo é o plano pequeno com uma única tarefa. O DC tem só três
+  portes, e o mínimo não é um quarto (seção 1, *Porte*).
 
 ### 10. A correção pede aprovação?
 
@@ -376,7 +386,7 @@ decidida, o item diz qual.
   `module.json`, descoberta pelo núcleo sem lista central; o núcleo nunca importa módulo. Só quem
   mantém o plugin inclui e remove módulos. Hooks ficam para depois, porque o build gera
   `hooks/hooks.json` a partir do `settings.json`, e juntar os hooks de cada módulo pede um passo
-  novo. O primeiro módulo é o fluxo de correção.
+  novo. O primeiro módulo é o workflow de correção.
 
 ## 3. Peças essenciais que o texto original não cita
 
@@ -405,7 +415,7 @@ decidida, o item diz qual.
 | Camada | No DC | Muda quando |
 |---|---|---|
 | Entidades | codex: conceitos (pedido, plano, porte, unidade, tarefa, teste), contratos e gates | o método muda |
-| Casos de uso | os fluxos por tipo de plano e suas etapas (decode, revisão, derive, code), que são as skills | um fluxo muda, ou um tipo ganha fluxo próprio |
+| Casos de uso | os workflows por tipo de plano e suas etapas (decode, revisão, derive, code), que são as skills | um workflow muda, ou um tipo ganha workflow próprio |
 | Adaptadores | `dc.py`, scripts, hooks e formatos de arquivo | o formato ou o Claude Code muda |
 | Frameworks | Claude Code, git e runners de teste | fora do controle do DC |
 
