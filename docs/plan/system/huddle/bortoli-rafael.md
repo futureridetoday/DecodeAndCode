@@ -297,6 +297,12 @@ A `H-10` do huddle do AmFlow (2026-10-01) registra um defeito do método, "o `ba
 
 **`registry.ligar` e `registry.desligar` não têm subcomando no `dc.py`.** A norma (*Camada normativa*, ~linha 320) diz que ligar e desligar uma guideline "é operação, não edição de arquivo", mas o `dc.py` não expõe nenhuma das duas: só código Python as alcança. Notado pelo intake do `add-norm-update`, em 2026-11-22, porque o arquivamento do `update` tangencia o `rules-off/`.
 
+### H-25 · `revisitar` · 2026-11-23 · Claude
+
+**Drift entre guideline-ponte e recurso do projeto: intake de 2026-11-23 parou no gate A.** A `L-03` do `0017` segue aberta: a ponte cita o recurso pelo nome em prosa, e nenhum lint vê ponte sem recurso (`rules.lint_rule` e `lint_guideline` conferem frontmatter, `paths` e corpo não vazio, nunca o nome citado). Recurso criado depois do setup só aparece de novo se o `rethink` rodar, porque só setup e `rethink` chamam o `descobrir`. Hoje nada disso tem caso: nenhum projeto sob `~/Code` concluiu o setup (nenhum `docs/plan/system/setup.md`), o AmFlow tem o plugin habilitado sem setup e sem ponte, e a única ponte já gravada viveu no projeto descartável da remedição do `0017`. Desenho mínimo, se voltar: campo legível por script na ponte (ex.: `resource: skill:ui-builder` no frontmatter, gravado pelo `criar-guideline`) e um check que cruza pontes com `descoberta._recursos`, avisando ponte sem recurso e recurso sem ponte. Canal a decidir: aviso de abertura ou `lint-unidade`. Gatilho: a primeira ponte em projeto real com setup concluído, ou o primeiro `implement` que não achar o recurso citado.
+
+Evidência: revisão: 0017
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |
