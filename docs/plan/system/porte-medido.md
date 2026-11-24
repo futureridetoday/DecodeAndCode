@@ -50,3 +50,4 @@ dependencies: []
 | [0019-norm-evolution-evidence](../model/0019-norm-evolution-evidence.md) | médio | 7 | não declarado | — | 2026-11-21 |
 | [0020-add-norm-rethink](../model/0020-add-norm-rethink.md) | médio | 10 | não declarado | — | 2026-11-22 |
 | [0021-fix-packaged-norm-links](../model/0021-fix-packaged-norm-links.md) | pequeno | — | não declarado | — | 2026-11-23 |
+| [0022-persona-spike](../model/0022-persona-spike.md) | pequeno | — | não declarado | — | 2026-11-23 |
