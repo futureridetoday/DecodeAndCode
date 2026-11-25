@@ -10,7 +10,7 @@ tags: [codex, redesign, atomic-design, inventario]
 author: Bortoli
 created: 2026-11-24
 status: draft
-version: 0.19.0
+version: 0.20.0
 updated: ""
 
 # system
@@ -29,8 +29,7 @@ Base de conceitos para o redesign do codex. A fonte dos itens é o
 O trabalho tem duas fases:
 
 1. **Identificar os átomos:** nome e origem no brief, sem definição.
-2. **Definir cada átomo:** o que é, como funciona e com quais outros itens se relaciona. A
-   classificação em moléculas e organismos vem nesta fase, quando as relações estiverem definidas.
+2. **Definir cada átomo:** o que é, como funciona e com quais outros itens se relaciona.
 
 Ficam de fora os nomes de mecanismo (scripts, subcomandos, hooks), porque o codex não os cita
 (brief, seção 4).
@@ -42,8 +41,8 @@ Fechada em 2026-11-24, com 65 itens, depois de esgotar o brief. Na fase 2, seis 
 reaproveitados.
 
 A classificação em átomo, propriedade ou composto não serviu de filtro no primeiro lote: todos os
-itens precisam de descrição. Entra na lista o que a pessoa seleciona; a classificação fica para a
-fase 2.
+itens precisam de descrição. Entra na lista o que a pessoa seleciona, e a classificação foi deixada
+de lado.
 
 | # | Item | Nota |
 |---|---|---|
@@ -76,12 +75,12 @@ fase 2.
 | I-31 | Papel | PM, Designer e Tech Lead |
 | I-32 | Referência de produto |  |
 | I-33 | Mindset de produto |  |
-| I-34 | Módulo | junto com o manifesto do módulo |
+| I-34 | Módulo | o contrato técnico fica na documentação de manutenção |
 | I-35 | Usuário | ator: pede, aprova e testa |
 | I-36 | Claude | ator: decodifica, revisa, deriva e coda |
-| I-37 | História | escrita na revisão; relação com a unidade a definir |
+| I-37 | História | escrita na revisão; cada unidade corresponde a uma história |
 | I-38 | Definition of Ready | o que o derive garante |
-| I-39 | Correção | workflow e tipo `fix` |
+| I-39 | Correção | workflow `fix` |
 | I-41 | Plano anterior ao redesign | só se atualiza quando o usuário pede |
 | I-42 | Migração | da norma para o codex nos projetos que já usam o DC |
 | I-43 | Raiz dos planos | `<plan_root>` |
@@ -99,7 +98,7 @@ fase 2.
 | I-55 | Invariante | uma fonte por fato; nada do projeto viaja no plugin |
 | I-56 | Restrição fundamental | o projeto não altera o codex |
 | I-58 | Núcleo | nunca importa um módulo |
-| I-59 | Tabela de recursos do plano | skills do projeto pelo nome |
+| I-59 | Tabela de recursos do plano | recursos do projeto pelo nome |
 | I-60 | Objetivo do plano |  |
 | I-61 | Quem mantém o plugin | único ator que altera o codex e inclui ou remove módulos |
 | I-62 | Os quatro riscos | valor, usabilidade, viabilidade técnica e de negócio |
@@ -110,9 +109,16 @@ fase 2.
 
 ## Fase 2 — Definições
 
-Cada item traz o que é, como funciona, as relações com outros itens pelo ID e a origem. A fonte é
-o brief; quando a informação vem do projeto, o item marca **[projeto]**; sem fonte, o campo fica
-com "—".
+Cada item traz o que é, como funciona, as relações com outros itens pelo ID e a origem. O que é
+implementação de hoje fica à parte, em **Mecanismo hoje**, porque o codex não cita mecanismo
+(I-54).
+
+Fontes, nesta ordem: o brief, sem marca; a decisão da pessoa, com a data (*decidido em*); o
+projeto, marcado **[projeto]**; e a referência de produto citada, marcada **[referência]**. Sem
+fonte, o campo fica com "—".
+
+**O inventário é a fonte da verdade do redesign.** Onde ele e o brief divergem, vale o inventário:
+a divergência vem de uma decisão da pessoa, registrada com a data.
 
 ### Piloto
 
@@ -125,7 +131,7 @@ com "—".
   - No workflow de produto, começa como proposta conceitual no decode (P1), é aprovado (P2) e vira
     plano técnico na revisão (P3), com tarefas ou unidades conforme o porte.
   - Recebe número na aprovação do plano técnico (P4, decisão 2).
-  - O plano com mais de uma unidade é testado inteiro no fim (P8).
+  - O plano grande é testado inteiro no fim (P8); todo plano fecha com a aprovação final.
   - Todos os planos ficam juntos em `<plan_root>/`. O pequeno é um arquivo; o médio e o grande são
     uma pasta com o plano e as unidades.
   - O campo `core:` diz a que parte do sistema o plano se refere.
@@ -147,12 +153,12 @@ com "—".
   - O médio tem 1 unidade, e o grande, 2 ou mais.
   - O derive dá a cada unidade o contexto, a memória e o padrão de código do projeto (P5).
   - O code executa uma unidade por vez (P6).
-  - Só começa com um oráculo e só fecha com teste e aprovação do usuário, registrada em
-    `approved_by` e `approved_at`.
+  - Só começa com um oráculo e só fecha com teste e aprovação do usuário.
   - A próxima unidade só começa depois que a anterior é aprovada (P7).
   - Basta sozinha e roda sem o histórico da conversa (seção 3, cold-start).
   - Se a execução mostrar que estava insuficiente, a correção é da unidade, registrada como lacuna
     (seção 3).
+- **Mecanismo hoje:** a aprovação fica nos campos `approved_by` e `approved_at` da unidade.
 - **Relações:** é feita de tarefas (I-16); produz uma entrega; pertence a um plano médio ou
   grande (I-11, I-14); é preparada no derive (I-08) e executada no code (I-09); começa com um
   critério de aceite; fecha com teste (I-19) e aprovação (I-18); corresponde a uma história
@@ -182,17 +188,20 @@ com "—".
     2. O plano técnico, no fim da revisão; é nela que o plano recebe número (P4, decisão 2).
     3. As unidades derivadas, no fim do derive (decidido em 2026-11-24; o brief não tem esta
        aprovação).
-    4. Cada entrega, no code: fecha a unidade junto com o teste, registrada em `approved_by` e
-       `approved_at`; a próxima unidade só começa depois (P7).
-    5. A aprovação final, depois do teste do plano inteiro (decidido em 2026-11-24; o brief só tem
-       o teste, P8). No pequeno, que não tem unidade, é a única aprovação depois do code.
+    4. Cada entrega, no code: fecha a unidade junto com o teste; a próxima unidade só começa
+       depois (P7).
+    5. A aprovação final, que fecha o plano (decidido em 2026-11-24). No grande, vem depois do
+       teste do plano inteiro (P8), que só existe no grande. No pequeno, que não tem unidade, é a
+       única aprovação depois do code.
   - No workflow de correção, na ordem:
     1. O plano mínimo, antes do code (C2, decisão 10).
     2. A aprovação final, depois do teste que reproduz o defeito (decidido em 2026-11-24; o brief
        só tem o teste, C4).
   - Quem aprova é sempre o usuário.
-  - As escritas do DC no projeto (foundation, regra `Skill(<nome>)`, migração) também pedem o sim
-    da pessoa, mas não são aprovação do workflow; cada item as descreve.
+  - As escritas do DC no projeto (foundation, permissão de uso de skill, migração) também pedem o
+    sim da pessoa, mas não são aprovação do workflow; cada item as descreve.
+- **Mecanismo hoje:** a aprovação da unidade fica nos campos `approved_by` e `approved_at`; a
+  permissão de uso de skill é uma regra `Skill(<nome>)` no `settings.json` do projeto.
 - **Relações:** é dada pelo usuário (I-35); fecha o decode (I-06), a revisão (I-07), o derive (I-08)
   e o code (I-09); aprova o plano técnico (I-12), o plano mínimo (I-13) e a unidade (I-15); vem
   depois do teste (I-19, I-64, I-65); abre a numeração do plano (I-11).
@@ -214,18 +223,17 @@ com "—".
 - **Relações:** pode ser um insight (I-02); depois dele vem a escolha do tipo (I-03); é a etapa
   inicial de todo workflow (I-04, I-05); dele nasce o plano (I-11); é decodificado no decode (I-06);
   vem do usuário (I-35); o paralelo com produto digital o relaciona à entrada (I-51).
-- **Origem:** seção 1 (*Missão*, *Objetivo do DC*, *Entrada, comum aos dois workflows*, *O paralelo*).
+- **Origem:** seção 1 (*Missão*, *Objetivo do DC*, *Entrada, comum aos dois workflows*, *O
+  paralelo*).
 
 #### I-02 Insight
 
 - **O que é:** uma das formas de entrada: algo para discutir, sem ser ainda um pedido.
 - **Como funciona:**
+  - O DC conversa sobre ele e só abre plano se ele virar um pedido (decidido em 2026-11-24).
   - Pode terminar numa conversa sem plano.
-  - O brief não diz como um insight vira pedido.
 - **Relações:** é uma forma de entrada (I-01); se virar pedido, segue para a escolha do tipo (I-03).
 - **Origem:** seção 1 (*Entrada, comum aos dois workflows*, etapa 1).
-- **Decidido em 2026-11-24:** uma entrada que ainda não é pedido. O DC conversa sobre ela e só abre plano se ela
-  virar um pedido.
 
 #### I-03 Tipo
 
@@ -240,10 +248,10 @@ com "—".
   - O valor `norma` de `plan_type` e `unit_type` vira `rule` no formato novo; os planos antigos
     continuam com `norma`.
   - Hoje o intake propõe o tipo junto com o plano; no redesign o tipo vem antes do decode.
-- **Relações:** escolhe o workflow (I-04) e, com ele, a correção (I-39) ou o produto; vem de uma lista;
-  é identificado por Claude (I-36) e pode ser corrigido pelo usuário (I-35); é declarado
-  no plano (I-11); define o objetivo do plano junto com o pedido (I-60); vem depois do pedido
-  (I-01) e antes do decode (I-06).
+- **Relações:** escolhe o workflow (I-04) e, com ele, a correção (I-39) ou o produto; vem de uma
+  lista; é identificado por Claude (I-36) e pode ser corrigido pelo usuário (I-35); é declarado no
+  plano (I-11); define o objetivo do plano junto com o pedido (I-60); vem depois do pedido (I-01) e
+  antes do decode (I-06).
 - **Origem:** seção 1 (*Entrada, comum aos dois workflows*, *O que muda*, *Restrições*); decisões 5
   e 6.
 
@@ -256,8 +264,8 @@ com "—".
     (decidido em 2026-11-24).
   - Os dois começam pela mesma entrada (etapas 1 e 2).
   - Outros tipos podem ganhar workflow próprio depois.
-  - Na Clean Architecture do DC, os workflows e suas etapas são os casos de uso; mudam quando um workflow
-    muda ou um tipo ganha workflow próprio.
+  - Na Clean Architecture do DC, os workflows e suas etapas são os casos de uso; mudam quando um
+    workflow muda ou um tipo ganha workflow próprio.
   - O workflow de correção é o primeiro módulo.
 - **Relações:** é escolhido pelo tipo (I-03); é feito de etapas (I-05); o de correção é I-39 e o de
   produto passa por decode (I-06), revisão (I-07), derive (I-08) e code (I-09); é seguido pelo
@@ -277,8 +285,8 @@ com "—".
 
 #### I-06 Decode
 
-- **O que é:** a primeira etapa do workflow de produto (P1): a em que Claude entende o pedido e propõe
-  uma solução conceitual. Substitui o `intake`.
+- **O que é:** a primeira etapa do workflow de produto (P1): a em que Claude entende o pedido e
+  propõe uma solução conceitual. Substitui o `intake`.
 - **Como funciona:**
   - Claude atua no papel de PM, Designer e Tech Lead.
   - Usa o mindset de produto, a foundation, os princípios, as guidelines e os guardrails, e as
@@ -293,10 +301,10 @@ com "—".
 - **Relações:** vem depois do tipo (I-03); produz a proposta, que o usuário aprova (I-18);
   segue-se a revisão (I-07); usa o mindset de produto (I-33), os papéis (I-31), as referências de
   produto (I-32), os quatro riscos (I-62), a foundation (I-26), princípios, guidelines e
-  guardrails (I-22, I-23, I-24) e os recursos do projeto (I-30, I-59); sua semente é o workflow de
+  guardrails (I-22, I-23, I-24) e os recursos do projeto (I-30, I-59); sua semente é o fluxo de
   decodificação (I-50); segue a Clean Architecture (I-53).
-- **Origem:** seção 1 (P1, *Referências de produto*, *O que muda*, *Workflow de correção*); decisões 7
-  e 12.
+- **Origem:** seção 1 (P1, *Referências de produto*, *O que muda*, *Workflow de correção*); decisões
+  7 e 12.
 
 #### I-07 Revisão
 
@@ -310,7 +318,9 @@ com "—".
     define.
   - Apoia-se em histórias de usuário e INVEST e em User Story Mapping.
   - A independência entre planos se confere nela.
-  - O lint cruza a tabela de recursos do plano com os recursos do projeto na revisão.
+  - Confere se os recursos do projeto citados no plano existem.
+- **Mecanismo hoje:** um lint cruza a tabela de recursos do plano com a descoberta de recursos do
+  projeto.
 - **Relações:** vem depois da aprovação da proposta (I-18); escreve histórias (I-37); quebra
   em tarefas (I-16); produz o plano técnico (I-12) e define o porte (I-14); confere a independência
   entre planos (I-46); usa as referências de produto
@@ -319,22 +329,24 @@ com "—".
 
 #### I-08 Derive
 
-- **O que é:** a etapa P5 do workflow de produto: prepara cada unidade para ser executada. Só existe no
-  médio e no grande.
+- **O que é:** a etapa P5 do workflow de produto: prepara cada unidade para ser executada. Só existe
+  no médio e no grande.
 - **Como funciona:**
-  - Entrega cada unidade com contexto, memória e o padrão de código do projeto.
+  - Entrega cada unidade com contexto, memória e o padrão de código do projeto. A memória são as
+    decisões e lacunas que o plano já registrou e que a unidade precisa conhecer (decidido em
+    2026-11-24).
   - Garante que a unidade baste sozinha (cold-start).
+  - Termina com a aprovação das unidades derivadas pelo usuário (decidido em 2026-11-24).
   - No paralelo com produto digital, é o momento em que a história fica pronta para desenvolver.
-  - No grande, orquestra a execução entre sessões (handoff).
+  - No médio e no grande, produz o handoff, que leva a execução para uma sessão nova.
   - Cita na unidade as guidelines aplicáveis, que o code recebe.
-  - O lint de nomes dos recursos do projeto roda no derive.
-- **Relações:** vem depois do plano técnico aprovado (I-12, I-18); prepara a unidade (I-15); garante
-  a Definition of Ready (I-38) e o cold-start (I-44); produz o handoff (I-45); usa o padrão de
-  código (I-28) e a foundation (I-26); cita guidelines (I-23) e confere recursos do projeto
-  (I-59); antecede o code (I-09).
+  - Confere se os recursos do projeto citados ainda existem.
+- **Mecanismo hoje:** um lint confere os nomes dos recursos do projeto.
+- **Relações:** vem depois do plano técnico aprovado (I-12, I-18) e termina numa aprovação (I-18);
+  prepara a unidade (I-15); garante a Definition of Ready (I-38) e o cold-start (I-44); produz o
+  handoff (I-45); usa o padrão de código (I-28) e a foundation (I-26); cita guidelines (I-23) e
+  confere recursos do projeto (I-59); antecede o code (I-09).
 - **Origem:** seção 1 (P5, *Porte*, *O paralelo*); seção 3; decisões 8 e 12.
-- **Decidido em 2026-11-24:** a memória são as decisões e lacunas que o plano já registrou e que a unidade precisa
-  conhecer, coerente com o cold-start.
 
 #### I-09 Code
 
@@ -347,11 +359,13 @@ com "—".
     unidade traz o que precisa para o cold-start, e começar sem o histórico economiza tokens.
   - Gate de entrada: não começa sem oráculo. Gate de saída: não fecha sem teste e sem a aprovação do
     usuário (P7).
-  - A unidade roda num subagente, sem o histórico da conversa.
-  - A guideline-ponte continua valendo no code, e o lint de nomes dos recursos do projeto roda na
-    entrada.
-  - Se a execução mostrar que a unidade estava insuficiente, a correção é da unidade, registrada como
-    lacuna.
+  - A unidade roda sem o histórico da conversa.
+  - Na entrada, confere se os recursos do projeto citados ainda existem; as guidelines que ligam
+    caminhos a recursos do projeto continuam valendo.
+  - Se a execução mostrar que a unidade estava insuficiente, a correção é da unidade, registrada
+    como lacuna.
+- **Mecanismo hoje:** a skill `implement` roda num subagente (fork); um lint confere os nomes dos
+  recursos na entrada; a guideline-ponte liga caminhos a recursos do projeto.
 - **Relações:** executa tarefas (I-16) ou uma unidade (I-15); vem depois do plano mínimo aprovado
   (I-13) ou do derive (I-08); é seguido do teste (I-19) e da aprovação (I-18); usa os recursos do
   projeto (I-30, I-59) e as guidelines (I-23); obedece ao cold-start (I-44); executa o Claude
@@ -379,26 +393,28 @@ com "—".
   - É registrado no diagnóstico (C1) e aprovado pelo usuário antes do code (C2).
   - Se o diagnóstico mostrar que a correção não é pequena, ela passa para o workflow de produto.
   - A correção gera plano registrado (decisão 9).
-- **Relações:** é o plano (I-11) do workflow de correção (I-39); tem o porte pequeno (I-14); é aprovado
-  (I-18); é codado (I-09) e verificado pelo teste que reproduz o defeito (I-65).
+- **Relações:** é o plano (I-11) do workflow de correção (I-39); tem o porte pequeno (I-14); é
+  aprovado (I-18); é codado (I-09) e verificado pelo teste que reproduz o defeito (I-65).
 - **Origem:** seção 1 (*Workflow de correção*, C1, C2); decisões 9 e 10.
 
 #### I-14 Porte
 
-- **O que é:** o tamanho do plano no workflow de produto: pequeno, médio ou grande.
+- **O que é:** o tamanho do plano: pequeno, médio ou grande, e só esses três. Vale nos dois
+  workflows: a correção usa o pequeno com uma única tarefa, o plano mínimo.
 - **Como funciona:**
   - Pequeno: lista de tarefas, sem derive, executada na mesma sessão logo após a aprovação do plano
     técnico.
-  - Médio: 1 unidade, com derive, aprovada ao final.
-  - Grande: 2 ou mais unidades, com derive, uma por vez, cada uma depois da aprovação da anterior.
+  - Médio: 1 unidade, com derive, numa sessão nova, aprovada ao final.
+  - Grande: 2 ou mais unidades, com derive, numa sessão nova, uma por vez, cada uma depois da
+    aprovação da anterior.
   - Define-se na revisão.
   - Não há limite de tarefas por unidade: a unidade tem as tarefas necessárias para entregar um
     pacote testável que agrega valor ao produto (decidido em 2026-11-24).
-  - O porte medido continua onde está, aplicado por script.
   - Um plano sem porte não é aprovado.
+- **Mecanismo hoje:** o porte medido continua onde está, aplicado por script.
 - **Relações:** é definido na revisão (I-07); determina se o plano passa pelo derive (I-08); fixa a
-  estrutura do plano (I-11) em tarefas (I-16) ou unidades (I-15); o grande tem handoff (I-45) e
-  teste do plano inteiro (I-64).
+  estrutura do plano (I-11) em tarefas (I-16) ou unidades (I-15); o médio e o grande têm handoff
+  (I-45); só o grande tem teste do plano inteiro (I-64); o mínimo é o pequeno (I-13).
 - **Origem:** seção 1 (*Porte, no workflow de produto*); seção 3 (*Porte medido*); decisões 2 e 3.
 
 #### I-19 Teste
@@ -456,16 +472,16 @@ com "—".
 
 #### I-23 Guideline
 
-- **O que é:** uma regra do projeto que carrega quando Claude lê ou edita um arquivo que casa com
-  um padrão.
+- **O que é:** uma diretriz técnica do projeto, que vale para os arquivos que casam com um
+  padrão.
 - **Como funciona:**
-  - Mecanismo: rule com `paths`, em `.claude/rules/`.
-  - Frontmatter inválido faz a guideline carregar sempre; por isso o lint continua necessário.
-  - Subdiretórios de `.claude/rules/` também carregam.
   - A guideline-ponte nomeia o recurso do projeto para os caminhos onde ele vale; o derive a cita
     na unidade e o code a recebe.
   - A Clean Architecture, no projeto, é guideline de quem a adota.
   - O decode a usa.
+- **Mecanismo hoje:** rule com `paths` em `.claude/rules/`, que carrega quando Claude lê ou edita um
+  arquivo que casa com o padrão; frontmatter inválido faz a guideline carregar sempre, e por isso o
+  lint continua necessário; subdiretórios de `.claude/rules/` também carregam.
 - **Relações:** é do projeto; usada no decode (I-06), citada no derive (I-08) e recebida no code
   (I-09); a ponte liga recursos do projeto (I-30); irmã do princípio (I-22) e do guardrail (I-24);
   Clean Architecture no projeto (I-53); criada e revisada pelo setup (I-48) e pelo rethink (I-49).
@@ -477,10 +493,11 @@ com "—".
 
 - **O que é:** uma regra do projeto que não pode depender de Claude lembrar: é imposta.
 - **Como funciona:**
-  - Mecanismo: o hook `PreToolUse`, que a documentação manda usar para bloquear
-    independentemente da decisão de Claude.
-  - As regras ficam no projeto, em `.claude/guardrails.json`; o hook é do plugin.
+  - Bloqueia a ação independentemente da decisão de Claude.
+  - As regras são do projeto; o que as impõe é do plugin.
   - O decode o usa.
+- **Mecanismo hoje:** o hook `PreToolUse`, que a documentação do Claude Code manda usar para
+  bloquear; as regras ficam em `.claude/guardrails.json`.
 - **Relações:** é do projeto; usado no decode (I-06); criado e revisado pelo setup (I-48) e pelo
   rethink (I-49); irmão do princípio (I-22) e da guideline (I-23).
 - **Origem:** seção 3; seção 5.
@@ -520,9 +537,10 @@ com "—".
   - Mora só no plugin, versionado com ele, e nunca é copiado para o projeto.
   - Só quem mantém o plugin o altera, a cada versão.
   - Evolui por evidência, a partir do registro de uso, e não por reescrita (seção 3).
-  - É à prova de futuro pela regra de dependência; um lint confere.
+  - É à prova de futuro pela regra de dependência.
   - Substitui a norma por completo, inclusive nos projetos que já usam o DC.
   - Na Clean Architecture, é a camada das entidades.
+- **Mecanismo hoje:** um lint confere que o codex não cita mecanismo.
 - **Relações:** é uma camada (I-52), par da foundation (I-26); é mantido por quem mantém o plugin
   (I-61); nenhum projeto o altera (I-56); obedece à regra de dependência (I-54) e aos invariantes
   (I-55); contém as referências de produto (I-32) e o fluxo de decodificação (I-50); evolui pelo
@@ -540,7 +558,7 @@ com "—".
   - Extrair o padrão do código existente, com o setup propondo e a pessoa aprovando, é módulo para
     depois da versão 1.
 - **Relações:** faz parte da foundation (I-26); entra na unidade pelo derive (I-08); o setup propõe
-  extraí-lo (I-48) com aprovação (I-18); a extração é módulo futuro (I-34).
+  extraí-lo (I-48), com o sim da pessoa; a extração é módulo futuro (I-34).
 - **Origem:** seção 1 (*Duas camadas*, P5); seção 3; decisões 8 e 14.
 
 #### I-29 Mapa de recursos do projeto
@@ -587,8 +605,8 @@ com "—".
 
 #### I-32 Referência de produto
 
-- **O que é:** uma referência consagrada de criação de produto digital em que o decode e a revisão se
-  apoiam. Ficam no próprio codex.
+- **O que é:** uma referência consagrada de criação de produto digital em que o decode e a revisão
+  se apoiam. Ficam no próprio codex.
 - **Como funciona:**
   - No decode: Jobs to Be Done, Design Thinking e Double Diamond, Lean Startup, os quatro riscos de
     Cagan e Shape Up.
@@ -596,7 +614,7 @@ com "—".
   - Cada uma traz algo específico: por exemplo, o JTBD descreve o problema pelo que a pessoa quer
     realizar.
 - **Relações:** moram no codex (I-27); apoiam o decode (I-06) e a revisão (I-07); incluem os quatro
-  riscos (I-62), hipótese e MVP (I-63), a história (I-37) e a proposta (via Shape Up); a
+  riscos (I-62), a hipótese (I-63), o MVP (I-66), a história (I-37) e a proposta (via Shape Up); a
   semente delas é o fluxo de decodificação (I-50); o mindset de produto as sustenta (I-33).
 - **Origem:** seção 1 (*Referências de produto*); decisão 11.
 
@@ -644,9 +662,11 @@ com "—".
 - **Como funciona:**
   - Pede: traz o pedido, os blocos de texto ou o insight.
   - Pode corrigir o tipo que Claude declara.
-  - Aprova: a correção (C2), a proposta (P2), o plano técnico (P4) e cada entrega (P7).
+  - Aprova, na ordem do workflow: a proposta, o plano técnico, as unidades derivadas, cada entrega
+    e o plano no fim; na correção, o plano mínimo e o plano no fim (I-18).
   - Testa, ou deixa o teste com Claude, na correção, na entrega e no plano inteiro.
-  - Aprova as escritas do DC no projeto, como a foundation e as regras de permissão.
+  - Dá o sim às escritas do DC no projeto, como a foundation e as permissões de uso de skill; esse
+    sim não é aprovação do workflow.
   - O projeto que usa o DC não altera o codex nem liga ou desliga módulo.
 - **Relações:** faz o pedido (I-01); corrige o tipo (I-03); dá as aprovações (I-18); testa (I-19);
   parceiro de Claude (I-36); não é o mantenedor do plugin (I-61).
@@ -661,7 +681,8 @@ com "—".
   - Pode testar no lugar do usuário.
   - Executa as unidades em cold-start, sem o histórico da conversa.
   - O DC é otimizado para Claude.
-  - Modelo por etapa: Opus decide, Sonnet executa (frontmatter das skills).
+- **Mecanismo hoje:** o modelo de cada etapa é declarado no frontmatter da skill: Opus decide,
+  Sonnet executa.
 - **Relações:** faz o decode (I-06), a revisão (I-07), o derive (I-08) e o code (I-09); identifica o
   tipo (I-03); exerce os papéis (I-31); testa (I-19); parceiro do usuário (I-35); obedece ao
   cold-start (I-44).
@@ -707,6 +728,7 @@ com "—".
   - C2, aprovação do plano mínimo.
   - C3, code.
   - C4, teste: o teste que reproduz o defeito falha antes da correção e passa depois.
+  - Por fim, a aprovação final do plano (decidido em 2026-11-24).
   - O decode é enxuto: sem gastar milhares de tokens para corrigir uma palavra.
   - Se a correção não for pequena, o plano passa para o workflow de produto.
   - É o primeiro módulo.
@@ -720,30 +742,33 @@ com "—".
 
 - **O que é:** o plano sem versão do formato.
 - **Como funciona:**
-  - Os scripts o leem pela regra antiga.
+  - É lido pela regra antiga.
   - Fica onde está, mesmo dentro de uma pasta de core.
   - Só é atualizado quando o usuário quiser revisá-lo, derivá-lo ou codá-lo; revisar esses planos
     não faz parte do redesign.
   - Continua com `norma` em `plan_type` e `unit_type`.
   - Links de planos fechados para a norma ficam como registro.
   - Nenhum arquivo em uso usa os nomes antigos, mas esses planos ficam como estão.
-- **Relações:** é um plano (I-11) sem a versão do formato; mora na raiz dos planos (I-43) ou em pasta
-  de core; só muda quando o usuário (I-35) o leva à revisão (I-07), ao derive (I-08) ou ao code
-  (I-09); migração em I-42.
+- **Mecanismo hoje:** os scripts escolhem a regra pela versão do formato.
+- **Relações:** é um plano (I-11) sem a versão do formato; mora na raiz dos planos (I-43) ou em
+  pasta de core; só muda quando o usuário (I-35) o leva à revisão (I-07), ao derive (I-08) ou ao
+  code (I-09); migração em I-42.
 - **Origem:** seção 1 (*Restrições*, *Compatibilidade e migração*); decisões 3 e 6.
 
 #### I-42 Migração
 
 - **O que é:** o passo que substitui a norma pelo codex nos projetos que já usam o DC.
 - **Como funciona:**
-  - O hook de abertura avisa na primeira sessão com a versão nova.
+  - A primeira sessão com a versão nova avisa da migração.
   - Apaga a cópia da norma do projeto, só com aprovação.
   - O histórico do git a guarda, e os links de planos fechados para a norma ficam como registro.
-  - A cópia é arquivo do projeto, gravado pelo bootstrap em `<plan_root>/system/`; remover e
-    reinstalar o plugin não a apaga.
+  - A cópia é arquivo do projeto; remover e reinstalar o plugin não a apaga.
   - Todo plano novo declara a versão do formato.
-  - O redesign termina no codex; depois vêm a propagação e a revisão geral, e só então a release 3.0.
-- **Relações:** substitui a norma pelo codex (I-27); exige aprovação (I-18); atua sobre a raiz dos
+  - O redesign termina no codex; depois vêm a propagação e a revisão geral, e só então a release
+    3.0.
+- **Mecanismo hoje:** o aviso vem do hook de abertura da sessão; a cópia foi gravada pelo bootstrap
+  em `<plan_root>/system/`.
+- **Relações:** substitui a norma pelo codex (I-27); pede o sim da pessoa; atua sobre a raiz dos
   planos (I-43); lida com planos antigos (I-41).
 - **Origem:** seção 1 (*Compatibilidade e migração*); decisões 6 e 13.
 
@@ -763,8 +788,7 @@ com "—".
 
 #### I-44 Cold-start
 
-- **O que é:** a propriedade da unidade de bastar sozinha: roda num subagente sem o histórico da
-  conversa.
+- **O que é:** a propriedade da unidade de bastar sozinha: roda sem o histórico da conversa.
 - **Como funciona:**
   - É o que o derive precisa garantir.
   - Se a execução mostrar que a unidade estava insuficiente, a correção é da unidade, registrada
@@ -777,10 +801,14 @@ com "—".
 
 #### I-45 Handoff
 
-- **O que é:** a orquestração da execução entre sessões, no plano grande.
+- **O que é:** o que leva o plano médio ou grande para a sessão nova e conduz a execução das
+  unidades (decidido em 2026-11-24).
 - **Como funciona:**
-  - Faz parte da skill derive.
-- **Relações:** é produzido pelo derive (I-08); conduz as unidades (I-15) de um plano grande (I-14).
+  - É produzido no derive.
+  - O brief e o projeto o previam só no grande; com a sessão nova no médio, vale para os dois.
+- **Mecanismo hoje:** faz parte da skill derive.
+- **Relações:** é produzido pelo derive (I-08); conduz as unidades (I-15) de um plano médio ou
+  grande (I-14); leva à sessão nova (I-09).
 - **Origem:** seção 3.
 - **Nota [projeto]:** a norma o descreve como `_handoff.md`, o prompt que conduz a execução, gravado
   só no grande (`docs/plan/system/modelo-dev-units.md:762`, `1626`).
@@ -791,37 +819,42 @@ com "—".
   outro.
 - **Como funciona:**
   - A checagem de independência e concorrência vai para o codex, na etapa de revisão.
+  - Vale a regra atual **[projeto]** (`modelo-dev-units.md:790`): todo plano diz por que é um
+    plano e não dois, e a revisão barra dois planos concorrentes no mesmo alvo (decidido em
+    2026-11-24).
 - **Relações:** é conferida na revisão (I-07); vale entre planos (I-11).
 - **Origem:** seção 3.
-- **Decidido em 2026-11-24:** vale a regra atual **[projeto]**: todo plano diz por que é um plano e não dois
-  (`modelo-dev-units.md:790`), e a revisão barra dois planos concorrentes no mesmo alvo.
 
 #### I-47 Registro de uso
 
-- **O que é:** o log de uso do DC e o feedback ao método, que fazem o codex evoluir por evidência, não
-  por reescrita.
+- **O que é:** o log de uso do DC e o feedback ao método, que fazem o codex evoluir por evidência,
+  não por reescrita.
 - **Como funciona:**
-  - O log fica no projeto, em `.claude/log/`.
+  - O registro fica no projeto.
   - O destino do feedback é o registro do método.
-  - As entradas usam as marcas `E-XX` e `M-XX`.
+  - As entradas usam as marcas `E-XX` e `M-XX` **[projeto]** (`modelo-dev-units.md:1252`): `E-XX`
+    é um erro registrado; `M-XX` é um feedback sobre o próprio método, escrito de forma genérica
+    e aprovado pela pessoa (decidido em 2026-11-24).
+- **Mecanismo hoje:** o log fica em `.claude/log/`.
 - **Relações:** é do projeto; alimenta a evolução do codex (I-27), cuja alteração cabe só ao
   mantenedor (I-61).
 - **Origem:** seção 3.
-- **Decidido em 2026-11-24:** **[projeto]** `E-XX` é um erro registrado no log; `M-XX` é um feedback sobre o próprio
-  método, escrito de forma genérica e aprovado pela pessoa (`modelo-dev-units.md:1252`).
 
 #### I-48 Setup
 
-- **O que é:** a skill do primeiro uso do DC no projeto: cria princípios, guidelines e guardrails.
+- **O que é:** o primeiro uso do DC no projeto: cria princípios, guidelines e guardrails.
 - **Como funciona:**
-  - Um aviso na abertura da sessão, por hook, propõe o setup quando falta.
+  - A abertura da sessão propõe o setup quando ele falta.
   - É uma das portas pelas quais o projeto escreve a foundation, sempre com aprovação.
   - Propõe, com a pessoa aprovando, a extração do padrão de código; isso é módulo para depois da
     versão 1.
-  - Cada skill do projeto que o DC pode usar ganha uma regra `Skill(<nome>)` gravada com aprovação.
+  - Registra a permissão de cada skill do projeto que o DC pode usar, com o sim da pessoa.
   - A guideline-ponte é criada no setup.
+- **Mecanismo hoje:** o aviso vem do hook de abertura da sessão; a permissão é uma regra
+  `Skill(<nome>)` no `settings.json` do projeto.
 - **Relações:** cria e revisa princípios, guidelines e guardrails (I-22, I-23, I-24); escreve a
-  foundation (I-26); irmão do rethink (I-49); aprovações (I-18); avisa também do huddle (I-21).
+  foundation (I-26); irmão do rethink (I-49); escreve o mapa de recursos (I-29); avisa também do
+  huddle (I-21).
 - **Origem:** seção 3; seção 1 (*Duas camadas*); seção 5; decisões 8 e 12.
 - **Nota [projeto]:** a skill o define como o primeiro uso: pré-condições, perfil, princípios,
   guidelines, guardrails, huddle e o princípio Decode → Code, uma sugestão por vez, com toda
@@ -829,7 +862,7 @@ com "—".
 
 #### I-49 Rethink
 
-- **O que é:** a skill que revisa princípios, guidelines e guardrails depois de uma mudança de rumo
+- **O que é:** a revisão de princípios, guidelines e guardrails depois de uma mudança de rumo
   do projeto.
 - **Como funciona:**
   - É uma das portas pelas quais o projeto escreve a foundation, sempre com o sim da pessoa.
@@ -847,30 +880,30 @@ com "—".
 
 #### I-50 Fluxo de decodificação
 
-- **O que é:** os três estágios que o DC de hoje aplica a uma decisão antes de virar plano: Clarificar,
-  Evitar e Reduzir.
+- **O que é:** os três estágios que o DC de hoje aplica a uma decisão antes de virar plano:
+  Clarificar, Evitar e Reduzir.
 - **Como funciona:**
   - Clarificar pergunta qual é o problema, a métrica e o beneficiário.
   - Evitar pergunta se dá para resolver sem código.
   - Reduzir pergunta qual é a menor versão que resolve 80%.
   - O brief o trata como a semente das referências de produto.
-- **Relações:** semente do decode (I-06) e das referências de produto (I-32); Reduzir tem relação com
-  hipótese e MVP (I-63).
+  - Entra como base do decode, com Clarificar, Evitar e Reduzir; os gates A e B só entram depois
+    de revistos à luz das referências de produto (decidido em 2026-11-24).
+- **Relações:** semente do decode (I-06) e das referências de produto (I-32); o Clarificar pergunta
+  a métrica que dá o sinal da hipótese (I-63); o Reduzir difere do MVP (I-66).
 - **Origem:** seção 1 (*Referências de produto*).
 - **Nota [projeto]:** a norma acrescenta dois gates, A (necessidade real) e B (mínimo viável)
   (`docs/plan/system/modelo-dev-units.md:671-690`); o princípio da subtração antes da adição está em
   `.claude/rules/principles.md`.
-- **Decidido em 2026-11-24:** entra como base do decode, com Clarificar, Evitar e Reduzir; os gates A e B só entram
-  depois de revistos à luz das referências de produto.
 
 #### I-51 Paralelo com produto digital
 
-- **O que é:** a correspondência entre o workflow do DC e o workflow de produto digital.
+- **O que é:** a correspondência entre o workflow do DC e o processo de criação de produto digital.
 - **Como funciona:**
   - Stakeholders e squad escrevem o pedido (entrada); PM, Designer e Tech Lead propõem a solução
-    (decode); a proposta é aprovada (aprovação); PM e Tech Lead escrevem histórias, refinam e quebram
-    em tarefas (revisão); a história fica pronta (derive, Definition of Ready); desenvolvimento
-    (code); demonstração e aceite da história (teste e aprovação da unidade).
+    (decode); a proposta é aprovada (aprovação); PM e Tech Lead escrevem histórias, refinam e
+    quebram em tarefas (revisão); a história fica pronta (derive, Definition of Ready);
+    desenvolvimento (code); demonstração e aceite da história (teste e aprovação da unidade).
   - O plano corresponde à proposta, a unidade à história e a tarefa continua tarefa.
   - Orienta, mas ainda não é regra: precisa de mais estudo e refinamento, e não é o foco agora.
   - O DC também serve para criar recursos que não são produto digital.
@@ -881,7 +914,8 @@ com "—".
 
 #### I-52 Camada
 
-- **O que é:** cada uma das duas partes que guardam o método: o codex e a foundation.
+- **O que é:** cada uma das duas partes em que o DC organiza o que sabe: o método, no codex, e o
+  projeto, na foundation.
 - **Como funciona:**
   - Codex: o método, só no plugin, alterado só por quem o mantém.
   - Foundation: o padrão de código do projeto e o mapa de recursos, em `<plan_root>/system/`,
@@ -926,10 +960,10 @@ com "—".
   - As skills citam o codex, e os scripts o implementam.
   - O núcleo nunca importa um módulo.
   - O que envelhece rápido fica na borda; é isso que torna o codex à prova de futuro.
-  - Um lint confere que o codex não cita mecanismo.
   - Teste para cada trecho do codex: ele continuaria verdadeiro se o script, a skill ou a versão do
     Claude Code mudassem? Se não, não é codex.
   - A norma atual a quebra nos 27% das linhas que descrevem mecanismo.
+- **Mecanismo hoje:** um lint confere que o codex não cita mecanismo.
 - **Relações:** vale para o codex (I-27); é a regra da Clean Architecture (I-53); no nível dos
   módulos, o núcleo nunca importa um módulo (I-58).
 - **Origem:** seção 1 (*Restrições*); seção 4; decidido em 2026-11-24.
@@ -939,14 +973,14 @@ com "—".
 - **O que é:** uma regra que vale sempre: uma fonte por fato; nada específico de projeto viaja no
   plugin.
 - **Como funciona:**
-  - Uma fonte por fato: nenhum trecho do codex aparece repetido na foundation nem nas skills; um
-    lint confere a repetição literal.
-  - Nada do projeto no plugin: a auditoria do pacote hoje só procura o nome deste repositório; dado de
-    outro projeto precisa entrar na mesma auditoria.
-  - Instruções em conflito não têm vencedor; por isso nada do projeto, nem rules nem foundation, pode
-    repetir ou contradizer o codex.
-- **Relações:** protege o codex (I-27) e a foundation (I-26); a lista de tipos fica fora do codex por
-  causa dela; o projeto não altera o codex (I-56).
+  - Uma fonte por fato: nenhum trecho do codex aparece repetido na foundation nem nas skills.
+  - Nada do projeto no plugin: nenhum dado de projeto pode viajar no plugin.
+  - Instruções em conflito não têm vencedor; por isso nada do projeto, nem rules nem foundation,
+    pode repetir ou contradizer o codex.
+- **Mecanismo hoje:** um lint confere a repetição literal; a auditoria do pacote hoje só procura o
+  nome deste repositório, e dado de outro projeto precisa entrar na mesma auditoria.
+- **Relações:** protege o codex (I-27) e a foundation (I-26); a lista de tipos fica fora do codex
+  por causa dela; o projeto não altera o codex (I-56).
 - **Origem:** seção 1 (*Restrições*); seção 3; seção 5.
 
 #### I-56 Restrição fundamental
@@ -954,35 +988,38 @@ com "—".
 - **O que é:** o projeto não altera o codex.
 - **Como funciona:**
   - O codex só existe no plugin, e nenhum comando do DC o copia para o projeto.
-  - Consequência: o bootstrap deixa de copiar a norma.
+  - Consequência: nada copia o método para o projeto.
   - Tradeoff aceito: fora de uma skill do DC, Claude não vê o método.
+- **Mecanismo hoje:** o bootstrap deixa de copiar a norma.
 - **Relações:** protege o codex (I-27); a foundation, que o projeto altera, é a outra camada (I-26);
   a migração remove a cópia antiga (I-42); só o mantenedor altera o codex (I-61).
 - **Origem:** seção 1 (*Restrições*, *Duas camadas*); decisão 1.
 
 #### I-58 Núcleo
 
-- **O que é:** o DC sem módulos.
+- **O que é:** a parte do DC que funciona sem nenhum módulo.
 - **Como funciona:**
-  - Nunca importa um módulo.
-  - Procura as pastas que têm `module.json` e só elas viajam no pacote; não há lista central.
-  - Recusa um módulo que exige outra versão dele, e diz por quê.
-  - A suíte do núcleo continua passando sem qualquer módulo; incluir um módulo não exige editar o
-    núcleo.
-  - O núcleo do codex fica na pasta compartilhada das skills.
-- **Relações:** descobre os módulos (I-34); o módulo o usa; o núcleo do codex (I-27); mantido
+  - Nunca depende de um módulo.
+  - Incluir ou remover um módulo não exige alterá-lo.
+  - O contrato técnico com os módulos é arquitetura do plugin, não do método: fica na
+    documentação de manutenção, fora do codex (decidido em 2026-11-24).
+- **Mecanismo hoje:** o núcleo procura as pastas que têm `module.json`, e só elas viajam no pacote;
+  recusa um módulo que exige outra versão dele; a suíte do núcleo passa sem qualquer módulo; o
+  núcleo do codex fica na pasta compartilhada das skills.
+- **Relações:** não depende dos módulos (I-34), que o usam; o núcleo do codex (I-27); mantido
   por I-61; a regra de dependência vale entre núcleo e módulo (I-54).
 - **Origem:** seção 1 (*Restrições*, *Módulos*); seção 5; decisão 14.
 
 #### I-59 Tabela de recursos do plano
 
-- **O que é:** a tabela no plano que registra as skills do projeto pelo nome.
+- **O que é:** a tabela no plano que registra, pelo nome, os recursos do projeto que o plano usa.
 - **Como funciona:**
-  - Registra só o nome pelo qual a skill é invocada, o tipo e onde entra na entrega; sem conteúdo,
-    linha ou versão.
-  - Um script a lê.
-  - Um lint cruza a tabela com a descoberta de recursos na revisão, no derive e na entrada do code.
+  - Registra só o nome pelo qual o recurso é invocado, o tipo e onde entra na entrega; sem
+    conteúdo, linha ou versão.
+  - É conferida na revisão, no derive e na entrada do code: o recurso citado precisa existir.
   - No decode, o nome vai para a tabela.
+- **Mecanismo hoje:** um script lê a tabela, e um lint a cruza com a descoberta de recursos do
+  projeto.
 - **Relações:** faz parte do plano (I-11); registra recursos do projeto (I-30); orienta-se pelo mapa
   de recursos (I-29); é preenchida no decode (I-06) e conferida na revisão (I-07), no derive
   (I-08) e no code (I-09); diz onde cada recurso entra na entrega.
@@ -992,10 +1029,11 @@ com "—".
 
 - **O que é:** o que o plano quer atingir, claro para o usuário e para Claude.
 - **Como funciona:**
+  - É uma frase que o usuário confirma na etapa de tipo, distinta do objetivo do DC (decidido em
+    2026-11-24).
   - É uma das saídas da etapa 2 da entrada, ao lado do workflow que o plano segue.
 - **Relações:** sai da etapa de tipo (I-03); é do plano (I-11); parte do pedido (I-01).
 - **Origem:** seção 1 (*Entrada, comum aos dois workflows*, etapa 2).
-- **Decidido em 2026-11-24:** uma frase que o usuário confirma na etapa de tipo, distinta do objetivo do DC.
 
 #### I-61 Quem mantém o plugin
 
@@ -1049,7 +1087,7 @@ com "—".
 
 - **O que é:** o teste P8, feito sobre o plano como um todo.
 - **Como funciona:**
-  - Só vale quando o plano tem mais de uma unidade.
+  - Só existe no plano grande (decidido em 2026-11-24).
   - Só roda depois que todas as unidades forem concluídas.
   - Claude ou o usuário o faz.
 - **Relações:** é um teste (I-19); testa o plano (I-11) do porte grande (I-14); vem depois das
@@ -1087,3 +1125,18 @@ com "—".
   referência de produto (I-32).
 - **Origem:** seção 1 (*Referências de produto*); criado na fase 2, ao separar hipótese e MVP;
   decidido em 2026-11-24.
+
+## Termos e pontos em aberto
+
+O que os itens usam sem definir, e o que o redesign ainda precisa decidir. O codex vai precisar
+resolver cada um.
+
+| Termo ou ponto | Onde aparece | Situação |
+|---|---|---|
+| Proposta | I-06, I-07, I-11, I-12, I-18, I-32 e outros | é a saída do decode (P1) e o que se aprova em P2; o item I-10 saiu na fase 2 |
+| Entrega | I-15, I-18, I-19, I-59, I-66 | é o que a unidade produz e o que se aprova em P7; o item I-17 saiu na fase 2 |
+| Critério de aceite ou oráculo | I-09, I-15, I-19, I-37 | é o gate de entrada do code; o item I-20 saiu na fase 2, sem decidir se os dois termos são o mesmo |
+| Lacuna | I-08, I-09, I-15, I-44 | é a unidade que se mostrou insuficiente, registrada no plano; nunca virou item |
+| "O decode segue a Clean Architecture" | I-06, I-53 | o brief afirma, mas não diz o que isso significa na prática |
+| O teste antes da aprovação final no pequeno e no médio | I-18, I-19, I-64 | o teste do plano inteiro só existe no grande; no pequeno e no médio, não está definido o que se testa antes da aprovação final |
+| Divergências com o brief | I-18, I-21, I-45 | as aprovações novas, o huddle e o handoff no médio ainda não estão no brief; vale o inventário |
