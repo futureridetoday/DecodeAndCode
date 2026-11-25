@@ -29,7 +29,7 @@ o codex; a fase 2 migra para ele, um por vez, tudo o que hoje consome a norma. O
 do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); este plano diz como
 chegar lá e não repete o que eles dizem.
 
-**Estado:** escrito em 2026-11-25; execução autorizada só para a parte 1.1, em 2026-11-25. Nenhuma
+**Estado:** escrito em 2026-11-25; a parte 1.1 foi autorizada e concluída em 2026-11-25. Nenhuma
 outra parte começa sem a aprovação da pessoa.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
@@ -86,7 +86,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 
 ### Parte 1.1 — Arquitetura da informação e estratégia de conteúdo
 
-- **Entrega:** o guia do codex, decidido com a pessoa, em `docs/codex/codex-guide.md` (novo). Ele
+- **Entrega:** o guia do codex, decidido com a pessoa, em `docs/maintenance/codex-guide.md` (novo). Ele
   responde:
   - **Leitores e leitura:** quem lê o codex e quando — cada etapa lê o trecho de que precisa, quando
     roda (item 27), e quem mantém o plugin o altera (item 61) — e como cada trecho é achado sem ler o
@@ -115,7 +115,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como se chega ao guia:** duas ou três alternativas de organização, comparadas por um critério
   medido — por exemplo, quantas seções e quantos arquivos cada etapa precisa ler —, e a pessoa
   escolhe.
-- **Alvo:** `docs/codex/codex-guide.md`.
+- **Alvo:** `docs/maintenance/codex-guide.md`.
 - **Depende de:** —
 - **Critério de aceite:** o guia responde a cada pergunta acima; todo item do inventário e todo ponto
   da 1.2 têm destino no mapa; nenhum *Mecanismo hoje* tem destino no codex; a escolha da organização
@@ -123,7 +123,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** o mapa conferido contra a lista de itens do inventário e de pontos da 1.2; o
   guia lido contra a lista de perguntas.
 - **Onde roda:** esta sessão.
-- **Estado:** em curso desde 2026-11-25.
+- **Estado:** concluída em 2026-11-25.
 
 ### Parte 1.2 — Pontos em aberto
 
