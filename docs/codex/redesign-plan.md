@@ -29,8 +29,8 @@ o codex; a fase 2 migra para ele, um por vez, tudo o que hoje consome a norma. O
 do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); este plano diz como
 chegar lá e não repete o que eles dizem.
 
-**Estado:** escrito em 2026-11-25; execução **não autorizada**. Nenhuma parte começa sem a aprovação
-da pessoa.
+**Estado:** escrito em 2026-11-25; execução autorizada só para a parte 1.1, em 2026-11-25. Nenhuma
+outra parte começa sem a aprovação da pessoa.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
 
@@ -106,7 +106,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** leitura da tabela de pontos em aberto e busca por "sem fonte" e ": —" no
   inventário.
 - **Onde roda:** esta sessão, ponto a ponto com a pessoa.
-- **Estado:** pendente.
+- **Estado:** em curso desde 2026-11-25.
 
 ### Parte 1.2 — Arquitetura da informação e estratégia de conteúdo
 
