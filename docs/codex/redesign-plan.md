@@ -123,7 +123,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** o mapa conferido contra a lista de itens do inventário e de pontos da 1.2; o
   guia lido contra a lista de perguntas.
 - **Onde roda:** esta sessão.
-- **Estado:** concluída em 2026-11-25.
+- **Estado:** concluída em 2026-11-25, PR #63.
 
 ### Parte 1.2 — Pontos em aberto
 
