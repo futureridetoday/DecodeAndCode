@@ -59,6 +59,7 @@ propagação (`redesign-brief.md:231-232`), e a verificação final, que o fecha
 | D-06 | 2026-11-25 | O teto de 8 passos por unidade sai quando o `lint_unidade.py` migrar, junto com o teste dele. Mantém a decisão 3 do brief, de o teto sair junto com a troca (`redesign-brief.md:258-261`). |
 | D-07 | 2026-11-25 | A norma é apagada quando não sobrar consumidor dela. A migração nos projetos que já usam o DC (item 42) fecha a fase 2, antes da release. |
 | D-08 | 2026-11-25 | O plano mora neste arquivo, fora do `_inbox/` e sem a numeração do `dc.py`. Não usa `intake`, `review-plan`, `derive`, `implement`, o backlog projetado nem os lints do DC como gate ([handoff](redesign-handoff.md), *Aviso central*). |
+| D-09 | 2026-11-25 | A arquitetura da informação vem antes dos pontos em aberto: a 1.1 passa a ser o guia, e a 1.2, os pontos. Onde cada conceito mora no codex é decisão de arquitetura, e vários pontos — proposta, entrega, critério de aceite e lacuna — dependem dela. A autorização dada à 1.1 passa para a arquitetura. |
 
 ## Lacunas
 
@@ -83,32 +84,7 @@ Nenhuma registrada. Formato: `L-NN`, data, parte, o que faltou e a correção.
 
 A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com ela (D-05).
 
-### Parte 1.1 — Pontos em aberto
-
-- **Entrega:** cada ponto abaixo decidido com a pessoa e registrado no inventário com a data.
-  - Os sete da tabela *Termos e pontos em aberto* (`atomic-inventory.md:1052-1060`), entre eles se o
-    brief recebe as três divergências ou se o inventário basta.
-  - Quatro achados em 2026-11-24, fora da tabela:
-    1. Quando o plano de correção recebe número: os itens 11 e 18 ligam o número à aprovação do
-       plano técnico, P4 (`atomic-inventory.md:215`, `:315`), que a correção não tem, e o item 13
-       não diz.
-    2. Numeração, `_planos.md` e nomenclatura: o brief as manda para o codex como regra
-       (`redesign-brief.md:399`), e o inventário não tem item para elas.
-    3. Gates A e B: o item 50 diz que entram depois de revistos à luz das referências de produto
-       (`atomic-inventory.md:808-809`), sem dizer quem os revê nem quando.
-    4. MVP no DC: o trecho do item 66 marcado "proposta, sem fonte"
-       (`atomic-inventory.md:1039-1040`) precisa de confirmação.
-- **Alvo:** `docs/codex/atomic-inventory.md`; `docs/codex/redesign-brief.md` só se a decisão sobre as
-  divergências pedir.
-- **Depende de:** —
-- **Critério de aceite:** nenhum ponto sem decisão datada; nenhum trecho do inventário marcado
-  "proposta, sem fonte"; nenhum campo de item vazio ("—") sem motivo.
-- **Como verificar:** leitura da tabela de pontos em aberto e busca por "sem fonte" e ": —" no
-  inventário.
-- **Onde roda:** esta sessão, ponto a ponto com a pessoa.
-- **Estado:** em curso desde 2026-11-25.
-
-### Parte 1.2 — Arquitetura da informação e estratégia de conteúdo
+### Parte 1.1 — Arquitetura da informação e estratégia de conteúdo
 
 - **Entrega:** o guia do codex, decidido com a pessoa, em `docs/codex/codex-guide.md` (novo). Ele
   responde:
@@ -134,27 +110,56 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
     para lá e o próprio guia.
   - **Mapa:** cada item do inventário para a seção do codex, e cada *Mecanismo hoje* para fora do
     codex.
+- **Pontos em aberto:** o guia é desenhado sobre o inventário como ele está. Os pontos da 1.2 entram
+  no mapa como lacunas conhecidas, cada um com o lugar provável no codex.
 - **Como se chega ao guia:** duas ou três alternativas de organização, comparadas por um critério
   medido — por exemplo, quantas seções e quantos arquivos cada etapa precisa ler —, e a pessoa
   escolhe.
 - **Alvo:** `docs/codex/codex-guide.md`.
-- **Depende de:** 1.1.
-- **Critério de aceite:** o guia responde a cada pergunta acima; todo item do inventário tem destino
-  no mapa; nenhum *Mecanismo hoje* tem destino no codex; a escolha da organização cita a medição;
-  aprovação da pessoa.
-- **Como verificar:** o mapa conferido contra a lista de itens do inventário; o guia lido contra a
-  lista de perguntas.
+- **Depende de:** —
+- **Critério de aceite:** o guia responde a cada pergunta acima; todo item do inventário e todo ponto
+  da 1.2 têm destino no mapa; nenhum *Mecanismo hoje* tem destino no codex; a escolha da organização
+  cita a medição; aprovação da pessoa.
+- **Como verificar:** o mapa conferido contra a lista de itens do inventário e de pontos da 1.2; o
+  guia lido contra a lista de perguntas.
 - **Onde roda:** esta sessão.
+- **Estado:** em curso desde 2026-11-25.
+
+### Parte 1.2 — Pontos em aberto
+
+- **Entrega:** cada ponto abaixo decidido com a pessoa, dentro da estrutura do guia (1.1), e
+  registrado no inventário com a data.
+  - Os sete da tabela *Termos e pontos em aberto* (`atomic-inventory.md:1052-1060`), entre eles se o
+    brief recebe as três divergências ou se o inventário basta.
+  - Quatro achados em 2026-11-24, fora da tabela:
+    1. Quando o plano de correção recebe número: os itens 11 e 18 ligam o número à aprovação do
+       plano técnico, P4 (`atomic-inventory.md:215`, `:315`), que a correção não tem, e o item 13
+       não diz.
+    2. Numeração, `_planos.md` e nomenclatura: o brief as manda para o codex como regra
+       (`redesign-brief.md:399`), e o inventário não tem item para elas.
+    3. Gates A e B: o item 50 diz que entram depois de revistos à luz das referências de produto
+       (`atomic-inventory.md:808-809`), sem dizer quem os revê nem quando.
+    4. MVP no DC: o trecho do item 66 marcado "proposta, sem fonte"
+       (`atomic-inventory.md:1039-1040`) precisa de confirmação.
+- **Alvo:** `docs/codex/atomic-inventory.md`; `docs/codex/redesign-brief.md` só se a decisão sobre as
+  divergências pedir; o guia, se uma decisão mudar a estrutura.
+- **Depende de:** 1.1.
+- **Critério de aceite:** nenhum ponto sem decisão datada; nenhum trecho do inventário marcado
+  "proposta, sem fonte"; nenhum campo de item vazio ("—") sem motivo; uma decisão que muda a
+  estrutura está no guia.
+- **Como verificar:** leitura da tabela de pontos em aberto e busca por "sem fonte" e ": —" no
+  inventário.
+- **Onde roda:** esta sessão, ponto a ponto com a pessoa.
 - **Estado:** pendente.
 
 ### Parte 1.3 — Texto do codex
 
-- **Entrega:** o codex escrito no lugar e na estrutura do guia (1.2). Começa por um capítulo piloto,
+- **Entrega:** o codex escrito no lugar e na estrutura do guia (1.1). Começa por um capítulo piloto,
   aprovado antes dos outros; o que o piloto ensinar entra no guia antes de seguir. Nenhuma skill lê o
   codex na fase 1.
 - **Alvo:** os arquivos novos do codex. Na pasta compartilhada das skills, eles entram no pacote
   (`empacotar.py:114`).
-- **Depende de:** 1.2.
+- **Depende de:** 1.1 e 1.2.
 - **Critério de aceite:** todos os itens do inventário cobertos conforme o mapa; cada trecho passa no
   teste da regra de dependência; nenhum fato em dois lugares; o texto segue o guia; a suíte passa
   (`scripts/test-python.sh`); aprovação da pessoa.
@@ -174,7 +179,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Alvo:** scripts e testes novos em `.claude/skills/decode-and-code/scripts/`. Os lints não são
   ligados ao `dc.py` nem ao `verificacao.py`, que consomem a norma: essa ligação entra na migração
   deles (2.2).
-- **Depende de:** 1.2 para começar; 1.3 para fechar.
+- **Depende de:** 1.1 para começar; 1.3 para fechar.
 - **Critério de aceite:** a suíte passa (`scripts/test-python.sh`); cada lint reprova um caso de teste
   com o defeito que procura; os dois rodam limpos no codex aprovado na 1.3, e um defeito que acharem
   nele vira lacuna da 1.3, corrigida antes de a 1.4 fechar.
@@ -217,7 +222,7 @@ levantar cada consumidor e depois troca um por vez.
      novos (itens 06, 07, 31 a 33, 37, 50, 62, 63 e 66), o workflow de correção e o módulo (itens
      34, 39 e 58) e a foundation (itens 26, 28, 29 e 59).
   5. **Destino de cada seção da norma:** codex, skill, script, documentação de manutenção, no lugar
-     decidido na 1.2, ou descarte. A norma tem 301 linhas de mecanismo e 115 que só servem a quem
+     decidido na 1.1, ou descarte. A norma tem 301 linhas de mecanismo e 115 que só servem a quem
      mantém o plugin (`redesign-brief.md:40-47`); nada disso pode sumir sem destino quando ela for
      apagada (2.3).
   6. **O que o DC grava num projeto a partir da norma:** além da cópia em `<plan_root>/system/`
@@ -280,7 +285,7 @@ levantar cada consumidor e depois troca um por vez.
   - o consumidor não aponta mais para a norma, e os outros sentidos da palavra seguem o mapa;
   - o consumidor faz o que o trecho equivalente do codex diz, verificado como o mapa manda;
   - a suíte passa e os lints da 1.4 rodam limpos, inclusive o de repetição sobre o consumidor;
-  - um ajuste no codex segue o guia (1.2) e foi aprovado pela pessoa;
+  - um ajuste no codex segue o guia (1.1) e foi aprovado pela pessoa;
   - o mapa registra a linha como migrada.
 - **Como verificar:** a suíte, os lints e a busca no consumidor.
 - **Depende de:** 2.1 e 1.4.
@@ -345,7 +350,9 @@ Feitas à mão em 2026-11-25, no lugar do `review-plan` (D-08).
 
 **Dependências, conferidas e declaradas em cada parte**
 
-- A 1.4 precisa da 1.2 para começar (lugar e estrutura do codex) e da 1.3 para fechar; a 1.3 fecha
+- A 1.2 decide os pontos em aberto dentro da estrutura da 1.1; uma decisão que muda a estrutura
+  volta ao guia.
+- A 1.4 precisa da 1.1 para começar (lugar e estrutura do codex) e da 1.3 para fechar; a 1.3 fecha
   por leitura e pela suíte, sem esperar a 1.4.
 - A 2.1 precisa do texto da 1.3 para achar os trechos equivalentes.
 - A 2.2 precisa dos lints da 1.4, que são gate de cada subparte.
