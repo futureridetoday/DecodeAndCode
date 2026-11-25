@@ -3,14 +3,14 @@
 name: redesign-handoff
 type: doc
 project: ""
-description: Handoff para a sessão principal que vai criar o plano do redesign da norma para o codex — objetivo, fontes, o aviso de não usar o decode para planejar a própria substituição, o que pode ser absorvido dele e como trabalhar com a pessoa
+description: Handoff da sessão principal do redesign da norma para o codex — fontes, o aviso de não usar o decode para planejar a própria substituição, o que pode ser absorvido dele, como trabalhar com a pessoa e por onde retomar o plano
 tags: [codex, redesign, handoff]
 
 # history
 author: Bortoli
 created: 2026-11-25
 status: draft
-version: 1.0.0
+version: 1.1.0
 updated: ""
 
 # system
@@ -29,10 +29,10 @@ das sessões anteriores; tudo o que precisa está aqui ou nos arquivos que este 
 
 ## Objetivo
 
-Criar, com a pessoa, o plano de execução do redesign que substitui a norma do DC
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)) pelo **codex**. O que o codex é e
-contém já foi decidido; esta sessão decide **como** chegar lá: as partes, a ordem, o que cada
-parte entrega e como cada uma é verificada.
+Conduzir, com a pessoa, o plano do redesign que substitui a norma
+([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)) pelo **codex**:
+[`redesign-plan.md`](redesign-plan.md). O que o codex é e contém está no inventário e no brief; como
+chegar lá — as fases, as partes, a ordem e como cada parte é verificada — está no plano.
 
 ## Fontes, em ordem de autoridade
 
@@ -81,17 +81,6 @@ no desenvolvimento:
 Regra prática: quando um passo chamaria uma skill ou um script do DC, faça à mão o que ele faria de
 útil e diga à pessoa que fez assim.
 
-## O que já está decidido e ainda não está no código
-
-As decisões estão no inventário e no brief. Duas pedem atenção no plano:
-
-- **O teto de 8 passos por unidade** sai do código (`lint_unidade.py` e o teste dele) **só na
-  execução do redesign**, junto com a troca da norma pelo codex, para os dois não divergirem
-  (brief, decisão 3).
-- **Três decisões do inventário ainda não foram levadas ao brief:** as aprovações novas (depois do
-  derive e a aprovação final), a nova definição do huddle e o handoff no médio. A pessoa adiou
-  esse ajuste. O plano decide se atualiza o brief ou se o inventário basta.
-
 ## Como trabalhar com a pessoa
 
 - Toda a escrita é em pt-BR, objetiva.
@@ -104,10 +93,7 @@ As decisões estão no inventário e no brief. Duas pedem atenção no plano:
 - A pessoa decide o que entra no plano. Quando houver opções, trazer uma recomendação e o tradeoff
   principal.
 
-## Primeiro passo sugerido
+## Por onde retomar
 
-1. Ler o inventário e o brief inteiros.
-2. Propor à pessoa a estrutura do plano: onde ele mora (sugestão: `docs/codex/redesign-plan.md`,
-   fora do `_inbox/`), as partes, a ordem e quais partes viram sessões aninhadas. Esperar o sim.
-3. Começar pelos *Termos e pontos em aberto* que bloqueiam a escrita do codex, como proposta,
-   entrega, critério de aceite e lacuna.
+Ler o plano, o inventário e o brief inteiros e seguir pela primeira parte do plano com *Estado*
+pendente, só com a aprovação da pessoa.
