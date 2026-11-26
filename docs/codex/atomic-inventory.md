@@ -10,7 +10,7 @@ tags: [codex, redesign, atomic-design, inventario]
 author: Bortoli
 created: 2026-11-24
 status: draft
-version: 0.21.0
+version: 0.22.0
 updated: ""
 
 # system
@@ -38,7 +38,9 @@ data.
   projeto, marcado **[projeto]**; e a referência de produto citada, marcada **[referência]**. Sem
   fonte, o campo fica com "—".
 - **Numeração:** os números não são reaproveitados. Saíram os itens 10, 17, 20, 25, 40 e 57, e o 66
-  (MVP) nasceu da separação do 63.
+  (MVP) nasceu da separação do 63. O 67 (Proposta), o 68 (Entrega) e o 69 (Critério de aceite)
+  nasceram na parte 1.2 do plano do redesign, no lugar dos conceitos que o 10, o 17 e o 20 tinham;
+  o 70 (Lacuna) e o 71 (Numeração e nomenclatura) também nasceram nela.
 
 ## Inventário atômico
 
@@ -127,14 +129,16 @@ data.
   - Sai uma proposta de solução conceitual, com referências técnicas, escrita para o usuário.
   - As skills do projeto são invocadas pelo nome, nunca lidas e copiadas; o nome vai para a tabela
     do plano.
-  - Segue Clean Architecture, sempre.
   - O fluxo de decodificação de hoje (Clarificar, Evitar, Reduzir) é a semente do decode.
+  - Gate de saída: a proposta só vai à aprovação (P2) se passa nos dois gates. A, necessidade real:
+    o problema é de alguém agora, e a hipótese tem sinal mensurável (63). B, mínimo viável: é a menor
+    versão que resolve, com o que fica de fora declarado (50, 67) (decidido em 2026-11-25).
   - Na correção, o decode é enxuto: identificar o problema e criar a correção.
 - **Relações:** vem depois do tipo (03); produz a proposta, que o usuário aprova (18);
   segue-se a revisão (07); usa o mindset de produto (33), os papéis (31), as referências de
   produto (32), os quatro riscos (62), a foundation (26), princípios, guidelines e
   guardrails (22, 23, 24) e os recursos do projeto (30, 59); sua semente é o fluxo de
-  decodificação (50); segue a Clean Architecture (53).
+  decodificação (50).
 - **Origem:** seção 1 (P1, *Referências de produto*, *O que muda*, *Workflow de correção*); decisões
   7 e 12.
 
@@ -189,13 +193,12 @@ data.
   - No pequeno, as tarefas rodam na mesma sessão. No médio e no grande, uma unidade por vez, e o
     plano recebe a recomendação de ser executado numa sessão nova (decidido em 2026-11-24): a
     unidade traz o que precisa para o cold-start, e começar sem o histórico economiza tokens.
-  - Gate de entrada: não começa sem oráculo. Gate de saída: não fecha sem teste e sem a aprovação do
+  - Gate de entrada: não começa sem critério de aceite (69). Gate de saída: não fecha sem teste e sem a aprovação do
     usuário (P7).
   - A unidade roda sem o histórico da conversa.
   - Na entrada, confere se os recursos do projeto citados ainda existem; as guidelines que ligam
     caminhos a recursos do projeto continuam valendo.
-  - Se a execução mostrar que a unidade estava insuficiente, a correção é da unidade, registrada
-    como lacuna.
+  - Unidade insuficiente vira lacuna (70).
 - **Mecanismo hoje:** a skill `implement` roda num subagente (fork); um lint confere os nomes dos
   recursos na entrada; a guideline-ponte liga caminhos a recursos do projeto.
 - **Relações:** executa tarefas (16) ou uma unidade (15); vem depois do plano mínimo aprovado
@@ -212,7 +215,9 @@ data.
   - Tem um tipo, que escolhe o workflow.
   - No workflow de produto, começa como proposta conceitual no decode (P1), é aprovado (P2) e vira
     plano técnico na revisão (P3), com tarefas ou unidades conforme o porte.
-  - Recebe número na aprovação do plano técnico (P4, decisão 2).
+  - Recebe número na aprovação do plano que vai ser executado: o plano técnico, no produto (P4,
+    decisão 2), ou o plano mínimo, na correção (C2). Uma correção que passa para o workflow de
+    produto recebe número em P4 (decidido em 2026-11-25).
   - O plano grande é testado inteiro no fim (P8); todo plano fecha com a aprovação final.
   - Todos os planos ficam juntos em `<plan_root>/`. O pequeno é um arquivo; o médio e o grande são
     uma pasta com o plano e as unidades.
@@ -261,8 +266,8 @@ data.
   - Grande: 2 ou mais unidades, com derive, numa sessão nova, uma por vez, cada uma depois da
     aprovação da anterior.
   - Define-se na revisão.
-  - Não há limite de tarefas por unidade: a unidade tem as tarefas necessárias para entregar um
-    pacote testável que agrega valor ao produto (decidido em 2026-11-24).
+  - Não há limite de tarefas por unidade: a unidade tem as tarefas necessárias para produzir a sua
+    entrega (68) (decidido em 2026-11-24).
   - Um plano sem porte não é aprovado.
 - **Mecanismo hoje:** o porte medido continua onde está, aplicado por script.
 - **Relações:** é definido na revisão (07); determina se o plano passa pelo derive (08); fixa a
@@ -272,21 +277,19 @@ data.
 
 ### 15 - Unidade
 
-- **O que é:** uma lista de tarefas que, no fim, entrega um pacote concreto e documentado, que
-  agrega valor ao todo e é minimamente mensurável e testável, pelo Claude ou pelo usuário.
+- **O que é:** uma lista de tarefas que, no fim, produz uma entrega (68).
 - **Como funciona:**
-  - Tem as tarefas necessárias para entregar um pacote testável que agrega valor ao produto; não
-    há limite de tarefas (decidido em 2026-11-24).
+  - Tem as tarefas necessárias para produzir a entrega; não há limite de tarefas (decidido em
+    2026-11-24).
   - O médio tem 1 unidade, e o grande, 2 ou mais.
   - O derive dá a cada unidade o contexto, a memória e o padrão de código do projeto (P5).
   - O code executa uma unidade por vez (P6).
-  - Só começa com um oráculo e só fecha com teste e aprovação do usuário.
+  - Só começa com critério de aceite (69) e só fecha com teste e aprovação do usuário.
   - A próxima unidade só começa depois que a anterior é aprovada (P7).
   - Basta sozinha e roda sem o histórico da conversa (seção 3, cold-start).
-  - Se a execução mostrar que estava insuficiente, a correção é da unidade, registrada como lacuna
-    (seção 3).
+  - Unidade insuficiente vira lacuna (70).
 - **Mecanismo hoje:** a aprovação fica nos campos `approved_by` e `approved_at` da unidade.
-- **Relações:** é feita de tarefas (16); produz uma entrega; pertence a um plano médio ou
+- **Relações:** é feita de tarefas (16); produz uma entrega (68); pertence a um plano médio ou
   grande (11, 14); é preparada no derive (08) e executada no code (09); começa com um
   critério de aceite; fecha com teste (19) e aprovação (18); corresponde a uma história
   (37); obedece ao cold-start (44); é orquestrada pelo handoff (45).
@@ -318,10 +321,11 @@ data.
     4. Cada entrega, no code: fecha a unidade junto com o teste; a próxima unidade só começa
        depois (P7).
     5. A aprovação final, que fecha o plano (decidido em 2026-11-24). No grande, vem depois do
-       teste do plano inteiro (P8), que só existe no grande. No pequeno, que não tem unidade, é a
-       única aprovação depois do code.
+       teste do plano inteiro (P8). No pequeno, vem depois do teste da entrega, e é a única
+       aprovação depois do code. No médio, a aprovação da única entrega é também a aprovação final
+       (decidido em 2026-11-25).
   - No workflow de correção, na ordem:
-    1. O plano mínimo, antes do code (C2, decisão 10).
+    1. O plano mínimo, antes do code; é nela que o plano recebe número (C2, decisão 10).
     2. A aprovação final, depois do teste que reproduz o defeito (decidido em 2026-11-24; o brief
        só tem o teste, C4).
   - Quem aprova é sempre o usuário.
@@ -344,10 +348,10 @@ data.
     aprovação (P7), e o teste do plano inteiro (P8).
   - A unidade não fecha sem teste e sem a aprovação do usuário.
   - O estado de uma unidade é derivado do teste, nunca editado à mão.
-  - O que se entrega precisa ser minimamente mensurável e testável.
-- **Relações:** verifica a correção (39, 65), a entrega e o plano inteiro (64); precede
+  - No pequeno e no médio, o teste da entrega é também o teste do plano (decidido em 2026-11-25).
+- **Relações:** verifica a correção (39, 65), a entrega (68) e o plano inteiro (64); precede
   a aprovação (18); fecha a unidade (15) junto com ela; é feito pelo usuário (35) ou por
-  Claude (36); cobre o critério de aceite.
+  Claude (36); confere o critério de aceite (69).
 - **Origem:** seção 1 (C4, P7, P8, *Unidade*); seção 3; decisão 4.
 
 ### 21 - Huddle
@@ -622,8 +626,8 @@ data.
     unidade.
   - Para recursos que não são produto digital, o "quem" é quem usa o recurso.
 - **Relações:** é escrita na revisão (07); corresponde à unidade (15); a Definition of Ready a
-  qualifica (38); o aceite é o teste (19) e a aprovação (18); as referências (32); o
-  paralelo (51).
+  qualifica (38); os critérios de aceite (69); o aceite é o teste (19) e a aprovação (18); as
+  referências (32); o paralelo (51).
 - **Origem:** seção 1 (P3, *Referências de produto*, *O paralelo*); decidido em 2026-11-24.
 
 ### 38 - Definition of Ready
@@ -709,8 +713,7 @@ data.
 - **O que é:** a propriedade da unidade de bastar sozinha: roda sem o histórico da conversa.
 - **Como funciona:**
   - É o que o derive precisa garantir.
-  - Se a execução mostrar que a unidade estava insuficiente, a correção é da unidade, registrada
-    como lacuna.
+  - Unidade insuficiente vira lacuna (70).
   - A memória de execução entre unidades ficou fora do redesign, porque o cold-start depende de a
     unidade bastar sozinha.
 - **Relações:** vale para a unidade (15); é garantido pelo derive (08) e obedecido pelo code
@@ -805,8 +808,8 @@ data.
   - Evitar pergunta se dá para resolver sem código.
   - Reduzir pergunta qual é a menor versão que resolve 80%.
   - O brief o trata como a semente das referências de produto.
-  - Entra como base do decode, com Clarificar, Evitar e Reduzir; os gates A e B só entram depois
-    de revistos à luz das referências de produto (decidido em 2026-11-24).
+  - Entra como base do decode, com Clarificar, Evitar e Reduzir; os gates A e B, revistos à luz das
+    referências de produto, são o gate de saída do decode (06) (decidido em 2026-11-25).
 - **Relações:** semente do decode (06) e das referências de produto (32); o Clarificar pergunta
   a métrica que dá o sinal da hipótese (63); o Reduzir difere do MVP (66).
 - **Origem:** seção 1 (*Referências de produto*).
@@ -864,9 +867,10 @@ data.
     isso que torna o codex à prova de futuro.
   - Onde vale (decisão 7): no método, sempre; no código do plugin, onde um script estiver causando
     problema; no projeto, é guideline de quem a adota.
-  - O que "o decode a segue" significa na prática: —
+  - A Clean Architecture organiza o método, não as soluções que o decode propõe; no projeto, ela
+    entra só como guideline de quem a adota (23) (decidido em 2026-11-25).
 - **Relações:** as entidades são o codex (27); os casos de uso são os workflows (04); a regra é
-  a regra de dependência (54); no projeto, é guideline (23); o decode a segue (06).
+  a regra de dependência (54); no projeto, é guideline (23).
 - **Origem:** seção 1 (*Restrições*); seção 4; decisão 7; decidido em 2026-11-24.
 
 ### 54 - Regra de dependência
@@ -1005,7 +1009,8 @@ data.
 
 - **O que é:** o teste P8, feito sobre o plano como um todo.
 - **Como funciona:**
-  - Só existe no plano grande (decidido em 2026-11-24).
+  - Só existe no plano grande (decidido em 2026-11-24): no pequeno e no médio, o teste da entrega já
+    cobre o plano inteiro.
   - Só roda depois que todas as unidades forem concluídas.
   - Claude ou o usuário o faz.
 - **Relações:** é um teste (19); testa o plano (11) do porte grande (14); vem depois das
@@ -1036,25 +1041,97 @@ data.
   - Depois de medir **[referência]**: perseverar, pivotar ou parar.
   - Não é o *Reduzir*, que mira o escopo (a menor versão que resolve 80%), e não é o porte pequeno,
     que é tamanho do plano.
-  - No DC (proposta, sem fonte): a proposta declara o MVP junto com a hipótese, e a aprovação da
-    entrega é o ponto em que se mede.
+  - No DC, a proposta declara o MVP junto com a hipótese (67). O sinal se mede no ponto de
+    verificação que a hipótese declara (63), que pode vir depois de o plano fechar: a aprovação da
+    entrega confere o critério de aceite (69), não a hipótese (decidido em 2026-11-25).
 - **Relações:** testa a hipótese (63); difere do *Reduzir* (50) e do porte (14); é declarado
-  no decode (06); a medição acontece na aprovação (18); faz parte do mindset de produto (33);
+  no decode (06) e na proposta (67); o sinal se mede no ponto que a hipótese declara (63); faz parte do mindset de produto (33);
   referência de produto (32).
 - **Origem:** seção 1 (*Referências de produto*); criado ao separar hipótese e MVP;
   decidido em 2026-11-24.
 
+### 67 - Proposta
+
+- **O que é:** o que sai do decode (P1): a solução conceitual para o pedido, escrita para o usuário,
+  que ele aprova em P2.
+- **Como funciona:**
+  - Traz o problema e de quem ele é, a hipótese (63) e o MVP (66), a solução conceitual com as
+    referências técnicas, o apetite, os riscos e o que fica de fora, como no Shape Up.
+  - É escrita para o usuário, não para quem executa.
+  - Só depois da aprovação vem a revisão, que a transforma em plano técnico.
+  - A correção não tem proposta: o diagnóstico gera o plano mínimo.
+- **Relações:** sai do decode (06); é aprovada pelo usuário (18, 35); vira plano técnico na revisão
+  (07, 12); declara a hipótese (63); segue o Shape Up entre as referências de produto (32); não
+  existe na correção (13, 39).
+- **Origem:** seção 1 (P1, P2, *Referências de produto*); decidido em 2026-11-25, depois da remoção
+  do item 10.
+
+### 68 - Entrega
+
+- **O que é:** o pacote que uma unidade produz: concreto, documentado, que agrega valor ao todo e que
+  se consegue medir e testar, por Claude ou pelo usuário.
+- **Como funciona:**
+  - Cada unidade tem uma entrega e as tarefas necessárias para produzi-la (15).
+  - É testada e aprovada pelo usuário antes de a próxima unidade começar (P7).
+  - No pequeno, que não tem unidade, a entrega é o resultado das tarefas, aprovado na aprovação
+    final.
+  - A tabela de recursos do plano diz onde cada recurso do projeto entra nela (59).
+- **Relações:** é produzida pela unidade (15) ou pelas tarefas do pequeno (16); passa pelo teste
+  (19) e pela aprovação (18); a tabela de recursos aponta onde cada recurso entra nela (59).
+- **Origem:** seção 1 (*Unidade*, P7); decidido em 2026-11-25, depois da remoção do item 17.
+
+### 69 - Critério de aceite
+
+- **O que é:** a frase verificável que diz quando a entrega (68) está pronta, declarada antes de
+  começar, junto com o teste que a verifica (19).
+- **Como funciona:**
+  - Toda entrega tem critério de aceite, e ele é o gate de entrada do code: sem ele e sem o teste
+    que o verifica, o trabalho não começa.
+  - O teste da entrega confere o critério antes da aprovação (P7).
+  - Na história, são os critérios de aceite do formato de Mike Cohn (37).
+  - Na correção, o teste que verifica o critério é o que reproduz o defeito (65).
+  - O termo "oráculo", da norma, não é usado: o critério diz o que precisa ser verdade, e o teste é
+    o que confere.
+- **Relações:** é da entrega (68); é verificado pelo teste (19, 65); é o gate de entrada do code
+  (09) e da unidade (15); vem da história (37).
+- **Origem:** seção 3 (*Gates de entrada e de saída do code*); decidido em 2026-11-25, depois da
+  remoção do item 20.
+
+### 70 - Lacuna
+
+- **O que é:** o registro, no plano, de que uma unidade se mostrou insuficiente na execução.
+- **Como funciona:**
+  - Quando a execução mostra que faltava algo na unidade, a correção é feita na unidade, não deixada
+    a cargo de quem a executa.
+  - A lacuna fica no plano, marcada `L-XX`, com o que faltou e a correção feita.
+  - O derive leva à unidade as lacunas que ela precisa conhecer, como parte da memória (08).
+- **Relações:** é registrada no plano (11) sobre uma unidade (15); nasce da execução no code (09);
+  entra na memória que o derive passa à unidade (08); protege o cold-start (44).
+- **Origem:** seção 3 (*Lacuna `L-XX`*); decidido em 2026-11-25.
+
+### 71 - Numeração e nomenclatura
+
+- **O que é:** como planos e unidades são nomeados e numerados, para que cada um seja rastreável.
+- **Como funciona:**
+  - O plano nasce com um nome semântico, em inglês e em kebab-case, no formato
+    `<intenção>-<alvo>[-<qualificador>]`. O nome é identificador, e a prosa do plano segue em pt-BR.
+    O nome não declara o tipo (03).
+  - Na aprovação, o plano recebe um número de 4 dígitos, sequencial em todo o projeto, atribuído uma
+    vez e nunca reaproveitado (11). Passa a se chamar `NNNN-nome`, e o nome não muda mais.
+  - Cada unidade tem um identificador `NNNN-nn`, formado pelo número do plano e pela ordem dela no
+    plano. Ele nunca muda, e é ele que o código, os testes e as outras unidades citam. O nome do
+    arquivo da unidade, `nn-slug`, pode mudar sem quebrar nenhuma referência.
+  - Os planos aprovados ficam num índice, e a situação de cada um é derivada, nunca digitada.
+- **Mecanismo hoje:** a validação sintática do nome (tamanho, caracteres e conectivos) e a checagem
+  de colisão são feitas por script; o índice é `<plan_root>/_planos.md`, projetado por script entre
+  marcadores; a sugestão de nomes vem da skill.
+- **Relações:** o número sai na aprovação (11, 18); o nome não declara o tipo (03); os planos moram
+  juntos na raiz (43); a unidade (15) tem identificador próprio; a situação vem do estado derivado do
+  teste (19).
+- **Origem:** seção 3 (*Numeração, `_planos.md` e nomenclatura*); norma, seção *Nomenclatura*
+  **[projeto]** (`modelo-dev-units.md:962-1059`); decidido em 2026-11-25.
+
 ## Termos e pontos em aberto
 
-O que os itens usam sem definir, e o que o redesign ainda precisa decidir. O codex vai precisar
-resolver cada um.
-
-| Termo ou ponto | Onde aparece | Situação |
-|---|---|---|
-| Proposta | 06, 07, 11, 12, 18, 32 e outros | é a saída do decode (P1) e o que se aprova em P2; o item 10 saiu do inventário |
-| Entrega | 15, 18, 19, 59, 66 | é o que a unidade produz e o que se aprova em P7; o item 17 saiu do inventário |
-| Critério de aceite ou oráculo | 09, 15, 19, 37 | é o gate de entrada do code; o item 20 saiu do inventário, sem decidir se os dois termos são o mesmo |
-| Lacuna | 08, 09, 15, 44 | é a unidade que se mostrou insuficiente, registrada no plano; nunca virou item |
-| "O decode segue a Clean Architecture" | 06, 53 | o brief afirma, mas não diz o que isso significa na prática |
-| O teste antes da aprovação final no pequeno e no médio | 18, 19, 64 | o teste do plano inteiro só existe no grande; no pequeno e no médio, não está definido o que se testa antes da aprovação final |
-| Divergências com o brief | 18, 21, 45 | as aprovações novas, o huddle e o handoff no médio ainda não estão no brief; vale o inventário |
+Nenhum. A parte 1.2 do plano do redesign decidiu todos em 2026-11-25; cada decisão está no item que
+ela muda, com a data, e o lugar de cada uma no codex está no mapa do guia do codex.

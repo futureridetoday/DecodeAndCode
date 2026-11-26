@@ -10,7 +10,7 @@ tags: [codex, redesign, arquitetura-da-informacao]
 author: Bortoli
 created: 2026-11-25
 status: stable
-version: 1.0.0
+version: 1.1.0
 updated: ""
 
 # system
@@ -28,7 +28,8 @@ da informação e de estratégia de conteúdo do codex. O conteúdo vem do
 [inventário atômico](../codex/atomic-inventory.md); este guia diz como ele se organiza. "Item NN" é o
 item NN do inventário.
 
-**Estado:** aprovado em 2026-11-25, o que fecha a parte 1.1.
+**Estado:** aprovado em 2026-11-25, o que fecha a parte 1.1; o mapa recebeu as decisões da 1.2 no
+mesmo dia.
 
 ## Leitores e leitura
 
@@ -209,18 +210,19 @@ Decidido em 2026-11-25.
 |---|---|---|
 | `stages.md` | 04 Workflow, 05 Etapa, 06 Decode, 07 Revisão, 08 Derive, 09 Code, 48 Setup, 49 Rethink | 8 |
 | `fix.md` | 13 Plano mínimo, 39 Correção, 65 Teste que reproduz o defeito | 3 |
-| `artifacts.md` | 01 Pedido, 11 Plano, 12 Plano técnico, 15 Unidade, 16 Tarefa, 26 Foundation, 29 Mapa de recursos do projeto, 37 História, 45 Handoff, 59 Tabela de recursos do plano, 60 Objetivo do plano | 11 |
-| `rules.md` | 03 Tipo, 14 Porte, 18 Aprovação, 19 Teste, 38 Definition of Ready, 41 Plano anterior ao redesign, 43 Raiz dos planos, 44 Cold-start, 46 Independência entre planos, 64 Teste do plano inteiro | 10 |
+| `artifacts.md` | 01 Pedido, 11 Plano, 12 Plano técnico, 15 Unidade, 16 Tarefa, 26 Foundation, 29 Mapa de recursos do projeto, 37 História, 45 Handoff, 59 Tabela de recursos do plano, 60 Objetivo do plano, 67 Proposta, 68 Entrega | 13 |
+| `rules.md` | 03 Tipo, 14 Porte, 18 Aprovação, 19 Teste, 38 Definition of Ready, 41 Plano anterior ao redesign, 43 Raiz dos planos, 44 Cold-start, 46 Independência entre planos, 64 Teste do plano inteiro, 69 Critério de aceite, 70 Lacuna, 71 Numeração e nomenclatura | 13 |
 | `product-references.md` | 32 Referência de produto, 33 Mindset de produto, 50 Fluxo de decodificação, 51 Paralelo com produto digital, 62 Os quatro riscos, 63 Hipótese, 66 MVP | 7 |
 | `invariants.md` | 55 Invariante, 56 Restrição fundamental | 2 |
-| `concepts.md` | 02 Insight, 21 Huddle, 22 Princípio, 23 Guideline, 24 Guardrail, 28 Padrão de código, 30 Recurso do projeto, 31 Papel, 35 Usuário, 36 Claude, 47 Registro de uso, 53 Clean Architecture | 12 |
-| Este guia | 27 Codex, 52 Camada, 54 Regra de dependência | 3 |
+| `concepts.md` | 02 Insight, 21 Huddle, 22 Princípio, 23 Guideline, 24 Guardrail, 28 Padrão de código, 30 Recurso do projeto, 31 Papel, 35 Usuário, 36 Claude, 47 Registro de uso | 11 |
+| Este guia | 27 Codex, 52 Camada, 53 Clean Architecture, 54 Regra de dependência | 4 |
 | `docs/maintenance/` | 34 Módulo, 42 Migração, 58 Núcleo, 61 Quem mantém o plugin | 4 |
 
 - **48 Setup e 49 Rethink** ficam em `stages.md`: não fazem parte dos workflows, mas cabem no modelo
   do tipo Etapa.
-- **53 Clean Architecture** fica em `concepts.md` até a 1.2 decidir o que "o decode segue a Clean
-  Architecture" quer dizer.
+- **53 Clean Architecture** vem para este guia (decidido em 2026-11-25, na 1.2): ela organiza o
+  método, não as soluções que o decode propõe, e nenhuma etapa decide algo por ela; no projeto, entra
+  como guideline de quem a adota (23).
 - **34 Módulo** vai para a manutenção, contra a matriz de leitura, que o ligou à correção: o contrato
   do módulo é de quem mantém o plugin, e nenhuma etapa decide algo por ele.
 
@@ -241,14 +243,14 @@ Nenhum *Mecanismo hoje* vai para o codex. Cada um fica onde está e entra no map
 
 | Ponto | Lugar provável |
 |---|---|
-| Proposta | seção nova em `artifacts.md` |
-| Entrega | seção nova em `artifacts.md` |
-| Critério de aceite ou oráculo | seção nova em `rules.md` |
-| Lacuna | seção nova em `rules.md` |
-| O decode segue a Clean Architecture | 06 Decode e 53 Clean Architecture |
-| Teste antes da aprovação final no pequeno e no médio | 19 Teste e 64 Teste do plano inteiro |
-| Divergências com o brief | fora do codex: decisão de processo |
-| Número do plano de correção | `fix.md` |
-| Numeração, `_planos.md` e nomenclatura | seção nova em `rules.md`; o `_planos.md` é projeção por script e fica fora |
-| Gates A e B | 50 Fluxo de decodificação |
-| MVP no DC | 66 MVP |
+| Proposta | 67 Proposta, em `artifacts.md` (decidido em 2026-11-25) |
+| Entrega | 68 Entrega, em `artifacts.md` (decidido em 2026-11-25) |
+| Critério de aceite ou oráculo | 69 Critério de aceite, em `rules.md`; o termo "oráculo" sai (decidido em 2026-11-25) |
+| Lacuna | 70 Lacuna, em `rules.md` (decidido em 2026-11-25) |
+| O decode segue a Clean Architecture | 53 Clean Architecture, neste guia: organiza o método, não as soluções (decidido em 2026-11-25) |
+| Teste antes da aprovação final no pequeno e no médio | 18, 19 e 64: o teste da entrega vale como teste do plano; no médio, uma aprovação só (decidido em 2026-11-25) |
+| Divergências com o brief | fora do codex: o brief foi congelado, e vale o inventário (decidido em 2026-11-25) |
+| Número do plano de correção | 11 Plano, com menção no 18: o número sai na aprovação do plano mínimo, C2 (decidido em 2026-11-25) |
+| Numeração, `_planos.md` e nomenclatura | 71 Numeração e nomenclatura, em `rules.md`; o `_planos.md` é projeção por script e fica fora (decidido em 2026-11-25) |
+| Gates A e B | 06 Decode, como gate de saída, e 50 Fluxo de decodificação (decidido em 2026-11-25) |
+| MVP no DC | 66 MVP e 67 Proposta: declarado na proposta, medido no ponto que a hipótese declara (decidido em 2026-11-25) |

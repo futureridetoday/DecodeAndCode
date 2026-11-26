@@ -29,8 +29,8 @@ o codex; a fase 2 migra para ele, um por vez, tudo o que hoje consome a norma. O
 do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); este plano diz como
 chegar lá e não repete o que eles dizem.
 
-**Estado:** escrito em 2026-11-25; a parte 1.1 foi autorizada e concluída em 2026-11-25. Nenhuma
-outra parte começa sem a aprovação da pessoa.
+**Estado:** escrito em 2026-11-25; as partes 1.1 e 1.2 foram autorizadas e concluídas em
+2026-11-25. Nenhuma outra parte começa sem a aprovação da pessoa.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
 
@@ -150,7 +150,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** leitura da tabela de pontos em aberto e busca por "sem fonte" e ": —" no
   inventário.
 - **Onde roda:** esta sessão, ponto a ponto com a pessoa.
-- **Estado:** pendente.
+- **Estado:** concluída em 2026-11-25, PR #64.
 
 ### Parte 1.3 — Texto do codex
 
