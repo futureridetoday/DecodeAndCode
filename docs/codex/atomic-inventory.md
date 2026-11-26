@@ -10,7 +10,7 @@ tags: [codex, redesign, atomic-design, inventario]
 author: Bortoli
 created: 2026-11-24
 status: draft
-version: 0.22.0
+version: 0.23.0
 updated: ""
 
 # system
@@ -23,10 +23,13 @@ dependencies: [redesign-brief]
 
 # Inventário atômico do codex
 
-Os conceitos de que o codex é feito, um por item. É a fonte da verdade do redesign que substitui a
-norma pelo codex: o plano do redesign parte dele e do [brief](redesign-brief.md). Onde os dois
-divergem, vale o inventário, porque a divergência vem de uma decisão da pessoa, registrada com a
-data.
+**Estado:** registro desde 2026-11-26. O codex, em `.claude/skills/decode-and-code/codex/`, passou
+a ser a fonte da verdade do método no fechamento da parte 1.3 do [plano do redesign](redesign-plan.md)
+(D-10); onde o codex e este inventário divergem, vale o codex.
+
+Os conceitos de que o codex é feito, um por item. Foi a fonte da verdade do redesign até o codex ser
+escrito: o plano do redesign parte dele e do [brief](redesign-brief.md). Onde os dois divergem, vale
+o inventário, porque a divergência vem de uma decisão da pessoa, registrada com a data.
 
 ## Como ler
 

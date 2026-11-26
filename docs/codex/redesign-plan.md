@@ -30,7 +30,8 @@ do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); 
 chegar lá e não repete o que eles dizem.
 
 **Estado:** escrito em 2026-11-25; as partes 1.1 e 1.2 foram autorizadas e concluídas em
-2026-11-25. Nenhuma outra parte começa sem a aprovação da pessoa.
+2026-11-25, e a 1.3, autorizada no mesmo dia e concluída em 2026-11-26. Nenhuma outra parte começa
+sem a aprovação da pessoa.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
 
@@ -60,6 +61,7 @@ propagação (`redesign-brief.md:231-232`), e a verificação final, que o fecha
 | D-07 | 2026-11-25 | A norma é apagada quando não sobrar consumidor dela. A migração nos projetos que já usam o DC (item 42) fecha a fase 2, antes da release. |
 | D-08 | 2026-11-25 | O plano mora neste arquivo, fora do `_inbox/` e sem a numeração do `dc.py`. Não usa `intake`, `review-plan`, `derive`, `implement`, o backlog projetado nem os lints do DC como gate ([handoff](redesign-handoff.md), *Aviso central*). |
 | D-09 | 2026-11-25 | A arquitetura da informação vem antes dos pontos em aberto: a 1.1 passa a ser o guia, e a 1.2, os pontos. Onde cada conceito mora no codex é decisão de arquitetura, e vários pontos — proposta, entrega, critério de aceite e lacuna — dependem dela. A autorização dada à 1.1 passa para a arquitetura. |
+| D-10 | 2026-11-26 | No fechamento da 1.3, o codex passa a ser a fonte da verdade do método. O inventário e o brief ficam como registro do redesign, e os ajustes da fase 2 mudam o codex. |
 
 ## Lacunas
 
@@ -169,7 +171,9 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
   mudem um lugar só.
 - **Onde roda:** esta sessão; depois do piloto, sessões aninhadas por capítulo, se o guia der um
   arquivo por capítulo.
-- **Estado:** pendente.
+- **Estado:** concluída em 2026-11-26, PR #65. Os sete capítulos foram aprovados um a um, a partir do piloto
+  `stages.md`, e cobrem 57 itens; os 8 restantes são os do guia e da manutenção. As lições foram para
+  as regras 2, 4 e 5 e para a fronteira do guia. O codex passou a ser a fonte da verdade (D-10).
 
 ### Parte 1.4 — Lints do codex
 
