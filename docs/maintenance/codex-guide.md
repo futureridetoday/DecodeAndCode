@@ -10,7 +10,7 @@ tags: [codex, redesign, arquitetura-da-informacao]
 author: Bortoli
 created: 2026-11-25
 status: stable
-version: 1.1.0
+version: 1.4.0
 updated: ""
 
 # system
@@ -112,7 +112,9 @@ quando passa nos dois testes:
 2. Uma etapa precisa dele para decidir certo, e não só para executar.
 
 **Núcleo e módulo.** O workflow de correção é o primeiro módulo e traz o próprio capítulo do codex
-(itens 34 e 39). O núcleo nunca depende desse capítulo (item 58).
+(itens 34 e 39). O núcleo nunca depende desse capítulo (item 58). O que é do módulo sai do núcleo
+mesmo quando o item do inventário mistura os dois: no piloto, o decode enxuto da correção (item 06) e
+a etapa C3 (item 09) foram para `fix.md`.
 
 **Codex e o que fala do codex.** Os 8 itens que nenhum momento de leitura usa têm destinos
 diferentes:
@@ -153,20 +155,24 @@ Decidido em 2026-11-25.
 1. **Dependência.** Nenhum trecho cita skill, script, hook, versão do Claude Code ou projeto; todo
    trecho passa no teste do item 54 (`atomic-inventory.md:881-882`).
 2. **Uma fonte por fato.** Cada fato mora numa seção só; as outras a citam pelo título, no texto ou
-   em *Ver também*, e nunca o repetem (item 55).
+   em *Ver também*, e nunca o repetem (item 55). Uma etapa pode listar, no gate, a condição que
+   aplica; o que ela não pode é reescrever a regra com outras palavras.
 3. **Por quê sim, história não.** Uma regra pode trazer o porquê em uma frase, quando ele ajuda a
    aplicá-la num caso de fronteira. Data, medição, número de planos e caso passado ficam fora: são
    evidência e história (item 27).
 4. **Um termo por conceito.** O nome dos itens do inventário é o glossário; o mesmo conceito nunca
-   aparece com outro nome. Identificadores ficam em código: `fix`, `product`, `rule`.
+   aparece com outro nome. Identificadores ficam em código: `fix`, `product`, `rule`. Uma palavra
+   comum que coincide com um termo do glossário, usada em outro sentido, é trocada: na revisão,
+   "lacunas" virou "o que falta", porque Lacuna é o item 70.
 5. **Referências de produto.** Toda referência cita autor e obra e é descrita com palavras próprias,
-   sem citação longa da fonte.
+   sem citação longa da fonte. Autor e obra ficam só na seção da referência, em
+   `product-references.md`; as outras seções nomeiam a referência e a citam em *Ver também*.
 6. **Idioma e voz.** Segue a rule `voice-and-language` do projeto, que esta regra cita e não repete.
    O texto é no presente, impessoal, e diz o que é e o que vale — não o passo a passo, que é
    procedimento da skill.
 7. **Seção curta.** Teto de 40 linhas por seção; acima disso, a seção provavelmente tem dois
    conceitos. A média por item no inventário é 13,6 linhas (818 em 60). O teto é escolhido, não
-   medido, e o piloto da 1.3 pode mudá-lo.
+   medido; o piloto da 1.3 o manteve, com a maior seção de `stages.md` em 23 linhas.
 
 As regras 1, 2 e 7 se conferem por script; as 3 a 6, por leitura.
 
