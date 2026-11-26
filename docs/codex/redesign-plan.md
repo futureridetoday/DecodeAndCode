@@ -171,7 +171,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
   mudem um lugar só.
 - **Onde roda:** esta sessão; depois do piloto, sessões aninhadas por capítulo, se o guia der um
   arquivo por capítulo.
-- **Estado:** concluída em 2026-11-26. Os sete capítulos foram aprovados um a um, a partir do piloto
+- **Estado:** concluída em 2026-11-26, PR #65. Os sete capítulos foram aprovados um a um, a partir do piloto
   `stages.md`, e cobrem 57 itens; os 8 restantes são os do guia e da manutenção. As lições foram para
   as regras 2, 4 e 5 e para a fronteira do guia. O codex passou a ser a fonte da verdade (D-10).
 
