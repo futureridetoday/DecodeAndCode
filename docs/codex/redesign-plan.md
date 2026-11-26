@@ -150,7 +150,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** leitura da tabela de pontos em aberto e busca por "sem fonte" e ": —" no
   inventário.
 - **Onde roda:** esta sessão, ponto a ponto com a pessoa.
-- **Estado:** concluída em 2026-11-25.
+- **Estado:** concluída em 2026-11-25, PR #64.
 
 ### Parte 1.3 — Texto do codex
 
