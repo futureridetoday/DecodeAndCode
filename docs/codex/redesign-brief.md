@@ -10,7 +10,7 @@ tags: [codex, redesign, foundation, clean-architecture, decode-and-code]
 author: Bortoli
 created: 2026-11-24
 status: draft
-version: 1.15.0
+version: 1.17.0
 updated: ""
 
 # system
@@ -22,6 +22,10 @@ dependencies: []
 ---
 
 # Redesign — da norma ao codex
+
+**Estado:** congelado em 2026-11-25. O brief registra o contexto e as decisões até essa data. O que
+mudou depois está no [inventário atômico](atomic-inventory.md) e, desde 2026-11-26, no codex, que
+passou a ser a fonte da verdade do método; onde divergem, vale o codex.
 
 Este brief consolida as ideias do redesign que substitui a norma
 ([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)) por um **codex**. Registra as ideias,
