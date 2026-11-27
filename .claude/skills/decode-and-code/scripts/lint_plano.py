@@ -85,9 +85,21 @@ def unidades_previstas(corpo: str) -> int | None:
     return len(_LINHA_NUMERADA.findall(resto[: fim.start()] if fim else resto))
 
 
+def secoes_exigidas(plano: Path) -> tuple[str, ...]:
+    """As seções de todo plano do formato 2, ou as que um módulo declara para o tipo do plano.
+
+    O plano mínimo da correção, por exemplo, traz o defeito no lugar das histórias (módulo `fix`).
+    """
+    plan_type = (regioes.ler_campo(plano, "plan_type") or "").strip(" \t\"'")
+    for modulo in lib.modulos():
+        if plan_type in modulo["plan_sections"]:
+            return tuple(modulo["plan_sections"][plan_type])
+    return SECOES_DO_FORMATO_ATUAL
+
+
 def _checar_formato_atual(plano: Path, corpo: str, plan_size: str) -> list[str]:
     """As seções do formato 2 e a decomposição que o porte pede (codex, *Porte*)."""
-    problemas = [f"formato 2 exige '## {s}'" for s in SECOES_DO_FORMATO_ATUAL if not _tem_heading(corpo, s)]
+    problemas = [f"formato 2 exige '## {s}'" for s in secoes_exigidas(plano) if not _tem_heading(corpo, s)]
     previstas = unidades_previstas(corpo)
     if plan_size == "pequeno":
         if not _tem_heading(corpo, "Tarefas"):

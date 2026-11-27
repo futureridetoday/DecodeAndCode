@@ -93,6 +93,49 @@ SKILLS = MODOS + ("decode", "huddle", "setup", "rethink")
 
 _config_cache: dict | None = None
 
+# Módulos (codex, item 34 do inventário; `docs/maintenance/modules.md`): cada pasta de `modules/` com
+# um `module.json` é um módulo. O núcleo nunca importa um módulo: só lê o que o `module.json` declara.
+_CAMPOS_DO_MODULO = ("name", "version", "core_format", "plan_types", "skills", "plan_sections")
+
+
+def modulos_dir() -> Path:
+    """A pasta dos módulos, na pasta compartilhada das skills — a mesma no checkout e no pacote."""
+    return Path(__file__).resolve().parent.parent / "modules"
+
+
+def modulos(pasta: Path | None = None) -> list[dict]:
+    """Os módulos presentes, em ordem de nome, cada um com `path` acrescentado ao que o JSON declara.
+
+    Levanta `ValueError` nomeando o módulo quando o `module.json` é ilegível, não traz os campos de
+    `_CAMPOS_DO_MODULO` ou exige outro formato do núcleo: módulo que não se encaixa é recusado
+    inteiro, nunca carregado pela metade.
+    """
+    achados = []
+    pasta = pasta or modulos_dir()
+    for manifesto in sorted(pasta.glob("*/module.json")) if pasta.is_dir() else []:
+        try:
+            dados = json.loads(manifesto.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as erro:
+            raise ValueError(f"module.json ilegível em {manifesto}: {erro}") from None
+        faltam = [c for c in _CAMPOS_DO_MODULO if c not in dados]
+        if faltam:
+            raise ValueError(f"module.json sem {', '.join(faltam)} em {manifesto}")
+        if dados["core_format"] != FORMATO_ATUAL:
+            raise ValueError(
+                f"o módulo {dados['name']!r} exige o formato {dados['core_format']} do núcleo, "
+                f"e o núcleo está no {FORMATO_ATUAL}"
+            )
+        achados.append({**dados, "path": manifesto.parent})
+    return achados
+
+
+def skills_do_pacote(pasta_modulos: Path | None = None) -> tuple[str, ...]:
+    """As skills que viajam: as do núcleo (`SKILLS`) e as que cada módulo presente declara.
+
+    `pasta_modulos` é a de onde o pacote é construído; por padrão, a desta pasta compartilhada.
+    """
+    return SKILLS + tuple(s for m in modulos(pasta_modulos) for s in m["skills"])
+
 
 def formato(caminho: Path) -> int:
     """Versão do formato de um plano ou de uma unidade — `FORMATO_ANTERIOR` quando não declara.

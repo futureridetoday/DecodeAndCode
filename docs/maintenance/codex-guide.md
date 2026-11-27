@@ -95,7 +95,7 @@ Decidido em 2026-11-25.
   | `product-references.md` | Referência de produto |
   | `invariants.md` | Invariante |
   | `concepts.md` | Conceito |
-  | `fix.md` | Capítulo do workflow de correção (item 39); vai para a pasta do módulo quando ele existir, na fase 2 |
+  | `fix.md` | Capítulo do workflow de correção (item 39); mora na pasta do módulo, `modules/fix/codex/` ([`modules.md`](modules.md)) |
 
 - **Títulos:** o título de cada seção é único no codex inteiro, porque a leitura é por título.
 
@@ -207,6 +207,7 @@ Decidido em 2026-11-25.
   guardrails; [`packaging.md`](packaging.md), o empacotamento, a reconciliação, o bootstrap e o ciclo
   instalado; [`skills-and-scripts.md`](skills-and-scripts.md), a fronteira entre skill e script, os
   modelos, os esqueletos sem template e o porquê do log de uso e do porte medido.
+- **Módulos:** [`modules.md`](modules.md), o contrato entre o núcleo e os módulos (itens 34 e 58).
 - **README:** as seções de manutenção — *Como este repositório se relaciona com o pacote* e
   *Procedimento de release* (`README.md:215`, `:228`) — passam para lá na fase 2, como um consumidor
   do mapa da 2.1, e o README fica com um link.

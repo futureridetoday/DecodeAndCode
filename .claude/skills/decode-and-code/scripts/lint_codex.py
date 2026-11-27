@@ -92,8 +92,18 @@ def secoes(arquivo: Path) -> list[Secao]:
     return achadas
 
 
-def capitulos(codex_dir: Path) -> list[Path]:
-    return sorted(codex_dir.glob("*.md"))
+def capitulos(codex_dir: Path | list[Path]) -> list[Path]:
+    """Os capítulos de uma pasta do codex, ou de várias — o núcleo e o capítulo de cada módulo."""
+    pastas = codex_dir if isinstance(codex_dir, list) else [codex_dir]
+    return sorted((c for p in pastas for c in p.glob("*.md")), key=lambda c: (str(c.parent), c.name))
+
+
+def pastas_do_codex() -> list[Path]:
+    """O núcleo e o capítulo de cada módulo presente: os lints conferem os dois juntos, porque o
+    capítulo do módulo cita títulos do núcleo em *Ver também*."""
+    import lib
+
+    return [CODEX_DIR] + [m["path"] / "codex" for m in lib.modulos() if (m["path"] / "codex").is_dir()]
 
 
 def _ver_tambem(secao: Secao) -> list[str] | None:
@@ -108,7 +118,7 @@ def _ver_tambem(secao: Secao) -> list[str] | None:
 # --- estrutura ---------------------------------------------------------------------------------
 
 
-def lint_estrutura(codex_dir: Path, teto: int = TETO_DE_LINHAS) -> list[str]:
+def lint_estrutura(codex_dir: Path | list[Path], teto: int = TETO_DE_LINHAS) -> list[str]:
     todas = [s for cap in capitulos(codex_dir) for s in secoes(cap)]
     titulos: dict[str, Secao] = {}
     problemas: list[str] = []
@@ -181,7 +191,7 @@ def _achados_na_linha(linha: str, nomes: set[str], projetos: set[str]) -> list[t
     return [a for a in achados if not (a in vistos or vistos.add(a))]
 
 
-def lint_dependencia(codex_dir: Path, nomes: set[str], projetos: set[str]) -> list[str]:
+def lint_dependencia(codex_dir: Path | list[Path], nomes: set[str], projetos: set[str]) -> list[str]:
     problemas = []
     for cap in capitulos(codex_dir):
         linhas, desloc = _corpo(cap.read_text(encoding="utf-8"))
@@ -205,7 +215,7 @@ def _palavras(linhas: list[str], primeira: int) -> list[tuple[str, int]]:
     return saida
 
 
-def lint_repeticao(codex_dir: Path, alvos: list[Path], janela: int = JANELA_PADRAO) -> list[str]:
+def lint_repeticao(codex_dir: Path | list[Path], alvos: list[Path], janela: int = JANELA_PADRAO) -> list[str]:
     origem: dict[tuple[str, ...], str] = {}
     for cap in capitulos(codex_dir):
         for s in secoes(cap):
@@ -267,12 +277,12 @@ def main(argv: list[str] | None = None) -> int:
     raiz, repo, plan_root = _contexto_do_projeto()
     problemas: list[str] = []
     if args.lint in ("estrutura", "todos"):
-        problemas += lint_estrutura(CODEX_DIR)
+        problemas += lint_estrutura(pastas_do_codex())
     if args.lint in ("dependencia", "todos"):
-        problemas += lint_dependencia(CODEX_DIR, nomes_de_mecanismo(SKILLS_DIR), nomes_de_projeto(raiz, repo))
+        problemas += lint_dependencia(pastas_do_codex(), nomes_de_mecanismo(SKILLS_DIR), nomes_de_projeto(raiz, repo))
     if args.lint in ("repeticao", "todos"):
         alvos = args.alvos or alvos_padrao(SKILLS_DIR, plan_root)
-        problemas += lint_repeticao(CODEX_DIR, alvos, args.janela)
+        problemas += lint_repeticao(pastas_do_codex(), alvos, args.janela)
 
     for problema in problemas:
         print(problema)

@@ -202,6 +202,13 @@ def procedimentos_dir() -> Path:
     return Path(__file__).resolve().parent.parent / "procedures"
 
 
+def pastas_do_codex() -> list[Path]:
+    """O núcleo do codex e o capítulo de cada módulo presente (`lib.modulos`)."""
+    import lib
+
+    return [codex_dir()] + [m["path"] / "codex" for m in lib.modulos() if (m["path"] / "codex").is_dir()]
+
+
 def secao_do_codex(titulo: str, pasta: Path | None = None) -> tuple[Path, str]:
     """`(arquivo, trecho)` da seção `## <titulo>` do codex — título exato, que no codex é único.
 
@@ -209,8 +216,8 @@ def secao_do_codex(titulo: str, pasta: Path | None = None) -> tuple[Path, str]:
     título quando nenhum capítulo o tem: o codex nunca é copiado ao projeto (codex, *Restrição
     fundamental*), e quem lê é o pacote, então a falta é defeito do pacote, não do projeto.
     """
-    pasta = pasta or codex_dir()
-    for capitulo in sorted(pasta.glob("*.md")):
+    pastas = [pasta] if pasta else pastas_do_codex()
+    for capitulo in sorted(c for p in pastas for c in p.glob("*.md")):
         linhas = capitulo.read_text(encoding="utf-8").split("\n")
         for i, linha in enumerate(linhas):
             if linha.rstrip() == f"## {titulo}":
@@ -218,7 +225,7 @@ def secao_do_codex(titulo: str, pasta: Path | None = None) -> tuple[Path, str]:
                     (j for j in range(i + 1, len(linhas)) if linhas[j].startswith("## ")), len(linhas)
                 )
                 return capitulo, "\n".join(linhas[i:fim]).rstrip()
-    raise ValueError(f"seção ausente no codex ({pasta}): {titulo}")
+    raise ValueError(f"seção ausente no codex ({', '.join(map(str, pastas))}): {titulo}")
 
 
 class Aplicavel(NamedTuple):

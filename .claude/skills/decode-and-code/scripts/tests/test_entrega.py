@@ -103,7 +103,7 @@ class TestPequeno(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         plano = Path(tmp.name) / "0002-fix-algo.md"
         plano.write_text(
-            f"---\nplan_id: {plan_id}\nstatus: approved\nplan_size: pequeno\nplan_type: fix\n"
+            f"---\nplan_id: {plan_id}\nstatus: approved\nplan_size: pequeno\nplan_type: chore\n"
             "format_version: 2\napproved_by: Ana\napproved_at: 2026-11-27\n---\n\n# fix-algo\n\n"
             "## Objetivo\n\nx\n\n## Histórias\n\nx\n\n## Independência\n\nx\n\n## Recursos\n\nnenhum\n\n"
             f"## Tarefas\n\n{tarefas}\n",
