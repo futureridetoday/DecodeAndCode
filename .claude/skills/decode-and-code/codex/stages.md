@@ -9,8 +9,8 @@ tags: [codex, workflow, etapa]
 # history
 author: Bortoli
 created: 2026-11-25
-status: draft
-version: 0.3.0
+status: stable
+version: 1.0.0
 updated: ""
 
 # system
