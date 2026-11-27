@@ -44,8 +44,7 @@ source: local
 
 > Invocação só explícita (`disable-model-invocation: true`): o `derive` cria arquivos no plano.
 
-Esta skill executa o modo `derive`. `plan_root` vem do `config.json` ao lado de
-`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo. O que vale está no codex; leia pelo
+Esta skill executa o modo `derive`. `plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. O que vale está no codex; leia pelo
 título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de memória. Comece por
 `Derive`, `Definition of Ready`, `Unidade`, `Cold-start`, `Handoff`, `Critério de aceite` e `Tipo`.
 

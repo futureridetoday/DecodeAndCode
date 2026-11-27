@@ -42,8 +42,7 @@ source: local
 
 # review-plan
 
-Esta skill executa o modo `review`: a revisão do workflow de produto. `plan_root` vem do
-`config.json` ao lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo. O que vale
+Esta skill executa o modo `review`: a revisão do workflow de produto. `plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. O que vale
 está no codex; leia pelo título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de
 memória. Comece por `Revisão`, `Plano técnico`, `História`, `Critério de aceite`, `Tarefa`, `Unidade`,
 `Porte`, `Independência entre planos`, `Tipo` e `Aprovação`.
@@ -65,7 +64,9 @@ memória. Comece por `Revisão`, `Plano técnico`, `História`, `Critério de ac
    - `## Decisões e riscos` — as decisões técnicas e os riscos; nenhuma em aberto;
    - pelo porte: `## Tarefas`, como checklist `- [ ]`, no pequeno; `## Unidades`, tabela
      `| # | Unidade | Entrega | Histórias |`, uma linha numerada por unidade, nos portes com unidade.
-   Preencha `plan_size`. O que o tipo pede que a revisão confira está em `Tipo`.
+   Preencha `plan_size`. No pequeno, sem unidade para levar o teste, a revisão o declara no plano: acrescente
+   ao frontmatter `test: <caminho do teste>` (vazio no tipo `rule`), `state: spec` e
+   `verified_at: ""`. O que o tipo pede que a revisão confira está em `Tipo`.
 3. **Fontes e recursos.** Abra as fontes técnicas citadas na proposta; confira que existem e servem. Cada
    recurso de `## Recursos` precisa existir no projeto: confira pelo nome.
 4. **Concorrência.** Leia `_planos.md`: um plano em desenvolvimento que muda o mesmo comportamento

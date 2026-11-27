@@ -37,6 +37,9 @@ plan_type: fix
 format_version: 2
 approved_by: ""
 approved_at: ""
+test: tests/test_algo.py
+state: spec
+verified_at: ""
 ---
 
 # fix-algo

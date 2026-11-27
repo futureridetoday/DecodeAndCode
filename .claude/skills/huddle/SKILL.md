@@ -43,8 +43,8 @@ source: local
 
 Esta skill conduz o modo `huddle` da pessoa que está na sessão — a fila do que ainda não foi
 decidido. O que o huddle é, e os destinos de uma entrada, estão no codex: leia
-`python3 "${CLAUDE_SKILL_DIR}/dc.py" codex Huddle Rethink`, nunca de memória. `plan_root` vem do
-`config.json` ao lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`. Cada pessoa tem o próprio arquivo, e o `dc.py`
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" codex Huddle Rethink`, nunca de memória. `plan_root` é o que
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. Cada pessoa tem o próprio arquivo, e o `dc.py`
 resolve qual é pelo `git config user.name`: aqui só se lê e se escreve o da pessoa da sessão.
 
 Argumentos: $ARGUMENTS

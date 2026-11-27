@@ -44,6 +44,8 @@ def _texto(
               "approved_at: 2026-11-27"]
     if core:
         linhas.append(f"core: {core}")
+    if plan_size == "pequeno":
+        linhas += ["test: tests/test_x.py", "state: spec", 'verified_at: ""']
     linhas += ["---", "", "# exemplo", ""]
     secoes = {
         "Objetivo": "Uma frase.",
@@ -99,6 +101,16 @@ class TestLintPlanoFormatoAtual(_Raiz):
     def test_pequeno_com_unidades_reprova(self) -> None:
         problemas = self._lint(_texto("pequeno", tarefas=True, unidades=1))
         self.assertTrue(any("pequeno não tem unidade" in p for p in problemas), problemas)
+
+    def test_pequeno_sem_teste_declarado_reprova(self) -> None:
+        texto = _texto("pequeno", tarefas=True).replace("test: tests/test_x.py\n", 'test: ""\n')
+        self.assertIn(
+            "pequeno exige 'test' preenchido: o caminho do teste que verifica o critério", self._lint(texto)
+        )
+
+    def test_pequeno_sem_os_campos_do_teste_reprova(self) -> None:
+        texto = _texto("pequeno", tarefas=True).replace("state: spec\n", "")
+        self.assertIn("pequeno exige 'state' no frontmatter, ainda que vazio", self._lint(texto))
 
     def test_pequeno_sem_tarefas_reprova(self) -> None:
         self.assertIn("pequeno exige '## Tarefas'", self._lint(_texto("pequeno")))

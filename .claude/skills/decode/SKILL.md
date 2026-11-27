@@ -44,7 +44,7 @@ source: local
 
 Pedido: $ARGUMENTS
 
-`plan_root` vem do `config.json` ao lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo.
+`plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`.
 
 O que vale em cada passo está no codex; leia as seções pelo título com
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de memória. Comece por

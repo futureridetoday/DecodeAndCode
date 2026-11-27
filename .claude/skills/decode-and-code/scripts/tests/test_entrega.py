@@ -98,13 +98,14 @@ class TestAprovar(_Plano):
 
 
 class TestPequeno(unittest.TestCase):
-    def _plano(self, tarefas: str, plan_id: str = '"0002"') -> Path:
+    def _plano(self, tarefas: str, plan_id: str = '"0002"', state: str = "verified") -> Path:
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         plano = Path(tmp.name) / "0002-fix-algo.md"
         plano.write_text(
             f"---\nplan_id: {plan_id}\nstatus: approved\nplan_size: pequeno\nplan_type: chore\n"
-            "format_version: 2\napproved_by: Ana\napproved_at: 2026-11-27\n---\n\n# fix-algo\n\n"
+            "format_version: 2\napproved_by: Ana\napproved_at: 2026-11-27\ntest: tests/test_x.py\n"
+            f"state: {state}\nverified_at: \"\"\n---\n\n# fix-algo\n\n"
             "## Objetivo\n\nx\n\n## Histórias\n\nx\n\n## Independência\n\nx\n\n## Recursos\n\nnenhum\n\n"
             f"## Tarefas\n\n{tarefas}\n",
             encoding="utf-8",
@@ -122,8 +123,35 @@ class TestPequeno(unittest.TestCase):
         with self.assertRaises(ValueError):
             entrega.aprovar(self._plano("- [x] fazer\n- [ ] conferir"), "Ana")
 
+    def test_aprovar_sem_teste_verde_recusa(self) -> None:
+        with self.assertRaisesRegex(ValueError, "teste verde"):
+            entrega.aprovar(self._plano("- [x] fazer", state="spec"), "Ana")
+
     def test_aprovar_com_tudo_feito_fecha_o_plano(self) -> None:
         plano = entrega.aprovar(self._plano("- [x] fazer\n- [x] conferir"), "Ana")
+        self.assertEqual(regioes.ler_campo(plano, "status"), "done")
+
+
+class TestVerificarNoPequeno(unittest.TestCase):
+    """O pequeno não tem unidade: o `verificar` roda o teste que o plano declara e projeta o estado
+    no próprio plano — o caminho determinístico até o teste, que o teste ponta a ponta mostrou faltar."""
+
+    def test_projeta_verified_no_plano_e_libera_a_aprovacao(self) -> None:
+        import verificacao
+
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        raiz = Path(tmp.name).resolve()
+        (raiz / "tests").mkdir()
+        (raiz / "tests" / "test_x.py").write_text("x\n", encoding="utf-8")
+        plano = TestPequeno._plano(self, "- [x] fazer", state="spec")
+        with mock.patch.object(lib, "repo_root", return_value=raiz), mock.patch.object(
+            verificacao, "_executar", return_value=(0, "Ran 3 tests\n\nOK\n")
+        ):
+            estado, escreveu = verificacao.verificar(plano)
+        self.assertEqual((estado, escreveu), ("verified", True))
+        self.assertEqual(regioes.ler_campo(plano, "state"), "verified")
+        entrega.aprovar(plano, "Ana")
         self.assertEqual(regioes.ler_campo(plano, "status"), "done")
 
 

@@ -13,7 +13,8 @@ o code executa na mesma sessão. No formato 1 vale só o lint da unidade, como a
 (`verificacao`). Por isso a unidade `dev` ou `plan` só se aprova com `state: verified` — aprovar o
 que o teste não passou seria aprovar sem P7. A unidade `rule` é o inverso: a aprovação é o aceite
 (codex, *Tipo*), e o `verificar` a fecha depois. O plano pequeno se aprova com todas as tarefas
-marcadas, e a aprovação dele é a aprovação final: grava `status: done`.
+marcadas e o teste que ele declara verde (`verificar` sobre o próprio plano), e a aprovação dele é a
+aprovação final: grava `status: done`.
 """
 
 from __future__ import annotations
@@ -94,6 +95,10 @@ def aprovar(alvo: Path, por: str, data: str | None = None) -> Path:
         abertas = [texto for feita, texto in tarefas if not feita]
         if abertas:
             raise ValueError(f"tarefas por marcar antes da aprovação: {'; '.join(abertas)}")
+        plan_type = _limpo(regioes.ler_campo(alvo, "plan_type"))
+        state = _limpo(regioes.ler_campo(alvo, "state"))
+        if plan_type not in lib.TIPOS_DE_APROVACAO and state != "verified":
+            raise ValueError(f"a entrega só se aprova com o teste verde (state: verified); está {state!r}")
         regioes.escrever_campos(alvo, {"status": "done"})
         return alvo
 
