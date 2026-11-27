@@ -196,7 +196,7 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
 - **Como verificar:** a suíte e uma execução dos dois lints sobre o codex.
 - **Detalhamento:** decidido em D-12.
 - **Onde roda:** aninhada; rodou nesta sessão, por pedido da pessoa.
-- **Estado:** concluída em 2026-11-26. `lint_codex.py` com 29 testes; o codex roda limpo nos lints
+- **Estado:** concluída em 2026-11-26, PR #67. `lint_codex.py` com 29 testes; o codex roda limpo nos lints
   de estrutura e de dependência. O de repetição acha 3 trechos nas skills de hoje — `intake`
   ("o que o projeto já tem"), `rethink` ("depois de uma mudança de rumo") e `setup` ("enunciado, o
   objetivo numa frase curta") —, que entram no mapa da 2.1 e somem na subparte de cada skill.
