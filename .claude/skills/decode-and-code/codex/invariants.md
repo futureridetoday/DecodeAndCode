@@ -10,7 +10,7 @@ tags: [codex, invariante]
 author: Bortoli
 created: 2026-11-26
 status: draft
-version: 0.1.0
+version: 0.2.0
 updated: ""
 
 # system
@@ -28,8 +28,8 @@ dependencies: []
 **O que é:** uma regra que vale sempre, em qualquer etapa e em qualquer projeto.
 
 - **Enunciado:**
-  - Uma fonte por fato: nenhum trecho do codex aparece repetido na foundation nem no procedimento
-    das etapas.
+  - Uma fonte por fato: nenhum trecho do codex aparece repetido na foundation nem no passo a passo
+    que conduz cada etapa. Vale para o trecho copiado, não para a ideia citada.
   - Nada do projeto no plugin: nenhum dado de projeto viaja no plugin.
   - Instruções em conflito não têm vencedor; por isso nada do projeto, nem guideline nem foundation,
     pode repetir ou contradizer o codex.

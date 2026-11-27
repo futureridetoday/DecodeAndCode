@@ -3,14 +3,14 @@
 name: codex-fix
 type: knowledge
 project: ""
-description: Codex do decode-and-code, capítulo do workflow de correção — o workflow, o plano mínimo e o teste que reproduz o defeito; o núcleo não depende deste capítulo
+description: Codex do decode-and-code, capítulo do workflow de correção — o workflow, a passagem para o workflow de produto, o plano mínimo e o teste que reproduz o defeito; o núcleo não depende deste capítulo
 tags: [codex, correcao, modulo]
 
 # history
 author: Bortoli
 created: 2026-11-26
 status: draft
-version: 0.1.0
+version: 0.3.0
 updated: ""
 
 # system
@@ -33,43 +33,62 @@ provar que foi corrigido.
   workflow.
 - **O que sai:** o defeito corrigido, provado pelo teste que reproduz o defeito, e o plano fechado.
 - **Workflow de correção, depois da entrada:**
-  - C1, diagnóstico: Claude localiza e reproduz o defeito e registra o plano mínimo.
+  - C1, diagnóstico: Claude localiza e reproduz o defeito, à mão se preciso, e registra o plano
+    mínimo.
   - C2, aprovação do plano mínimo.
-  - C3, code, com o plano mínimo aprovado como entrada.
-  - C4, teste que reproduz o defeito.
+  - C3, code, com o plano mínimo aprovado como entrada: começa pelo teste que reproduz o defeito,
+    que roda e falha antes do ajuste.
+  - C4, o mesmo teste passa depois do ajuste.
   - Aprovação final, depois do teste.
 - **Regras:**
-  - O decode é enxuto: identifica o defeito e o que muda para corrigi-lo, sem o custo de um plano de
-    produto para mudar uma palavra.
+  - O diagnóstico é um decode enxuto: identifica o defeito e o que muda para corrigi-lo, lendo do
+    projeto só o que o defeito toca, sem o custo de um plano de produto para mudar uma palavra.
   - A correção não tem proposta: o diagnóstico gera o plano mínimo.
-  - Se o diagnóstico mostra que o ajuste não é pequeno, o plano passa para o workflow de produto.
+  - Valem no C3 os gates do code, e nas aprovações as regras de Aprovação, recusa inclusive.
 
-**Ver também:** Plano mínimo, Teste que reproduz o defeito, Workflow, Tipo, Decode, Code, Aprovação,
-Proposta.
+**Ver também:** Passagem para o workflow de produto, Plano mínimo, Teste que reproduz o defeito,
+Workflow, Tipo, Decode, Code, Aprovação, Proposta.
+
+## Passagem para o workflow de produto
+
+**O que é:** o que acontece quando o diagnóstico mostra que o pedido não cabe na correção.
+
+- **Quem faz:** Claude propõe; o usuário aprova a troca.
+- **Quando vale:** quando o ajuste não é pequeno, ou quando não há defeito, porque o comportamento
+  pedido nunca foi especificado nem construído.
+- **Regras:**
+  - Claude propõe o novo tipo, com o motivo, e o usuário aprova a troca.
+  - O plano continua, ainda sem número: o conteúdo do plano mínimo dá lugar ao do workflow de
+    produto, o que o diagnóstico achou entra na proposta como contexto, e o nome pode ser refeito.
+  - O plano volta à confirmação do objetivo, na entrada, e segue o workflow de produto desde o P1.
+
+**Ver também:** Correção, Plano mínimo, Tipo, Objetivo do plano, Workflow, Decode, Plano.
 
 ## Plano mínimo
 
 **O que é:** o plano pequeno com uma única tarefa, que a correção segue.
 
-- **Contém:** o defeito e como reproduzi-lo, o que muda para corrigi-lo, e como verificar.
+- **Contém:** o que todo plano contém, e, no lugar das histórias, o defeito e como reproduzi-lo, o
+  que muda para corrigi-lo, e como verificar, que é o critério de aceite.
 - **Quem cria:** Claude, no diagnóstico (C1).
 - **Regras:**
-  - É o plano de porte pequeno; muda só o conteúdo.
+  - É o plano de porte pequeno, com uma tarefa que inclui o teste.
   - Toda correção gera plano registrado.
-  - O usuário o aprova antes do code (C2), e é nessa aprovação que o plano recebe número. Se o plano
-    passa para o workflow de produto, o número segue a regra do Plano.
+  - O usuário o aprova antes do code (C2), e é nessa aprovação que o plano recebe número.
 
-**Ver também:** Correção, Plano, Porte, Tarefa, Aprovação, Numeração e nomenclatura, Plano técnico,
-Teste que reproduz o defeito.
+**Ver também:** Correção, Passagem para o workflow de produto, Plano, Porte, Tarefa, Critério de
+aceite, Aprovação, Numeração e nomenclatura, Teste que reproduz o defeito.
 
 ## Teste que reproduz o defeito
 
-**O que é:** o teste C4 da correção, que falha antes do ajuste e passa depois.
+**O que é:** o teste da correção, que falha antes do ajuste e passa depois.
 
-- **Quando vale:** em toda correção, depois do code.
+- **Quando vale:** em toda correção; é escrito e roda vermelho no início do C3, e roda verde no C4.
 - **O que exige:**
   - Claude ou o usuário o faz, a partir de como reproduzir o defeito, que o plano mínimo declara.
   - É o teste que verifica o critério de aceite da correção.
-- **Quando falha:** sem ele, a correção não é verificada.
+  - A execução vermelha, antes do ajuste, fica registrada no relatório da entrega.
+- **Quando falha:** se não falha antes do ajuste, não reproduz o defeito e é refeito; se não passa
+  depois, o C3 continua.
 
-**Ver também:** Teste, Critério de aceite, Plano mínimo, Correção, Aprovação.
+**Ver também:** Teste, Critério de aceite, Plano mínimo, Correção, Entrega, Aprovação.

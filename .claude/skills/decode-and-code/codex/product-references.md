@@ -10,7 +10,7 @@ tags: [codex, referencia-de-produto]
 author: Bortoli
 created: 2026-11-26
 status: draft
-version: 0.1.0
+version: 0.3.0
 updated: ""
 
 # system
@@ -33,13 +33,13 @@ apoiam.
   - Design Thinking, de Tim Brown (*Change by Design*), e o Double Diamond, do Design Council;
   - Lean Startup, de Eric Ries (*The Lean Startup*);
   - Shape Up, de Ryan Singer (*Shape Up*);
-  - o formato de história de usuário, de Mike Cohn (*User Stories Applied*);
+  - o formato de história, de Mike Cohn (*User Stories Applied*);
   - INVEST, de Bill Wake (*INVEST in Good Stories, and SMART Tasks*);
   - User Story Mapping, de Jeff Patton (*User Story Mapping*).
 - **O que traz:** no decode, as perguntas do mindset de produto; na revisão, a forma, a qualidade e
   a ordem das histórias.
 - **Em que etapa entra:** no decode, JTBD, Design Thinking e Double Diamond, Lean Startup, os quatro
-  riscos e Shape Up; na revisão, histórias de usuário, INVEST e User Story Mapping.
+  riscos e Shape Up; na revisão, o formato de história, INVEST e User Story Mapping.
 
 **Ver também:** Mindset de produto, Os quatro riscos, Hipótese, MVP, Fluxo de decodificação,
 Decode, Revisão, Proposta, História.
@@ -61,7 +61,7 @@ consegue verificar.
   - Quanto vale gastar, e o que fica de fora? (Shape Up)
   - Dá para resolver sem código, e qual é a menor versão? (fluxo de decodificação)
 - **Em que etapa entra:** no decode. Vale também para recursos que não são produto digital, e então
-  o "usuário" é quem usa o recurso.
+  "quem usa" é quem usa o recurso.
 
 **Ver também:** Referência de produto, Os quatro riscos, Hipótese, MVP, Fluxo de decodificação,
 Decode, Paralelo com produto digital.
@@ -85,7 +85,8 @@ Evitar e Reduzir.
 **O que é:** validar valor, usabilidade, viabilidade técnica e viabilidade de negócio.
 
 - **Fonte:** Marty Cagan (*Inspired*).
-- **O que traz:** a pauta do trio PM, Designer e Tech Lead.
+- **O que traz:** a pauta do trio PM, Designer e Tech Lead. Segurança e privacidade entram como
+  viabilidade técnica e de negócio.
 - **Em que etapa entra:** no decode.
 
 **Ver também:** Papel, Decode, Hipótese, Referência de produto.
@@ -100,7 +101,9 @@ provar errada, com o sinal que vai confirmá-la ou refutá-la.
 - **O que traz:**
   - O modelo: "Acreditamos que <mudança>, para <quem>, vai resultar em <resultado>. Teremos
     confiança para seguir quando <sinal mensurável>, até <prazo ou ponto de verificação>."
-  - Cada hipótese tem um resultado só, e o sinal é definido antes de construir.
+  - Cada hipótese tem um resultado só, e o sinal é definido antes de construir. O sinal pode vir de
+    uma consulta ao que o sistema já guarda ou de uma observação do usuário, com data; não exige
+    instrumentação nova.
   - Se nenhum resultado pode contradizê-la, não é hipótese.
   - Há duas hipóteses de partida: a de valor, que é o primeiro dos quatro riscos, e a de crescimento.
     O ciclo é construir, medir e aprender.
@@ -109,9 +112,10 @@ provar errada, com o sinal que vai confirmá-la ou refutá-la.
     reduzir o consumo de tokens por unidade. Teremos confiança para seguir quando o consumo médio
     cair nos próximos 5 planos."
 - **Em que etapa entra:** no decode, declarada na proposta; o sinal se liga à métrica que o
-  Clarificar pergunta.
+  Clarificar pergunta. Um ponto de verificação depois de o plano fechar fica no huddle.
 
-**Ver também:** MVP, Proposta, Decode, Os quatro riscos, Fluxo de decodificação, Mindset de produto.
+**Ver também:** MVP, Proposta, Decode, Os quatro riscos, Fluxo de decodificação, Mindset de produto,
+Huddle.
 
 ## MVP
 
