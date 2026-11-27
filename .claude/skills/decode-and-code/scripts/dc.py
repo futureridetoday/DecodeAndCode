@@ -856,6 +856,31 @@ def _planos_que_citam(args: argparse.Namespace) -> int:
     return OK
 
 
+def _migrar(args: argparse.Namespace) -> int:
+    """Sem `--aplicar`, lista o que o projeto ainda tem do método anterior; com ele, aplica um item."""
+    import lib
+    import migracao
+
+    projeto = lib.repo_root()
+    if args.aplicar:
+        tocados = migracao.aplicar(projeto, args.aplicar)
+        for caminho in tocados:
+            print(f"{args.aplicar}: {os.path.relpath(caminho, projeto)}")
+        if not tocados:
+            print(f"{args.aplicar}: nada a fazer")
+        return OK
+    p = migracao.pendencias(projeto)
+    if p.norma:
+        print(f"norma: {os.path.relpath(p.norma, projeto)} — cópia do método anterior; apagar com o sim")
+    for arquivo in p.huddles:
+        print(f"huddle: {os.path.relpath(arquivo, projeto)} — esqueleto que cita a norma; trocar com o sim")
+    for arquivo in p.planos:
+        print(f"plano: {os.path.relpath(arquivo, projeto)} — cita a norma; atualiza na revisão, no derive ou no code")
+    if p.vazias():
+        print("nada a migrar")
+    return OK
+
+
 def _setup_registrar(args: argparse.Namespace) -> int:
     import setup
 
@@ -942,6 +967,13 @@ def _parser() -> argparse.ArgumentParser:
         "inclui ou atualiza um recurso no mapa da foundation, JSON no stdin (1 se fora do vocabulário)",
         _foundation_recurso,
     )
+    p = comando(
+        "migrar",
+        "lista o que o projeto ainda tem do método anterior, ou aplica um item com --aplicar",
+        _migrar,
+    )
+    p.add_argument("--aplicar", choices=("norma", "huddle"), help="só com o sim da pessoa")
+
     p = comando(
         "planos-que-citam",
         "lista os planos abertos (rascunho ou em desenvolvimento) e as unidades deles que citam o nome",

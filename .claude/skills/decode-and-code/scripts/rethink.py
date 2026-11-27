@@ -109,15 +109,18 @@ def record(projeto: Path, camada: str, nome: str, decisao: str, motivo: str) -> 
     destino.write_text(atual.rstrip("\n") + "\n" + linha, encoding="utf-8")
 
 
-def planos_que_citam(nome: str) -> list[Path]:
+def planos_que_citam(nome: str, raiz: Path | None = None, com_handoff: bool = False) -> list[Path]:
     """Os arquivos de plano aberto que citam `nome` — para o rethink listá-los ao usuário (codex, *Rethink*).
 
     Aberto é o rascunho no `_inbox/` e o plano de `_planos.md` cuja situação não é `concluído`; do
     plano numerado entram o arquivo dele e, quando é pasta, as unidades. Cita é ter o nome como
     palavra inteira, fora de outra palavra: `scripts` casa em "a guideline `scripts`", não em
     "test-scripts". Plano fechado fica como registro (codex, *Plano anterior ao redesign*).
+
+    `raiz` é a raiz dos planos, quando quem chama não roda de dentro do projeto (o hook de abertura);
+    `com_handoff` inclui o `_handoff.md` dos planos abertos, que a migração (2.4) também lista.
     """
-    raiz = lib.plan_root()
+    raiz = raiz or lib.plan_root()
     padrao = re.compile(rf"(?<![\w-]){re.escape(nome)}(?![\w-])")
     candidatos = sorted((raiz / "_inbox").glob("*.md")) if (raiz / "_inbox").is_dir() else []
     planos_md = raiz / "_planos.md"
@@ -131,7 +134,10 @@ def planos_que_citam(nome: str) -> list[Path]:
             candidatos.append(arquivo)
             if arquivo.parent.name == arquivo.stem:
                 candidatos += sorted(p for p in arquivo.parent.glob("[0-9][0-9]-*.md"))
+                if com_handoff:
+                    candidatos.append(arquivo.parent / "_handoff.md")
     return [
         c for c in candidatos
-        if c.is_file() and not c.name.startswith("_") and padrao.search(c.read_text(encoding="utf-8"))
+        if c.is_file() and (not c.name.startswith("_") or (com_handoff and c.name == "_handoff.md"))
+        and padrao.search(c.read_text(encoding="utf-8"))
     ]

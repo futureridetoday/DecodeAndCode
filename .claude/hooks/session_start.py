@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Hook `SessionStart` (matcher `startup`) — propõe o setup pendente e lembra do huddle atrasado.
+"""Hook `SessionStart` (matcher `startup`) — propõe o setup pendente, a migração para o codex e o huddle atrasado.
 
 Planos 0008, T6, e 0009-05. Sem `setup.md` concluído (ausente, ou `completed_at` vazio), propõe
 `/decode-and-code:setup` e só isso — um aviso por vez, e a checagem vem antes de `huddle.usuario`,
 porque projeto recém-aberto pode não ter `docs/`, `.claude/` nem `user.name`. Com o setup
 concluído, lê o arquivo de huddle de quem abre a sessão e, com entrada aberta e `reminder_days`
 dias ou mais desde `last_huddle` (ou `created`), avisa do huddle. Em ambos devolve `systemMessage`
-para a pessoa e `additionalContext` para o modelo. Nunca escreve, e fica em silêncio em qualquer outro caso e em qualquer erro: um
+para a pessoa e `additionalContext` para o modelo. Com o setup concluído e algo do método anterior
+ainda no projeto (`migracao.pendencias`, parte 2.4 do redesign), avisa também da migração. Nunca escreve, e fica em silêncio em qualquer outro caso e em qualquer erro: um
 lembrete que trava a abertura da sessão é pior que nenhum.
 
 O projeto vem de `CLAUDE_PROJECT_DIR`, nunca de `lib.repo_root()` — a mesma razão do
@@ -27,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "decode-and-code" / "scripts"))
 import eventos  # noqa: E402
 import huddle  # noqa: E402
+import migracao  # noqa: E402
 import setup  # noqa: E402
 
 LEMBRETE_PADRAO = 7
@@ -81,6 +83,19 @@ def _aviso_huddle(projeto: Path, hoje: date) -> tuple[str, str] | None:
     )
 
 
+def _aviso_migracao(projeto: Path) -> tuple[str, str] | None:
+    """O que o projeto ainda tem do método anterior ao codex (parte 2.4 do redesign), ou `None`."""
+    if migracao.pendencias(projeto).vazias():
+        return None
+    return (
+        "O decode-and-code trocou a norma pelo codex, e este projeto ainda tem o que o método anterior "
+        "gravou. Rode /decode-and-code:setup para migrar, item por item, com o seu sim.",
+        "O projeto tem pendências da migração para o codex (dc.py migrar as lista): a cópia da norma, o "
+        "esqueleto antigo do huddle ou planos abertos que a citam. Proponha /decode-and-code:setup, "
+        "que conduz a migração; nada se apaga sem o sim da pessoa.",
+    )
+
+
 def _aviso_erros(projeto: Path, hoje: date) -> tuple[str, str] | None:
     """Os `E-XX` do log sem resolução há `eventos.ALARME_DIAS` dias ou mais (plano 0018, `D-08`)."""
     ids = eventos.atrasados(projeto, hoje)
@@ -106,7 +121,11 @@ def aviso(projeto: Path, hoje: date) -> dict | None:
         parte_huddle = _aviso_huddle(projeto, hoje)
     except Exception:
         parte_huddle = None  # sem `user.name` ou huddle ilegível: o alarme do log ainda sai
-    partes = [parte for parte in (parte_huddle, _aviso_erros(projeto, hoje)) if parte]
+    try:
+        parte_migracao = _aviso_migracao(projeto)
+    except Exception:
+        parte_migracao = None  # aviso que falha não trava a abertura
+    partes = [parte for parte in (parte_migracao, parte_huddle, _aviso_erros(projeto, hoje)) if parte]
     if not partes:
         return None
     return {
