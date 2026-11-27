@@ -16,7 +16,7 @@ Timeout conta como falha (`spec`), nunca como exceção: o objetivo do timeout
 é só impedir que um teste interativo trave a verificação, não distinguir
 esse caso de qualquer outro jeito de o teste não provar que passa.
 
-`unit_type: norma` (unidade 0001-13) ramifica antes de qualquer coisa acima: markdown normativo não
+`unit_type: rule` — `norma` no formato anterior ao redesign (unidade 0001-13) — ramifica antes de qualquer coisa acima: markdown normativo não
 tem `test` — o campo é exigido **vazio** — então o oráculo não pode ser "rodar o teste declarado".
 `_verificar_norma` fecha por `lint_unidade` limpo somado à aprovação humana registrada
 (`approved_by`/`approved_at`), sem executar `subprocess` nenhum, e copia `approved_at` para
@@ -81,7 +81,7 @@ def verificar_com_saida(unidade: Path, dry_run: bool = False) -> tuple[str, bool
     não distingue "passou" de "não rodou" (plano 0005, F1-F3).
     """
     unit_type = regioes.ler_campo(unidade, "unit_type")
-    if unit_type and unit_type.strip() == "norma":
+    if unit_type and unit_type.strip() in lib.TIPOS_DE_APROVACAO:
         return _verificar_norma(unidade, dry_run)
 
     test_declarado = regioes.ler_campo(unidade, "test")
@@ -134,7 +134,7 @@ def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool, str]:
 def _aprovacao_ausente(unidade: Path) -> list[str]:
     """Um problema por campo de aprovação vazio — o oráculo da `L-01`, declarado pelo humano."""
     return [
-        f"unit_type 'norma' exige '{campo}' preenchido"
+        f"unit_type de aprovação exige '{campo}' preenchido"
         for campo in ("approved_by", "approved_at")
         if lint_unidade._campo_vazio(regioes.ler_campo(unidade, campo))
     ]

@@ -170,7 +170,7 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     derivação incremental reinvoque o modo `derive` sem tratar o caso no markdown (`L-17`).
 
     Levanta `ValueError` se o plano não declara `core`, `plan_size` (ou declara fora do
-    vocabulário `lib.PLAN_SIZES_VALIDOS`), `plan_type` (ou declara fora de `lib.PLAN_TYPES_VALIDOS`,
+    vocabulário `lib.PLAN_SIZES_VALIDOS`), `plan_type` (ou declara fora do vocabulário do formato do plano, `lib.PLAN_TYPES_POR_FORMATO`,
     plano 0012), `approved_by`, `approved_at` (ou declara algo que não é
     data ISO), se falta no frontmatter qualquer campo que a aprovação escreve (`plan_id`, `status`
     — a linha tem de existir, ainda que vazia; conferido antes de mover, para não deixar o plano
@@ -198,9 +198,10 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if _campo_vazio(plan_type):
         raise ValueError(f"plano não declara 'plan_type' — {plano}")
     plan_type = plan_type.strip(" \t\"'")
-    if plan_type not in lib.PLAN_TYPES_VALIDOS:
+    tipos = lib.PLAN_TYPES_POR_FORMATO[lib.formato(plano)]
+    if plan_type not in tipos:
         raise ValueError(
-            f"plan_type fora do vocabulário {lib.PLAN_TYPES_VALIDOS} — {plan_type!r} em {plano}"
+            f"plan_type fora do vocabulário {tipos} — {plan_type!r} em {plano}"
         )
 
     approved_by = regioes.ler_campo(plano, "approved_by")

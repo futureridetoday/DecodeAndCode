@@ -8,10 +8,11 @@ pelo executor no meio do trabalho.
 Três decisões da norma moldam o comportamento: teste **declarado**, não
 existente (decisão 15) — o campo `test` precisa estar presente, o arquivo que
 ele aponta não; teto de **8 passos** na Sequência (decisão 1), acima disso a
-unidade divide; e `unit_type` restrito a `dev`, `plan` ou `norma` (decisão 28,
-estendida pela unidade 0001-13).
+unidade divide; e `unit_type` restrito ao vocabulário do formato da unidade
+(`lib.UNIT_TYPES_POR_FORMATO`): `dev`, `plan` e `rule` no atual, `norma` no
+lugar de `rule` no anterior ao redesign.
 
-`norma` inverte a obrigatoriedade de `test`: unidade que entrega markdown
+O tipo aceito pela aprovação (`rule`, ou `norma` no formato anterior) inverte a obrigatoriedade de `test`: unidade que entrega markdown
 normativo não tem teste que prove que a prosa presta (`L-01`), então `test:`
 passa a ser exigido **vazio**. A aprovação humana — `approved_by`/`approved_at`
 — é o oráculo em seu lugar, mas é de **saída**: o humano a declara depois de
@@ -29,6 +30,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import lib
 import regioes
 
 CAMPOS_FRONTMATTER = ("unit_id", "unit_type", "core", "module", "state")
@@ -44,7 +46,6 @@ BLOCOS_CORPO = (
 )
 
 TETO_PASSOS = 8
-UNIT_TYPES_VALIDOS = ("dev", "plan", "norma")
 
 _UNIT_ID_RE = re.compile(r"^\d{4}-\d{2}$")
 _PASSO_RE = re.compile(r"(?m)^\d+\.\s")
@@ -111,11 +112,15 @@ def _checar_frontmatter(unidade: Path) -> list[str]:
     if unit_id and unit_id.strip() and not _UNIT_ID_RE.match(unit_id.strip()):
         problemas.append(f"unit_id fora do formato NNNN-NN: {unit_id!r}")
 
+    try:
+        tipos = lib.UNIT_TYPES_POR_FORMATO[lib.formato(unidade)]
+    except ValueError as erro:
+        return problemas + [str(erro)]
     unit_type = valores.get("unit_type")
     unit_type_normalizado = unit_type.strip() if unit_type else ""
-    unit_type_valido = unit_type_normalizado if unit_type_normalizado in UNIT_TYPES_VALIDOS else None
+    unit_type_valido = unit_type_normalizado if unit_type_normalizado in tipos else None
     if unit_type_normalizado and unit_type_valido is None:
-        problemas.append(f"unit_type inválido, esperado {UNIT_TYPES_VALIDOS}: {unit_type!r}")
+        problemas.append(f"unit_type inválido, esperado {tipos}: {unit_type!r}")
 
     problemas.extend(_checar_test(test, unit_type_valido))
 
@@ -128,9 +133,9 @@ def _checar_test(test: str | None, unit_type: str | None) -> list[str]:
     Usa `_campo_vazio` dos dois lados — não o laço genérico de `_checar_frontmatter`, que não
     despe aspas e deixaria `test: ""` passar como preenchido em `dev`/`plan`.
     """
-    if unit_type == "norma":
+    if unit_type in lib.TIPOS_DE_APROVACAO:
         if not _campo_vazio(test):
-            return ["unit_type 'norma' exige test: vazio — markdown normativo não roda comando"]
+            return [f"unit_type {unit_type!r} exige test: vazio — markdown normativo não roda comando"]
         return []
     if _campo_vazio(test):
         return ["campo obrigatório ausente no frontmatter: test"]
