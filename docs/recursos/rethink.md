@@ -2,24 +2,24 @@
 
 Versão 1.0.0 · skill
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
 ## O que é
 
-A skill que **repensa a norma do projeto** depois de uma mudança de rumo: revisa cada princípio,
-guideline e guardrail que existe — **Manter**, **Editar** ou **Arquivar** —, sugere os novos e
-registra cada decisão. Roda em Opus, na conversa principal (sem `context: fork`), porque a ferramenta
+A skill que **revisa o que o projeto definiu** depois de uma mudança de rumo: cada princípio,
+guideline e guardrail que existe — **Manter**, **Editar** ou **Arquivar** —, a foundation (padrão de
+código e mapa de recursos), os itens novos e os planos abertos afetados, registrando cada decisão. Roda em Opus, na conversa principal (sem `context: fork`), porque a ferramenta
 de perguntas não existe em subagente. Só a pessoa a invoca: `/decode-and-code:rethink`.
 
 **Não atualiza o plugin.** Trocar a versão do método é `/plugin update` (README, *Atualização*); o
-`rethink` revisa a norma **do projeto**.
+`rethink` revisa o que é **do projeto**.
 
 ## Problema que resolve
 
 Quando o projeto muda de rumo — outro objetivo, outra marca, outro público —, princípios, guidelines
 e guardrails continuam dizendo o rumo antigo em toda sessão. Rodar o setup de novo não revisa: ele
-pula o que já foi decidido e só cria. Os escritores só criavam, e editar ou tirar um item da norma
-pedia um plano por item, ou edição à mão, que a norma proíbe para princípio.
+pula o que já foi decidido e só cria. Os escritores só criavam, e editar ou tirar um item
+pedia um plano por item, ou edição à mão, que o método proíbe para princípio.
 
 ## Como funciona
 
@@ -30,7 +30,7 @@ pedia um plano por item, ou edição à mão, que a norma proíbe para princípi
 - **Passo 1 — perfil.** Se o objetivo, o escopo ou a stack mudou, o perfil do `setup.md` é reescrito
   por `setup-perfil`. Objetivo novo pede north star novo, o primeiro item da revisão.
 - **Passo 2 — os existentes.** Na ordem princípios → guidelines → guardrails, um por vez:
-  - **Manter** — nada muda na norma.
+  - **Manter** — nada muda.
   - **Editar** — o mesmo comando da criação, com `--replace`: mesmo nome, mesmo lugar, validado antes
     de a versão antiga sair.
   - **Arquivar** — `dc.py archive`, com o motivo: o item sai do que o Claude Code carrega e vai para
@@ -67,8 +67,7 @@ pedia um plano por item, ou edição à mão, que a norma proíbe para princípi
 
 ## Fundamentação
 
-Norma, seções *Rethink* e *Camada normativa → Editar e arquivar*, em
-[`modelo-dev-units.md`](../plan/system/modelo-dev-units.md). Plano
+Codex, seções *Rethink*, *Foundation* e *Mapa de recursos do projeto*. Plano
 [`0020-add-norm-rethink`](../plan/model/0020-add-norm-rethink.md).
 
 ## Limites

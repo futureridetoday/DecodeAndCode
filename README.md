@@ -1,22 +1,25 @@
 # decode-and-code
 
-Plugin do Claude Code que empacota o método **decode-and-code**: o ciclo `plano → unidade →
-cold-start` que transforma trabalho novo em unidades executáveis por uma sessão sem contexto, e a
-**norma em camadas** que decide o que cada unidade pode assumir sem perguntar.
+Plugin do Claude Code que empacota o método **decode-and-code**: o caminho de um pedido até a
+entrega, em que Claude entende e propõe antes de construir, e constrói em unidades que rodam numa
+sessão nova, sem o histórico da conversa.
 
 **O problema.** Uma sessão nova do modelo não sabe o que a anterior sabia — o custo aparece como
 retrabalho, decisão re-tomada e execução que diverge do combinado. Documentação solta não resolve:
 não é lida no momento certo, e envelhece sem ninguém notar.
 
-**A resposta.** O método faz o *plano* carregar a diferença entre sessões. Trabalho novo vira um
-plano; o plano é derivado em *unidades*; cada unidade é escrita para quem chega **sem contexto** da
-conversa que a produziu — com contrato, arquivos que toca, normas que referencia e um **teste
-declarado**. O critério de que ela está pronta é esse teste passando, não a opinião de quem revisa.
-O que a unidade não repete, ela referencia — a norma em camadas guarda o que vale, *uma fonte por
-fato*.
+**A resposta.** O método faz o *plano* carregar a diferença entre sessões. O pedido vira uma
+proposta, que o usuário aprova; a proposta vira um plano técnico, com histórias e critérios de
+aceite; o plano é derivado em *unidades*, cada uma pronta para quem chega **sem contexto**, com o
+**teste declarado**. A entrega está pronta quando o teste passa e o usuário a aprova.
 
-**A evidência.** A skill de origem, medida no AmFlow: 15 de 15 unidades executadas por Sonnet em
-sessões novas, sem uma pergunta sobre o conteúdo da unidade.
+**O método é o codex**, em [`.claude/skills/decode-and-code/codex/`](.claude/skills/decode-and-code/codex/):
+o workflow, as etapas, os artefatos, as regras e o que cada projeto define — princípios, guidelines,
+guardrails e a foundation. Ele viaja no plugin, e as skills o leem pelo título da seção, nunca o
+copiam.
+
+**A evidência.** A skill de origem: 15 de 15 unidades executadas por Sonnet em sessões novas, sem uma
+pergunta sobre o conteúdo da unidade.
 
 ## Instalação
 
@@ -37,12 +40,9 @@ como branch default; o segundo instala o plugin a partir dele.
 ### Por upload
 
 Customize → Plugins → *upload a custom plugin file*, com o zip anexado ao
-[Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente
-(`decode-and-code-2.4.0.zip`).
+[Release](https://github.com/futureridetoday/DecodeAndCode/releases) mais recente.
 
 ### Atualização
-
-Quando sai uma versão nova do plugin:
 
 ```bash
 /plugin marketplace update future-ride-today
@@ -52,195 +52,61 @@ Quando sai uma versão nova do plugin:
 /plugin update decode-and-code@future-ride-today
 ```
 
-O primeiro refresca o metadado do marketplace (nova `version`, `url`, `sha256`); o segundo baixa o
-zip do Release novo, confere o `sha256` e instala. **Reiniciar o Claude Code** para aplicar — ou
-usar o painel `/plugin` → aba Installed, que sinaliza *update available*.
+O primeiro refresca o metadado do marketplace; o segundo baixa o zip do Release novo, confere o
+`sha256` e instala. **Reiniciar o Claude Code** para aplicar.
 
-Mudança que fica só no repositório (`README.md`, `docs/`, `docs/plan/`) não entra no pacote e não
-exige nada de quem instalou.
-
-**Atualizar o plugin não é repensar a norma.** Os comandos acima trocam a versão do **método**. Quando
-é o **projeto** que muda de rumo — outro objetivo, outra marca, outro público —, o que se revisa são os
-princípios, as guidelines e os guardrails dele: `/decode-and-code:rethink`. Guia:
-[`docs/recursos/rethink.md`](docs/recursos/rethink.md).
-
-### Para desenvolver ou testar sem instalar
-
-Depois de `empacotar.construir()` (ver *Como este repositório se relaciona com o pacote*), que
-escreve o staging em `dist/decode-and-code/`:
-
-```bash
-claude --plugin-dir dist/decode-and-code
-```
-
-Ou direto do asset publicado, sem build local:
-
-```bash
-claude --plugin-url https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.4.0/decode-and-code-2.4.0.zip
-```
+Mudança que fica só no repositório (`README.md`, `docs/`) não entra no pacote e não exige nada de
+quem instalou. **Atualizar o plugin não é repensar o projeto**: quando é o projeto que muda de rumo,
+o que se revisa são os princípios, as guidelines, os guardrails e a foundation dele, com
+`/decode-and-code:rethink`.
 
 ## Como começar
 
 1. **Instale no escopo do projeto**, não só no de usuário: assim cada colega que clonar o repositório
    trabalha com as mesmas guidelines e guardrails. A skill `setup` propõe gravar isso em
    `.claude/settings.json` (`dc.py setup-escopo`); cada pessoa ainda instala o plugin uma vez por clone.
-   Confiar na pasta registra o marketplace, mas não instala o plugin. Num projeto com a habilitação
-   já commitada, `/plugin install decode-and-code@future-ride-today` dentro da sessão instala no
-   escopo do projeto; pelo terminal, o padrão é o escopo de usuário — use
-   `claude plugin install decode-and-code@future-ride-today --scope project`.
-2. **Rode `/decode-and-code:setup`** — a primeira coisa a fazer. Ao abrir a sessão num projeto sem
-   setup concluído, o aviso de abertura o propõe. A skill entende o projeto, sugere guidelines e
-   guardrails uma por vez (aprovar, editar ou rejeitar), inicia o seu huddle e explica o método. Guia:
-   [`docs/recursos/setup.md`](docs/recursos/setup.md).
+   Pelo terminal, use `claude plugin install decode-and-code@future-ride-today --scope project`.
+2. **Rode `/decode-and-code:setup`** — a primeira coisa a fazer; o aviso de abertura o propõe num
+   projeto sem setup. Ele inicia o seu huddle e grava, uma sugestão por vez e só com o seu sim, os
+   princípios, a foundation (padrão de código e mapa de recursos), as guidelines e os guardrails.
+   Guia: [`docs/recursos/setup.md`](docs/recursos/setup.md).
+3. **Traga um pedido** com `/decode-and-code:decode <pedido>`.
 
-## Como usar o Decode And Code
+## O workflow
 
-Em [`docs/recursos/`](docs/recursos/): um documento por **recurso** (skills, hooks)
-no formato *o que é · problema · como funciona · como usar · exemplos · fundamentação · base de
-conhecimento · limites*, e um **guia de uso** por camada normativa — quando e como criar um
-princípio, uma guideline, um guardrail.
+| Etapa | O que sai | Skill | Quem aprova |
+|---|---|---|---|
+| Entrada | o tipo, com o motivo, e o objetivo do plano | `decode` | o usuário confirma |
+| P1, decode | a proposta, escrita para o usuário, no `_inbox/` | `decode` | P2, o usuário |
+| P3, revisão | o plano técnico: histórias, porte, independência, tarefas ou unidades | `review-plan` | P4, o usuário; o plano recebe número |
+| P5, derive | cada unidade pronta para rodar sem a conversa, e o handoff (médio e grande) | `derive` | o usuário aprova as unidades |
+| P6, code | a entrega de cada unidade, ou das tarefas do pequeno | `code`, em fork | P7, o usuário testa e aprova |
+| P8 | o teste do plano inteiro (só no grande) | — | aprovação final |
+
+A correção (`fix`) segue um workflow próprio, o módulo `fix`: a skill `diagnose` reproduz o defeito e
+escreve o plano mínimo, e o `code` faz o teste vermelho, o ajuste e o teste verde.
+
+Quem executa uma unidade entrega arquivos e relatório, e não commita. A situação de cada unidade é
+**projetada a partir do teste**, nunca editada à mão.
+
+## Recursos
+
+Em [`docs/recursos/`](docs/recursos/): um documento por recurso, e um guia de uso por item que o
+projeto define.
 
 | Tipo | Recurso | O que faz | Doc |
 |---|---|---|---|
-| skill | `review-plan` | Revisa um plano antes da aprovação — os seis checks, parte por script, parte por julgamento (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| skill | `derive` | Deriva a estrutura e as unidades de um plano aprovado — só por invocação explícita (Opus) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| skill | `implement` | Implementa uma unidade já derivada em cold-start, num subagent isolado (Sonnet) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
-| skill | `huddle` | Conduz o huddle da pessoa — percorre as entradas abertas e decide, promove a guideline ou guardrail, descarta ou mantém; só por invocação explícita (Opus) | [huddle.md](docs/recursos/huddle.md) |
-| skill | `setup` | Conduz o primeiro uso do método no projeto — escopo do plugin, perfil, guidelines e guardrails uma sugestão por vez, huddle e o método; o aviso de abertura o propõe (Opus) | [setup.md](docs/recursos/setup.md) |
-| skill | `rethink` | Repensa a norma do projeto depois de uma mudança de rumo — revisa cada princípio, guideline e guardrail (manter, editar ou arquivar), sugere os novos e registra cada decisão; só por invocação explícita (Opus) | [rethink.md](docs/recursos/rethink.md) |
-| skill | `intake` | Percorre a escada de menor intervenção antes de um plano nascer — resolve direto, ou grava o esboço mínimo em `_inbox/` para a skill `review-plan` revisar; roda em fork (Opus) | [intake.md](docs/recursos/intake.md) |
-| hooks | 4 hooks, 3 no pacote | Guardrail do projeto (`PreToolUse`), log de norma/guidelines (`InstructionsLoaded`) e lembrete do huddle (`SessionStart`) viajam no plugin; `SubagentStart` fica só neste repositório — no harness, sem custo de contexto | [hooks.md](docs/recursos/hooks.md) |
-| guia de uso | Criar um princípio | Quando e como adicionar, editar ou arquivar uma seção de `.claude/rules/principles.md` | [create-principle.md](docs/recursos/create-principle.md) |
-| guia de uso | Criar uma guideline | Quando e como criar, editar ou arquivar um arquivo com `paths:` em `.claude/rules/` | [create-guideline.md](docs/recursos/create-guideline.md) |
-| guia de uso | Criar um guardrail | Quando e como adicionar, editar ou arquivar uma regra de `.claude/guardrails.json` | [create-guardrail.md](docs/recursos/create-guardrail.md) |
+| skill | `decode` | Entrada e proposta (P1, P2) | [decode.md](docs/recursos/decode.md) |
+| skill | `review-plan`, `derive`, `code` | Plano técnico (P3, P4), unidades (P5) e entregas (P6, P7) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `diagnose` | Diagnóstico e plano mínimo da correção (módulo `fix`) | [decode-and-code.md](docs/recursos/decode-and-code.md) |
+| skill | `huddle` | Conduz o huddle da pessoa: decide, propõe ao rethink ou a um plano `rule`, descarta ou mantém | [huddle.md](docs/recursos/huddle.md) |
+| skill | `setup` | Primeiro uso: huddle, princípios, foundation, guidelines e guardrails | [setup.md](docs/recursos/setup.md) |
+| skill | `rethink` | Revisão depois de uma mudança de rumo, foundation inclusive | [rethink.md](docs/recursos/rethink.md) |
+| hooks | 4 hooks, 3 no pacote | Guardrail (`PreToolUse`), log de ativação (`InstructionsLoaded`) e aviso de abertura (`SessionStart`) | [hooks.md](docs/recursos/hooks.md) |
+| guia de uso | Princípio, guideline, guardrail | Quando e como criar, editar ou arquivar cada um | [create-principle.md](docs/recursos/create-principle.md), [create-guideline.md](docs/recursos/create-guideline.md), [create-guardrail.md](docs/recursos/create-guardrail.md) |
 
-O plugin carrega o **mecanismo**. Guardrail e guideline são do projeto que instala — o método os
-materializa lá, e nunca viaja com os deste repositório.
-
-## O ciclo
-
-| # | Etapa | Onde |
-|---|---|---|
-| 1 | O plano nasce | `docs/plan/_inbox/` |
-| 2 | Revisão | skill `review-plan` |
-| 3 | **Aprovação** | humano |
-| 4 | Derivação em unidades | skill `derive` |
-| 5 | Implementação, uma unidade por vez | skill `implement`, em cold-start |
-
-Quem executa uma unidade entrega arquivos e relatório, e não commita. O estado de cada unidade
-(`spec` → `wip` → `verified`) é **projetado a partir do teste**, nunca editado à mão.
-
-## A norma em camadas
-
-O que uma unidade pode assumir sem perguntar vive em quatro camadas, separadas por quão negociável
-cada uma é. A unidade **referencia** a camada, nunca a copia — *uma fonte por fato*.
-
-| Camada | O que é | Onde fica registrado | Como entra em contexto |
-|---|---|---|---|
-| **Princípio** | a direção e o porquê — estável, muda só por decisão deliberada | [`.claude/rules/principles.md`](.claude/rules/principles.md) | carrega em **toda sessão** — o arquivo não declara `paths:` |
-| **Guideline** | o "como" técnico de um escopo — decisão de projeto | um arquivo por regra em `.claude/rules/`, com `paths:` no frontmatter (desligadas ficam no irmão `.claude/rules-off/`) | **ativa sozinha** quando um arquivo que casa `paths:` é tocado |
-| **Guardrail** | um limite verificável — o que nunca se faz | `.claude/guardrails.json` | o hook `PreToolUse` consulta a cada chamada de ferramenta e pode **negar**, com a regra no motivo |
-| **Referência** | fonte externa canônica — a doc oficial de uma biblioteca-chave | citada no `<core>/system/` | a unidade aponta quando é relevante |
-
-O `CLAUDE.md` é a camada de **processo**; `<core>/system/` cobre o **domínio**.
-
-**Princípio ou guideline? O teste.** *Uma equipe competente pode rejeitar isto e ainda estar
-fazendo trabalho bom?* Se **não**, é princípio — os deste repositório (*código é custo*, *subtração
-antes de adição*, *evidência acima de opinião*, mais o protocolo de exceção) estão em
-[`principles.md`](.claude/rules/principles.md), com a proveniência em
-[`03-principles-rule.md`](docs/plan/model/0001-decode-and-code-foundation/03-principles-rule.md). Se
-**sim**, é guideline. O fluxo de decodificação que os aplica é mecanismo do método e mora na
-norma, que viaja com o plugin. A marca mecânica: princípio não tem `paths:` e carrega sempre; guideline tem
-`paths:` e carrega por escopo.
-
-**Guideline ou skill?** Skill é **invocada** — alguém pede, e ela responde *como fazer X*. Guideline
-é **ativada** — entra sozinha pelo caminho do arquivo, e responde *o que vale quando eu toco Y*.
-
-### Como cada camada nasce
-
-- **Princípio** — entra por três portas, todas com aprovação humana: como unidade de tipo `norma`
-  (prosa normativa, aprovada no plano), pelo setup, aprovado na conversa e gravado por
-  `dc.py criar-principio`, ou pelo `rethink`, depois de uma mudança de rumo. Teto de 5 por projeto, ideal 3, só *Enunciado* e *Teste*: carrega em toda
-  sessão. Não se descobre em execução, e não muda por conveniência.
-- **Guideline e guardrail** — **se escolhem por evidência de falha, não por elegância.** Uma
-  guideline nasce na primeira divergência observada entre duas execuções; um guardrail, quando um
-  incidente mostra o limite que faltava. Por isso a instância vive no projeto que instala — um repo
-  novo é greenfield e não tem incidente nenhum.
-- **Editar e arquivar também são operação, nas três camadas.** Editar mantém nome e lugar
-  (`--replace`); arquivar move o item para `.claude/archive/`, fora do que o Claude Code carrega, com
-  data, autor e motivo, e o nome fica reservado. Nada se apaga: planos antigos podem citá-lo.
-- **Ligar e desligar guideline é operação de arquivo, não edição.** Mover entre `.claude/rules/` e
-  o irmão `.claude/rules-off/` (fora do que o Claude Code carrega); o `registry.json` que acompanha
-  é projeção, nunca fonte.
-
-### O que viaja no plugin
-
-O **mecanismo**: o carregamento nativo por `paths:`, o hook do guardrail, `rules.auditar_arvore()`,
-e a norma [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md) que **define** as camadas
-(seção *Camada normativa*). **Não viaja** o conteúdo: `.claude/rules/*` e `.claude/guardrails.json`
-são instância — cada projeto escreve os seus. `bootstrap.iniciar` materializa a norma no projeto que
-instala; as camadas, cada projeto preenche.
-
-## Huddle
-
-O **huddle** é a **fila do que ainda não foi decidido** — a pauta da conversa recorrente entre cada
-pessoa do projeto e o modelo. **Um arquivo por pessoa**, em `<plan_root>/system/huddle/<usuario>.md`
-(aqui, [`docs/plan/system/huddle/`](docs/plan/system/huddle/)), versionado e nunca carregado
-automaticamente: entra em contexto quando a conversa acontece, senão competiria com norma já
-decidida. A pessoa é o `git config user.name`, e cada uma vê só o próprio arquivo.
-
-**Para que serve.** As três camadas normativas (princípio, guideline, guardrail) só guardam o que
-já foi decidido. O huddle guarda o resto: pergunta em aberto, contradição que a execução contornou,
-padrão que uma sessão sozinha não revela, alternativa rejeitada cuja premissa pode ter mudado, algo
-que o humano corrigiu. **Nada ali é autoritativo enquanto está ali.** Uma entrada nasce aberta, é
-discutida, e quando resolve **sai** — para a norma, uma guideline ou um guardrail, ou o
-`## Decisões` de um plano —, deixando uma linha em `## Fechadas` com data e destino.
-
-**Como usar.**
-
-- **Conversar.** `/decode-and-code:huddle` roda a pauta e percorre as abertas uma a uma: decidir,
-  promover a guideline ou guardrail, descartar ou manter. `/decode-and-code:huddle registrar <texto>`
-  abre uma entrada.
-- **Ser lembrado.** O hook `SessionStart` avisa ao abrir a sessão quando há entrada aberta e o
-  último huddle foi há `reminder_days` dias ou mais (7 por padrão; `0` desliga), campo do seu arquivo.
-- **O modelo registra no fecho.** As seis skills que registram terminam rodando `dc.py huddle-fecho`,
-  registram o que ficou aberto e declaram `entradas novas no huddle: N (H-XX, …)` — obrigatória
-  mesmo com `N` igual a zero —, conferida por `dc.py huddle-lint-relatorio`.
-- **Projeto com o arquivo único antigo** (`<plan_root>/system/huddle.md`): `dc.py huddle-migrar`
-  o move para o arquivo da pessoa.
-
-Guia: [`docs/recursos/huddle.md`](docs/recursos/huddle.md). Formato, gatilhos e a regra de despejo:
-[`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md), seção *Huddle*.
-
-## Como este repositório se relaciona com o pacote
-
-`.claude/` é a **fonte** — as sete skills e a pasta compartilhada `decode-and-code/` (scripts), os
-hooks e o manifesto (`.claude/plugin.json`). `dist/decode-and-code/` é staging
-**gitignorado**: `empacotar.construir()` o escreve do zero a cada build, e nada dali é commitado. O
-que se distribui é o **zip** que `empacotar.empacotar_zip()` produz a partir dessa mesma árvore,
-publicado como asset de um GitHub Release e referenciado por `source: archive` (`url` + `sha256`) no
-`marketplace.json`.
-
-```bash
-python3 -c "import sys; sys.path.insert(0, '.claude/skills/decode-and-code/scripts'); import empacotar; empacotar.construir()"
-```
-
-### Procedimento de release
-
-Desenvolvimento acontece em **`dev`** (staging, branch default). O release promove `dev` → `main`
-(produção) e publica dali — a instalação por comando fixa `@main` (ver *Instalação*). O repositório
-precisa estar **público**: `source: archive` baixa o asset por URL anônima, e um repo privado
-devolve `404` para qualquer cliente sem token.
-
-1. Em `dev`: bump de `version` em **`.claude/plugin.json` e na entrada do plugin no
-   `marketplace.json`** — os dois têm que concordar (`claude plugin tag` valida isso)
-2. Em `dev`: `empacotar_zip()` — constrói, roda `verificar()`/`validar()` sobre o staging, zipa e
-   imprime o caminho do zip e o SHA-256
-3. Em `dev`: preencher no `marketplace.json` a `url` (determinística —
-   `…/releases/download/v<versão>/decode-and-code-<versão>.zip`) e o `sha256` do passo 2; commit
-4. Promover `dev` → `main` (merge, sem force) e push
-5. Em `main`: `gh release create v<versão> decode-and-code-<versão>.zip --target main --title "Decode and Code <versão>" --notes "…"`
-6. `/plugin marketplace update future-ride-today` — e os usuários rodam a *Atualização* acima
+O plugin carrega o **mecanismo** e o codex. Princípios, guidelines, guardrails, a foundation e o
+huddle são do projeto que instala, e nunca viajam com os deste repositório.
 
 ## Desenvolvimento
 
@@ -249,8 +115,9 @@ bash scripts/test-python.sh
 ```
 
 O harness aceita Python ≥ 3.10, prefere o 3.10 e avisa quando roda em outra versão; o CI roda em
-3.10 fixo e é a prova de compatibilidade com o Cowork. Ver
-[`language-policy.md`](docs/plan/system/language-policy.md) para a medição de ambientes que fixou o
-alvo.
+3.10 fixo e é a prova de compatibilidade com o Cowork
+([`language-policy.md`](docs/plan/system/language-policy.md)).
 
-A norma completa fica em [`modelo-dev-units.md`](docs/plan/system/modelo-dev-units.md).
+Quem mantém o plugin: [`docs/maintenance/`](docs/maintenance/) — o guia do codex, o empacotamento,
+o [procedimento de release](docs/maintenance/release.md), os módulos, e a fronteira entre skills e
+scripts.

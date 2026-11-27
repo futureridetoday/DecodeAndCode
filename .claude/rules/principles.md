@@ -5,8 +5,8 @@ description: Os três princípios inegociáveis do decode-and-code — código �
 
 # Princípios
 
-Carregados sempre — este arquivo não declara `paths:`. É o que os separa de guideline (norma,
-seção *Camada normativa → Princípio*): **uma equipe competente pode rejeitar isso
+Carregados sempre — este arquivo não declara `paths:`. É o que os separa de guideline (codex,
+seção *Princípio*): **uma equipe competente pode rejeitar isso
 e ainda estar fazendo trabalho bom?** Não, para os três abaixo — por isso são princípio, não
 escolha técnica.
 
@@ -40,8 +40,8 @@ estética.
 ## Fluxo de decodificação
 
 Os três estágios (Clarificar, Evitar, Reduzir) e os gates A e B que aplicam estes princípios a uma
-decisão concreta estão na norma, seção *Antes do plano — fluxo de decodificação*
-([`modelo-dev-units.md`](../../docs/plan/system/modelo-dev-units.md)): são mecanismo do método e
+decisão concreta estão no codex, seção *Fluxo de decodificação*
+([`product-references.md`](../skills/decode-and-code/codex/product-references.md)): são mecanismo do método e
 viajam com o plugin.
 
 ## Protocolo de exceção

@@ -2,11 +2,11 @@
 
 Versão 1.1.0 · guia de uso
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
-Guia de procedimento. Definições na norma
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md), seção *Camada normativa*) — aqui só o
-**como**.
+Guia de procedimento. O que princípio, guideline e guardrail são, e as três portas que os gravam,
+está no codex, seções *Princípio*, *Guideline*, *Guardrail* e *Rethink* (`dc.py codex <título>`) —
+aqui só o **como**.
 
 ## Quando criar
 
@@ -17,7 +17,7 @@ ter".
 
 Se a regra passa no teste do princípio (*ninguém competente rejeitaria*), é princípio, não
 guideline — veja [`create-principle.md`](create-principle.md). Se ela é *procedimento que alguém
-invoca* em vez de *norma que ativa sozinha ao tocar um arquivo*, é skill.
+invoca* em vez de *regra que ativa sozinha ao tocar um arquivo*, é skill.
 
 ## No primeiro uso
 
@@ -37,7 +37,7 @@ Pelo comando, do diretório do projeto — ele escreve o frontmatter, roda o lin
 
 ```bash
 dc.py criar-guideline <<'FIM'
-{"nome": "<nome>", "descricao": "<quando vale>", "paths": ["<glob>"], "corpo": "<a norma>"}
+{"nome": "<nome>", "descricao": "<quando vale>", "paths": ["<glob>"], "corpo": "<a regra>"}
 FIM
 ```
 
@@ -51,7 +51,7 @@ reprovada. O que cada campo pede:
   `**/` (`**/*.tsx`). Pasta inteira é `dir/**/*`, não `dir/**`. Sem chaves `{a,b}` nem vírgula —
   uma entrada por padrão. Cada uma compila **e** casa ao menos um arquivo que existe; sem casar
   nada, a guideline carrega e nunca ativa.
-- `corpo` — a norma técnica daquele escopo, nunca vazio. Anti-drift: o que a norma ou outra
+- `corpo` — a regra técnica daquele escopo, nunca vazio. Anti-drift: o que o codex ou outra
   guideline já diz, esta **referencia**, não copia (ex.: `scripts.md` cita `language-policy.md`
   para a medição de ambiente e não a repete).
 - `aguardando` (opcional) — `true` para escopo que ainda não existe no disco: grava
@@ -73,11 +73,11 @@ Trocar o nome não é editar — é arquivar a antiga e criar a nova.
 `dc.py archive guideline <nome>`. O arquivo sai de `rules/` (ou de `rules-off/`) para
 `.claude/archive/rules/`, ganha `archived_at`, `archived_by` e `reason` no frontmatter, e o
 `registry.json` é reprojetado sem ela. Arquivar não é desligar: a desligada volta um dia e por isso
-passa no lint; a arquivada sai da norma. Arquivar **move, nunca apaga**: planos antigos podem citar o item. O motivo vai no stdin, e
+passa no lint; a arquivada sai do que o projeto segue. Arquivar **move, nunca apaga**: planos antigos podem citar o item. O motivo vai no stdin, e
 `archived_by` é o `git config user.name`. O nome arquivado fica **reservado** — criar outro item com
 ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não resolvidas:` com
 "arquivada em <data> por <quem>: <motivo>". Para trazer de volta, com o mesmo nome:
-`dc.py restore guideline <nome>`, que exige de novo `lint_guideline`. Norma, *Camada normativa → Editar e arquivar*.
+`dc.py restore guideline <nome>`, que exige de novo `lint_guideline`. Codex, *Rethink* (editar e arquivar).
 
 ## Como validar
 

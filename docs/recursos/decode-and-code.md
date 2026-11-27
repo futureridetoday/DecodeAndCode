@@ -1,104 +1,88 @@
 # decode-and-code
 
-Versão 1.0.0 · skills (3)
+Versão 2.0.0 · skills `review-plan`, `derive`, `code` e `diagnose`
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
 ## O que é
 
-As três skills que executam a norma de Unidades de Desenvolvimento
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md)), uma por modo: `review-plan` (revisar
-um plano antes da aprovação), `derive` (derivar a estrutura e as unidades de um plano aprovado) e
-`implement` (implementar uma unidade já derivada, em cold-start). Todo determinismo — gates,
-contagem, projeção de estado, validação de nome e colisão — fica nos scripts da pasta compartilhada
-`decode-and-code/scripts/`; as skills cuidam do que exige julgamento.
+As skills que levam a proposta aprovada até a entrega, no workflow do codex (*Workflow*):
+`review-plan` (P3 e P4, o plano técnico e a aprovação que dá o número), `derive` (P5, as unidades
+prontas para rodar sem a conversa), `code` (P6 e P7, a entrega e a aprovação dela), e `diagnose`, do
+módulo de correção. Todo determinismo — gates, contagem, projeção de estado, validação de nome — fica
+nos scripts da pasta compartilhada `decode-and-code/scripts/`; as skills cuidam do que exige
+julgamento.
 
 ## Problema que resolve
 
 Uma sessão nova não sabe o que a anterior sabia. Sem um método que force o plano a carregar essa
 diferença, cada retomada re-deriva o que já existe ou executa fora do que foi desenhado. As skills
-dão o procedimento: o modo é o nome da skill, os gates barram avanço com teste empírico, e o estado
-de cada unidade é projetado do teste, nunca escrito à mão.
+dão o procedimento; os gates barram o avanço por teste; e a situação de cada unidade é projetada do
+teste, nunca escrita à mão.
 
 ## Como funciona
 
 Cada skill chama os scripts por um ponto de entrada só, o `dc.py`
 (`python3 "${CLAUDE_SKILL_DIR}/dc.py" <subcomando> …`, do diretório do projeto), e o `allowed-tools`
-libera só ele — `Bash(python3 "${CLAUDE_SKILL_DIR}/dc.py" *)` e a grafia sem aspas, nunca `Bash`
-solto, que pré-aprovaria qualquer comando de shell no turno da skill. Esse `dc.py` é um atalho na
-pasta de cada skill que executa o da pasta compartilhada `decode-and-code/scripts/`: a liberação casa
-o texto do comando, e um caminho com `..` o modelo normaliza e deixa de casar. Saída em texto simples;
-código `0` ok, `1` problema ou reprovação, `2` erro de uso ou exceção:
+libera só ele. Saída em texto simples; código `0` ok, `1` problema ou reprovação, `2` erro de uso ou
+exceção. Cada skill lê do codex, pelo título, as seções que valem para ela (`dc.py codex`).
 
-- **`review-plan <plano>`** (Opus) — roda os checks determinísticos primeiro (nome por
-  `validar-nome`, concorrência na região `planos` de `_planos.md` por `concorrencia`, links do
-  corpo), depois reserva julgamento para erro conceitual, erro de arquitetura e adequação das
-  fontes. Lacunas novas entram como `L-XX`. Encerra **sem aprovar** — quem aprova é o humano.
-- **`derive <plano aprovado>`** (Opus) — `aprovar` valida `core`, numera e move o plano do
-  `_inbox`. No porte grande, decide a fatia de cada unidade, escreve, linta, projeta o backlog e
-  grava o `_handoff.md`. **Só por invocação explícita** (`disable-model-invocation: true`): cria
-  estrutura e move arquivos, e o Skill tool recusa que o modelo o dispare.
-- **`implement <unidade>`** (Sonnet) — gate de entrada (`lint-unidade`), lê a unidade inteira e as seções
-  que ela cita (`normas`),
-  escreve o teste declarado e o código que o faz passar tocando só os arquivos que ela lista, gate
-  de saída (`verificar`), projeta o backlog (`projetar-backlog`). **Não commita.**
-
-**O `implement` roda sempre em fork** (`context: fork`, `agent: general-purpose`): um subagent sem o
-histórico da conversa, em qualquer sessão, inclusive a de orquestração, sem gastar o contexto dela.
-Substitui o par de commands `/implement` e `/delegate` das versões anteriores. Daí duas
-consequências de desenho: não é interativo — *se o executor precisou perguntar, a unidade falhou* —,
-e o resultado volta como uma mensagem, que quem orquestra revisa antes de versionar.
-
-**O modelo é declarado em cada skill** (`model:`), não herdado da sessão: `review-plan` numa sessão
-Sonnet roda em Opus, e `implement` numa sessão Opus roda só em Sonnet (norma, seção *Modelos*).
+- **`review-plan <plano>`** (Opus) — escreve, abaixo da proposta aprovada, as histórias, a
+  independência, as decisões e os riscos, e as tarefas (pequeno) ou a tabela de unidades (médio e
+  grande); confere fontes, recursos e concorrência; roda `validar-nome` e `lint-plano`. Na
+  aprovação do usuário (P4), roda `aprovar`: o plano recebe número e vai para a raiz dos planos.
+- **`derive <plano>`** (Opus, só por invocação explícita) — no médio e no grande, escreve uma
+  unidade por linha de `## Unidades`, com os blocos da Definition of Ready, cita as guidelines dos
+  caminhos (`guidelines-aplicaveis`), linta (`lint-unidade`), projeta o backlog e grava o
+  `_handoff.md`. O usuário aprova as unidades juntas.
+- **`code <unidade>`** (Sonnet, em fork, sem o histórico) — `entrada-code` confere a unidade e a
+  aprovação da anterior; escreve o teste e o código pelo critério de aceite; `verificar` projeta o
+  estado. Para e propõe o ajuste (lacuna) quando a unidade não basta, e antes de ação irreversível.
+  No pequeno, executa as tarefas do plano. `code aprovar <alvo>` grava a aprovação do usuário (P7)
+  por `aprovar-entrega`.
+- **`diagnose <defeito>`** (Opus) — do módulo `fix`: reproduz o defeito, escreve o plano mínimo e o
+  leva à aprovação (C2); o `code` faz o teste vermelho, o ajuste e o teste verde.
 
 ## Como usar
 
-| Plugin instalado | Checkout deste repositório |
-|---|---|
-| `/decode-and-code:review-plan <plano>` | `/review-plan <plano>` |
-| `/decode-and-code:derive <plano>` | `/derive <plano>` |
-| `/decode-and-code:implement <unidade>` | `/implement <unidade>` |
+```bash
+/decode-and-code:review-plan docs/plan/_inbox/add-catalog.md
+```
 
-> /decode-and-code:review-plan docs/plan/_inbox/catalogo.md
+```bash
+/decode-and-code:derive docs/plan/0031-add-catalog
+```
 
-O modelo também invoca `review-plan` e `implement` por pedido em linguagem natural; o `derive`,
-só o usuário, pelo comando. O nome `review` ficou de fora porque `/review` é alias do
-`/code-review` embutido.
+```bash
+/decode-and-code:code 0031-01
+```
+
+```bash
+/decode-and-code:code aprovar 0031-01
+```
+
+O handoff do médio e do grande vai para uma sessão nova, que roda o `code` de cada unidade na ordem
+dele.
 
 ## Exemplos de uso
 
-**Revisar antes de aprovar.** Um plano novo está no `_inbox/`. `review-plan` roda os seis checks,
-separa o que o script decidiu do que é julgamento, e devolve uma linha por achado — check, veredito
-(`bloqueante` | `aviso`), origem (`comando` | `julgamento`).
-
-**Derivar um plano grande.** Plano aprovado, ainda sem unidades. `derive` cria `<core>/<NNNN>-<nome>/`,
-gera um arquivo por unidade do `## Escopo`, linta cada um e escreve o `_handoff.md` para a sessão de
-execução.
-
-**Implementar uma unidade.** Unidade `0004-06` derivada. `implement` roda o gate de entrada, escreve
-o teste e o código, roda o gate de saída — e se o teste não passa, a unidade não vira `verified`.
+- Plano pequeno: `review-plan` → aprovação P4 → `code <plano>` → `code aprovar <plano>`, que fecha o
+  plano.
+- Plano grande: `review-plan` → P4 → `derive` → aprovação das unidades → `code` e `code aprovar` por
+  unidade, na ordem do handoff → teste do plano inteiro (P8).
 
 ## Fundamentação
 
-A norma [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md) — os modos, os dois gates, o
-fluxo completo, o formato da unidade — é a fonte; as skills descrevem só o **como**, para não
-duplicar o que ela diz (regra anti-drift). Origem medida: a skill `dev-units` do AmFlow — 15 de 15
-unidades executadas por Sonnet em sessões novas, sem uma pergunta sobre conteúdo de unidade.
+Codex, seções *Revisão*, *Plano técnico*, *Derive*, *Definition of Ready*, *Handoff*, *Code*,
+*Entrega*, *Lacuna* e *Aprovação*; no módulo de correção, *Correção* e *Plano mínimo*.
 
 ## Base de conhecimento
 
-Nenhuma além dos próprios `SKILL.md`. A norma é lida do projeto que instala, em
-`<plan_root>/system/modelo-dev-units.md` — `plan_root` vem do `config.json` da pasta compartilhada
-(`docs/plan` é só o default). `dc.py bootstrap` cria a estrutura num projeto recém-instalado. A
-skill [`intake`](intake.md), que antecede o ciclo, tem documento próprio.
+A fronteira entre skill e script e o modelo de cada skill:
+[`skills-and-scripts.md`](../maintenance/skills-and-scripts.md).
 
 ## Limites
 
-- **Não aprova plano.** `review-plan` encerra com achados; a aprovação é ato humano.
-- **`derive` completo só no porte grande.** Pequeno e médio movem o plano sem subpasta e não
-  derivam unidade.
-- **`implement` não commita e não pergunta.** Entrega arquivos e relatório; versionar é de quem
-  orquestra.
-- **Não resolve unidade insuficiente.** A correção volta para quem deriva, como lacuna.
-- **Nada específico de projeto viaja nas skills.** Guardrail e guideline são do projeto que instala.
+Nenhuma skill aprova pelo usuário: P2, P4, a aprovação das unidades e P7 são dele. Quem executa uma
+unidade não commita. Plano anterior ao redesign (sem `format_version`) passa pela revisão antes de
+derive e code.

@@ -2,13 +2,13 @@
 
 Versão 1.2.0 · skill
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
 ## O que é
 
 A skill que conduz o **huddle** da pessoa da sessão: a conversa sobre o que ainda não foi decidido.
-Percorre as entradas abertas do arquivo da pessoa, uma por vez, e para cada uma decide, promove a
-guideline ou guardrail, leva ao método, descarta com o motivo ou mantém. Com `registrar <texto>`,
+Percorre as entradas abertas do arquivo da pessoa, uma por vez, e para cada uma decide, propõe o
+item ao `rethink` ou a um plano `rule` (as portas que gravam princípio, guideline e guardrail), leva ao método, descarta com o motivo ou mantém. Com `registrar <texto>`,
 abre uma entrada nova. Roda em Opus e só por invocação explícita (`disable-model-invocation: true`):
 o huddle se abre quando a conversa acontece.
 
@@ -26,7 +26,7 @@ registrar, e a linha de fecho dos relatórios só provava que existia, não que 
 - **Script para tudo que é formato**, pelo `dc.py`: `huddle-iniciar`, `huddle-abrir`,
   `huddle-fechar`, `huddle-concluir`, `huddle-pauta`, `huddle-fecho`, `huddle-lint`,
   `huddle-lint-relatorio` e `huddle-migrar`.
-- **Registro no fecho.** As seis skills que registram (`intake`, `review-plan`, `derive`, `implement`, `setup`, `rethink`)
+- **Registro no fecho.** As skills que registram (`decode`, `review-plan`, `derive`, `code`, `diagnose`, `setup`, `rethink`)
   terminam rodando `huddle-fecho`, registram o que ficou aberto com `huddle-abrir --autor Claude`, e
   passam a mensagem final por `huddle-lint-relatorio`, que exige
   `entradas novas no huddle: N (H-XX, …)` com ids abertos hoje no arquivo da pessoa.
@@ -58,15 +58,16 @@ registrar, e a linha de fecho dos relatórios só provava que existia, não que 
 
 - O aviso de abertura diz "Huddle: 3 entrada(s) aberta(s), último huddle há 9 dias". A pessoa roda
   `/decode-and-code:huddle`; a skill mostra a pauta, decide uma entrada (destino: o `## Decisões` de
-  um plano), promove outra a guideline depois de a pessoa aprovar o texto, mantém a terceira e grava
+  um plano), fecha outra como proposta de guideline para um plano `rule`, mantém a terceira e grava
   a data do huddle.
 - No meio do trabalho, a pessoa nota que dois documentos se contradizem e roda
-  `/decode-and-code:huddle registrar "o README e a norma divergem sobre X"`; a skill confirma o tipo
+  `/decode-and-code:huddle registrar "o README e o codex divergem sobre X"`; a skill confirma o tipo
   `divergência` e devolve o `H-XX`.
 
 ## Fundamentação
 
-Norma, seções *Huddle* e *Log de uso*, em [`modelo-dev-units.md`](../plan/system/modelo-dev-units.md).
+Codex, seções *Huddle* e *Registro de uso*; o porquê do log em
+[`skills-and-scripts.md`](../maintenance/skills-and-scripts.md).
 Planos [`0008-wire-huddle-cycle`](../plan/model/0008-wire-huddle-cycle.md) e
 [`0019-norm-evolution-evidence`](../plan/model/0019-norm-evolution-evidence.md).
 
