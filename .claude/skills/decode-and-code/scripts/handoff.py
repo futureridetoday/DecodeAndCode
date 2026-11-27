@@ -48,7 +48,7 @@ próprio, uma por vez. Você prepara, revisa o que volta, e versiona depois de r
 
 ## Como disparar cold-start
 
-Uma forma só: a skill `implement <unidade>`. Ela roda sempre num subagent isolado (`context: fork`,
+Uma forma só: a skill `code <unidade>`. Ela roda sempre num subagent isolado (`context: fork`,
 Sonnet), em qualquer sessão, e por isso não gasta o contexto de orquestração que você guarda.
 
 ## Regras que não mudam

@@ -80,12 +80,12 @@ class TestEsqueleto(_BaseComPlanoSintetico):
     def test_nomeia_uma_unica_forma_de_disparar_cold_start(self):
         """`0004-06` e `P-03` — sem isso, o prompt diz 'cold-start' sem dizer como disparar.
 
-        Eram dois comandos, conforme a sessão; agora é a skill `implement`, que roda
+        Eram dois comandos, conforme a sessão; agora é a skill `code`, que roda
         sempre em fork. O caso contrário prova que os dois comandos não sobraram no texto.
         """
         texto = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("a skill `implement <unidade>`", texto)
+        self.assertIn("a skill `code <unidade>`", texto)
         self.assertIn("`context: fork`", texto)
         self.assertNotIn("/implement", texto)
         self.assertNotIn("delegate", texto)

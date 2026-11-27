@@ -31,7 +31,7 @@ nunca é copiado ao projeto (codex, *Restrição fundamental*).
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
 si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as sete skills
-(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `implement` —, o `intake`, o `huddle`, o `setup` e o `rethink`) e a pasta
+(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `code` —, o `decode`, o `huddle`, o `setup` e o `rethink`) e a pasta
 compartilhada `decode-and-code/` —
 `scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de

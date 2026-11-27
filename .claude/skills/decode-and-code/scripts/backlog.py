@@ -160,7 +160,12 @@ def _projetar_grande(
     else:
         previstas = _contar_previstas(texto)
     unidades = sorted(_unidades(dir_plano), key=_chave_ordenacao)
-    return _montar_backlog(unidades, previstas), _situacao(unidades, previstas)
+    situacao = _situacao(unidades, previstas)
+    if versao == lib.FORMATO_ATUAL and situacao == "concluído":
+        # formato 2: a unidade fecha com o teste e a aprovação da entrega (codex, *Unidade*, P7)
+        aprovadas = all((regioes.ler_campo(u.arquivo, "approved_at") or "").strip(" \t\"'") for u in unidades)
+        situacao = situacao if aprovadas else "em desenvolvimento"
+    return _montar_backlog(unidades, previstas), situacao
 
 
 def _projetar_medio(arquivo_do_plano: Path) -> tuple[str, str]:

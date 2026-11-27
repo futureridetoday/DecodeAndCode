@@ -197,7 +197,7 @@ class TestLintUnidadeAceitaTipoNorma(unittest.TestCase):
         """A aprovação é do humano **depois** da entrega — exigi-la na entrada recusava toda `norma`.
 
         Medido no AmFlow (plano 0028, plugin 2.0.0): `lint-unidade` reprovava as três unidades
-        `norma` recém-derivadas só pela ausência de `approved_by`/`approved_at`, e a `implement`
+        `norma` recém-derivadas só pela ausência de `approved_by`/`approved_at`, e o `code`
         encerrava antes de escrever qualquer coisa.
         """
         with tempfile.TemporaryDirectory() as tmp:

@@ -50,7 +50,7 @@ LIMITE_DESCRIPTION_DECODE = 600
 
 # Skill → modo que o corpo precisa citar. `model`, `disable-model-invocation` e `context` são o que
 # a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
-# `implement` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
+# `code` roda em fork. `agent` é `general-purpose` porque o nome curto de um agent do plugin
 # não resolve numa skill de plugin e cai, sem aviso, no padrão (medido com Claude Code 2.1.300).
 # `None` é campo ausente: `context` só existe onde há fork (`P-10`, campo vazio não se declara).
 TOPOLOGIA = {
@@ -68,8 +68,8 @@ TOPOLOGIA = {
         "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
-    "implement": {
-        "modo": "implement",
+    "code": {
+        "modo": "code",
         "model": "sonnet",
         "allowed-tools": ALLOWED_TOOLS,
         "disable-model-invocation": "false",

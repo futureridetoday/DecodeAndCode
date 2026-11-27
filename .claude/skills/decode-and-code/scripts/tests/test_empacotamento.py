@@ -15,7 +15,7 @@ exige `verificar() == []`. A primeira entrega tinha só a sintética, e ela resp
 no `SKILL.md` e dentro do `_CONTEUDO_INICIAL` de `porte.py`. Fixture prova o mecanismo, nunca a
 instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza a regra.
 
-O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`) mais a pasta
+O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`, hoje `code`) mais a pasta
 compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; os comandos saem do
 pacote. O `P-06` converte o único agent na skill `intake`, hoje `decode` (`D-03`): o pacote passa a ter quatro
 skills e nenhum `agents/`.

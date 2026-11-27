@@ -57,13 +57,13 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 
 ## Modelos
 
-**Sonnet é o padrão no `implement`.** O `review` e o `derive` pedem julgamento denso — Opus. **Cada
+**Sonnet é o padrão no `code`.** O `review` e o `derive` pedem julgamento denso — Opus. **Cada
 skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive`, `decode`, `huddle`, `setup` e `rethink` em `opus`,
-`implement` em `sonnet`.
+`code` em `sonnet`.
 
 Medido em 2026-10-15 (Claude Code 2.1.300, pacote carregado com `claude -p --plugin-dir`): sem
 fork, `model:` troca o modelo do turno — `/decode-and-code:review-plan` numa sessão Sonnet rodou em
-Opus; com `context: fork`, o subagent roda no `model:` da skill — `/decode-and-code:implement`
+Opus; com `context: fork`, o subagent roda no `model:` da skill — `/decode-and-code:implement` (hoje `code`)
 numa sessão Opus rodou só em Sonnet.
 
 A premissa anterior — a skill herda o modelo da sessão, verificada em 2026-07-19 olhando skills
@@ -86,7 +86,7 @@ instancia.
 > curto **resolve**: o debug log mostra `Preloaded skill`, e o agent recebe o corpo da skill com o
 > caminho absoluto dos scripts, fora do checkout. Numa skill de plugin, o inverso: `agent:` com nome
 > curto de agent do próprio plugin **não resolve** — cai no padrão, sem aviso —, e só o nome com
-> namespace (`plugin:agent`) resolve; por isso a skill com `context: fork` (`implement`)
+> namespace (`plugin:agent`) resolve; por isso a skill com `context: fork` (`code`)
 > declara `general-purpose`. Que a skill carregue, ou o nome resolva, é comportamento de
 > sessão, e só a medição o mostra.
 

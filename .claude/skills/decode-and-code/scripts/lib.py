@@ -83,7 +83,7 @@ UNIT_TYPES_POR_FORMATO = {
 TIPOS_DE_APROVACAO = ("norma", "rule")
 
 # Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
-MODOS = ("review-plan", "derive", "implement")
+MODOS = ("review-plan", "derive", "code")
 
 # As skills que viajam no pacote (`empacotar`): os três modos, o `decode`, que antecede o ciclo, o
 # `huddle`, que conduz a conversa da pessoa (plano 0008), o `setup`, que conduz o primeiro uso

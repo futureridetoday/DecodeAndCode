@@ -63,7 +63,7 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
 2. **Uma unidade por linha de `## Unidades`.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" proxima-unidade <dir_plano>`
    dá o `nn`; o arquivo é `<dir_plano>/<nn>-<slug>.md`, com o frontmatter `unit_id: <NNNN>-<nn>`,
    `unit_type` (`dev`, `plan` ou `rule`), `state: spec`, `test: <caminho do teste>` (vazio no
-   `rule`) e `verified_at: ""`, e o corpo com um `##` para cada bloco: `História`,
+   `rule`), `verified_at: ""`, `approved_by: ""` e `approved_at: ""`, e o corpo com um `##` para cada bloco: `História`,
    `Critério de aceite`, `Tarefas` (lista), `Arquivos` (tabela com os caminhos entre crases),
    `Guidelines`, `Recursos`, `Decisões e lacunas` e `Depende de` — nomes, contratos e arquivos que
    ela espera das anteriores, ou `nada`. O `test:` aponta o arquivo do teste mesmo antes de ele

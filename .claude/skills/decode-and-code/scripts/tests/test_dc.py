@@ -46,6 +46,8 @@ import verificacao
 SUBCOMANDOS = (
     "validar-nome",
     "codex",
+    "entrada-code",
+    "aprovar-entrega",
     "bootstrap",
     "aprovar",
     "proxima-unidade",
@@ -279,7 +281,7 @@ class TestAtalhoDeSkill(_ProjetoCase):
                 self.assertNotIn("Traceback", uso.stderr)
 
     def test_erro_de_excecao_sai_com_2_e_mensagem_sem_traceback(self):
-        r = self._atalho("implement", "lint-unidade", str(self.projeto / "nao-existe.md"))
+        r = self._atalho("code", "lint-unidade", str(self.projeto / "nao-existe.md"))
         self.assertEqual(r.returncode, 2)
         self.assertIn("nao-existe.md", r.stderr)
         self.assertNotIn("Traceback", r.stderr)
@@ -1368,7 +1370,7 @@ class TestVerificar(_ProjetoCase):
 
 
 class TestNormas(_ProjetoCase):
-    """`normas` — o que o `implement` roda para receber o conteúdo das normas que a unidade cita (`L-08`)."""
+    """`normas` — o que o `code` roda para receber o conteúdo das normas que a unidade cita (`L-08`)."""
 
     def _documento(self) -> Path:
         alvo = self.projeto / "docs" / "norma.md"
@@ -1442,7 +1444,7 @@ class TestNormas(_ProjetoCase):
     def test_o_atalho_da_skill_implement_repassa_o_comando(self):
         unidade = self._unidade("| Alfa | [`norma.md`](../norma.md), seção *Alfa* |")
         r = _executar(
-            self.projeto, "normas", str(unidade), script=_PACOTE / "skills" / "implement" / "dc.py"
+            self.projeto, "normas", str(unidade), script=_PACOTE / "skills" / "code" / "dc.py"
         )
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("### docs/norma.md § Alfa", r.stdout)
