@@ -117,14 +117,14 @@ class TestGateDeEntrada(unittest.TestCase):
         problemas = lint_unidade.lint(alvo)
         self.assertTrue(any("Sequência" in p for p in problemas), problemas)
 
-    def test_sequencia_acima_do_teto(self):
+    def test_sequencia_longa_aprova_porque_o_teto_saiu(self):
+        """D-06 do plano do redesign: o teto de 8 passos sai com a migração do `lint_unidade`."""
         passos = "\n".join(f"{i}. passo {i}" for i in range(1, 16))
         texto = UNIDADE_VALIDA.replace(
             "1. Primeiro passo\n2. Segundo passo\n3. Terceiro passo", passos
         )
         alvo = self._escreve(texto)
-        problemas = lint_unidade.lint(alvo)
-        self.assertTrue(any("acima do teto" in p for p in problemas), problemas)
+        self.assertEqual(lint_unidade.lint(alvo), [])
 
     def test_criterio_de_aceite_vazio(self):
         texto = UNIDADE_VALIDA.replace(
@@ -142,7 +142,7 @@ class TestGateDeEntrada(unittest.TestCase):
         problemas = lint_unidade.lint(alvo)
         self.assertTrue(any("Arquivos" in p for p in problemas), problemas)
 
-    def test_sem_criterio_e_muitos_passos_devolve_exatamente_dois_problemas(self):
+    def test_sem_criterio_e_muitos_passos_devolve_so_o_do_criterio(self):
         passos = "\n".join(f"{i}. passo {i}" for i in range(1, 16))
         texto = UNIDADE_VALIDA.replace(
             "1. Primeiro passo\n2. Segundo passo\n3. Terceiro passo", passos
@@ -151,7 +151,7 @@ class TestGateDeEntrada(unittest.TestCase):
         )
         alvo = self._escreve(texto)
         problemas = lint_unidade.lint(alvo)
-        self.assertEqual(len(problemas), 2, problemas)
+        self.assertEqual(len(problemas), 1, problemas)
 
     def test_devolve_todos_os_problemas_de_uma_vez(self):
         texto = (

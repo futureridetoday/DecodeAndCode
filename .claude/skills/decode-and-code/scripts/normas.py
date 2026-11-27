@@ -35,6 +35,7 @@ import re
 from pathlib import Path
 from typing import NamedTuple
 
+import lib
 import lint_unidade
 import regioes
 import registry
@@ -65,16 +66,20 @@ class NaoResolvida(NamedTuple):
 
 
 def resolver(unidade: Path) -> tuple[list[Entrada], list[NaoResolvida]]:
-    """Entradas resolvidas e não resolvidas de `## Normas aplicáveis`, na ordem da tabela.
+    """Entradas resolvidas e não resolvidas da tabela de guidelines, na ordem dela.
+
+    A tabela é `## Normas aplicáveis` no formato 1 e `## Guidelines` no formato 2
+    (`lint_unidade.SECAO_DE_GUIDELINES`); as linhas têm a mesma forma nos dois.
 
     Levanta `FileNotFoundError` se `unidade` não existir (propagado de `Path.read_text`) e
     `ValueError` se ela não tem a seção. Uma linha ruim nunca levanta: entra nas não resolvidas.
     """
     unidade = Path(unidade).resolve()
     corpo = lint_unidade._corpo(unidade.read_text(encoding="utf-8"))
-    secao = lint_unidade._secao(corpo, "Normas aplicáveis")
+    nome = lint_unidade.SECAO_DE_GUIDELINES[lib.formato(unidade)]
+    secao = lint_unidade._secao(corpo, nome)
     if secao is None:
-        raise ValueError(f"{unidade} não tem a seção '## Normas aplicáveis'")
+        raise ValueError(f"{unidade} não tem a seção '## {nome}'")
 
     resolvidas: list[Entrada] = []
     nao_resolvidas: list[NaoResolvida] = []

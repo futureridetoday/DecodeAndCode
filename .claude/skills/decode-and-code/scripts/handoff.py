@@ -5,8 +5,11 @@ O `derive` terminava entregando estrutura, unidades e backlog, e nada que disses
 execução daquilo. A ponte era feita à mão, e a qualidade do que vinha depois dependia inteiramente
 de quanto aquele texto acertava.
 
-`gerar` grava `_handoff.md` no diretório do plano. **Só o grande o tem**: médio e pequeno executam
-na mesma sessão em que foram aprovados, e não há ponte entre sessões a construir.
+`gerar` grava `_handoff.md` no diretório do plano. No formato 1, **só o grande o tem**. No formato 2
+(codex, *Handoff*; subparte 2.2.08), o médio e o grande o têm, porque a unidade do médio também roda
+em sessão nova: o esqueleto `_ESQUELETO_ATUAL` traz a ordem das unidades, a situação de cada uma,
+derivada do teste, e as seções do codex que o code lê, citadas pelo título (`SECOES_DO_CODE`) —
+nunca copiadas.
 
 **Divisão entre script e julgamento, a mesma do resto do método.** Aqui vive o esqueleto e o que se
 mede sem opinar — commit, unidades derivadas e verificadas, próximo número livre. A fila, as
@@ -108,6 +111,79 @@ Rode você mesmo, e **some as duas linhas `Ran`** — o total é a soma, nunca a
 """
 
 
+# As seções do codex que a sessão de cada unidade lê, pelo título (codex, *Handoff*). A skill do code
+# cita a mesma lista, e o teste confere que as duas não divergem.
+SECOES_DO_CODE = (
+    "Code",
+    "Unidade",
+    "Entrega",
+    "Critério de aceite",
+    "Teste",
+    "Lacuna",
+    "Cold-start",
+    "Huddle",
+    "Guardrail",
+    "Recurso do projeto",
+)
+
+# A situação de uma unidade derivada do `state` que o teste projeta (codex, *Teste*).
+_SITUACAO = {"verified": "verificada"}
+
+_ESQUELETO_ATUAL = """\
+# Handoff — plano {plano}
+
+Este arquivo leva o plano a uma sessão nova e conduz o code das unidades, uma por vez, na ordem da
+fila. É projeção: o derive o regera, e edição à mão se perde.
+
+## Como executar cada unidade
+
+`/decode-and-code:code <unidade>`, uma por vez, na ordem da fila. A próxima só começa depois de o
+usuário aprovar a entrega da anterior (P7). {fecho}
+
+## O que a sessão de cada unidade lê
+
+A unidade e estas seções do codex, pelo título — `dc.py codex` as imprime:
+
+{secoes}
+
+## Situação, derivada do teste
+
+Gerado em {gerado_em}, sobre o commit `{commit}`. Se divergir do que você medir, vale a medição.
+
+| Unidade | Situação |
+|---|---|
+{situacao}
+
+## A fila
+
+{fila}
+
+## Pendências do usuário
+
+{pendencias}
+
+## Onde eu começaria, e por quê
+
+{sugestao}
+
+> Sugestão registrada, não decisão. Quem escolhe a ordem é o usuário.
+
+## O plano
+
+`{plano_md}`
+"""
+
+
+def _situacao(dir_plano: Path) -> str:
+    """Uma linha por unidade, na ordem do nome, com a situação lida do `state` — nunca digitada."""
+    linhas = []
+    for unidade in sorted(porte._listar_unidades(dir_plano), key=lambda u: u.name):
+        unit_id = (regioes.ler_campo(unidade, "unit_id") or unidade.stem).strip(" \t\"'")
+        state = (regioes.ler_campo(unidade, "state") or "").strip(" \t\"'")
+        linhas.append(f"| {unit_id} | {_SITUACAO.get(state, 'por fazer')} |")
+    return "\n".join(linhas) or "| — | nenhuma unidade derivada |"
+
+
 def _commit() -> str:
     """`HEAD` abreviado — `desconhecido` quando git não responde, nunca exceção."""
     try:
@@ -172,6 +248,28 @@ def gerar(dir_plano: Path, *, fila: str, pendencias: str, sugestao: str) -> Path
 
     derivadas, verificadas = _contagem(dir_plano)
     raiz = lib.repo_root()
+
+    if lib.formato(plano_md) == lib.FORMATO_ATUAL:
+        grande = (regioes.ler_campo(plano_md, "plan_size") or "").strip(" \t\"'") == "grande"
+        texto = _ESQUELETO_ATUAL.format(
+            plano=dir_plano.name,
+            fecho=(
+                "Depois da última, o teste do plano inteiro (P8) e a aprovação final."
+                if grande
+                else "A aprovação da entrega única é a aprovação final."
+            ),
+            secoes="\n".join(f"- *{titulo}*" for titulo in SECOES_DO_CODE),
+            gerado_em=date.today().isoformat(),
+            commit=_commit(),
+            situacao=_situacao(dir_plano),
+            fila=fila.strip(),
+            pendencias=pendencias.strip(),
+            sugestao=sugestao.strip(),
+            plano_md=_relativo(plano_md, raiz),
+        )
+        alvo = dir_plano / NOME_ARQUIVO
+        alvo.write_text(texto, encoding="utf-8")
+        return alvo
 
     texto = _ESQUELETO.format(
         plano=dir_plano.name,
