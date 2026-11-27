@@ -11,7 +11,7 @@ exceção é a recusa: só quando nega, o hook grava o bloqueio em `.claude/log/
 segredo. O `eventos` só é importado nesse caminho.
 
 `CLAUDE_PROJECT_DIR`, não `__file__`. Medido em 2026-09-04 contra o pacote instalado num
-projeto consumidor (AmFlow): `Path(__file__).resolve().parent.parent` acerta rodando da
+projeto consumidor: `Path(__file__).resolve().parent.parent` acerta rodando da
 fonte — `.claude/hooks/` fica dois níveis abaixo de `.claude/`, onde `guardrails.json`
 também mora —, mas erra empacotado: `empacotar._copiar_hooks` escreve `hooks/` sem o
 prefixo `.claude/` (irmã de `skills/`, `agents/`; `_escrever_hooks_json` documenta a troca
