@@ -226,7 +226,6 @@ class TestCodexAprovado(unittest.TestCase):
 
 # Repetição que ainda existe nas skills, com a subparte da migração que a remove. A lista só diminui.
 REPETICOES_CONHECIDAS: dict[tuple[str, str], str] = {
-    ("setup", "a mudança aproxima o projeto do objetivo"): "2.2.11",
     ("rethink", "depois de uma mudança de rumo"): "2.2.12",
 }
 
