@@ -2,14 +2,14 @@
 # ── claude code — campos nativos ──────────────────────────────────────────────
 name: derive
 description: |
-  Deriva a estrutura e as unidades de um plano já aprovado — cria a estrutura do alvo, move o plano do _inbox, gera um arquivo por unidade e projeta o backlog.
+  Conduz o derive (P5) de um plano médio ou grande já aprovado: escreve cada unidade pronta para o code, projeta o backlog, grava o handoff e leva as unidades à aprovação.
 
-  Use when o usuário pede, de forma explícita, para derivar um plano já aprovado.
+  Use when o usuário pede, de forma explícita, para derivar um plano aprovado.
 
   <example>
-  Context: plano aprovado, ainda sem estrutura nem unidades
-  user: "derive o plano docs/plan/_inbox/catalogo.md"
-  commentary: modo derive — cria a estrutura do alvo, move o plano do _inbox, gera um arquivo por unidade e projeta o backlog
+  Context: plano técnico aprovado no P4, porte grande
+  user: "derive o plano docs/plan/0031-add-catalog"
+  commentary: modo derive — uma unidade por linha de ## Unidades, cada uma com a Definition of Ready, o handoff e a aprovação das unidades
   </example>
 
 disable-model-invocation: true
@@ -29,8 +29,8 @@ project: DecodeAndCode
 author: Bortoli
 created: 2026-10-15
 status: draft
-version: 1.0.0
-updated: "2026-10-15"
+version: 2.0.0
+updated: "2026-11-27"
 scope: project
 auto_load: false
 tags: [decode-and-code, skill, plano, unidade, derive]
@@ -42,41 +42,56 @@ source: local
 
 # derive
 
-> Invocação só explícita (`disable-model-invocation: true`): um `derive` disparado por engano cria estrutura e move arquivos.
+> Invocação só explícita (`disable-model-invocation: true`): o `derive` cria arquivos no plano.
 
-Esta skill executa o modo `derive` da norma `<plan_root>/system/modelo-dev-units.md` — `plan_root` resolvido pelo `config.json` em `${CLAUDE_SKILL_DIR}/../decode-and-code/`. Todo determinismo (gates, contagem, projeção de estado) fica nos scripts em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/` (norma, seção *Fronteira skill / script*); a skill cuida do que exige julgamento.
+Esta skill executa o modo `derive`. `plan_root` vem do `config.json` ao lado de
+`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo. O que vale está no codex; leia pelo
+título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de memória. Comece por
+`Derive`, `Definition of Ready`, `Unidade`, `Cold-start`, `Handoff`, `Critério de aceite` e `Tipo`.
 
 ## Argumentos
 
-- `$target` — caminho do plano aprovado a derivar
+- `$target` — o diretório do plano aprovado, ou o arquivo dele
 
 ## Instruções
 
 ### `derive <plano>`
 
-A Sequência é a da norma (*Fluxo completo*, etapas 4 a 7) — esta seção descreve só o **como**, para não duplicar o que já está lá.
-
-1. **Aprovar** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar <plano>` valida `core`, atribui o número do plano, valida o nome, move o arquivo do `_inbox` (compondo `move-md.py`) e registra a linha em `_planos.md`. Qualquer validação que falhar impede toda escrita.
-2. **Ler o escopo** — a tabela `## Escopo` do plano já movido: uma linha por unidade prevista, com número e responsabilidade.
-3. **Decidir a fatia** — para cada unidade, o contrato, a sequência e os arquivos que ela toca. **É aqui que está o julgamento**, e por isso o modo pede Opus, nunca Sonnet. O `plan_type` do plano muda a fatia: siga a coluna *derive* da norma (*Tipo de plano*).
-4. **Numerar e escrever** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" proxima-unidade <dir_plano>` dá o próximo `nn`; cada arquivo carrega todos os blocos do corpo (norma, *Formato do arquivo de unidade*) e declara `test:` mesmo antes de o arquivo existir. *Normas aplicáveis* no formato da norma (link relativo e "seção *X*") — o `lint-unidade` do passo 5 recusa o que não resolve. Escrita a tabela *Arquivos*, rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" guidelines-aplicaveis <arquivo>` e cite em *Normas aplicáveis* cada linha que ele devolve: é a guideline que vale para aqueles caminhos, inclusive a que liga um recurso do projeto. O que sair em `Avisos:` não se cita — vai para o relatório.
-5. **Lint antes de seguir** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <arquivo>...` em cada unidade recém-escrita; qualquer problema apontado é corrigido ali, antes de passar para a próxima.
-6. **Projetar o backlog** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`, que atualiza também a situação da linha em `_planos.md`.
-7. **Gravar o handoff** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" handoff <dir_plano>` escreve `_handoff.md` no diretório do plano, lendo do stdin as seções `## Fila`, `## Pendências` e `## Sugestão` (seção ausente é erro). Passe-as por heredoc com o delimitador entre aspas, `<<'FIM'`: o texto leva crases, e sem as aspas o shell as executa. **Só no grande.** O script mede o que não pede opinião — commit, derivadas, verificadas, próximo número livre — e as três seções são **julgamento seu**: a ordem das unidades com suas dependências, o que ficou pendente do humano, e por onde você começaria.
-8. **Registrar e relatar** — decisões tomadas durante a derivação vão para uma seção própria do plano, nunca para a norma; lacunas novas entram como `L-XX`, sem tentar resolvê-las; o que ficou pendente é reportado ao humano. **E dizer o que fazer com o handoff:** ele é para uma **sessão nova**, colado inteiro, e quem o receber orquestra a execução — não implementa unidade.
+1. **Entrada.** O plano tem número (`plan_id`), `format_version: 2` e porte médio ou grande. Sem
+   número, mande à revisão (`/decode-and-code:review-plan`); sem `format_version`, também: a revisão
+   o atualiza. O pequeno não tem derive.
+2. **Uma unidade por linha de `## Unidades`.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" proxima-unidade <dir_plano>`
+   dá o `nn`; o arquivo é `<dir_plano>/<nn>-<slug>.md`, com o frontmatter `unit_id: <NNNN>-<nn>`,
+   `unit_type` (`dev`, `plan` ou `rule`), `state: spec`, `test: <caminho do teste>` (vazio no
+   `rule`) e `verified_at: ""`, e o corpo com um `##` para cada bloco: `História`,
+   `Critério de aceite`, `Tarefas` (lista), `Arquivos` (tabela com os caminhos entre crases),
+   `Guidelines`, `Recursos`, `Decisões e lacunas` e `Depende de` — nomes, contratos e arquivos que
+   ela espera das anteriores, ou `nada`. O `test:` aponta o arquivo do teste mesmo antes de ele
+   existir. O que o tipo do plano pede no aceite está em `Tipo`.
+3. **Guidelines.** Com a tabela `Arquivos` escrita, rode
+   `python3 "${CLAUDE_SKILL_DIR}/dc.py" guidelines-aplicaveis <unidade>` e ponha cada linha que ele
+   devolver na tabela `| Guideline | Onde |` de `## Guidelines`, mais o padrão de código da
+   foundation pelo nome, se houver; sem nenhuma, escreva `nenhuma`. O que sair em `Avisos:` vai
+   para o relatório.
+4. **Recursos.** Confira que cada recurso de `## Recursos` do plano ainda existe no projeto; um que
+   sumiu é lacuna do plano.
+5. **Lint.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <unidade>...` em cada unidade; corrija
+   ali o que ele apontar.
+6. **Backlog.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`.
+7. **Handoff.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" handoff <dir_plano>` grava `_handoff.md`,
+   lendo do stdin as seções `## Fila`, `## Pendências` e `## Sugestão` (seção ausente é erro), por
+   heredoc com o delimitador entre aspas, `<<'FIM'`. As três são julgamento seu: a ordem com as
+   dependências, o que espera do usuário e por onde começar.
+8. **Aprovação das unidades.** Mostre as unidades ao usuário. No sim, acrescente ao plano
+   `## Aprovação das unidades` com quem aprovou e a data, e diga que o handoff vai para uma sessão
+   nova. Na recusa, ajuste as unidades com a objeção.
 9. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime a seção *Huddle* do codex. O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
 
-> **O handoff é projeção, não documento.** Cada `derive` incremental o regera com os números
-> daquele instante, e edição à mão se perde na próxima execução. O prefixo `_` o mantém fora do
-> padrão `NN-*.md` que conta unidades.
+> **O handoff e o backlog são projeção.** Cada `derive` os regera, e edição à mão se perde. O
+> prefixo `_` mantém o handoff fora do padrão `NN-*.md` que conta unidades.
 
-> **O lint roda antes de entregar** (passo 5). Sem isso, o `derive` produz unidades que o gate de entrada do `implement` recusa depois, e o retrabalho só aparece na próxima sessão.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `codex`, `proxima-unidade`, `guidelines-aplicaveis`, `lint-unidade`, `projetar-backlog`, `handoff`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
 
-> **Os passos 2 a 6 valem só para o grande** (norma, *Fluxo completo* e *O que cada porte carrega*). **No pequeno, esta sequência não roda** — o passo 1 (`aprovar`) move o plano direto para `<core>/<NNNN>-<nome>.md`, sem subpasta, e para aí: sem `## Escopo`, sem unidade para decidir, numerar ou lintar. Quem executa é a sessão que orquestra, direto, sem `implement` (norma, *Fluxo completo*). O `projetar-backlog` ainda roda sobre esse arquivo, mas não escreve região nenhuma — só projeta a situação a partir de `status`, escrito pelo humano (fecha quando ele grava `status: done`). **No médio**, `aprovar` também move sem subpasta e os passos 2 a 5 seguem sem rodar — médio não deriva unidade —, mas o passo 6 projeta as caixas de `## Tarefas` em vez do backlog de unidades.
+## Fora do escopo
 
-Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `aprovar`, `proxima-unidade`, `guidelines-aplicaveis`, `lint-unidade`, `projetar-backlog`, `handoff`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
-
-## Referências
-
-- Norma: `<plan_root>/system/modelo-dev-units.md` — `plan_root` é o do `config.json`, e
-  `docs/plan` é só o default. Vive no projeto que usa a skill, e é lá que a skill a lê.
+A proposta, o plano técnico, o code e as aprovações, que são do usuário.

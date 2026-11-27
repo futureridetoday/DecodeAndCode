@@ -23,6 +23,13 @@ mentia ao lado de um `state: verified` com data.
 
 O gate verifica presença e forma, não coerência entre Contrato e Sequência —
 isso é julgamento, fora do alcance de regex.
+
+**Formato 2** (codex, *Definition of Ready*; subparte 2.2.08): a unidade traz os blocos de
+`BLOCOS_DO_FORMATO_ATUAL` — a história, o critério de aceite (com o teste no `test:`), as tarefas,
+os arquivos, as guidelines dos caminhos, os recursos, as decisões e lacunas que valem para ela e o
+que espera das anteriores. `core` e `module` deixam de ser exigidos: não há pasta por parte do
+sistema. O teto de passos sai (D-06 do plano do redesign): a unidade não tem limite de tarefas. O
+formato 1 segue com os blocos de antes, também sem o teto.
 """
 
 from __future__ import annotations
@@ -45,7 +52,22 @@ BLOCOS_CORPO = (
     "Verificação",
 )
 
-TETO_PASSOS = 8
+# Blocos do corpo da unidade no formato 2, na ordem em que o derive os escreve (codex, *Definition of
+# Ready*). `Guidelines` é a tabela que `normas.resolver` lê, no lugar de *Normas aplicáveis*.
+BLOCOS_DO_FORMATO_ATUAL = (
+    "História",
+    "Critério de aceite",
+    "Tarefas",
+    "Arquivos",
+    "Guidelines",
+    "Recursos",
+    "Decisões e lacunas",
+    "Depende de",
+)
+CAMPOS_DO_FORMATO_ATUAL = ("unit_id", "unit_type", "state")
+
+# Onde mora a tabela de guidelines que `normas.resolver` lê, por formato.
+SECAO_DE_GUIDELINES = {lib.FORMATO_ANTERIOR: "Normas aplicáveis", lib.FORMATO_ATUAL: "Guidelines"}
 
 _UNIT_ID_RE = re.compile(r"^\d{4}-\d{2}$")
 _PASSO_RE = re.compile(r"(?m)^\d+\.\s")
@@ -57,11 +79,19 @@ def lint(unidade: Path) -> list[str]:
     """Verifica se `unidade` sobrevive ao cold-start — lista vazia quando aprovada."""
     texto = unidade.read_text(encoding="utf-8")
     corpo = _corpo(texto)
+    try:
+        atual = lib.formato(unidade) == lib.FORMATO_ATUAL
+    except ValueError:
+        atual = False  # `_checar_frontmatter` devolve o problema do formato
 
     problemas: list[str] = []
     problemas.extend(_checar_frontmatter(unidade))
-    problemas.extend(_checar_blocos(corpo))
-    problemas.extend(_checar_sequencia(corpo))
+    if atual:
+        problemas.extend(_checar_blocos_do_formato_atual(corpo))
+        problemas.extend(_checar_tarefas(corpo))
+    else:
+        problemas.extend(_checar_blocos(corpo))
+        problemas.extend(_checar_sequencia(corpo))
     problemas.extend(_checar_criterio_aceite(corpo))
     problemas.extend(_checar_arquivos(corpo))
     problemas.extend(_checar_ultimo_resultado(corpo))
@@ -95,8 +125,13 @@ def _checar_frontmatter(unidade: Path) -> list[str]:
     aqui: é gate de saída, conferido por `verificacao`.
     """
     try:
+        atual = lib.formato(unidade) == lib.FORMATO_ATUAL
+    except ValueError:
+        atual = False
+    campos = CAMPOS_DO_FORMATO_ATUAL if atual else CAMPOS_FRONTMATTER
+    try:
         valores = {
-            chave: regioes.ler_campo(unidade, chave) for chave in CAMPOS_FRONTMATTER
+            chave: regioes.ler_campo(unidade, chave) for chave in campos
         }
         test = regioes.ler_campo(unidade, "test")
     except ValueError:
@@ -178,8 +213,29 @@ def _checar_sequencia(corpo: str) -> list[str]:
     passos = _PASSO_RE.findall(secao)
     if not passos:
         return ["Sequência sem passos numerados"]
-    if len(passos) > TETO_PASSOS:
-        return [f"Sequência com {len(passos)} passos, acima do teto de {TETO_PASSOS}"]
+    return []
+
+
+def _checar_blocos_do_formato_atual(corpo: str) -> list[str]:
+    """Cada bloco da Definition of Ready como heading `## `, presente e com conteúdo."""
+    problemas = []
+    for bloco in BLOCOS_DO_FORMATO_ATUAL:
+        secao = _secao(corpo, bloco)
+        if secao is None:
+            problemas.append(f"bloco ausente: {bloco}")
+        elif not secao.strip():
+            problemas.append(f"bloco sem conteúdo: {bloco}")
+    return problemas
+
+
+_ITEM_RE = re.compile(r"(?m)^\s*(?:-|\d+\.)\s+\S")
+
+
+def _checar_tarefas(corpo: str) -> list[str]:
+    """Ao menos uma tarefa, em lista; sem teto (D-06)."""
+    secao = _secao(corpo, "Tarefas")
+    if secao is not None and secao.strip() and not _ITEM_RE.search(secao):
+        return ["Tarefas sem item de lista"]
     return []
 
 
@@ -199,12 +255,17 @@ def _checar_normas(unidade: Path, corpo: str) -> list[str]:
     O gate de entrada não pode aprovar norma que não chega ao executor. Seção ausente já é
     reportada por `_checar_blocos`. Import local: `normas` importa este módulo.
     """
-    if _secao(corpo, "Normas aplicáveis") is None:
+    try:
+        nome = SECAO_DE_GUIDELINES[lib.formato(unidade)]
+    except ValueError:
+        return []
+    if _secao(corpo, nome) is None:
         return []
     import normas
 
     _, nao_resolvidas = normas.resolver(unidade)
-    return [f"norma aplicável não resolve ({n.motivo}): {n.linha}" for n in nao_resolvidas]
+    rotulo = "guideline" if nome == "Guidelines" else "norma aplicável"
+    return [f"{rotulo} não resolve ({n.motivo}): {n.linha}" for n in nao_resolvidas]
 
 
 def _checar_arquivos(corpo: str) -> list[str]:
