@@ -10,7 +10,7 @@ A escolha do runner vem do mapa `runners` do config — cada extensão de teste
 aponta para o script que a roda, caminho relativo à raiz do repositório. O
 caminho do teste declarado é passado por inteiro ao runner, sem reduzir ao
 diretório-pacote — granularidade de arquivo, não de pacote (unidade 0005-02; a
-redução a pacote era a imprecisão aceita pela norma, lacuna L-05 do plano 0002).
+redução a pacote era a imprecisão aceita antes, lacuna L-05 do plano 0002).
 
 Timeout conta como falha (`spec`), nunca como exceção: o objetivo do timeout
 é só impedir que um teste interativo trave a verificação, não distinguir

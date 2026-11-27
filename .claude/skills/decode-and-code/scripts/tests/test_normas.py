@@ -301,26 +301,25 @@ class TestErros(_SinteticoCase):
 
 
 class TestContraUnidadeReal(unittest.TestCase):
-    """A `04` do plano `0001`: as três formas numa tabela de seis linhas — e o que sobra."""
+    """A `04` do plano `0001`: as três formas numa tabela de seis linhas — e o que sobra.
+
+    Depois da parte 2.3 do redesign, a norma não existe mais: a linha que a citava vai para as não
+    resolvidas com "arquivo ausente", como o codex manda tratar os links de plano anterior ao
+    redesign (*Plano anterior ao redesign*: ficam como registro).
+    """
 
     UNIDADE = lib.plan_root() / "model" / "0001-decode-and-code-foundation" / "04-ddl-guardrail-hook.md"
 
-    def test_resolve_cinco_de_seis_e_a_sexta_e_a_do_claude_md(self):
+    def test_resolve_quatro_de_seis(self):
         resolvidas, nao_resolvidas = normas.resolver(self.UNIDADE)
-        self.assertEqual(len(resolvidas), 5)
-        self.assertEqual(len(nao_resolvidas), 1)
-        self.assertEqual(nao_resolvidas[0].motivo, "sem link para o arquivo")
+        self.assertEqual(len(resolvidas), 4)
+        self.assertEqual([n.motivo for n in nao_resolvidas], ["sem link para o arquivo", "arquivo ausente"])
         self.assertIn("`.claude/CLAUDE.md`, invariante 2", nao_resolvidas[0].linha)
+        self.assertIn("modelo-dev-units.md", nao_resolvidas[1].linha)
 
     def test_as_secoes_achadas_sao_as_citadas_na_ordem(self):
         resolvidas, _ = normas.resolver(self.UNIDADE)
-        esperado = (
-            "O pipeline completo",
-            "O pipeline completo",  # a linha "mesma seção"
-            "Restrições conhecidas",
-            "Decisões",
-            "Guardrail fundador",
-        )
+        esperado = ("O pipeline completo", "O pipeline completo", "Restrições conhecidas", "Decisões")
         for entrada, comeco in zip(resolvidas, esperado, strict=True):
             with self.subTest(secao=comeco):
                 self.assertTrue(entrada.secao.startswith(comeco), entrada.secao)
@@ -331,9 +330,6 @@ class TestContraUnidadeReal(unittest.TestCase):
         decisoes = resolvidas[3]
         self.assertTrue(decisoes.trecho.startswith("## Decisões"))
         self.assertIn("| D-07 |", decisoes.trecho)
-        guardrail = resolvidas[4]
-        self.assertEqual(guardrail.arquivo, lib.plan_root() / "system" / "modelo-dev-units.md")
-        self.assertTrue(guardrail.trecho.startswith("#### Guardrail fundador"))
 
 
 if __name__ == "__main__":

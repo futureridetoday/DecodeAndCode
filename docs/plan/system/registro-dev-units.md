@@ -23,8 +23,9 @@ dependencies: []
 
 > **Este documento é registro, não mecanismo.** Guarda a evidência, as decisões e a história deste
 > projeto por trás do modelo de Unidades de Desenvolvimento. O **mecanismo** — o que qualquer
-> projeto que instala o método usa, e o que viaja no pacote — vive em
-> [`modelo-dev-units.md`](modelo-dev-units.md). Este documento não viaja.
+> projeto que instala o método usa, e o que viaja no pacote — vivia em `modelo-dev-units.md`, que o
+> redesign substituiu pelo codex (`.claude/skills/decode-and-code/codex/`) e apagou. Este documento
+> não viaja.
 
 ---
 

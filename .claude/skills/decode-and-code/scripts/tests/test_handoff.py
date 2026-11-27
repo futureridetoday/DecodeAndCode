@@ -77,48 +77,20 @@ class TestEsqueleto(_BaseComPlanoSintetico):
         for parte in _JULGAMENTO.values():
             self.assertIn(parte, texto)
 
-    def test_nomeia_uma_unica_forma_de_disparar_cold_start(self):
-        """`0004-06` e `P-03` — sem isso, o prompt diz 'cold-start' sem dizer como disparar.
-
-        Eram dois comandos, conforme a sessão; agora é a skill `code`, que roda
-        sempre em fork. O caso contrário prova que os dois comandos não sobraram no texto.
-        """
+    def test_nomeia_uma_unica_forma_de_executar_cada_unidade(self):
+        """`0004-06` e `P-03` — o handoff diz como disparar a unidade, e não sobra comando antigo."""
         texto = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("a skill `code <unidade>`", texto)
-        self.assertIn("`context: fork`", texto)
-        self.assertNotIn("/implement", texto)
+        self.assertIn("`/decode-and-code:code <unidade>`", texto)
+        self.assertNotIn("implement", texto)
         self.assertNotIn("delegate", texto)
 
-    def test_onde_ler_aponta_para_as_tres_skills_e_nao_para_o_skill_md_unico(self):
+    def test_plano_do_formato_1_tambem_recebe_o_esqueleto_do_codex(self):
+        """Parte 2.3: um esqueleto só; o do formato 1 citava a norma, que saiu."""
         texto = self._gerar().read_text(encoding="utf-8")
 
-        for nome in lib.MODOS:
-            with self.subTest(skill=nome):
-                self.assertIn(f"{nome}/SKILL.md", texto)
-        self.assertNotIn("decode-and-code/SKILL.md", texto)
-
-    def test_cita_so_os_tres_modos_e_nao_o_decode(self):
-        """`P-06` — o `decode` viaja no pacote, mas não é modo da norma, e o handoff cita por modo."""
-        texto = self._gerar().read_text(encoding="utf-8")
-
-        self.assertIn("decode", lib.SKILLS)
-        self.assertNotIn("decode", lib.MODOS)
-        self.assertNotIn(":decode ", texto)
-
-    def test_cita_a_norma_em_vez_de_copiar_a_disciplina(self):
-        texto = self._gerar().read_text(encoding="utf-8")
-
-        self.assertIn("Como revisar uma entrega", texto)
-        self.assertIn("modelo-dev-units.md", texto)
-        self.assertNotIn("Separe o sintoma da raiz", texto)
-
-    def test_manda_somar_as_duas_linhas_e_nao_declara_o_total(self):
-        """`L-03` — a suíte não é medida aqui; o prompt carrega o comando e a regra."""
-        texto = self._gerar().read_text(encoding="utf-8")
-
-        self.assertIn("./scripts/test-python.sh", texto)
-        self.assertIn("some as duas linhas", texto)
+        self.assertNotIn("modelo-dev-units", texto)
+        self.assertIn("- *Code*", texto)
 
     def test_regera_sobrescrevendo_porque_e_projecao(self):
         primeiro = self._gerar(fila="1. `0009-01`").read_text(encoding="utf-8")
@@ -137,24 +109,24 @@ class TestEsqueleto(_BaseComPlanoSintetico):
         self.assertFalse((vazio / "_handoff.md").exists())
 
 
-class TestContagemMedida(_BaseComPlanoSintetico):
-    def test_conta_derivadas_e_verificadas_do_disco(self):
+class TestSituacaoMedida(_BaseComPlanoSintetico):
+    def test_situacao_de_cada_unidade_vem_do_disco(self):
         fixtures.unidade(self.dir_plano, nome="01-a.md", unit_id="0009-01", state="verified")
         fixtures.unidade(self.dir_plano, nome="02-b.md", unit_id="0009-02", state="spec")
 
         texto = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("| Unidades derivadas | 2 |", texto)
-        self.assertIn("| Verificadas | 1 |", texto)
+        self.assertIn("| 0009-01 | verificada |", texto)
+        self.assertIn("| 0009-02 | por fazer |", texto)
 
-    def test_a_contagem_muda_quando_o_disco_muda(self):
+    def test_a_situacao_muda_quando_o_disco_muda(self):
         """O caso contrário: número que não se move não está sendo medido."""
         antes = self._gerar().read_text(encoding="utf-8")
         fixtures.unidade(self.dir_plano, nome="01-a.md", unit_id="0009-01", state="verified")
         depois = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("| Unidades derivadas | 0 |", antes)
-        self.assertIn("| Unidades derivadas | 1 |", depois)
+        self.assertIn("nenhuma unidade derivada", antes)
+        self.assertIn("| 0009-01 | verificada |", depois)
 
     def test_git_ausente_nao_levanta_e_diz_desconhecido(self):
         with mock.patch.object(handoff.subprocess, "run", side_effect=FileNotFoundError):
@@ -164,10 +136,9 @@ class TestContagemMedida(_BaseComPlanoSintetico):
 
 
 class TestContraOPlanoReal(unittest.TestCase):
-    """`L-31` — só o caso real prova que os números vêm de medição, e não de literal."""
+    """`L-31` — só o caso real prova que a situação vem de medição, e não de literal."""
 
-    def test_caminhos_das_skills_citadas_existem_no_repositorio(self):
-        """O mock acima só prova o texto; este prova que cada caminho citado aponta para um arquivo."""
+    def test_situacao_bate_com_o_state_de_cada_unidade(self):
         with tempfile.TemporaryDirectory() as tmp:
             copia = Path(tmp) / _DIR_0001.name
             copia.mkdir()
@@ -176,29 +147,14 @@ class TestContraOPlanoReal(unittest.TestCase):
 
             texto = handoff.gerar(copia, **_JULGAMENTO).read_text(encoding="utf-8")
 
-        for nome in lib.MODOS:
-            with self.subTest(skill=nome):
-                caminho = f".claude/skills/{nome}/SKILL.md"
-                self.assertIn(f"`{caminho}`", texto)
-                self.assertTrue((lib.repo_root() / caminho).is_file())
-
-    def test_numeros_batem_com_o_oraculo_no_mesmo_instante(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            copia = Path(tmp) / _DIR_0001.name
-            copia.mkdir()
-            for arquivo in _DIR_0001.glob("*.md"):
-                (copia / arquivo.name).write_text(arquivo.read_text(encoding="utf-8"), encoding="utf-8")
-
-            alvo = handoff.gerar(copia, **_JULGAMENTO)
-            texto = alvo.read_text(encoding="utf-8")
-
             unidades = porte._listar_unidades(copia)
-            verificadas = sum(
-                1 for u in unidades if (regioes.ler_campo(u, "state") or "").strip() == "verified"
-            )
-            self.assertIn(f"| Unidades derivadas | {len(unidades)} |", texto)
-            self.assertIn(f"| Verificadas | {verificadas} |", texto)
-            self.assertIn(f"| Próximo número livre | {numeracao.proxima_unidade(copia)} |", texto)
+            self.assertTrue(unidades)
+            for unidade in unidades:
+                unit_id = (regioes.ler_campo(unidade, "unit_id") or "").strip(" \"'")
+                state = (regioes.ler_campo(unidade, "state") or "").strip()
+                situacao = "verificada" if state == "verified" else "por fazer"
+                with self.subTest(unidade=unit_id):
+                    self.assertIn(f"| {unit_id} | {situacao} |", texto)
 
 
 class TestContratoComOSkillDoDerive(unittest.TestCase):

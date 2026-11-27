@@ -12,8 +12,8 @@ resolvem — as que as unidades reais usam —, e o resto vai para as não resol
 - `[texto](caminho), seção de mesmo nome` — *X* é o texto da primeira coluna;
 - `mesma seção …` — repete arquivo e seção da linha anterior, se ela resolveu.
 
-A seção é o primeiro título, de qualquer nível, cujo texto **começa** com *X*. O `3. ` que a norma
-põe diante de alguns títulos não conta — as unidades citam *Camada normativa*, não *3. Camada
+A seção é o primeiro título, de qualquer nível, cujo texto **começa** com *X*. O `3. ` que a norma de antes do
+redesign punha diante de alguns títulos não conta — as unidades citam *Camada normativa*, não *3. Camada
 normativa*. O trecho vai do título até o próximo de nível igual ou maior, e os subtítulos entram.
 
 Não chegam ao executor, e vão para as não resolvidas: linha sem link, link sem seção reconhecida
@@ -23,8 +23,8 @@ ausente está em `.claude/archive/` (plano 0020), o motivo passa a ser "arquivad
 <quem>: <motivo>", para o arquivamento não parecer link quebrado.
 
 Reaproveita `lint_unidade._corpo` e `_secao`: o frontmatter fora, e `## Normas aplicáveis` lida do mesmo
-jeito que o gate de entrada a lê. Título dentro de cerca de código não conta — a norma exemplifica
-cabeçalhos em blocos de código, e um `###` de exemplo encerraria a seção antes da hora.
+jeito que o gate de entrada a lê. Título dentro de cerca de código não conta — documento de regras
+exemplifica cabeçalhos em blocos de código, e um `###` de exemplo encerraria a seção antes da hora.
 """
 
 from __future__ import annotations

@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
-"""Prompt de orquestração gravado pelo `derive` — plano 0003.
+"""Handoff gravado pelo `derive` — plano 0003, e o formato do codex na subparte 2.2.08.
 
 O `derive` terminava entregando estrutura, unidades e backlog, e nada que dissesse como conduzir a
-execução daquilo. A ponte era feita à mão, e a qualidade do que vinha depois dependia inteiramente
-de quanto aquele texto acertava.
-
-`gerar` grava `_handoff.md` no diretório do plano. No formato 1, **só o grande o tem**. No formato 2
-(codex, *Handoff*; subparte 2.2.08), o médio e o grande o têm, porque a unidade do médio também roda
-em sessão nova: o esqueleto `_ESQUELETO_ATUAL` traz a ordem das unidades, a situação de cada uma,
-derivada do teste, e as seções do codex que o code lê, citadas pelo título (`SECOES_DO_CODE`) —
-nunca copiadas.
+execução daquilo. `gerar` grava `_handoff.md` na pasta do plano, no médio e no grande (codex,
+*Handoff*): a ordem das unidades, a situação de cada uma, derivada do `state` que o teste projeta, e
+as seções do codex que o code lê, citadas pelo título (`SECOES_DO_CODE`) — nunca copiadas. Um
+esqueleto só, para todo plano: o do formato 1, que citava a norma, saiu com ela (parte 2.3).
 
 **Divisão entre script e julgamento, a mesma do resto do método.** Aqui vive o esqueleto e o que se
-mede sem opinar — commit, unidades derivadas e verificadas, próximo número livre. A fila, as
-pendências do humano e a sugestão de por onde começar chegam por parâmetro, porque são julgamento
-de quem deriva.
+mede sem opinar — o commit e a situação de cada unidade. A fila, as pendências do usuário e a
+sugestão de por onde começar chegam por parâmetro, porque são julgamento de quem deriva.
 
-**O que este módulo deliberadamente não mede: a suíte.** Rodá-la aqui a faria rodar dentro de si
-mesma quando o teste deste módulo executasse, que é a recursão contra a qual `verificacao` mantém
-uma sentinela. E baked-in ela envelheceria no primeiro commit. O prompt carrega o **comando** e a
-regra de somar as duas linhas `Ran` — quem lê mede. É a divergência `L-03` do plano 0003, e ela
-fortalece o desenho em vez de enfraquecê-lo: número declarado é alegação, e o prompt inteiro existe
-para dizer isso.
-
-O arquivo é **projeção**, regerada a cada `derive` incremental. O prefixo `_` o mantém fora de
+O arquivo é **projeção**, regerada a cada `derive`. O prefixo `_` o mantém fora de
 `numeracao.PADRAO_ARQUIVO_UNIDADE`, que é o que conta unidades aqui e em `porte`.
 """
 
@@ -34,82 +22,10 @@ from datetime import date
 from pathlib import Path
 
 import lib
-import numeracao
 import porte
 import regioes
 
 NOME_ARQUIVO = "_handoff.md"
-
-_ESQUELETO = """\
-# Orquestração — plano {plano}
-
-Você orquestra a execução deste plano. **Você não executa unidade** — unidades rodam em cold-start
-próprio, uma por vez. Você prepara, revisa o que volta, e versiona depois de revisar.
-
-## Como disparar cold-start
-
-Uma forma só: a skill `code <unidade>`. Ela roda sempre num subagent isolado (`context: fork`,
-Sonnet), em qualquer sessão, e por isso não gasta o contexto de orquestração que você guarda.
-
-## Regras que não mudam
-
-- **Aprovação é do humano.** Nenhum `derive` sem ele dizer, explicitamente, para aquele alvo
-- `state` e `verified_at` **nunca se editam à mão** — são projetados por script a partir do teste
-- **Nunca editar o miolo entre marcadores** (`<!-- backlog:start -->`, `<!-- planos:start -->`)
-- Quem executa unidade **entrega arquivos e relatório, não commita**
-- Unidade insuficiente é defeito **da unidade**: a correção volta para quem deriva, como `L-XX`
-- Ação irreversível ou que toque mais de 5 arquivos: apresentar antes, aguardar aprovação
-- **Todo número que este prompt afirma é alegação.** Meça com o oráculo do projeto, nunca com um
-  equivalente montado na hora
-
-## Como revisar — leia antes da primeira entrega
-
-`{norma}`, seção *Como revisar uma entrega*. Ela é a parte que decide a qualidade do que sai, e
-não está copiada aqui de propósito: uma fonte por fato.
-
-O que ela exige em uma linha: **medir em vez de reler o relatório**.
-
-## Estado no momento em que este arquivo foi gerado
-
-Gerado em {gerado_em}, sobre o commit `{commit}`. **Confira antes de agir** — se divergir do que
-você medir, o que vale é a sua medição, e a divergência merece ser reportada.
-
-| | |
-|---|---|
-| Unidades derivadas | {derivadas} |
-| Verificadas | {verificadas} |
-| Próximo número livre | {proxima} |
-
-A suíte **não** está contada aqui, e é deliberado: número declarado envelhece no primeiro commit.
-Rode você mesmo, e **some as duas linhas `Ran`** — o total é a soma, nunca a última linha:
-
-```
-./scripts/test-python.sh
-```
-
-## A fila
-
-{fila}
-
-## Pendências do humano
-
-{pendencias}
-
-## Onde eu começaria, e por quê
-
-{sugestao}
-
-> Sugestão registrada, não decisão. Quem escolhe a ordem é o humano.
-
-## Onde ler, antes de qualquer coisa
-
-1. `.claude/CLAUDE.md` — invariantes e protocolo
-2. `{norma}` — a norma
-3. As skills, uma por modo:
-{skills}
-4. `{plano_md}` — o plano, com *Escopo*, *Decisões* e *Lacunas*
-"""
-
 
 # As seções do codex que a sessão de cada unidade lê, pelo título (codex, *Handoff*). A skill do code
 # cita a mesma lista, e o teste confere que as duas não divergem.
@@ -213,25 +129,6 @@ def _relativo(caminho: Path, raiz: Path) -> str:
         return caminho.as_posix()
 
 
-def _skills_citadas(raiz: Path) -> str:
-    """Um item por modo (`lib.MODOS`), com o `SKILL.md` da skill de cada um — irmãs da pasta que guarda o `config.json`.
-
-    A pasta do `config.json` (`decode-and-code/`) é a compartilhada e não tem `SKILL.md`: as skills
-    moram ao lado dela, tanto no checkout quanto no pacote.
-    """
-    pasta_skills = lib._config_path().parent.parent
-    return "\n".join(
-        f"   - `{_relativo(pasta_skills / nome / 'SKILL.md', raiz)}`" for nome in lib.MODOS
-    )
-
-
-def _contagem(dir_plano: Path) -> tuple[int, int]:
-    """Unidades derivadas e quantas estão `verified` — lidas do disco, nunca do backlog projetado."""
-    unidades = porte._listar_unidades(dir_plano)
-    verificadas = sum(1 for u in unidades if (regioes.ler_campo(u, "state") or "").strip() == "verified")
-    return len(unidades), verificadas
-
-
 def gerar(dir_plano: Path, *, fila: str, pendencias: str, sugestao: str) -> Path:
     """Grava `_handoff.md` em `dir_plano` e devolve o caminho. Sobrescreve — é projeção.
 
@@ -239,50 +136,30 @@ def gerar(dir_plano: Path, *, fila: str, pendencias: str, sugestao: str) -> Path
     não tem como decidir dependência entre unidades nem o que é pendência do humano.
 
     Levanta `FileNotFoundError` se `dir_plano` não existir ou não tiver o arquivo do plano — o
-    handoff só faz sentido para o porte grande, que é o único com diretório próprio.
+    handoff só faz sentido para o médio e o grande, que têm pasta própria.
     """
     dir_plano = Path(dir_plano)
     plano_md = dir_plano / f"{dir_plano.name}.md"
     if not plano_md.is_file():
         raise FileNotFoundError(f"plano não encontrado para handoff: {plano_md}")
 
-    derivadas, verificadas = _contagem(dir_plano)
     raiz = lib.repo_root()
 
-    if lib.formato(plano_md) == lib.FORMATO_ATUAL:
-        grande = (regioes.ler_campo(plano_md, "plan_size") or "").strip(" \t\"'") == "grande"
-        texto = _ESQUELETO_ATUAL.format(
-            plano=dir_plano.name,
-            fecho=(
-                "Depois da última, o teste do plano inteiro (P8) e a aprovação final."
-                if grande
-                else "A aprovação da entrega única é a aprovação final."
-            ),
-            secoes="\n".join(f"- *{titulo}*" for titulo in SECOES_DO_CODE),
-            gerado_em=date.today().isoformat(),
-            commit=_commit(),
-            situacao=_situacao(dir_plano),
-            fila=fila.strip(),
-            pendencias=pendencias.strip(),
-            sugestao=sugestao.strip(),
-            plano_md=_relativo(plano_md, raiz),
-        )
-        alvo = dir_plano / NOME_ARQUIVO
-        alvo.write_text(texto, encoding="utf-8")
-        return alvo
-
-    texto = _ESQUELETO.format(
+    grande = (regioes.ler_campo(plano_md, "plan_size") or "").strip(" \t\"'") == "grande"
+    texto = _ESQUELETO_ATUAL.format(
         plano=dir_plano.name,
+        fecho=(
+            "Depois da última, o teste do plano inteiro (P8) e a aprovação final."
+            if grande
+            else "A aprovação da entrega única é a aprovação final."
+        ),
+        secoes="\n".join(f"- *{titulo}*" for titulo in SECOES_DO_CODE),
         gerado_em=date.today().isoformat(),
         commit=_commit(),
-        derivadas=derivadas,
-        verificadas=verificadas,
-        proxima=numeracao.proxima_unidade(dir_plano),
+        situacao=_situacao(dir_plano),
         fila=fila.strip(),
         pendencias=pendencias.strip(),
         sugestao=sugestao.strip(),
-        norma=_relativo(lib.plan_root() / "system" / "modelo-dev-units.md", raiz),
-        skills=_skills_citadas(raiz),
         plano_md=_relativo(plano_md, raiz),
     )
 

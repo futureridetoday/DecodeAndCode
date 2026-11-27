@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Testes de arquivar, restaurar e substituir guardrail — plano 0020, tarefa 4.
 
-Raiz sintética passada explicitamente. O oráculo é o da norma, *Camada normativa → Editar e
-arquivar*: arquivar move a regra com três campos e o hook deixa de negar o caso dela; o nome
+Raiz sintética passada explicitamente. O oráculo é o do codex, *Rethink* (editar e
+arquivar): arquivar move a regra com três campos e o hook deixa de negar o caso dela; o nome
 arquivado fica reservado; `restore` só devolve a regra provada por um par novo; `replace` prova a
 regra nova pelo par antes de trocar.
 """

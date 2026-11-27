@@ -248,12 +248,12 @@ class TestCicloCompleto(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             projeto = Path(tmp).resolve()
 
-            # 1 — bootstrap: a estrutura e a norma chegam ao projeto.
+            # 1 — bootstrap: a estrutura chega ao projeto, e o método não é copiado.
             _bootstrap_e_stub_de_runner(projeto)
             self.assertTrue((projeto / ".claude").is_dir())
             self.assertTrue((projeto / "docs" / "plan" / "_planos.md").is_file())
-            self.assertTrue(
-                (projeto / "docs" / "plan" / "system" / "modelo-dev-units.md").is_file()
+            self.assertFalse(
+                (projeto / "docs" / "plan" / "system" / "modelo-dev-units.md").exists()
             )
 
             plano = _escrever_plano_no_inbox(projeto)

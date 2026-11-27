@@ -55,7 +55,6 @@ _SCRIPTS_DE_DESENVOLVIMENTO = ("empacotar.py", "reconciliar.py", "lint_skill.py"
 
 _SCRIPT_DO_HOOK_RE = re.compile(re.escape(_ANCORA_PROJETO) + r"/([\w.-]+\.py)")
 
-_PROJECT_RE = re.compile(r"(?m)^project:.*$")
 
 # Link markdown `[texto](alvo)`; o grupo 1 é o alvo. Fonte única: `test_normas_system` a importa daqui.
 _LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -96,8 +95,8 @@ _MANIFESTO_RELATIVO = Path(".claude-plugin") / "plugin.json"
 # As skills que viajam são as de `lib.skills_do_pacote()` — as do núcleo e as que cada módulo presente
 # declara; lista explícita, nunca `.claude/skills/*`: uma skill
 # de desenvolvimento deste repositório não pode vazar para quem instala (`P-03`, `D-01`). A pasta
-# compartilhada não é skill (não tem `SKILL.md`): guarda `scripts/`, `config.json` e, no pacote,
-# `reference/`, e as quatro a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
+# compartilhada não é skill (não tem `SKILL.md`): guarda o codex, os procedimentos, os módulos,
+# `scripts/` e `config.json`, e as skills a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
 _PASTA_COMPARTILHADA = "decode-and-code"
 
 
@@ -121,7 +120,6 @@ def _fontes() -> dict[str, Path]:
         **{f"skill {nome}": skills / nome for nome in _skills_do_pacote(skills)},
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
-        "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
     }
 
 
@@ -147,14 +145,10 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
         shutil.rmtree(destino)
     destino.mkdir(parents=True)
 
-    manifesto = json.loads(fontes["manifesto"].read_text(encoding="utf-8"))
-    nome_plugin = manifesto["name"]
-
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
     escritos.extend(_copiar_skill(fontes["compartilhada"], destino))
     for nome in _skills_do_pacote(fontes["compartilhada"].parent):
         escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino))
-    escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin, manifesto["version"]))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))
     escritos.append(_escrever_hooks_json(hooks, destino))
     return escritos
@@ -226,24 +220,11 @@ def _so_campos_oficiais(texto: str) -> str:
     return "".join(saida)
 
 
-def _declarar_o_plugin(arquivo: Path, nome_plugin: str) -> None:
-    """`project:` do frontmatter da norma passa a declarar o **plugin**, não o repositório que o produziu.
-
-    A fonte continua declarando o repositório que a produziu, que é o correto para um artefato
-    deste projeto (padrão de frontmatter, `CLAUDE.md` global). O que não pode é a cópia distribuída
-    chegar em outro projeto declarando o nosso — é o defeito que o `huddle.md` teve, e a reescrita
-    aqui é a mesma classe da âncora de hook: derivado se corrige no build, fonte permanece honesta. Os
-    `SKILL.md` não passam por aqui desde o `P-10`: perdem o bloco inteiro, `project:` incluído.
-    """
-    texto = arquivo.read_text(encoding="utf-8")
-    arquivo.write_text(_PROJECT_RE.sub(f"project: {nome_plugin}", texto, count=1), encoding="utf-8")
-
-
 def _linhas_com_marca_de_codigo(texto: str) -> list[tuple[str, bool]]:
     """Cada linha de `texto` com `True` quando é cerca ```...``` ou está dentro de uma.
 
-    Fonte única da regra "bloco de código é exemplo, não link a resolver": `_sem_blocos_de_codigo`
-    e `_reescrever_links_relativos` a usam, e `test_normas_system` importa a primeira (plano `0021`).
+    Fonte única da regra "bloco de código é exemplo, não link a resolver": `_sem_blocos_de_codigo` a
+    usa, e `test_normas_system` a importa (plano `0021`).
     """
     marcadas = []
     dentro = False
@@ -259,61 +240,6 @@ def _linhas_com_marca_de_codigo(texto: str) -> list[tuple[str, bool]]:
 def _sem_blocos_de_codigo(texto: str) -> str:
     """Remove o miolo de blocos ```...``` — exemplo/template não é link a resolver."""
     return "\n".join(linha.rstrip("\r\n") for linha, codigo in _linhas_com_marca_de_codigo(texto) if not codigo)
-
-
-def _reescrever_links_relativos(texto: str, origem: Path, versao: str) -> str:
-    """Troca todo link relativo fora de bloco de código por URL do GitHub presa à tag `v<versao>`.
-
-    Plano `0021`: a norma é o único arquivo de `reference/`, e o `bootstrap` a copia para
-    `<plan_root>/system/` no projeto que instala — link relativo não resolve em nenhum dos dois
-    lugares. O alvo se resolve a partir de `origem` (o arquivo-fonte no repositório) e vira caminho
-    relativo à raiz; o fragmento é mantido (`L-01`). Link absoluto, `mailto:` e âncora pura passam
-    intactos. Alvo fora do repositório levanta `ValueError` — build que falha alto, não link mentiroso.
-    """
-    raiz = lib.repo_root().resolve()
-    base = f"https://github.com/{lib.config()['marketplace']['source']['repo']}/blob/v{versao}/"
-
-    def _trocar(achado: re.Match) -> str:
-        alvo = achado.group(1)
-        if alvo.startswith(("http://", "https://", "mailto:", "#")):
-            return achado.group(0)
-        caminho, separador, fragmento = alvo.partition("#")
-        relativo = (origem.parent / caminho).resolve().relative_to(raiz).as_posix()
-        inicio, fim = achado.span(1)
-        texto_link = achado.group(0)
-        return texto_link[: inicio - achado.start()] + base + relativo + separador + fragmento + texto_link[fim - achado.start() :]
-
-    return "".join(
-        linha if codigo else _LINK_RE.sub(_trocar, linha)
-        for linha, codigo in _linhas_com_marca_de_codigo(texto)
-    )
-
-
-def _copiar_norma(origem: Path, destino: Path, nome_plugin: str, versao: str) -> Path:
-    """Leva a norma-mecanismo para `reference/`, ao lado da skill — unidade `0004-04`.
-
-    `bootstrap.iniciar` materializa de lá quando o método roda de um pacote instalado (as skills já
-    citam `<plan_root>/system/modelo-dev-units.md`, e sem isto o projeto que instala não tem a fonte
-    que elas citam — `L-31` do plano `0001`). Fica fora de `docs/`, que `construir` nunca
-    copia (invariante 2): é **um** arquivo nomeado, o operativo que a `0004-03` já separou do
-    registro deste projeto, não a árvore inteira de `docs/plan`.
-
-    `project:` do frontmatter passa por `_declarar_o_plugin` — sem essa reescrita, a cópia distribuída
-    declara no próprio frontmatter o nome do repositório que a produziu, e `verificar` acusa: a mesma
-    classe de vazamento da `L-31`, medida nesta unidade num arquivo que ainda não existia quando
-    aquela lacuna foi escrita.
-
-    Os links relativos do corpo passam por `_reescrever_links_relativos` (plano `0021`): sem isso,
-    quem instala recebe links para arquivos que o pacote não leva.
-    """
-    alvo = destino / "skills" / "decode-and-code" / "reference" / origem.name
-    alvo.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(origem, alvo)
-    alvo.write_text(
-        _reescrever_links_relativos(alvo.read_text(encoding="utf-8"), origem, versao), encoding="utf-8"
-    )
-    _declarar_o_plugin(alvo, nome_plugin)
-    return alvo
 
 
 def _hooks_do_pacote(settings: Path) -> dict:
@@ -431,8 +357,8 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
     método — texto fixo e autoral, correto em qualquer checkout —, e por isso carrega o nome do
     repositório de origem sempre que o diretório local se chamar como o repositório real (o caso
     comum: quem clona não costuma renomear). Não é o vazamento que o marcador persegue — esse é a
-    cópia dos `SKILL.md`/norma citando o checkout que os construiu, e `_copiar_manifesto`
-    nunca passa pela reescrita que eles recebem (`_so_campos_oficiais`, `_declarar_o_plugin`): o
+    cópia dos `SKILL.md` citando o checkout que os construiu, e `_copiar_manifesto`
+    nunca passa pela reescrita que eles recebem (`_so_campos_oficiais`): o
     manifesto é copiado verbatim porque sua função é justamente declarar essa identidade, e ela não
     muda com o nome do diretório de quem constrói.
     """
@@ -515,8 +441,8 @@ def empacotar_zip(staging: Path | str | None = None) -> tuple[Path, str]:
     contra um asset real de Release é ato humano; se recusar, o conserto é trocar para o segundo
     layout aqui, não noutro lugar.
 
-    **`date_time` fixo, não o mtime do disco.** `_so_campos_oficiais` e `_declarar_o_plugin` reescrevem
-    alguns arquivos a cada `construir` (os `SKILL.md`, a norma copiada), o que muda o mtime a cada
+    **`date_time` fixo, não o mtime do disco.** `_so_campos_oficiais` reescreve
+    alguns arquivos a cada `construir` (os `SKILL.md`), o que muda o mtime a cada
     build mesmo com o conteúdo idêntico. Um zip que varia byte a byte entre duas construções da
     mesma fonte não serve de artefato reprodutível — por isso todo `ZipInfo` nasce com a mesma
     data, e só o conteúdo decide o hash.

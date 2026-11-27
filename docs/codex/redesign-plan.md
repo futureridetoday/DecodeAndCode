@@ -307,7 +307,8 @@ levantar cada consumidor e depois troca um por vez.
 - **Depende de:** 2.1 e 1.4.
 - **Onde roda:** sessões aninhadas, uma subparte por vez, salvo duas que o mapa mostre sem arquivo em
   comum.
-- **Estado:** pendente; as subpartes nascem do mapa.
+- **Estado:** concluída em 2026-11-27, as 15 subpartes em sequência, PRs #70 a #84; cada uma com o
+  que migrou e o que ficou para outra na seção *Registro da migração* do mapa.
 
 ### Parte 2.3 — Apagar a norma
 
@@ -319,7 +320,7 @@ levantar cada consumidor e depois troca um por vez.
   a suíte passa; o pacote é construído sem a norma.
 - **Como verificar:** a busca, a suíte e um build do pacote.
 - **Onde roda:** esta sessão.
-- **Estado:** pendente.
+- **Estado:** concluída em 2026-11-27; o registro do que sobrou na busca está no mapa.
 
 ### Parte 2.4 — Migração nos projetos que já usam o DC
 

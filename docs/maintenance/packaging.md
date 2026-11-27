@@ -30,10 +30,11 @@ nunca é copiado ao projeto (codex, *Restrição fundamental*).
 
 `empacotar.construir(destino)` produz a árvore do plugin **sempre a partir da fonte real**
 (`lib.repo_root()`), nunca de um parâmetro de origem — o plugin é o que este repositório produz de
-si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as sete skills
-(`lib.SKILLS`: os três modos — `review-plan`, `derive`, `code` —, o `decode`, o `huddle`, o `setup` e o `rethink`) e a pasta
-compartilhada `decode-and-code/` —
-`scripts/`, `config.json` e, no pacote, `reference/` —, esta sem `scripts/tests/` nem `__pycache__`
+si mesmo. Viaja o manifesto (`.claude/plugin.json`, fonte única de nome e versão), as skills
+(`lib.skills_do_pacote()`: as do núcleo — `decode`, `review-plan`, `derive`, `code`, `huddle`,
+`setup` e `rethink` — e as dos módulos presentes) e a pasta compartilhada `decode-and-code/` —
+`codex/`, `procedures/`, `modules/`, `scripts/` e `config.json` —, esta sem `scripts/tests/` nem
+`__pycache__`
 (o que inclui `huddle.py` — o mecanismo do huddle viaja como qualquer outro script; a instância de
 cada projeto, não), **três hooks** — `PreToolUse` (o guardrail), `InstructionsLoaded` (o log do
 controle de três estados) e `SessionStart` (o lembrete do huddle, codex, *Huddle*) — com
@@ -145,7 +146,7 @@ sobre o primeiro plano de um projeto zerado levanta `FileNotFoundError` em `_pla
 |---|---|
 | `<plan_root>/_planos.md` | Fonte da numeração — com frontmatter, os marcadores `planos` e o cabeçalho da tabela |
 | `<plan_root>/_inbox/` | Onde todo plano nasce |
-| `<plan_root>/system/` | Onde vive a camada normativa do core |
+| `<plan_root>/system/` | Onde vivem a foundation, o huddle e o registro do setup e do rethink do projeto |
 | `<projeto>/.claude/` | `root_markers` exige `.claude/` **e** `docs/` — sem os dois a âncora não resolveria o projeto **depois** do bootstrap |
 
 **Idempotente e nunca destrutiva**, no mesmo contrato de `huddle.iniciar` e do bootstrap de

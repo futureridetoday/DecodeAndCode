@@ -5,7 +5,7 @@ Recusa começar uma unidade que não sobrevive ao cold-start e devolve a lista
 do que falta, para a correção voltar ao `derive` em vez de ser descoberta
 pelo executor no meio do trabalho.
 
-Três decisões da norma moldam o comportamento: teste **declarado**, não
+Três decisões do método moldam o comportamento: teste **declarado**, não
 existente (decisão 15) — o campo `test` precisa estar presente, o arquivo que
 ele aponta não; teto de **8 passos** na Sequência (decisão 1), acima disso a
 unidade divide; e `unit_type` restrito ao vocabulário do formato da unidade

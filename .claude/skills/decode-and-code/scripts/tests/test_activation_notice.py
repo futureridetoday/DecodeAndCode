@@ -3,7 +3,7 @@
 
 Duas classes cobrem o mecanismo puro (`TestAnunciar*`), uma cobre a ausência de instância no
 módulo (mesmo padrão de `test_guardrail.py`), e `TestHooksReais` roda os dois pontos de entrada de
-verdade, via subprocesso com stdin/stdout/stderr — o oráculo que a norma pede: "o hook recusa o
+verdade, via subprocesso com stdin/stdout/stderr — o oráculo que `docs/maintenance/activation.md` pede: "o hook recusa o
 caso proibido e deixa passar o permitido" vale aqui como "o hook anuncia o que deve e cala o que
 não deve". Cada teste de hook real usa um `session_id` próprio (`uuid4`) para não colidir com
 nenhuma sessão real nem com outro teste, e limpa o arquivo de log que criar.

@@ -304,7 +304,7 @@ def _adicionar_guardrail(args: argparse.Namespace) -> int:
     return OK
 
 
-# Editar, arquivar e restaurar — plano 0020, norma *Camada normativa → Editar e arquivar*.
+# Editar, arquivar e restaurar — plano 0020; arquivar nunca apaga (codex, *Rethink*).
 
 _CAMADAS = ("principle", "guideline", "guardrail")
 
@@ -1145,7 +1145,7 @@ def _parser() -> argparse.ArgumentParser:
 
     comando("huddle-migrar", "move o huddle único de projeto para o arquivo da pessoa", _huddle_migrar)
 
-    comando("descobrir", "inventaria as fontes do projeto e a norma que ele já tem, sem classificar", _descobrir)
+    comando("descobrir", "inventaria as fontes do projeto e os princípios, guidelines e guardrails que ele já tem", _descobrir)
 
     comando("setup-iniciar", "cria <plan_root>/system/setup.md, sem sobrescrever", _setup_iniciar)
 
