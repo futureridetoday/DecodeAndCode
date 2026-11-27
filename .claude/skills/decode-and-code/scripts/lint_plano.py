@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Lint de formato de plano por porte — unidade 0001-13.
+"""Lint de formato de plano por porte — unidade 0001-13, e o formato 2 na subparte 2.2.05.
 
-Hoje existe **um** formato de plano, e ele cobra de uma correção de oito linhas a mesma estrutura
-que cobra de um plano de vinte unidades (`B-01`). `plan_size` (`0001-12`) já declara o porte; este
-módulo é o que verifica que o plano obedece o que o porte dele promete — a tabela de
-*O que cada porte carrega* na norma (`modelo-dev-units.md`).
+`plan_size` (`0001-12`) declara o porte; este módulo verifica que o plano obedece o que o porte dele
+promete. A regra depende da versão do formato (`lib.formato`):
+
+- **Formato 2** (codex, *Porte*, *Plano técnico*, *Independência entre planos*): todo plano tem
+  `## Objetivo`, `## Histórias`, `## Independência` e `## Recursos` (a tabela de recursos do plano,
+  que pode dizer que não há nenhum). O pequeno tem `## Tarefas` e nenhuma unidade; o médio tem
+  `## Unidades` com exatamente uma linha numerada; o grande, com duas ou mais. A região de backlog é
+  criada na aprovação (`scaffold.aprovar`), então o lint não a exige, e a recusa só no pequeno.
+- **Formato 1**, o plano anterior ao redesign: a regra de antes — médio com `## Tarefas`, grande
+  com `## Escopo` e `## Independência`, pequeno sem decomposição.
 
 Segue o mesmo desenho de `lint_unidade.py`/`lint_skill.py`: só lê, devolve lista de problemas, nunca
 levanta por conteúdo malformado — quem levanta por `plan_size` ausente ou fora do vocabulário é
@@ -50,9 +56,53 @@ def lint(plano: Path) -> list[str]:
     problemas.extend(_checar_tipo(plano))
 
     corpo = _corpo(plano.read_text(encoding="utf-8"))
+    try:
+        versao = lib.formato(plano)
+    except ValueError:
+        versao = None  # `_checar_tipo` já devolveu o problema do formato
+    if versao == lib.FORMATO_ATUAL:
+        problemas.extend(_checar_formato_atual(plano, corpo, plan_size))
+        return problemas
     problemas.extend(_checar_independencia(corpo, plan_size))
     problemas.extend(_checar_decomposicao(corpo, plan_size))
     problemas.extend(_checar_backlog(plano, plan_size))
+    return problemas
+
+
+# Seções que todo plano do formato 2 tem, em qualquer porte (codex, *Plano técnico*).
+SECOES_DO_FORMATO_ATUAL = ("Objetivo", "Histórias", "Independência", "Recursos")
+
+_LINHA_NUMERADA = re.compile(r"(?m)^\|\s*\d+\s*\|")
+
+
+def unidades_previstas(corpo: str) -> int | None:
+    """Linhas numeradas da tabela em `## Unidades` — `None` quando a seção não existe."""
+    m = re.search(r"(?m)^##\s+Unidades\s*$", corpo)
+    if m is None:
+        return None
+    resto = corpo[m.end():]
+    fim = re.search(r"(?m)^##\s", resto)
+    return len(_LINHA_NUMERADA.findall(resto[: fim.start()] if fim else resto))
+
+
+def _checar_formato_atual(plano: Path, corpo: str, plan_size: str) -> list[str]:
+    """As seções do formato 2 e a decomposição que o porte pede (codex, *Porte*)."""
+    problemas = [f"formato 2 exige '## {s}'" for s in SECOES_DO_FORMATO_ATUAL if not _tem_heading(corpo, s)]
+    previstas = unidades_previstas(corpo)
+    if plan_size == "pequeno":
+        if not _tem_heading(corpo, "Tarefas"):
+            problemas.append("pequeno exige '## Tarefas'")
+        if previstas is not None:
+            problemas.append("pequeno não tem unidade — tire '## Unidades' e deixe as tarefas no plano")
+        if regioes.ler_regiao(plano, "backlog") is not None:
+            problemas.append("pequeno não pode ter região de backlog — sem unidade, a projeção nunca escreveria ali")
+        return problemas
+    if previstas is None:
+        problemas.append(f"{plan_size} exige '## Unidades', com uma linha numerada por unidade")
+    elif plan_size == "médio" and previstas != 1:
+        problemas.append(f"médio tem exatamente 1 unidade; '## Unidades' tem {previstas}")
+    elif plan_size == "grande" and previstas < 2:
+        problemas.append(f"grande tem duas ou mais unidades; '## Unidades' tem {previstas}")
     return problemas
 
 

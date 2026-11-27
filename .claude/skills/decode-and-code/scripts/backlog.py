@@ -25,6 +25,10 @@ de 2026-08-25: medido contra o plano real `0001`, que é grande, passá-lo **com
 região vazia e situação lida de `status`, sem levantar, e gravava essa situação em `_planos.md`.
 Projeção errada que parece certa é a classe da `L-18`.
 
+**Formato 2** (codex, *Porte*): o médio tem uma unidade e projeta como o grande; o previsto vem da
+tabela `## Unidades` (`lint_plano.unidades_previstas`), não de `## Escopo`. O ramo de tarefas do
+médio é só do formato 1.
+
 Porte ausente ou desconhecido cai no ramo do **grande**, e é deliberado: grande levanta quando falta
 o marcador, então o caso não reconhecido falha alto. Cair no pequeno faria o oposto — projetar em
 silêncio a partir de `status`, que é justamente o defeito acima.
@@ -58,6 +62,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import lib
+import lint_plano
 import numeracao
 import porte
 import regioes
@@ -104,14 +109,15 @@ def projetar(alvo: Path, dry_run: bool = False) -> tuple[str, str]:
     if f"]({href})" not in miolo_planos:
         raise ValueError(f"plano {href!r} não tem linha em {lib.planos_md()}")
 
+    versao = lib.formato(arquivo_do_plano)
     if plan_size == "pequeno":
         backlog, situacao = _projetar_pequeno(arquivo_do_plano)
         escreve_backlog = False
-    elif plan_size == "médio":
+    elif plan_size == "médio" and versao == lib.FORMATO_ANTERIOR:
         backlog, situacao = _projetar_medio(arquivo_do_plano)
         escreve_backlog = True
     else:
-        backlog, situacao = _projetar_grande(arquivo_do_plano.parent, arquivo_do_plano)
+        backlog, situacao = _projetar_grande(arquivo_do_plano.parent, arquivo_do_plano, versao)
         escreve_backlog = True
 
     if dry_run:
@@ -141,12 +147,18 @@ def _plan_size(arquivo_do_plano: Path) -> str | None:
     return normalizado or None
 
 
-def _projetar_grande(dir_plano: Path, arquivo_do_plano: Path) -> tuple[str, str]:
-    """Comportamento inalterado desde antes da 0001-14: unidades derivadas em `dir_plano`,
-    contra o previsto em `## Escopo`."""
+def _projetar_grande(
+    dir_plano: Path, arquivo_do_plano: Path, versao: int = lib.FORMATO_ANTERIOR
+) -> tuple[str, str]:
+    """Unidades derivadas em `dir_plano` contra o previsto: `## Escopo` no formato 1, `## Unidades`
+    no formato 2, que vale também para o médio."""
     if regioes.ler_regiao(arquivo_do_plano, "backlog") is None:
         raise ValueError(f"marcador 'backlog' não existe em {arquivo_do_plano}")
-    previstas = _contar_previstas(arquivo_do_plano.read_text(encoding="utf-8"))
+    texto = arquivo_do_plano.read_text(encoding="utf-8")
+    if versao == lib.FORMATO_ATUAL:
+        previstas = lint_plano.unidades_previstas(texto)
+    else:
+        previstas = _contar_previstas(texto)
     unidades = sorted(_unidades(dir_plano), key=_chave_ordenacao)
     return _montar_backlog(unidades, previstas), _situacao(unidades, previstas)
 

@@ -16,7 +16,7 @@ projeto pelo `__file__` e cai para o `cwd`.
 
 Contrato de saída: texto simples em stdout, um item por linha. Código `0` quando ok ou aprovado;
 `1` quando há problema ou reprovação (lint com problemas, nome inválido, `verificar` fora de
-`verified`, `concorrencia` com conflito ou não verificável); `2` para erro de uso ou exceção, com a
+`verified`); `2` para erro de uso ou exceção, com a
 mensagem em stderr e sem traceback. Fora de `verified`, `verificar` acrescenta o motivo: a saída do
 teste, cortada nas últimas 80 linhas (e dizendo que cortou). `normas` sai `0` mesmo com linhas não
 resolvidas: elas vão na saída, sob `Não resolvidas:`, para o executor relatar.
@@ -57,20 +57,6 @@ def _validar_nome(args: argparse.Namespace) -> int:
     if not motivos:
         print("ok")
     return REPROVADO if motivos else OK
-
-
-def _concorrencia(args: argparse.Namespace) -> int:
-    import scaffold
-
-    linhas = scaffold.concorrentes(Path(args.plano))
-    if linhas is None:
-        print(f"não verificável: o plano não declara 'core' — {args.plano}")
-        return REPROVADO
-    for linha in linhas:
-        print(linha)
-    if not linhas:
-        print("sem conflito")
-    return REPROVADO if linhas else OK
 
 
 def _bootstrap(args: argparse.Namespace) -> int:
@@ -853,14 +839,6 @@ def _parser() -> argparse.ArgumentParser:
 
     p = comando("validar-nome", "valida a sintaxe de um nome de plano ou unidade (1 se inválido)", _validar_nome)
     p.add_argument("nome")
-
-    p = comando(
-        "concorrencia",
-        "linhas de _planos.md em desenvolvimento no mesmo core ou módulo do plano "
-        "(1 se há conflito ou se o plano não declara core)",
-        _concorrencia,
-    )
-    p.add_argument("plano")
 
     p = comando("bootstrap", "cria a estrutura mínima do método num projeto, sem sobrescrever", _bootstrap)
     p.add_argument("projeto", nargs="?", default=".", help="padrão: o diretório atual")
