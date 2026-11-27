@@ -654,6 +654,13 @@ def _imprimir_secao_do_codex(titulo: str) -> None:
     print()
 
 
+def _codex(args: argparse.Namespace) -> int:
+    """Imprime as seções do codex pelo título exato, na ordem pedida — o que cada skill lê do método."""
+    for titulo in args.titulos:
+        _imprimir_secao_do_codex(titulo)
+    return OK
+
+
 def _explicar(args: argparse.Namespace) -> int:
     """Imprime, do codex do pacote, as seções que explicam Decode → Code, a seção nomeada em
     `secao`, ou o procedimento compartilhado com esse nome."""
@@ -994,6 +1001,9 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--desde", help="padrão: last_huddle, ou created")
 
     comando("huddle-fecho", "imprime a seção Huddle do codex: quando registrar e o fecho", _huddle_fecho)
+
+    p = comando("codex", "imprime seções do codex pelo título exato (2 se um título não existe)", _codex)
+    p.add_argument("titulos", nargs="+", metavar="título")
 
     p = comando(
         "explicar",

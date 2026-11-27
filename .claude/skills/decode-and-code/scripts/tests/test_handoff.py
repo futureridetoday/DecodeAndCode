@@ -98,13 +98,13 @@ class TestEsqueleto(_BaseComPlanoSintetico):
                 self.assertIn(f"{nome}/SKILL.md", texto)
         self.assertNotIn("decode-and-code/SKILL.md", texto)
 
-    def test_cita_so_os_tres_modos_e_nao_o_intake(self):
-        """`P-06` — o `intake` viaja no pacote, mas não é modo da norma, e o handoff cita por modo."""
+    def test_cita_so_os_tres_modos_e_nao_o_decode(self):
+        """`P-06` — o `decode` viaja no pacote, mas não é modo da norma, e o handoff cita por modo."""
         texto = self._gerar().read_text(encoding="utf-8")
 
-        self.assertIn("intake", lib.SKILLS)
-        self.assertNotIn("intake", lib.MODOS)
-        self.assertNotIn("intake", texto)
+        self.assertIn("decode", lib.SKILLS)
+        self.assertNotIn("decode", lib.MODOS)
+        self.assertNotIn(":decode ", texto)
 
     def test_cita_a_norma_em_vez_de_copiar_a_disciplina(self):
         texto = self._gerar().read_text(encoding="utf-8")

@@ -2,13 +2,14 @@
 """Teste da base das skills do método — unidades 0002-11 e `P-03`, e `P-06`.
 
 Cobre o que `lint_skill.lint()` já verifica — frontmatter completo e o modo declarado no corpo — e
-o que ele não vê: a topologia de `D-01`. São as skills de `lib.SKILLS` — uma por modo, o `intake`, que antecede
+o que ele não vê: a topologia de `D-01`. São as skills de `lib.SKILLS` — uma por modo, o `decode`, que antecede
 o ciclo, o `huddle`, o `setup` e o `rethink` —, cada uma com o modelo e a invocação que pede; e `decode-and-code/` ficou só com o que
 elas compartilham, sem `SKILL.md`. O texto do corpo de cada modo não é testado: palavra no markdown
 protege redação, não comportamento, e o que o corpo cita do `dc.py` é conferido por `test_dc.py`.
 
-O `intake` (`P-06`, `D-03`) é o prompt de um subagent sem histórico, e o que ele carrega é caro:
-a skill tem teto de tamanho, e a `description` também — ela entra em contexto em toda sessão.
+O `decode` (antes `intake`, `P-06`) roda na sessão, sem fork, porque conversa com o usuário: o tipo,
+o objetivo e a proposta pedem a confirmação dele (codex, *Workflow* e *Decode*). A `description`
+dele tem teto, porque entra em contexto em toda sessão, e o `SKILL.md` também.
 """
 
 from __future__ import annotations
@@ -35,17 +36,17 @@ ALLOWED_TOOLS = (
     'Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)"'
 )
 
-# O `intake` pesquisa e grava esboço, então pede `WebFetch` restrito ao domínio da documentação do Claude
-# Code — o único campo em que difere das outras três.
-ALLOWED_TOOLS_INTAKE = (
+# O `decode` confere schema de recurso do Claude Code, então pede `WebFetch` restrito ao domínio da
+# documentação — o único campo em que difere das outras.
+ALLOWED_TOOLS_DECODE = (
     '"Read Write Edit Glob Grep WebFetch(domain:code.claude.com) '
     'Bash(python3 \\"${CLAUDE_SKILL_DIR}/dc.py\\" *) '
     'Bash(python3 ${CLAUDE_SKILL_DIR}/dc.py *)"'
 )
 
-# Tetos do `intake` (`P-06`): o `SKILL.md` inteiro em bytes, e a `description` em caracteres.
-LIMITE_SKILL_MD_INTAKE = 4096
-LIMITE_DESCRIPTION_INTAKE = 600
+# Tetos do `decode` (`P-06`): o `SKILL.md` inteiro em bytes, e a `description` em caracteres.
+LIMITE_SKILL_MD_DECODE = 6144
+LIMITE_DESCRIPTION_DECODE = 600
 
 # Skill → modo que o corpo precisa citar. `model`, `disable-model-invocation` e `context` são o que
 # a topologia decide: `derive` cria estrutura e move arquivos, então só se invoca de forma explícita;
@@ -76,13 +77,14 @@ TOPOLOGIA = {
         "agent": "general-purpose",
         "background": "false",
     },
-    "intake": {
-        "modo": "intake",
+    # Subparte 2.2.06: o decode conversa com o usuário (tipo, objetivo, aprovação da proposta), e a
+    # ferramenta de perguntas não existe em fork — por isso sem `context`.
+    "decode": {
+        "modo": "decode",
         "model": "opus",
-        "allowed-tools": ALLOWED_TOOLS_INTAKE,
+        "allowed-tools": ALLOWED_TOOLS_DECODE,
         "disable-model-invocation": "false",
-        "context": "fork",
-        "agent": "general-purpose",
+        "context": None,
         "background": "false",
         "argument-hint": '"<pedido>"',
     },
@@ -156,7 +158,7 @@ class TestSkillBase(unittest.TestCase):
                     self.assertEqual(regioes.ler_campo(SKILLS / nome / "SKILL.md", campo), valor)
 
     def test_so_as_skills_em_fork_declaram_agent(self):
-        for nome in ("review-plan", "derive", "huddle", "setup", "rethink"):
+        for nome in ("review-plan", "derive", "decode", "huddle", "setup", "rethink"):
             with self.subTest(skill=nome):
                 self.assertIsNone(regioes.ler_campo(SKILLS / nome / "SKILL.md", "agent"))
 
@@ -169,17 +171,17 @@ class TestSkillBase(unittest.TestCase):
             with self.subTest(skill=nome):
                 self.assertTrue((SKILLS / nome / "dc.py").is_file())
 
-    def test_skill_md_do_intake_cabe_no_teto_de_bytes(self):
-        tamanho = len((SKILLS / "intake" / "SKILL.md").read_bytes())
-        self.assertLessEqual(tamanho, LIMITE_SKILL_MD_INTAKE, f"{tamanho} bytes")
+    def test_skill_md_do_decode_cabe_no_teto_de_bytes(self):
+        tamanho = len((SKILLS / "decode" / "SKILL.md").read_bytes())
+        self.assertLessEqual(tamanho, LIMITE_SKILL_MD_DECODE, f"{tamanho} bytes")
 
-    def test_description_do_intake_cabe_no_teto_de_caracteres(self):
-        descricao = _descricao(SKILLS / "intake" / "SKILL.md")
+    def test_description_do_decode_cabe_no_teto_de_caracteres(self):
+        descricao = _descricao(SKILLS / "decode" / "SKILL.md")
         self.assertTrue(descricao)
-        self.assertLessEqual(len(descricao), LIMITE_DESCRIPTION_INTAKE, f"{len(descricao)} caracteres")
+        self.assertLessEqual(len(descricao), LIMITE_DESCRIPTION_DECODE, f"{len(descricao)} caracteres")
 
-    def test_description_do_intake_tem_use_when_e_um_unico_exemplo(self):
-        descricao = _descricao(SKILLS / "intake" / "SKILL.md")
+    def test_description_do_decode_tem_use_when_e_um_unico_exemplo(self):
+        descricao = _descricao(SKILLS / "decode" / "SKILL.md")
         self.assertEqual(descricao.count("Use when"), 1)
         self.assertEqual(descricao.count("<example>"), 1)
 

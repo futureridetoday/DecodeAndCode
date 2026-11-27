@@ -45,6 +45,7 @@ import verificacao
 
 SUBCOMANDOS = (
     "validar-nome",
+    "codex",
     "bootstrap",
     "aprovar",
     "proxima-unidade",
@@ -439,7 +440,7 @@ class TestLintUnidade(_ProjetoCase):
 
 
 class TestLintPlano(_ProjetoCase):
-    """`lint-plano` — o que o `intake` roda sobre o esboço que grava no `_inbox` (`P-06`)."""
+    """`lint-plano` — o que o `decode` roda sobre a proposta que grava no `_inbox` (`P-06`)."""
 
     def _plano(self, nome: str = "plano-bom", **kwargs) -> Path:
         """Plano sintético em `docs/plan/<core>/` — `pequeno` e sem backlog é o formato que aprova."""
@@ -473,7 +474,7 @@ class TestLintPlano(_ProjetoCase):
         self.assertTrue(any(linha.startswith(f"{ruim}: ") and linha != f"{ruim}: ok" for linha in linhas), linhas)
 
     def test_esboco_no_inbox_sem_numero_e_lido_pelo_mesmo_comando(self):
-        """O destino real do `intake`: `_inbox/<nome>.md`, que ainda não tem número."""
+        """O destino real do `decode`: `_inbox/<nome>.md`, que ainda não tem número."""
         self.bootstrap()
         esboco = self.plano_no_inbox()  # `grande` sem `## Independência` nem backlog
         r = self.dc("lint-plano", str(esboco.relative_to(self.projeto)))
