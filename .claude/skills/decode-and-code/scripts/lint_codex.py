@@ -20,8 +20,9 @@ crases, com extensão, num comando de barra, ou com `-` ou `_` no nome, o falso 
 Por que `N = 6`: medido no mesmo dia contra as skills de então — 25 trechos com 4 palavras, 6 com
 5, 2 com 6 e nenhum a partir de 7; com 6, o lint ainda pega a repetição real que a medição achou.
 
-Os lints não são ligados ao `dc.py` nem ao `verificacao.py`, que consomem a norma: essa ligação
-entra na migração deles (parte 2.2 do plano).
+Os três rodam na suíte, e com ela no CI: estrutura e dependência sobre o codex, repetição sobre as
+skills do DC, com a lista dos trechos conhecidos que ainda faltam sair (`REPETICOES_CONHECIDAS` no
+teste).
 """
 
 from __future__ import annotations

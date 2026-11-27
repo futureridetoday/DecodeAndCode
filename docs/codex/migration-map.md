@@ -310,3 +310,12 @@ testes dele.
 
 Cada subparte é detalhada e aprovada antes de começar (2.2), com as linhas deste mapa que cobre, e
 marca aqui as linhas migradas.
+
+## Registro da migração
+
+Uma linha por subparte fechada: as linhas do mapa que ela migrou, o PR e o que ficou para outra.
+
+| Subparte | Linhas migradas | PR | Notas |
+|---|---|---|---|
+| 2.2.01 | 1.15 (menos 8 pontos), 1.16, 1.17; lint de repetição na suíte | — | Ficam para a 2.2.02, com o destino na manutenção: `rules.py:10`, `:17`, `:552`, `activation_notice.py:85`, `:115`. Ficam para a 2.2.05, porque descrevem core e módulo, que saem em K-03: `scaffold.py:7`, `:29`, `:126`. O trecho repetido do `setup` mudou desde a 1.4: hoje é "a mudança aproxima o projeto do objetivo" (`setup:85`, contra *Princípio*). |
+

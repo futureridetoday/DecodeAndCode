@@ -2,8 +2,8 @@
 """Inventário do projeto para o setup — unidade 0009-02.
 
 Lista, por uma tupla literal de globs, os arquivos que dizem a stack, o objetivo e as convenções do
-projeto, com as primeiras 60 linhas de cada um, e à parte a norma que o projeto já tem. Só lê, e não
-classifica nada: classificar é da skill `setup`.
+projeto, com as primeiras 60 linhas de cada um, e à parte os princípios, guidelines e guardrails que
+o projeto já tem. Só lê, e não classifica nada: classificar é da skill `setup`.
 """
 
 from __future__ import annotations

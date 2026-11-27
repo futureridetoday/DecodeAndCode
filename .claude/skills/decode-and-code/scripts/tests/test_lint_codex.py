@@ -3,8 +3,9 @@
 
 Cada lint reprova um caso com o defeito que procura, plantado num codex sintético mínimo que,
 sozinho, aprova. Os lints de estrutura e de dependência também rodam sobre o codex aprovado na 1.3,
-que precisa passar limpo. O de repetição não roda limpo contra as skills de hoje, que ainda seguem a
-norma: rodar limpo sobre cada consumidor é critério de cada subparte da migração (2.2).
+que precisa passar limpo. O de repetição roda sobre as skills do DC e só aceita os trechos de
+`REPETICOES_CONHECIDAS`, cada um com a subparte da migração que o remove (2.2): repetição nova
+reprova, e trecho que saiu da skill tem de sair da lista.
 """
 
 from __future__ import annotations
@@ -221,6 +222,47 @@ class TestCodexAprovado(unittest.TestCase):
         raiz = lint_codex.SKILLS_DIR.parent.parent
         projetos = lint_codex.nomes_de_projeto(raiz, None)
         self.assertEqual(lint_codex.lint_dependencia(lint_codex.CODEX_DIR, nomes, projetos), [])
+
+
+# Repetição que ainda existe nas skills, com a subparte da migração que a remove. A lista só diminui.
+REPETICOES_CONHECIDAS: dict[tuple[str, str], str] = {
+    ("intake", "o que o projeto já tem"): "2.2.06",
+    ("setup", "a mudança aproxima o projeto do objetivo"): "2.2.11",
+    ("rethink", "depois de uma mudança de rumo"): "2.2.12",
+}
+
+
+def _repeticoes_nas_skills() -> set[tuple[str, str]]:
+    """(skill, trecho) de cada repetição que o lint acha nas skills reais."""
+    achadas = set()
+    for problema in lint_codex.lint_repeticao(
+        lint_codex.CODEX_DIR, lint_codex.alvos_padrao(lint_codex.SKILLS_DIR, None)
+    ):
+        caminho = problema.split(":", 1)[0]
+        trecho = problema.rsplit(": '", 1)[1].rstrip("'")
+        achadas.add((Path(caminho).parent.name, trecho))
+    return achadas
+
+
+class TestRepeticaoNasSkills(unittest.TestCase):
+    """O lint de repetição sobre as skills do DC: só os trechos conhecidos, e todos eles."""
+
+    def test_nenhuma_repeticao_nova(self) -> None:
+        novas = _repeticoes_nas_skills() - set(REPETICOES_CONHECIDAS)
+        self.assertEqual(novas, set(), "repetição do codex numa skill: cite a seção pelo título")
+
+    def test_conhecida_que_saiu_sai_da_lista(self) -> None:
+        sairam = set(REPETICOES_CONHECIDAS) - _repeticoes_nas_skills()
+        self.assertEqual(sairam, set(), "trecho que saiu da skill tem de sair de REPETICOES_CONHECIDAS")
+
+    def test_repeticao_plantada_reprova(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "nova" / "SKILL.md"
+            skill.parent.mkdir()
+            skill.write_text(
+                "A proposta é escrita para o usuário, não para quem executa.\n", encoding="utf-8"
+            )
+            self.assertTrue(lint_codex.lint_repeticao(lint_codex.CODEX_DIR, [skill]))
 
 
 class TestLinhaDeComando(unittest.TestCase):

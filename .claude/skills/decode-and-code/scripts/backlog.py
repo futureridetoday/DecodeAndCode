@@ -6,7 +6,7 @@ Duas superfícies derivadas de uma fonte única: o estado real vive no frontmatt
 `<!-- backlog:start -->`/`<!-- backlog:end -->` — e a coluna Situação da linha do plano em
 `_planos.md`. Por serem derivadas de uma leitura só do disco, as duas nunca divergem entre si; e
 `regioes.escrever_regiao` só grava se o resultado mudou, o que dá a idempotência que o critério de
-aceite exige (norma, decisão 17 e "Estado derivado de verificação").
+aceite exige (codex, *Teste*: a situação é derivada, nunca editada à mão).
 
 Tudo é validado antes de qualquer escrita: plano sem os marcadores do backlog, ou sem linha
 correspondente em `_planos.md`, levanta `ValueError` sem tocar em nenhum dos dois arquivos — inclusive

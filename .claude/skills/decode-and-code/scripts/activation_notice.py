@@ -125,7 +125,7 @@ def _veredito(caminho: str, motivo: str, colididos: set[str]) -> str:
 
 
 def _fora_do_lugar(caminho: str) -> str | None:
-    """Sinal para norma carregando de onde não deveria — as duas formas da `L-26`.
+    """Sinal para rule carregando de onde não deveria — as duas formas da `L-26`.
 
     A primeira é o destino de `desligar`: carregar de `rules-off/` significa que desligar não
     desligou. A segunda é a forma **histórica**, e é a que motivou toda esta unidade — um `.md`

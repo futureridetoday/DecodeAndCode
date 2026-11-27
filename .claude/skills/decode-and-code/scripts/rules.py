@@ -282,7 +282,7 @@ _DESCRICAO_PRINCIPIOS = "Princípios do projeto: como decidir. Carrega sempre, e
 
 
 def _rules_de_principio(dir_rules: Path) -> list[Path]:
-    """`.md` direto em `dir_rules` sem `paths:` — onde o teto conta (norma, *Princípio*)."""
+    """`.md` direto em `dir_rules` sem `paths:` — onde o teto conta (codex, *Princípio*)."""
     if not dir_rules.is_dir():
         return []
     return [p for p in sorted(dir_rules.glob("*.md")) if not registry._e_guideline(p)]
@@ -392,7 +392,7 @@ def _titulos_arquivados(raiz: Path) -> set[str]:
     return {t.casefold() for t in _TITULO_RE.findall(arquivo.read_text(encoding="utf-8"))}
 
 
-# Arquivar e restaurar — plano 0020, norma *Camada normativa → Editar e arquivar*.
+# Arquivar e restaurar — plano 0020; arquivar nunca apaga (codex, *Rethink*).
 
 _CABECALHO_ARQUIVO_PRINCIPIOS = (
     "# Princípios arquivados\n\n"

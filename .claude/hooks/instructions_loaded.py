@@ -5,7 +5,7 @@ Unidade 0001-05. `systemMessage` é descartado pelo Claude Code neste evento —
 2026-08-24 contra `code.claude.com/docs/en/hooks`: "Claude Code discards their JSON output
 fields, such as systemMessage and continue. Use this event for audit logging, compliance
 tracking, or observability." O canal é exatamente esse uso. Roda em todo carregamento de
-instrução — nada de I/O além de uma escrita pequena (norma, *Restrições conhecidas*).
+instrução — nada de I/O além de uma escrita pequena, porque o custo se paga a cada carregamento.
 
 Desde o plano 0018 (`D-05`) o anúncio vai para `.claude/log/eventos.jsonl` do projeto, com o
 `session_id`, e não mais para um arquivo por sessão em `gettempdir()`, que sumia com a sessão. O
