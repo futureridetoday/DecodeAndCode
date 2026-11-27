@@ -21,10 +21,12 @@ from pathlib import Path
 import lib
 from setup import _limpo
 
-CAMADAS = ("princípio", "guideline", "guardrail")
-DECISOES = ("mantido", "editado", "arquivado", "restaurado", "criado", "rejeitado")
+# `recurso` e `padrão de código` são da foundation (subparte 2.2.12): o rethink inclui e retira
+# recursos do mapa, e o histórico registra essas decisões como as das três camadas.
+CAMADAS = ("princípio", "guideline", "guardrail", "recurso", "padrão de código")
+DECISOES = ("mantido", "editado", "arquivado", "restaurado", "criado", "rejeitado", "retirado")
 # O `archive` exige motivo; a linha do histórico não pode ficar sem o que o comando exigiu.
-DECISOES_COM_MOTIVO = ("arquivado",)
+DECISOES_COM_MOTIVO = ("arquivado", "retirado")
 
 _CABECALHO_TABELA = "| camada | nome | decisão | motivo |\n|---|---|---|---|\n"
 _SECAO_RE = re.compile(r"(?m)^##[ \t]+\S")
@@ -105,3 +107,31 @@ def record(projeto: Path, camada: str, nome: str, decisao: str, motivo: str) -> 
         raise ValueError("histórico sem seção aberta: rode rethink-start antes")
     linha = f"| {camada} | {nome} | {decisao} | {motivo or '—'} |\n"
     destino.write_text(atual.rstrip("\n") + "\n" + linha, encoding="utf-8")
+
+
+def planos_que_citam(nome: str) -> list[Path]:
+    """Os arquivos de plano aberto que citam `nome` — para o rethink listá-los ao usuário (codex, *Rethink*).
+
+    Aberto é o rascunho no `_inbox/` e o plano de `_planos.md` cuja situação não é `concluído`; do
+    plano numerado entram o arquivo dele e, quando é pasta, as unidades. Cita é ter o nome como
+    palavra inteira, fora de outra palavra: `scripts` casa em "a guideline `scripts`", não em
+    "test-scripts". Plano fechado fica como registro (codex, *Plano anterior ao redesign*).
+    """
+    raiz = lib.plan_root()
+    padrao = re.compile(rf"(?<![\w-]){re.escape(nome)}(?![\w-])")
+    candidatos = sorted((raiz / "_inbox").glob("*.md")) if (raiz / "_inbox").is_dir() else []
+    planos_md = raiz / "_planos.md"
+    if planos_md.is_file():
+        for linha in planos_md.read_text(encoding="utf-8").splitlines():
+            colunas = [c.strip() for c in linha.strip().strip("|").split("|")]
+            link = re.search(r"\]\(([^)]+)\)", linha)
+            if len(colunas) < 6 or link is None or colunas[5] == "concluído":
+                continue
+            arquivo = raiz / link[1]
+            candidatos.append(arquivo)
+            if arquivo.parent.name == arquivo.stem:
+                candidatos += sorted(p for p in arquivo.parent.glob("[0-9][0-9]-*.md"))
+    return [
+        c for c in candidatos
+        if c.is_file() and not c.name.startswith("_") and padrao.search(c.read_text(encoding="utf-8"))
+    ]

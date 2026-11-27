@@ -844,6 +844,18 @@ def _foundation_retirar(args: argparse.Namespace) -> int:
     return OK
 
 
+def _planos_que_citam(args: argparse.Namespace) -> int:
+    import lib
+    import rethink
+
+    achados = rethink.planos_que_citam(args.nome)
+    for arquivo in achados:
+        print(os.path.relpath(arquivo, lib.repo_root()))
+    if not achados:
+        print("nenhum plano aberto cita")
+    return OK
+
+
 def _setup_registrar(args: argparse.Namespace) -> int:
     import setup
 
@@ -930,6 +942,13 @@ def _parser() -> argparse.ArgumentParser:
         "inclui ou atualiza um recurso no mapa da foundation, JSON no stdin (1 se fora do vocabulário)",
         _foundation_recurso,
     )
+    p = comando(
+        "planos-que-citam",
+        "lista os planos abertos (rascunho ou em desenvolvimento) e as unidades deles que citam o nome",
+        _planos_que_citam,
+    )
+    p.add_argument("nome")
+
     p = comando("foundation-retirar", "tira um recurso do mapa da foundation (1 se não está lá)", _foundation_retirar)
     p.add_argument("nome")
 
