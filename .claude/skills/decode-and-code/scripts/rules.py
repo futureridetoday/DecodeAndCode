@@ -7,14 +7,14 @@ Dá oráculo estrutural a `.claude/rules/*.md`: afirma que o arquivo é uma rule
 vazia quando aprovada, frontmatter malformado vira problema na lista, nunca exceção.
 
 `paths:` ausente é princípio; presente, cada entrada precisa compilar via `fnmatch.translate` +
-`re.compile` — é a única diferença mecânica entre as duas camadas (norma, seção *Não inventar
-ativação*). A validação por regex de lista (`[...]`) é deliberada: `regioes.ler_campo` não
+`re.compile` — é a única diferença mecânica entre as duas camadas (codex, *Princípio* e
+*Guideline*). A validação por regex de lista (`[...]`) é deliberada: `regioes.ler_campo` não
 interpreta YAML, e o formato inline já é o que o resto do frontmatter deste repositório usa
 (`tags: [...]`, `dependencies: []`).
 
 `lint_guideline` estende `lint_rule` para o caso em que `paths:` é obrigatório, não opcional: uma
 guideline sem escopo, ou com escopo que não casa nada no disco, aprova a forma e nunca ativa — a
-falha silenciosa que a norma nomeia em *Ativação silenciosa é o modo de falha da própria camada*.
+falha silenciosa que a validação da ativação procura (`docs/maintenance/activation.md`).
 Casamento contra o disco usa `Path.glob` a partir de `lib.repo_root()`, nunca fixture.
 
 `auditar_arvore` dá o mesmo tratamento à árvore inteira — `.claude/rules/` e `.claude/rules-off/`
@@ -549,7 +549,7 @@ def auditar_arvore() -> list[str]:
     """Varre `.claude/rules/` e `.claude/rules-off/` da raiz real — lista vazia quando a árvore
     está sã.
 
-    Três recusas isoladas (norma, seção *Validar a ativação*): um `.md` em qualquer subdiretório
+    Três recusas isoladas (`docs/maintenance/activation.md`): um `.md` em qualquer subdiretório
     de `rules/` — a `L-26` inteira, porque o matcher recursa e o arquivo continua carregando; um
     `.md` direto em `rules/` que reprova em `lint_rule`; um `.md` direto em `rules-off/` que
     reprova em `lint_guideline`, porque volta a ser ligado um dia e o defeito espera lá dentro.
