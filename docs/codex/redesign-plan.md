@@ -66,6 +66,7 @@ propagação (`redesign-brief.md:231-232`), e a verificação final, que o fecha
 | D-12 | 2026-11-26 | Desenho dos lints da 1.4, num módulo só (`lint_codex.py`), com três lints. **Dependência:** reprova caminho, evento de hook, comando de barra, versão do Claude Code, nome do projeto e nome de skill, script ou hook do DC em forma de identificador (entre crases, com extensão ou com `-` e `_`); palavra solta não conta, porque a medição deu cerca de 200 falsos positivos com termos do método (derive, setup, porte); as palavras genéricas skill, script e hook também não contam. **Repetição:** janela de 6 palavras — a medição contra as skills deu 25 trechos com 4, 6 com 5, 2 com 6 e nenhum com 7, e 6 ainda pega a repetição real. **Estrutura:** entra também, porque o guia confere as regras 2 e 7 por script: título único, *O que é* e *Ver também* em toda seção, referência a título que existe, teto de 40 linhas. |
 | D-13 | 2026-11-26 | A avaliação do codex ([codex-evaluation.md](codex-evaluation.md)) foi aplicada num ciclo só, com as recomendações aceitas pela pessoa nas três decisões dela. **Porte:** pequeno cabe numa sessão; médio é uma história que pede sessão nova; grande são duas ou mais em sequência; na dúvida, o menor. **Tipo:** a lista de tipos e o que cada um exige no aceite e na revisão passam a morar no codex, revendo a decisão 5 do brief e o item 03 do inventário, porque são critério do P3 e do P7; o vocabulário no código precisa bater com o codex, e a fase 2 confere. **Independência:** a revisão avisa e o plano registra o porquê; não barra. |
 | D-14 | 2026-11-27 | A segunda rodada do teste prático ([codex-evaluation.md](codex-evaluation.md), *Segunda rodada*) atravessou o fluxo sem inventar regra; os refinamentos de método foram aplicados com liberdade da fase 1 (D-11). Os mais visíveis: o porte conta entregas primeiro; ação irreversível pede o sim na hora; Claude decide sozinho o que não muda escopo nem critério. Uma terceira rodada só com o codex fica dispensada; o próximo teste é o da fase 2, com as skills migradas. PR #68. |
+| D-15 | 2026-11-27 | A pessoa delega a fase 2 inteira, até o redesign concluído e testado: Claude detalha e executa cada subparte, roda os testes e as validações, abre os PRs e os mescla no `dev`, sem aprovação item a item. Fica fora a publicação da release, que só sai com a aprovação dela. Substitui, para a fase 2, a aprovação de cada subparte (2.2) e a revisão manual de cada PR (*Como executar*); as decisões novas entram nesta tabela. |
 
 ## Lacunas
 
@@ -283,7 +284,8 @@ levantar cada consumidor e depois troca um por vez.
 - **Como verificar:** a busca refeita contra o mapa, e a lista do que foi lido conferida contra os
   scripts, hooks e skills do pacote.
 - **Onde roda:** esta sessão.
-- **Estado:** pendente.
+- **Estado:** mapa entregue em 2026-11-27, em [`migration-map.md`](migration-map.md), no branch
+  `docs/codex-migration-2-1`; aprovado em 2026-11-27, com as recomendações dos casos K-01 a K-15.
 
 ### Parte 2.2 — Migração dos consumidores
 
