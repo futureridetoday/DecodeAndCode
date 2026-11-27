@@ -121,7 +121,7 @@ caíram.
 
 Feita em 2026-11-27, com os mesmos quatro casos e as mesmas regras, depois dos ajustes da D-13. Cada
 atrito veio classificado como **método** (faltou regra para decidir) ou **procedimento** (faltou
-formato, caminho, comando ou valor).
+formato, caminho, comando ou valor). Os ajustes das duas rodadas entram no dev pelo PR #68.
 
 **O que mudou:** os pontos que travaram a primeira rodada funcionaram como escritos. As sessões
 escolheram o porte pela regra, montaram a unidade pela Definition of Ready, escreveram o handoff,
