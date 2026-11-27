@@ -30,8 +30,8 @@ do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); 
 chegar lá e não repete o que eles dizem.
 
 **Estado:** escrito em 2026-11-25; as partes 1.1 e 1.2 foram autorizadas e concluídas em
-2026-11-25, e a 1.3, autorizada no mesmo dia e concluída em 2026-11-26. Nenhuma outra parte começa
-sem a aprovação da pessoa.
+2026-11-25, a 1.3 e a 1.4, concluídas em 2026-11-26, o que fecha a fase 1. Antes da fase 2, o codex
+passa por teste e avaliação com a pessoa (D-11); nenhuma parte da fase 2 começa sem a aprovação dela.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
 
@@ -62,10 +62,16 @@ propagação (`redesign-brief.md:231-232`), e a verificação final, que o fecha
 | D-08 | 2026-11-25 | O plano mora neste arquivo, fora do `_inbox/` e sem a numeração do `dc.py`. Não usa `intake`, `review-plan`, `derive`, `implement`, o backlog projetado nem os lints do DC como gate ([handoff](redesign-handoff.md), *Aviso central*). |
 | D-09 | 2026-11-25 | A arquitetura da informação vem antes dos pontos em aberto: a 1.1 passa a ser o guia, e a 1.2, os pontos. Onde cada conceito mora no codex é decisão de arquitetura, e vários pontos — proposta, entrega, critério de aceite e lacuna — dependem dela. A autorização dada à 1.1 passa para a arquitetura. |
 | D-10 | 2026-11-26 | No fechamento da 1.3, o codex passa a ser a fonte da verdade do método. O inventário e o brief ficam como registro do redesign, e os ajustes da fase 2 mudam o codex. |
+| D-11 | 2026-11-26 | A pessoa dá liberdade total para conduzir o resto da fase 1, sem aprovação item a item; antes da fase 2, o codex passa por teste e avaliação com ela. |
+| D-12 | 2026-11-26 | Desenho dos lints da 1.4, num módulo só (`lint_codex.py`), com três lints. **Dependência:** reprova caminho, evento de hook, comando de barra, versão do Claude Code, nome do projeto e nome de skill, script ou hook do DC em forma de identificador (entre crases, com extensão ou com `-` e `_`); palavra solta não conta, porque a medição deu cerca de 200 falsos positivos com termos do método (derive, setup, porte); as palavras genéricas skill, script e hook também não contam. **Repetição:** janela de 6 palavras — a medição contra as skills deu 25 trechos com 4, 6 com 5, 2 com 6 e nenhum com 7, e 6 ainda pega a repetição real. **Estrutura:** entra também, porque o guia confere as regras 2 e 7 por script: título único, *O que é* e *Ver também* em toda seção, referência a título que existe, teto de 40 linhas. |
 
 ## Lacunas
 
-Nenhuma registrada. Formato: `L-NN`, data, parte, o que faltou e a correção.
+Formato: `L-NN`, data, parte, o que faltou e a correção.
+
+| Lacuna | Data | Parte | O que faltou | Correção |
+|---|---|---|---|---|
+| L-01 | 2026-11-26 | 1.3 | A medição da 1.4 achou o Plano mínimo repetindo a frase do Plano sobre o número em P4. | O Plano mínimo passou a dizer que o número segue a regra do Plano. |
 
 ## Como executar
 
@@ -188,10 +194,12 @@ A fase 1 não toca em nada que consome a norma: o plugin segue funcionando com e
   com o defeito que procura; os dois rodam limpos no codex aprovado na 1.3, e um defeito que acharem
   nele vira lacuna da 1.3, corrigida antes de a 1.4 fechar.
 - **Como verificar:** a suíte e uma execução dos dois lints sobre o codex.
-- **Detalhamento pendente:** como o lint reconhece mecanismo e o tamanho mínimo de um trecho
-  repetido.
-- **Onde roda:** aninhada.
-- **Estado:** pendente.
+- **Detalhamento:** decidido em D-12.
+- **Onde roda:** aninhada; rodou nesta sessão, por pedido da pessoa.
+- **Estado:** concluída em 2026-11-26. `lint_codex.py` com 29 testes; o codex roda limpo nos lints
+  de estrutura e de dependência. O de repetição acha 3 trechos nas skills de hoje — `intake`
+  ("o que o projeto já tem"), `rethink` ("depois de uma mudança de rumo") e `setup` ("enunciado, o
+  objetivo numa frase curta") —, que entram no mapa da 2.1 e somem na subparte de cada skill.
 
 ## Fase 2 — Migração gradual
 
@@ -362,5 +370,5 @@ Feitas à mão em 2026-11-25, no lugar do `review-plan` (D-08).
 - A 2.2 precisa dos lints da 1.4, que são gate de cada subparte.
 - O teto de 8 passos só sai na subparte do `lint_unidade.py` (D-06).
 
-**Lacunas registradas:** nenhuma até aqui. O detalhamento pendente da 1.4 e de cada subparte da 2.2
+**Lacunas registradas:** L-01, na seção *Lacunas*. O detalhamento pendente de cada subparte da 2.2
 está marcado nelas.

@@ -10,7 +10,7 @@ tags: [codex, redesign, arquitetura-da-informacao]
 author: Bortoli
 created: 2026-11-25
 status: stable
-version: 1.4.0
+version: 1.5.0
 updated: ""
 
 # system
@@ -174,7 +174,8 @@ Decidido em 2026-11-25.
    conceitos. A média por item no inventário é 13,6 linhas (818 em 60). O teto é escolhido, não
    medido; o piloto da 1.3 o manteve, com a maior seção de `stages.md` em 23 linhas.
 
-As regras 1, 2 e 7 se conferem por script; as 3 a 6, por leitura.
+As regras 1 e 7 se conferem por script, com o `lint_codex.py`; a 2, por script fora do codex e por
+leitura dentro dele; as 3 a 6, por leitura.
 
 ## Como mudar o codex depois
 

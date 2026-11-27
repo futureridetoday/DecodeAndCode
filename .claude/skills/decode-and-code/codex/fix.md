@@ -57,7 +57,7 @@ Proposta.
   - É o plano de porte pequeno; muda só o conteúdo.
   - Toda correção gera plano registrado.
   - O usuário o aprova antes do code (C2), e é nessa aprovação que o plano recebe número. Se o plano
-    passa para o workflow de produto, recebe número na aprovação do plano técnico (P4).
+    passa para o workflow de produto, o número segue a regra do Plano.
 
 **Ver também:** Correção, Plano, Porte, Tarefa, Aprovação, Numeração e nomenclatura, Plano técnico,
 Teste que reproduz o defeito.
