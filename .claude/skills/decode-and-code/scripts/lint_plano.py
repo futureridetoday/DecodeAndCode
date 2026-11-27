@@ -57,16 +57,24 @@ def lint(plano: Path) -> list[str]:
 
 
 def _checar_tipo(plano: Path) -> list[str]:
-    """`plan_type` ausente, vazio ou fora do vocabulário — sem encerrar as demais checagens (0012).
+    """`plan_type` ausente, vazio ou fora do vocabulário do formato — sem encerrar as demais checagens.
+
+    O vocabulário é o da versão do formato do plano (`lib.formato`): `rule` no atual, `norma` no
+    anterior ao redesign (codex, *Plano anterior ao redesign*).
 
     Ao contrário de `plan_size`, o tipo não muda o schema do porte, então os outros blocos seguem
     conferidos. Aspas são despidas como em `scaffold.aprovar`, para lint e gate concordarem.
     """
+    try:
+        versao = lib.formato(plano)
+    except ValueError as erro:
+        return [str(erro)]
+    tipos = lib.PLAN_TYPES_POR_FORMATO[versao]
     plan_type = (regioes.ler_campo(plano, "plan_type") or "").strip(" \t\"'")
     if not plan_type:
         return ["campo obrigatório ausente no frontmatter: plan_type"]
-    if plan_type not in lib.PLAN_TYPES_VALIDOS:
-        return [f"plan_type fora do vocabulário {lib.PLAN_TYPES_VALIDOS}: {plan_type!r}"]
+    if plan_type not in tipos:
+        return [f"plan_type fora do vocabulário {tipos} do formato {versao}: {plan_type!r}"]
     return []
 
 

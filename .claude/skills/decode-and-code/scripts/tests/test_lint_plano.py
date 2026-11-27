@@ -349,7 +349,7 @@ class TestPlanType(unittest.TestCase):
         problemas = self._lint("perf")
         self.assertEqual(len(problemas), 1, problemas)
         self.assertIn("plan_type fora do vocabulário", problemas[0])
-        self.assertIn(str(lib.PLAN_TYPES_VALIDOS), problemas[0])
+        self.assertIn(str(lib.PLAN_TYPES_POR_FORMATO[lib.FORMATO_ANTERIOR]), problemas[0])
 
     def test_plan_type_invalido_nao_encerra_as_demais_checagens(self):
         with tempfile.TemporaryDirectory() as tmp:

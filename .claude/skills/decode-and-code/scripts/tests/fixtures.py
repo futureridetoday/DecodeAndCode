@@ -336,6 +336,7 @@ def plano(
     independencia: bool = False,
     com_backlog: bool = True,
     com_diretorio: bool = True,
+    format_version: int | None = None,
 ) -> Path:
     """Escreve o plano sintético — devolve o diretório do plano, ou o arquivo `.md` direto.
 
@@ -356,6 +357,9 @@ def plano(
     existirem; para montar um plano bem formado num porte específico, quem chama passa a
     combinação que a tabela de portes da norma pede — ex. `plan_size="grande"`, `previstas=1`,
     `independencia=True`.
+
+    `format_version`, quando dado, entra no frontmatter logo depois de `plan_type`; `None` (o
+    default) escreve o plano sem o campo, isto é, do formato anterior ao redesign.
 
     Levanta `ValueError` se `core` ou `nome` forem vazios, antes de escrever qualquer arquivo.
     """
@@ -380,6 +384,10 @@ def plano(
         independencia=_bloco_independencia(independencia),
         backlog=_bloco_backlog(com_backlog),
     )
+    if format_version is not None:
+        linha = f"plan_type: {plan_type}\n"
+        assert linha in texto, "fixtures.plano: template sem a linha de plan_type"
+        texto = texto.replace(linha, linha + f"format_version: {format_version}\n", 1)
 
     if com_diretorio:
         dir_plano = Path(dir) / core / f"{numero}-{nome}"

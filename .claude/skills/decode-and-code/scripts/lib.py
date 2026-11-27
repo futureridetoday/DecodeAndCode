@@ -30,6 +30,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import regioes
+
 _DEFAULTS = {
     "plan_root": "docs/plan",
     # Marcas da raiz. Só `.claude/` não bastaria: qualquer projeto pode ter uma.
@@ -53,12 +55,32 @@ ROOT_MARKERS = tuple(_DEFAULTS["root_markers"])
 # tem dois leitores com papéis opostos — `scaffold.aprovar`, que é o gate e recusa, e
 # `lint_plano.lint`, que só reporta. Duas cópias divergiriam em silêncio, e o sintoma seria o
 # lint aprovando o que o gate recusa. Não é config: config se sobrepõe por projeto, e este
-# vocabulário é da norma.
+# vocabulário é do método (codex, *Porte*).
 PLAN_SIZES_VALIDOS = ("pequeno", "médio", "grande")
 
-# Vocabulário fechado de `plan_type` (plano 0012), pelo mesmo motivo e com os mesmos dois leitores
-# de `PLAN_SIZES_VALIDOS`. O que cada tipo muda a jusante está na norma, *Tipo de plano*.
-PLAN_TYPES_VALIDOS = ("fix", "feature", "remove", "refactor", "norma", "chore", "spike")
+# Versão do formato do plano (codex, *Plano* e *Plano anterior ao redesign*). Todo plano novo
+# declara `format_version: 2`; plano sem o campo é anterior ao redesign e segue a regra de antes,
+# onde está. Cada script que muda de regra com o redesign pergunta a versão por `formato`.
+FORMATO_ANTERIOR = 1
+FORMATO_ATUAL = 2
+FORMATOS_VALIDOS = (FORMATO_ANTERIOR, FORMATO_ATUAL)
+
+# Vocabulário fechado de `plan_type` por formato (plano 0012; codex, *Tipo*), com os mesmos dois
+# leitores de `PLAN_SIZES_VALIDOS`. O tipo `norma` do formato anterior se chama `rule` no atual.
+PLAN_TYPES_POR_FORMATO = {
+    FORMATO_ANTERIOR: ("fix", "feature", "remove", "refactor", "norma", "chore", "spike"),
+    FORMATO_ATUAL: ("fix", "feature", "remove", "refactor", "rule", "chore", "spike"),
+}
+PLAN_TYPES_VALIDOS = PLAN_TYPES_POR_FORMATO[FORMATO_ATUAL]
+
+# Vocabulário fechado de `unit_type` por formato: o tipo que muda princípio, guideline ou
+# guardrail é aceito pela aprovação, não por teste (codex, *Tipo*).
+UNIT_TYPES_POR_FORMATO = {
+    FORMATO_ANTERIOR: ("dev", "plan", "norma"),
+    FORMATO_ATUAL: ("dev", "plan", "rule"),
+}
+# Os dois nomes do tipo aceito pela aprovação, um por formato.
+TIPOS_DE_APROVACAO = ("norma", "rule")
 
 # Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
 MODOS = ("review-plan", "derive", "implement")
@@ -70,6 +92,35 @@ MODOS = ("review-plan", "derive", "implement")
 SKILLS = MODOS + ("intake", "huddle", "setup", "rethink")
 
 _config_cache: dict | None = None
+
+
+def formato(caminho: Path) -> int:
+    """Versão do formato de um plano ou de uma unidade — `FORMATO_ANTERIOR` quando não declara.
+
+    A unidade herda a versão do plano: vale o campo dela, se houver, e senão o do arquivo do plano
+    na mesma pasta (`<pasta>/<pasta>.md`). Valor fora de `FORMATOS_VALIDOS` levanta `ValueError`
+    com o caminho, porque ler um plano pela regra errada é pior que parar.
+    """
+    candidatos = [caminho]
+    plano_da_pasta = caminho.parent / f"{caminho.parent.name}.md"
+    if plano_da_pasta != caminho:
+        candidatos.append(plano_da_pasta)
+    for candidato in candidatos:
+        if not candidato.is_file():
+            continue
+        try:
+            valor = regioes.ler_campo(candidato, "format_version")
+        except ValueError:
+            continue
+        valor = (valor or "").strip(" \t\"'")
+        if not valor:
+            continue
+        if not valor.isdigit() or int(valor) not in FORMATOS_VALIDOS:
+            raise ValueError(
+                f"format_version fora de {FORMATOS_VALIDOS}: {valor!r} em {candidato}"
+            )
+        return int(valor)
+    return FORMATO_ANTERIOR
 
 
 def _config_path() -> Path:
