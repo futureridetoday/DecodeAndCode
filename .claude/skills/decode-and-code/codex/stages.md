@@ -10,7 +10,7 @@ tags: [codex, workflow, etapa]
 author: Bortoli
 created: 2026-11-25
 status: draft
-version: 0.1.0
+version: 0.3.0
 updated: ""
 
 # system
@@ -43,7 +43,7 @@ dependencies: []
   - P6, code.
   - P7, teste e aprovação de cada entrega.
   - P8, teste do plano inteiro, só no grande.
-  - Aprovação final.
+  - Aprovação final. No pequeno e no médio, ela coincide com a aprovação da única entrega, no P7.
 - **Regras:** o workflow de produto vale para todo tipo que não tem workflow próprio. Um workflow
   próprio tem capítulo próprio no codex e não muda este.
 
@@ -57,6 +57,8 @@ dependencies: []
   - Cada etapa diz quem a faz — Claude, o usuário ou os dois —, o que entra, o que sai e os gates de
     entrada e de saída.
   - Algumas etapas são aprovações.
+  - O DC é o método que este codex descreve. O codex diz o que vale em cada etapa; o passo a passo
+    de cada uma fica fora dele.
 
 **Ver também:** Workflow, Aprovação, Usuário, Claude.
 
@@ -68,10 +70,14 @@ conceitual.
 - **Quem faz:** Claude, nos papéis de PM, Designer e Tech Lead.
 - **O que entra:** o pedido, o tipo e o objetivo do plano.
 - **O que sai:** a proposta, escrita para o usuário.
-- **Gate de saída:** a proposta só vai à aprovação (P2) se passa nos dois gates.
-  - A, necessidade real: o problema é de alguém agora, e a hipótese tem sinal mensurável.
+- **Gate de saída:** a proposta só vai à aprovação (P2) se passa nos dois gates. Se um falha, Claude
+  refaz a proposta ou propõe ao usuário encerrar o plano.
+  - A, necessidade real: o problema é de alguém agora, e a hipótese tem sinal mensurável. O pedido
+    explícito do usuário conta como evidência de que o problema existe.
   - B, mínimo viável: é a menor versão que resolve, com o que fica de fora declarado.
 - **Regras:**
+  - A proposta tem o tamanho do pedido: num pedido pequeno, hipótese, MVP e riscos cabem numa linha
+    cada.
   - Decodifica com o mindset de produto, apoiado nas referências de produto, e com o fluxo de
     decodificação como base.
   - Usa o que o projeto já tem: a foundation, os princípios, as guidelines, os guardrails e os
@@ -88,17 +94,20 @@ Fluxo de decodificação, Papel, Foundation, Recurso do projeto, Tabela de recur
 
 - **Quem faz:** Claude, nos papéis de PM e Tech Lead.
 - **O que entra:** a proposta aprovada.
-- **O que sai:** o plano técnico, com o porte definido e as tarefas ou unidades que o porte pede.
-- **Gate de saída:** o plano técnico só vai à aprovação (P4) com porte, sem depender de outro plano
-  e citando só recursos do projeto que existem.
+- **O que sai:** o plano técnico.
+- **Gate de saída:** o plano técnico só vai à aprovação (P4) com porte, com a independência
+  declarada, sem decisão em aberto e citando só recursos do projeto que existem.
 - **Regras:**
   - Escreve as histórias, com os critérios de aceite, apoiada em INVEST e em User Story Mapping.
-  - Refina a viabilidade técnica, a compatibilidade, a infraestrutura, os erros, o que falta e as
-    decisões em aberto.
+  - Refina a viabilidade técnica, a compatibilidade, a infraestrutura e os erros, e registra no plano
+    técnico as decisões e os riscos técnicos.
+  - Fecha cada decisão em aberto, ou a declara fora de escopo.
+  - Abre cada fonte técnica da proposta e confere que existe e serve.
+  - Quando o porte diverge do apetite da proposta, mostra a diferença ao usuário na aprovação (P4).
   - Quebra o trabalho em tarefas e define o porte.
 
 **Ver também:** Plano técnico, História, Critério de aceite, Tarefa, Unidade, Porte, Independência
-entre planos, Tabela de recursos do plano, Referência de produto, Papel, Aprovação.
+entre planos, Tabela de recursos do plano, Proposta, Referência de produto, Papel, Aprovação.
 
 ## Derive
 
@@ -107,16 +116,15 @@ histórico da conversa; só existe no médio e no grande.
 
 - **Quem faz:** Claude.
 - **O que entra:** o plano técnico aprovado.
-- **O que sai:** cada unidade pronta para o code, e o handoff que leva a execução a uma sessão nova.
-- **Gate de saída:** a aprovação das unidades derivadas pelo usuário.
+- **O que sai:** cada unidade pronta para o code, e o handoff do plano.
+- **Gate de saída:** cada unidade cumpre a Definition of Ready, e o usuário aprova as unidades
+  derivadas.
 - **Regras:**
-  - Dá a cada unidade o contexto, a memória e o padrão de código do projeto. A memória são as
-    decisões e as lacunas que o plano registrou e que a unidade precisa conhecer.
-  - Garante que cada unidade cumpre a Definition of Ready e basta sozinha.
-  - Cita na unidade as guidelines que valem para ela.
+  - Dá a cada unidade o que a Definition of Ready pede.
+  - Declara em cada unidade o que ela espera das anteriores: nomes, contratos e arquivos.
   - Confere se os recursos do projeto citados ainda existem.
 
-**Ver também:** Unidade, Cold-start, Definition of Ready, Handoff, Lacuna, Padrão de código,
+**Ver também:** Unidade, Definition of Ready, Cold-start, Handoff, Lacuna, Padrão de código,
 Guideline, Tabela de recursos do plano, Aprovação.
 
 ## Code
@@ -132,14 +140,21 @@ Guideline, Tabela de recursos do plano, Aprovação.
 - **Gate de saída:** o teste da entrega e a aprovação do usuário (P7).
 - **Regras:**
   - No pequeno, as tarefas rodam na mesma sessão.
-  - No médio e no grande, roda uma unidade por vez, de preferência numa sessão nova: a unidade basta
-    sozinha, e começar sem o histórico custa menos.
-  - A próxima unidade só começa depois da aprovação da anterior.
-  - Usa os recursos do projeto e as guidelines que valem para os caminhos que toca.
-  - Unidade insuficiente vira lacuna.
+  - No médio e no grande, cada unidade roda na sua sessão nova, na ordem do handoff, e a próxima só
+    começa depois da aprovação da anterior.
+  - Se a entrega anterior divergiu do que a unidade espera, a unidade é ajustada antes de rodar; o
+    ajuste que muda o critério ou o escopo segue a Lacuna.
+  - Usa os recursos do projeto, o padrão de código e as guidelines dos caminhos que toca.
+  - Quando a unidade e o código divergem, o critério de aceite manda: Claude entrega pelo critério,
+    registra a divergência no relatório da entrega e nunca reduz o escopo em silêncio.
+  - Se o critério não se cumpre com o que a unidade ou a tarefa diz, ela é insuficiente e vira
+    lacuna.
+  - Ação irreversível ou fora do repositório, como mudar um banco remoto ou publicar, pede o sim do
+    usuário na hora, mesmo com o plano aprovado.
+  - Achado fora do escopo não entra no plano: vira um pedido novo ou uma entrada no huddle.
 
-**Ver também:** Entrega, Critério de aceite, Teste, Unidade, Tarefa, Cold-start, Lacuna, Recurso do
-projeto, Guideline, Aprovação.
+**Ver também:** Entrega, Critério de aceite, Teste, Unidade, Tarefa, Handoff, Cold-start, Lacuna,
+Padrão de código, Recurso do projeto, Guideline, Huddle, Aprovação.
 
 ## Setup
 
@@ -147,19 +162,24 @@ projeto, Guideline, Aprovação.
 e guardrails.
 
 - **Quem faz:** Claude propõe; o usuário aprova cada escrita.
-- **O que entra:** um projeto que ainda não fez o setup.
-- **O que sai:**
-  - os princípios, as guidelines e os guardrails do projeto, com a guideline que liga caminhos do
-    projeto aos recursos que valem para eles;
-  - a foundation, com o mapa de recursos do projeto;
-  - a permissão de uso de cada recurso do projeto que o DC pode usar;
-  - o huddle iniciado.
+- **O que entra:** um projeto que ainda não fez o setup, e o objetivo do projeto, que o usuário
+  declara.
+- **O que sai, nesta ordem:**
+  1. o huddle iniciado, que recebe o que surgir no resto do setup;
+  2. os princípios: o primeiro tirado do objetivo do projeto, os demais do que o usuário diz que
+     nunca pode ser violado;
+  3. a foundation, com o padrão de código e o mapa de recursos do projeto, e a permissão de uso de
+     cada recurso que o DC pode chamar;
+  4. as guidelines, que podem nomear os recursos já mapeados;
+  5. os guardrails.
 - **Regras:**
   - É proposto quando falta, e cada escrita no projeto pede o sim do usuário, uma sugestão por vez.
   - Nada do que grava no projeto repete ou contradiz o codex, e o codex não é copiado para o projeto.
+  - Nunca escreve nas instruções que o time mantém, e nada do que grava repete o que elas já dizem.
+    Os princípios ficam num lugar próprio, que vale em toda sessão.
 
-**Ver também:** Rethink, Princípio, Guideline, Guardrail, Foundation, Mapa de recursos do projeto,
-Recurso do projeto, Huddle, Invariante, Restrição fundamental.
+**Ver também:** Rethink, Princípio, Guideline, Guardrail, Foundation, Padrão de código, Mapa de
+recursos do projeto, Recurso do projeto, Huddle, Invariante, Restrição fundamental.
 
 ## Rethink
 
@@ -167,13 +187,19 @@ Recurso do projeto, Huddle, Invariante, Restrição fundamental.
 mudança de rumo.
 
 - **Quem faz:** Claude propõe; o usuário aprova cada escrita.
-- **O que entra:** um projeto com o setup feito e uma mudança de rumo.
-- **O que sai:** cada item mantido, editado ou arquivado; a foundation e o mapa de recursos do
-  projeto atualizados; os recursos do projeto que a mudança pede criados ou removidos.
+- **O que entra:** um projeto com o setup feito e uma mudança de rumo que o usuário declara: um
+  objetivo, uma tecnologia ou uma forma de trabalhar que deixa de valer.
+- **O que sai:** cada item mantido, editado, arquivado ou criado; a foundation e o mapa de recursos
+  do projeto atualizados; os planos abertos que citam um item retirado, listados para ajuste.
 - **Regras:**
-  - Só o rethink cria ou remove um recurso do projeto, e um recurso criado depois do setup só entra
-    no mapa de recursos por ele.
+  - Princípios, guidelines e guardrails só mudam por três portas: o setup, o rethink e um plano do
+    tipo `rule`. O huddle propõe a mudança, e uma dessas portas a grava.
+  - Só o rethink inclui um recurso no mapa de recursos depois do setup, ou o retira dele.
+  - O rethink revê o conjunto depois de uma mudança de rumo; um plano do tipo `rule` muda um item.
+  - Editar é mudar o texto ou o caminho de um item que continua valendo; o que deixa de valer é
+    arquivado. Arquivar nunca apaga: o item guarda o motivo, e o nome fica reservado.
+  - As instruções do time que contradizem a mudança são apontadas ao usuário, que as edita.
   - Valem as mesmas regras do setup para escrever no projeto.
 
 **Ver também:** Setup, Princípio, Guideline, Guardrail, Foundation, Mapa de recursos do projeto,
-Recurso do projeto.
+Recurso do projeto, Huddle, Tipo.

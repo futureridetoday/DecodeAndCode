@@ -10,7 +10,7 @@ tags: [codex, regra]
 author: Bortoli
 created: 2026-11-26
 status: draft
-version: 0.1.0
+version: 0.3.0
 updated: ""
 
 # system
@@ -25,15 +25,30 @@ dependencies: []
 
 ## Tipo
 
-**O que é:** a classificação do plano que escolhe o workflow que ele segue.
+**O que é:** a classificação do plano que escolhe o workflow que ele segue e o que a revisão e o
+aceite da entrega exigem.
 
 - **Quando vale:** na entrada, antes do decode.
-- **O que exige:**
-  - O tipo sai de uma lista que o DC mantém; o codex não a repete.
-  - Cada tipo segue o workflow de produto, a menos que tenha workflow próprio.
-- **Quando falha:** o usuário corrige o tipo declarado, e o plano segue o workflow do tipo corrigido.
+- **O que exige:** o tipo é um destes, e cada um muda o que se confere:
 
-**Ver também:** Workflow, Claude, Usuário, Objetivo do plano, Plano.
+  | Tipo | O trabalho | O aceite da entrega | A revisão confere |
+  |---|---|---|---|
+  | `fix` | corrigir um defeito | o teste que reproduz o defeito, vermelho antes e verde depois | o diagnóstico reproduz o defeito |
+  | `feature` | capacidade nova | o teste de cada entrega, que verifica os critérios das histórias | a independência, com peso |
+  | `remove` | tirar o que não se usa | os testes passam, e o código diminui | a evidência de que não se usa |
+  | `refactor` | mudar a forma sem mudar o comportamento | os testes passam sem alterar teste existente | a dor medida que justifica |
+  | `rule` | mudar princípio, guideline ou guardrail | a aprovação do usuário | os itens que mudam; nenhum código |
+  | `chore` | produzir um artefato de apoio | o artefato existe e funciona | o artefato e como conferi-lo |
+  | `spike` | responder a uma pergunta | a resposta registrada, sem código de produção; nunca grande | a pergunta e o destino da resposta |
+
+  Um defeito é um comportamento especificado que não se cumpre; o que nunca foi especificado não é
+  `fix`. A especificação pode ser implícita: o que o usuário descreve como esperado e o sistema
+  claramente deveria fazer. Na dúvida entre `fix` e outro tipo, o plano começa como `fix`, e o
+  diagnóstico confirma; nas demais dúvidas, Claude pergunta.
+- **Quando falha:** o usuário corrige o tipo declarado; depois da entrada, só uma troca aprovada por
+  ele muda o tipo.
+
+**Ver também:** Workflow, Claude, Usuário, Objetivo do plano, Plano, Teste, Aprovação.
 
 ## Porte
 
@@ -41,13 +56,17 @@ dependencies: []
 
 - **Quando vale:** em todo plano; define-se na revisão.
 - **O que exige:**
-  - Pequeno: lista de tarefas, sem derive.
-  - Médio: 1 unidade, com derive.
-  - Grande: 2 ou mais unidades, com derive e teste do plano inteiro.
+  - Pequeno: uma entrega que cabe na mesma sessão, sem perder o contexto; lista de tarefas, sem
+    derive. Pode ter mais de uma história.
+  - Médio: uma entrega que pede sessão nova; 1 unidade, com derive.
+  - Grande: duas ou mais entregas, em sequência; uma unidade por entrega, com derive e teste do plano
+    inteiro.
+  - Primeiro se contam as entregas; depois, se a entrega única cabe na sessão. Na dúvida, vale o
+    menor.
 - **Quando falha:** plano sem porte não é aprovado.
 
-**Ver também:** Revisão, Derive, Code, Tarefa, Unidade, Handoff, Teste do plano inteiro, Plano
-técnico.
+**Ver também:** Revisão, Derive, Code, Tarefa, Unidade, História, Handoff, Teste do plano inteiro,
+Plano técnico.
 
 ## Aprovação
 
@@ -56,13 +75,13 @@ técnico.
 - **Quando vale:** no workflow de produto, nesta ordem:
   1. A proposta, no fim do decode (P2).
   2. O plano técnico, no fim da revisão (P4), quando o plano recebe número.
-  3. As unidades derivadas, no fim do derive.
+  3. As unidades derivadas, juntas, no fim do derive.
   4. Cada entrega, no code, junto com o teste (P7).
   5. A aprovação final, que fecha o plano. No grande, vem depois do teste do plano inteiro (P8). No
-     pequeno, vem depois do teste da entrega e é a única aprovação depois do code. No médio, a
-     aprovação da única entrega é também a aprovação final.
+     pequeno e no médio, é a própria aprovação da única entrega (P7).
 - **O que exige:** quem aprova é sempre o usuário.
-- **Quando falha:** sem a aprovação, a etapa seguinte não começa.
+- **Quando falha:** sem a aprovação, a etapa seguinte não começa. Uma recusa volta à etapa que
+  produziu o resultado, com a objeção do usuário como entrada, ou encerra o plano como descartado.
 
 **Ver também:** Usuário, Workflow, Etapa, Proposta, Plano técnico, Unidade, Entrega, Teste, Teste do
 plano inteiro, Plano.
@@ -75,11 +94,12 @@ plano inteiro, Plano.
 - **O que exige:**
   - O critério vem junto com o teste que o verifica: o critério diz o que precisa ser verdade, e o
     teste é o que confere.
+  - A revisão escreve o critério, na história; o derive declara o teste na unidade; no pequeno, a
+    revisão declara os dois.
   - O teste da entrega confere o critério antes da aprovação (P7).
-  - Na história, são os critérios de aceite.
 - **Quando falha:** sem critério e sem o teste que o verifica, o code não começa.
 
-**Ver também:** Entrega, Teste, História, Code, Unidade, Aprovação.
+**Ver também:** Entrega, Teste, História, Revisão, Derive, Code, Unidade, Aprovação.
 
 ## Teste
 
@@ -88,13 +108,20 @@ plano inteiro, Plano.
 - **Quando vale:** antes da aprovação de cada entrega (P7) e, no grande, no teste do plano inteiro
   (P8).
 - **O que exige:**
-  - Claude ou o usuário o faz.
-  - O teste da entrega confere o critério de aceite.
-  - O estado de uma unidade é derivado do teste, nunca editado à mão.
-- **Quando falha:** a unidade não fecha, e a entrega não vai à aprovação.
+  - Claude ou o usuário o faz; o usuário escolhe, e Claude faz quando ele não escolhe.
+  - O teste da entrega confere o critério de aceite e o aceite que o tipo exige. Pode ser a soma dos
+    testes das tarefas, quando eles cobrem o critério.
+  - Todo número que o relatório afirma é alegação até ser medido: Claude mede ao menos uma afirmação
+    por outro caminho e declara qual, e o usuário pode medir outra.
+  - Um teste que decide algo falha quando o código que ele prova é desligado; verde sozinho não é
+    evidência.
+  - A situação de uma unidade — por fazer, em teste, verificada — é derivada do teste, nunca editada
+    à mão.
+- **Quando falha:** a unidade não fecha, a entrega não vai à aprovação, e o trabalho volta ao code da
+  mesma entrega.
 
-**Ver também:** Critério de aceite, Entrega, Unidade, Teste do plano inteiro, Aprovação, Claude,
-Usuário.
+**Ver também:** Critério de aceite, Entrega, Unidade, Tipo, Teste do plano inteiro, Aprovação,
+Claude, Usuário.
 
 ## Teste do plano inteiro
 
@@ -102,9 +129,11 @@ Usuário.
 
 - **Quando vale:** só no grande, depois que todas as unidades forem concluídas. No pequeno e no
   médio, o teste da entrega já cobre o plano inteiro.
-- **O que exige:** Claude ou o usuário testa o plano inteiro antes da aprovação final.
+- **O que exige:** Claude ou o usuário testa o plano inteiro antes da aprovação final, contra um
+  critério que o plano técnico declara.
+- **Quando falha:** o que falhou vira lacuna da unidade que o causa, e o trabalho volta ao code dela.
 
-**Ver também:** Teste, Porte, Aprovação, Entrega.
+**Ver também:** Teste, Porte, Aprovação, Entrega, Plano técnico, Lacuna.
 
 ## Definition of Ready
 
@@ -112,9 +141,17 @@ Usuário.
 digital.
 
 - **Quando vale:** no derive, para cada unidade.
-- **O que exige:** a unidade tem o que o derive lhe dá e basta sozinha.
+- **O que exige:** a unidade traz, sem depender da conversa:
+  - a história que realiza, e o critério de aceite com o teste que o verifica;
+  - as tarefas e os arquivos que toca;
+  - as guidelines desses caminhos e o padrão de código, citados pelo nome;
+  - os recursos do projeto que usa, pelo nome;
+  - as decisões e as lacunas do plano que valem para ela;
+  - o que espera das unidades anteriores.
+- **Quando falha:** a unidade não vai à aprovação das unidades derivadas.
 
-**Ver também:** Derive, Unidade, História, Cold-start, Paralelo com produto digital.
+**Ver também:** Derive, Unidade, História, Critério de aceite, Cold-start, Guideline, Padrão de
+código, Lacuna, Paralelo com produto digital.
 
 ## Cold-start
 
@@ -128,25 +165,33 @@ digital.
 
 ## Lacuna
 
-**O que é:** o registro, no plano, de que uma unidade se mostrou insuficiente na execução.
+**O que é:** o registro, no plano, de que uma unidade ou uma tarefa se mostrou insuficiente na
+execução.
 
-- **Quando vale:** quando a execução mostra que faltava algo na unidade.
+- **Quando vale:** quando a execução mostra que faltava algo na unidade, ou na tarefa do pequeno.
 - **O que exige:**
-  - O ajuste é feito na unidade, não deixado a cargo de quem a executa.
-  - A lacuna fica no plano, marcada `L-XX`, com o que faltou e o ajuste feito.
+  - Claude para, propõe o ajuste da unidade ou da tarefa, e só segue com a aprovação do usuário.
+  - O ajuste é feito na unidade, não deixado a cargo de quem a executa, e chega às unidades
+    seguintes que dependem do mesmo ponto.
+  - A lacuna fica no plano, marcada `L-XX`, numerada por plano, com o que faltou e o ajuste feito.
 
-**Ver também:** Unidade, Plano, Code, Derive, Cold-start.
+**Ver também:** Unidade, Tarefa, Plano, Code, Derive, Cold-start, Aprovação.
 
 ## Independência entre planos
 
 **O que é:** a condição de que um plano não dependa de outro.
 
-- **Quando vale:** na revisão.
-- **O que exige:** todo plano diz por que é um plano e não dois.
-- **Quando falha:** a revisão barra o plano que depende de outro, e dois planos concorrentes no mesmo
-  alvo.
+- **Quando vale:** na revisão, em todo plano.
+- **O que exige:**
+  - Todo plano diz por que é um plano e não dois, pelo teste: entregando só a parte A e parando, o
+    sistema fica válido e útil? Se sim para A e para B, são dois planos.
+  - Partes com dependência em sequência e objetivo único ficam no mesmo plano, como quando só A é
+    útil e B depende de A: dividi-las cria dependência entre planos.
+  - Dois planos concorrem quando, abertos ao mesmo tempo, mudam o mesmo comportamento.
+- **Quando falha:** a revisão avisa o usuário, que decide; quando ele decide não dividir, ou seguir
+  com um plano concorrente, o plano registra o porquê.
 
-**Ver também:** Revisão, Plano.
+**Ver também:** Revisão, Plano, Plano técnico, Aprovação.
 
 ## Numeração e nomenclatura
 
@@ -157,8 +202,9 @@ digital.
   - O plano nasce com um nome semântico, em inglês e em kebab-case, no formato
     `<intenção>-<alvo>[-<qualificador>]`. O nome é identificador, e a prosa do plano segue em pt-BR.
     O nome não declara o tipo.
-  - Na aprovação, o plano recebe um número de 4 dígitos, sequencial em todo o projeto, atribuído uma
-    vez e nunca reaproveitado. Passa a se chamar `NNNN-nome`, e o nome não muda mais.
+  - Na aprovação que o Plano define, o plano recebe um número de 4 dígitos, sequencial em todo o
+    projeto, atribuído uma vez e nunca reaproveitado. Passa a se chamar `NNNN-nome`, e o nome não
+    muda mais.
   - Cada unidade tem um identificador `NNNN-nn`, formado pelo número do plano e pela ordem dela no
     plano. Ele nunca muda, e é ele que o código, os testes e as outras unidades citam. O nome do
     arquivo da unidade, `nn-slug`, pode mudar sem quebrar nenhuma referência.
