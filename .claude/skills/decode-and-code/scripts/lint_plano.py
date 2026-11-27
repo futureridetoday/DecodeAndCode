@@ -97,11 +97,25 @@ def secoes_exigidas(plano: Path) -> tuple[str, ...]:
     return SECOES_DO_FORMATO_ATUAL
 
 
+def _checar_teste_do_pequeno(plano: Path) -> list[str]:
+    """No pequeno, a revisão declara o critério e o teste (codex, *Critério de aceite*): o plano traz
+    `test`, `state` e `verified_at`, que o `verificar` projeta como numa unidade. `test` vazio só no
+    tipo aceito pela aprovação (`rule`)."""
+    campos = {c: regioes.ler_campo(plano, c) for c in ("test", "state", "verified_at")}
+    problemas = [f"pequeno exige '{c}' no frontmatter, ainda que vazio" for c, v in campos.items() if v is None]
+    plan_type = (regioes.ler_campo(plano, "plan_type") or "").strip(" \t\"'")
+    test = (campos["test"] or "").strip(" \t\"'")
+    if campos["test"] is not None and not test and plan_type not in lib.TIPOS_DE_APROVACAO:
+        problemas.append("pequeno exige 'test' preenchido: o caminho do teste que verifica o critério")
+    return problemas
+
+
 def _checar_formato_atual(plano: Path, corpo: str, plan_size: str) -> list[str]:
     """As seções do formato 2 e a decomposição que o porte pede (codex, *Porte*)."""
     problemas = [f"formato 2 exige '## {s}'" for s in secoes_exigidas(plano) if not _tem_heading(corpo, s)]
     previstas = unidades_previstas(corpo)
     if plan_size == "pequeno":
+        problemas.extend(_checar_teste_do_pequeno(plano))
         if not _tem_heading(corpo, "Tarefas"):
             problemas.append("pequeno exige '## Tarefas'")
         if previstas is not None:

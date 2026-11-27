@@ -40,8 +40,7 @@ source: local
 # setup
 
 Esta skill conduz o modo `setup`: o primeiro uso do método no projeto, na conversa principal e com a
-ferramenta de perguntas. `plan_root` vem do `config.json` ao lado de
-`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo. O que vale está no codex; leia pelo
+ferramenta de perguntas. `plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. O que vale está no codex; leia pelo
 título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de memória: `Setup`,
 `Princípio`, `Guideline`, `Guardrail`, `Foundation`, `Padrão de código`, `Huddle`,
 `Recurso do projeto` e, por fim, `Mapa de recursos do projeto`.

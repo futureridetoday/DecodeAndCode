@@ -46,6 +46,7 @@ import verificacao
 SUBCOMANDOS = (
     "validar-nome",
     "codex",
+    "raiz",
     "modulos",
     "foundation",
     "foundation-padrao",

@@ -672,6 +672,14 @@ def _imprimir_secao_do_codex(titulo: str) -> None:
     print()
 
 
+def _raiz(args: argparse.Namespace) -> int:
+    """A raiz dos planos do projeto (`plan_root`), resolvida pelo `config.json` — a skill não o lê."""
+    import lib
+
+    print(lib.plan_root())
+    return OK
+
+
 def _modulos(args: argparse.Namespace) -> int:
     """Uma linha por módulo presente: o nome, os tipos de plano com workflow próprio e as skills."""
     import lib
@@ -1155,6 +1163,7 @@ def _parser() -> argparse.ArgumentParser:
 
     comando("huddle-fecho", "imprime a seção Huddle do codex: quando registrar e o fecho", _huddle_fecho)
 
+    comando("raiz", "imprime a raiz dos planos do projeto (plan_root)", _raiz)
     comando("modulos", "lista os módulos presentes, com os tipos de plano e as skills de cada um", _modulos)
 
     p = comando("codex", "imprime seções do codex pelo título exato (2 se um título não existe)", _codex)

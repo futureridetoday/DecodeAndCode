@@ -43,8 +43,7 @@ source: local
 
 Defeito: $ARGUMENTS
 
-Esta skill executa o modo `diagnose`, do módulo de correção. `plan_root` vem do `config.json` ao
-lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, nunca fixo. O que vale está no codex;
+Esta skill executa o modo `diagnose`, do módulo de correção. `plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. O que vale está no codex;
 leia pelo título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de memória:
 `Correção`, `Plano mínimo`, `Passagem para o workflow de produto` e, por último,
 `Teste que reproduz o defeito`.
@@ -59,7 +58,8 @@ leia pelo título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, n
 3. **Plano mínimo.** Escreva `<plan_root>/_inbox/<nome>.md` (nome conferido com
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`), com o frontmatter `plan_id: ""`,
    `status: draft`, `plan_type: fix`, `format_version: 2`, `plan_size: pequeno`,
-   `approved_by: ""`, `approved_at: ""`, e as seções `## Objetivo`, `## Defeito` (como reproduzir),
+   `approved_by: ""`, `approved_at: ""`, `test: <caminho do teste que reproduz o defeito>`,
+   `state: spec` e `verified_at: ""`, e as seções `## Objetivo`, `## Defeito` (como reproduzir),
    `## Correção` (o que muda), `## Como verificar` (o critério e o teste), `## Recursos` e
    `## Tarefas` com uma tarefa: escrever o teste, rodá-lo vermelho e guardar a saída para o
    relatório, corrigir, rodá-lo verde. Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>`.
