@@ -42,9 +42,9 @@ source: local
 # huddle
 
 Esta skill conduz o modo `huddle` da pessoa que está na sessão — a fila do que ainda não foi
-decidido, na norma `<plan_root>/system/modelo-dev-units.md`, seção *Huddle*. `plan_root` vem do
-`config.json` em `${CLAUDE_SKILL_DIR}/../decode-and-code/`; os scripts, de
-`${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`. Cada pessoa tem o próprio arquivo, e o `dc.py`
+decidido. O que o huddle é, e os destinos de uma entrada, estão no codex: leia
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" codex Huddle Rethink`, nunca de memória. `plan_root` vem do
+`config.json` ao lado de `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`. Cada pessoa tem o próprio arquivo, e o `dc.py`
 resolve qual é pelo `git config user.name`: aqui só se lê e se escreve o da pessoa da sessão.
 
 Argumentos: $ARGUMENTS
@@ -61,18 +61,12 @@ Argumentos: $ARGUMENTS
    do método; quando ela disser onde os levou, rode
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" metodo-levado <M-XX> "<onde>"`.
 2. **Uma entrada por vez**, pela ferramenta de perguntas, com cinco saídas:
-   - **Decidir** — o destino em texto livre (a norma, o `## Decisões` de um plano, uma resposta).
-     Grave com `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<destino>"`.
-   - **Promover** — a guideline ou o guardrail. Monte a proposta com a pessoa e mostre-a inteira;
-     **só grave depois de ela aprovar na conversa**. Guideline: o JSON
-     `{nome, descricao, paths, corpo}` (e `aguardando: true` se o caminho ainda não existe) para
-     `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline`. Guardrail: o JSON
-     `{regra, proibido, permitido}` para `python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`.
-     O JSON vai por arquivo, como diz *JSON pelo stdin* na norma
-     (`python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar conversa`, que traz também os padrões de `paths`
-     e o formato do guardrail): `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline < <arquivo>`.
-     Código `1` traz o motivo da recusa: ajuste com a pessoa e tente de novo. Gravado, feche com
-     `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<guideline ou guardrail>: <caminho>"`.
+   - **Decidir** — o destino em texto livre (o `## Decisões` de um plano, uma resposta). Grave com
+     `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "<destino>"`.
+   - **Propor** — princípio, guideline ou guardrail. O huddle não os grava: monte com a pessoa a
+     proposta e escolha com ela a porta que a grava, o `rethink` (quando o rumo do projeto muda, revê
+     tudo) ou um plano do tipo `rule` (um item), que nasce pelo `decode`. Feche com
+     `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fechar <H-XX> "proposta para <rethink ou plano rule>: <a proposta numa frase>"`.
    - **Levar ao método** — quando a entrada é sobre o próprio método, não sobre o projeto. Redija
      com a pessoa um texto genérico, sem nome de plano, módulo ou trecho do projeto; mostre-o
      inteiro e **só grave depois de ela aprovar na conversa**, com o texto no stdin:
@@ -82,15 +76,14 @@ Argumentos: $ARGUMENTS
    - **Manter** — continua aberta; nada a gravar.
 3. **Concluir** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-concluir`, que grava a data do huddle
    e apaga do log os eventos que a pauta mostrou.
-4. **Relatar** o que fechou, o que virou norma (com o caminho), o que foi descartado e o que ficou.
-
-Os critérios para guideline e guardrail — guideline nasce da stack e do objetivo, guardrail de
-uma decisão explícita do time — estão na norma, seção *Camada normativa*.
+4. **Relatar** o que fechou, o que virou proposta (e para qual porta), o que foi descartado e o que
+   ficou.
 
 ## `registrar <texto>`
 
 Abra uma entrada com a pessoa como autora. Pergunte o tipo pela ferramenta de perguntas, dentro
-do vocabulário fechado da norma (*Formato e vocabulário fechado*), e se a entrada tem origem — um
+do vocabulário fechado (`pergunta`, `divergência`, `padrão`, `revisitar` e `observação`), e se a
+entrada tem origem — um
 `E-XX`, um `L-XX`, um bloqueio, um gate ou uma revisão. A origem é opcional; com ela, grave com
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --evidencia "<origem>"`, sem ela, com
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo>` — o texto no stdin nos dois. Responda com
@@ -104,4 +97,4 @@ Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` li
 diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem
 tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando.
 Subcomandos: `huddle-pauta`, `huddle-fechar`, `huddle-concluir`, `huddle-abrir`, `huddle-migrar`,
-`log-resolver`, `metodo-listar`, `metodo-levado`, `criar-guideline`, `adicionar-guardrail` e `explicar`.
+`log-resolver`, `metodo-listar`, `metodo-levado` e `codex`.

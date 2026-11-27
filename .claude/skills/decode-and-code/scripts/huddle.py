@@ -13,7 +13,10 @@ de cada projeto é instância pura e não viaja no plugin — o mecanismo que cr
 
 Não há arquivo de template (`D-20`): o esqueleto vive em `_CONTEUDO_INICIAL`, como
 `porte._CONTEUDO_INICIAL` já faz para a tabela de porte — formato com uma fonte só, que é o
-script, com a norma descrevendo-o em prosa.
+script, com o codex (*Huddle*) dizendo o que ele é.
+
+O esqueleto de antes do redesign citava a norma e levava a tag `pre-norma`; `ESQUELETO_ANTERIOR`
+guarda os trechos que mudaram, para a migração dos projetos (parte 2.4) os reconhecer e trocar.
 """
 
 from __future__ import annotations
@@ -207,8 +210,8 @@ _CONTEUDO_INICIAL = """\
 name: huddle
 type: doc
 project: {projeto}
-description: Fila do que ainda não foi decidido — pauta da conversa recorrente entre o humano e o modelo. Nada aqui é norma; entrada resolvida sai daqui e vai para o lugar de coisa resolvida
-tags: [huddle, decode-and-code, pre-norma, pauta]
+description: Fila do que ainda não foi decidido — pauta da conversa recorrente entre a pessoa e Claude. Nada aqui é regra; entrada resolvida sai daqui e vai para o lugar certo
+tags: [huddle, decode-and-code, pauta]
 
 # history
 author: ""
@@ -226,12 +229,12 @@ dependencies: []
 
 # Huddle
 
-**Nada aqui é autoritativo.** Entrada aberta é coisa que espera decisão, não regra a seguir. Quando
-resolve, **sai** — para a norma, para uma guideline, ou para o `## Decisões` de um plano — e deixa
-uma linha em `## Fechadas` com a data e o destino.
+**Nada aqui é regra.** Entrada aberta é coisa que espera decisão. Quando resolve, **sai** — para uma
+decisão de plano, para o rethink ou um plano `rule`, que gravam princípio, guideline e guardrail, para
+o feedback ao método, ou para o descarte com motivo — e deixa uma linha em `## Fechadas` com a data e
+o destino.
 
-Formato, tipos, gatilhos e a regra de despejo: `<plan_root>/system/modelo-dev-units.md`, seção
-*Huddle*. Aqui não se duplica a norma; aqui se usa.
+O que o huddle é e quando se registra: o codex, seção *Huddle* (`dc.py codex Huddle`).
 
 ## Abertas
 
@@ -240,6 +243,29 @@ Formato, tipos, gatilhos e a regra de despejo: `<plan_root>/system/modelo-dev-un
 | # | Tipo | Fechada em | Destino |
 |---|---|---|---|
 """
+
+
+# Os trechos do esqueleto anterior ao redesign que mudaram, na forma exata em que foram gravados, e
+# o texto que os substitui (2.4). A ordem importa: a migração troca um par por vez.
+ESQUELETO_ANTERIOR = (
+    (
+        "Nada aqui é norma; entrada resolvida sai daqui e vai para o lugar de coisa resolvida",
+        "Nada aqui é regra; entrada resolvida sai daqui e vai para o lugar certo",
+    ),
+    ("tags: [huddle, decode-and-code, pre-norma, pauta]", "tags: [huddle, decode-and-code, pauta]"),
+    (
+        "**Nada aqui é autoritativo.** Entrada aberta é coisa que espera decisão, não regra a seguir. Quando\n"
+        "resolve, **sai** — para a norma, para uma guideline, ou para o `## Decisões` de um plano — e deixa\n"
+        "uma linha em `## Fechadas` com a data e o destino.\n\n"
+        "Formato, tipos, gatilhos e a regra de despejo: `<plan_root>/system/modelo-dev-units.md`, seção\n"
+        "*Huddle*. Aqui não se duplica a norma; aqui se usa.\n",
+        "**Nada aqui é regra.** Entrada aberta é coisa que espera decisão. Quando resolve, **sai** — para uma\n"
+        "decisão de plano, para o rethink ou um plano `rule`, que gravam princípio, guideline e guardrail, para\n"
+        "o feedback ao método, ou para o descarte com motivo — e deixa uma linha em `## Fechadas` com a data e\n"
+        "o destino.\n\n"
+        "O que o huddle é e quando se registra: o codex, seção *Huddle* (`dc.py codex Huddle`).\n",
+    ),
+)
 
 
 def _campos_da_pessoa(owner: str) -> str:
