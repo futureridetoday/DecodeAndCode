@@ -155,6 +155,55 @@ class TestVerificarNoPequeno(unittest.TestCase):
         self.assertEqual(regioes.ler_campo(plano, "status"), "done")
 
 
+class TestDcNoPequeno(unittest.TestCase):
+    """Achados da 2ª rodada do ponta a ponta: `aprovar-entrega` fecha o plano em `_planos.md` na hora,
+    e `normas` sobre o plano pequeno responde sem erro."""
+
+    def setUp(self) -> None:
+        import dc
+
+        self.dc = dc
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.raiz = Path(tmp.name).resolve()
+        (self.raiz / "system").mkdir()
+        cabecalho = "| # | Plano | Core | Módulo | Origem | Situação | Aprovado |\n|---|---|---|---|---|---|---|\n"
+        (self.raiz / "_planos.md").write_text(
+            f"<!-- planos:start -->\n{cabecalho}"
+            "| 0002 | [fix-algo](0002-fix-algo.md) | — | | — | em desenvolvimento | 2026-11-27 |\n"
+            "<!-- planos:end -->\n",
+            encoding="utf-8",
+        )
+        self.plano = self.raiz / "0002-fix-algo.md"
+        self.plano.write_text(
+            TestPequeno._plano(self, "- [x] fazer").read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        for nome in ("plan_root", "repo_root"):
+            p = mock.patch.object(lib, nome, return_value=self.raiz)
+            p.start()
+            self.addCleanup(p.stop)
+        p = mock.patch.object(dc, "_registrar")
+        p.start()
+        self.addCleanup(p.stop)
+
+    def _rodar(self, *argv: str) -> str:
+        import contextlib
+        import io
+
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            self.assertEqual(self.dc.main(list(argv)), 0)
+        return saida.getvalue()
+
+    def test_aprovar_entrega_fecha_o_plano_em_planos_md(self) -> None:
+        saida = self._rodar("aprovar-entrega", str(self.plano), "--por", "Ana")
+        self.assertIn("situação: concluído", saida)
+        self.assertIn("| concluído |", (self.raiz / "_planos.md").read_text(encoding="utf-8"))
+
+    def test_normas_no_pequeno_responde_sem_erro(self) -> None:
+        self.assertIn("plano pequeno", self._rodar("normas", str(self.plano)))
+
+
 class TestSkillDoCode(unittest.TestCase):
     def test_le_as_mesmas_secoes_que_o_handoff_cita(self) -> None:
         texto = (lib.repo_root() / ".claude" / "skills" / "code" / "SKILL.md").read_text(encoding="utf-8")

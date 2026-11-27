@@ -173,9 +173,16 @@ def _entrada_code(args: argparse.Namespace) -> int:
 
 
 def _aprovar_entrega(args: argparse.Namespace) -> int:
+    """Grava a aprovação (P7) e projeta o backlog do plano, para a situação em `_planos.md` refletir
+    o fecho na hora — o teste ponta a ponta mostrou o plano aprovado ainda "em desenvolvimento"."""
+    import backlog
     import entrega
 
-    print(entrega.aprovar(Path(args.alvo), args.por, args.data))
+    alvo = entrega.aprovar(Path(args.alvo), args.por, args.data)
+    print(alvo)
+    plano = alvo if entrega._e_plano_pequeno(alvo) else alvo.parent
+    _, situacao = backlog.projetar(plano)
+    print(f"situação: {situacao}")
     return OK
 
 
@@ -219,8 +226,13 @@ def _guidelines_aplicaveis(args: argparse.Namespace) -> int:
 
 
 def _normas(args: argparse.Namespace) -> int:
+    import entrega
     import normas
 
+    if entrega._e_plano_pequeno(Path(args.unidade)):
+        # o pequeno não tem unidade nem tabela de guidelines: elas carregam sozinhas pelo `paths:`
+        print("plano pequeno: as guidelines dos caminhos que ele toca carregam sozinhas, pelo paths:")
+        return OK
     resolvidas, nao_resolvidas = normas.resolver(Path(args.unidade))
     if not (resolvidas or nao_resolvidas):
         print("nenhuma norma citada")
