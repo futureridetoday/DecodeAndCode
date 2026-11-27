@@ -28,6 +28,8 @@ unit_type: dev
 state: spec
 test: tests/test_algo.py
 verified_at: ""
+approved_by: ""
+approved_at: ""
 ---
 
 # Algo

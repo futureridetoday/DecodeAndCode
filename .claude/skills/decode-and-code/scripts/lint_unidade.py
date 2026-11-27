@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate de entrada do modo `implement` — unidade 0002-06.
+"""Gate de entrada do modo `code` (antes `implement`) — unidade 0002-06.
 
 Recusa começar uma unidade que não sobrevive ao cold-start e devolve a lista
 do que falta, para a correção voltar ao `derive` em vez de ser descoberta
@@ -142,6 +142,13 @@ def _checar_frontmatter(unidade: Path) -> list[str]:
         for chave, valor in valores.items()
         if not (valor and valor.strip())
     ]
+    if atual:
+        # a aprovação da entrega (P7) grava estes dois; a linha tem de existir, ainda que vazia
+        problemas += [
+            f"campo ausente no frontmatter, ainda que vazio: {chave}"
+            for chave in ("approved_by", "approved_at", "verified_at")
+            if regioes.ler_campo(unidade, chave) is None
+        ]
 
     unit_id = valores.get("unit_id")
     if unit_id and unit_id.strip() and not _UNIT_ID_RE.match(unit_id.strip()):

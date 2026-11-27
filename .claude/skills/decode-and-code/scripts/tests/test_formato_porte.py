@@ -169,16 +169,19 @@ class TestBacklogEPorteFormatoAtual(_Raiz):
         plano = self.escrever(self.raiz / "_inbox" / "add-coisa.md", _texto(plan_size, **extra))
         return scaffold.aprovar(plano)
 
-    def _unidade(self, pasta: Path, n: int, state: str) -> None:
+    def _unidade(self, pasta: Path, n: int, state: str, approved_at: str = '""') -> None:
         self.escrever(pasta / f"0{n}-u{n}.md",
-                      f"---\nunit_id: 0001-0{n}\nstate: {state}\n---\n\n# u{n}\n")
+                      f"---\nunit_id: 0001-0{n}\nstate: {state}\napproved_at: {approved_at}\n---\n\n# u{n}\n")
 
-    def test_medio_projeta_a_unidade_e_fecha_quando_verificada(self) -> None:
+    def test_medio_fecha_com_o_teste_e_a_aprovacao_da_entrega(self) -> None:
         alvo = self._aprovado("médio", unidades=1)
         self._unidade(alvo.parent, 1, "spec")
         _, situacao = backlog.projetar(alvo.parent, dry_run=True)
         self.assertEqual(situacao, "em desenvolvimento")
         self._unidade(alvo.parent, 1, "verified")
+        _, situacao = backlog.projetar(alvo.parent, dry_run=True)
+        self.assertEqual(situacao, "em desenvolvimento", "verde sem aprovação não fecha (P7)")
+        self._unidade(alvo.parent, 1, "verified", approved_at="2026-11-27")
         conteudo, situacao = backlog.projetar(alvo.parent, dry_run=True)
         self.assertEqual(situacao, "concluído")
         self.assertIn("0001-01", conteudo)

@@ -19,7 +19,7 @@ verdade, porque o projeto sintético *é* a raiz resolvida depois do bootstrap.
 
 `SENTINELA_REENTRANCIA` é limpa em `setUpModule` como em `test_verificacao.py`: esta unidade agora
 também chama `verificacao.verificar` de verdade contra um subprocesso real (o stub de runner), e
-pode rodar dentro da própria verificação de si mesma (gate de saída do modo `implement`).
+pode rodar dentro da própria verificação de si mesma (gate de saída do modo `code`).
 """
 
 from __future__ import annotations

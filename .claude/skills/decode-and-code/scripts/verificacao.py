@@ -24,7 +24,7 @@ tem `test` — o campo é exigido **vazio** — então o oráculo não pode ser 
 de um fato que não mudou.
 
 `verificar_com_saida` devolve, além do estado, o **motivo** em texto — a saída do teste, ou a falta
-dele. Existe porque o executor do `implement` só chega ao teste pelo `dc.py` (`P-14`): sem o motivo,
+dele. Existe porque o executor do `code` só chega ao teste pelo `dc.py` (`P-14`): sem o motivo,
 `spec` é um veredito sem diagnóstico. `verificar` segue com o retorno de sempre, `(estado, escreveu)`,
 para todos os chamadores que já existem.
 """
@@ -112,7 +112,7 @@ def _verificar_norma(unidade: Path, dry_run: bool) -> tuple[str, bool, str]:
     """Oráculo de `unit_type: norma` — estrutura válida somada a aprovação humana, sem rodar nada.
 
     A aprovação é conferida **aqui**, não em `lint_unidade.lint`: aquele é também o gate de
-    entrada da `implement`, e o humano só declara `approved_by`/`approved_at` depois de revisar a
+    entrada do `code`, e o humano só declara `approved_by`/`approved_at` depois de revisar a
     entrega — exigi-los lá recusava toda `norma` antes de ela existir. `verified_at` copia
     `approved_at` — nunca `date.today()` — porque o fato verificado é a aprovação do humano, não a
     data em que o script rodou.

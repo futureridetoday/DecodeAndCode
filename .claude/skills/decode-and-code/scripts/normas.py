@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Conteúdo das normas que uma unidade cita — `L-08` do plano `apply-plugin-review`.
 
-A tabela `## Normas aplicáveis` é referência, nunca cópia, e mandar o `implement` abri-las não
+A tabela `## Normas aplicáveis` é referência, nunca cópia, e mandar o executor (hoje o `code`) abri-las não
 bastou: medido, o subagent abriu 0 de 3 seções numa rodada e um `grep` de 23 linhas nas outras. A
 instrução em markdown não estabiliza; o script entrega o trecho, e a skill só o roda.
 

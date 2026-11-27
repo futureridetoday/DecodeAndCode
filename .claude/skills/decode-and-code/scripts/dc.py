@@ -161,6 +161,24 @@ def _handoff(args: argparse.Namespace) -> int:
     return OK
 
 
+def _entrada_code(args: argparse.Namespace) -> int:
+    import entrega
+
+    problemas = entrega.entrada(Path(args.alvo))
+    for problema in problemas:
+        print(problema)
+    if not problemas:
+        print("ok")
+    return REPROVADO if problemas else OK
+
+
+def _aprovar_entrega(args: argparse.Namespace) -> int:
+    import entrega
+
+    print(entrega.aprovar(Path(args.alvo), args.por, args.data))
+    return OK
+
+
 def _verificar(args: argparse.Namespace) -> int:
     import verificacao
 
@@ -873,6 +891,22 @@ def _parser() -> argparse.ArgumentParser:
         _handoff,
     )
     p.add_argument("dir_plano")
+
+    p = comando(
+        "entrada-code",
+        "gate de entrada do code: a unidade (ou o plano pequeno) está pronta e as anteriores aprovadas (1 se não)",
+        _entrada_code,
+    )
+    p.add_argument("alvo")
+
+    p = comando(
+        "aprovar-entrega",
+        "grava a aprovação do usuário sobre a entrega (P7); a unidade dev/plan precisa estar verified",
+        _aprovar_entrega,
+    )
+    p.add_argument("alvo")
+    p.add_argument("--por", required=True, help="quem aprova: o usuário")
+    p.add_argument("--data", help="padrão: hoje")
 
     p = comando("verificar", "roda o teste da unidade e projeta state/verified_at (1 se não verified, mostrando a saída do teste)", _verificar)
     p.add_argument("unidade")
