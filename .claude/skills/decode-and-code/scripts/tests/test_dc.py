@@ -51,6 +51,7 @@ SUBCOMANDOS = (
     "foundation-padrao",
     "foundation-recurso",
     "foundation-retirar",
+    "planos-que-citam",
     "entrada-code",
     "aprovar-entrega",
     "bootstrap",
