@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validação sintática de nome e colisão no alvo — unidade 0002-03.
 
-Metade determinística da regra de nomes (norma, decisão 20): a skill sugere um
+Metade determinística da regra de nomes (codex, *Numeração e nomenclatura*): a skill sugere um
 nome com julgamento semântico, este módulo valida a sintaxe e a colisão no
 alvo. Toda recusa vem com o motivo — nunca só o primeiro — para que a skill
 corrija sem precisar adivinhar qual regra falhou.

@@ -4,7 +4,8 @@
 Unidade 0001-04. Toda a decisão vive em `guardrail.decidir`; este arquivo só lê o payload
 de stdin, resolve `.claude/guardrails.json` do projeto que iniciou a sessão, e escreve a
 resposta no formato que o hook espera. Roda em toda chamada de ferramenta — nada de I/O além
-da leitura do arquivo de regras, e nada de import pesado (norma, *Restrições conhecidas*). A
+da leitura do arquivo de regras, e nada de import pesado, porque cada milissegundo pesa em toda
+chamada. A
 exceção é a recusa: só quando nega, o hook grava o bloqueio em `.claude/log/eventos.jsonl` (plano
 0018, `D-05`) — a regra e o nome da ferramenta, **nunca** valor de `tool_input`, que pode ter
 segredo. O `eventos` só é importado nesse caminho.

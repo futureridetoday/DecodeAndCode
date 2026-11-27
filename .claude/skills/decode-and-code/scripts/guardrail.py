@@ -14,7 +14,7 @@ específico de projeto viaja no plugin).
 Falha aberta por construção: `decidir` — o único ponto que o hook chama — nunca levanta.
 Payload ilegível, arquivo de regras ausente ou regra malformada viram liberação, com o
 motivo devolvido para quem chama avisar em stderr. Guardrail que trava o trabalho por
-defeito próprio é o obstáculo que a norma manda evitar, não a proteção que ela pede.
+defeito próprio é obstáculo, não a proteção que o guardrail promete (codex, *Guardrail*).
 """
 
 from __future__ import annotations

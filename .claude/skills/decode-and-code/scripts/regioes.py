@@ -4,8 +4,8 @@
 Expõe dois pares de operação sobre um arquivo `.md`: campos nomeados do
 frontmatter (`chave: valor`, uma linha cada) e blocos delimitados por
 marcadores de comentário (`<!-- marcador:start -->` … `<!-- marcador:end -->`).
-Fora dessas regiões, o script nunca toca o arquivo — é o invariante que dá
-nome à unidade (norma, decisão 13).
+Fora dessas regiões, o script nunca toca o arquivo: a prosa é de quem a
+escreveu, e só a região é projeção.
 
 Sem parsing de YAML (decisão D-01 do plano): cada campo é casado por regex de
 linha, e escrever um campo substitui a linha inteira por `chave: valor`, sem

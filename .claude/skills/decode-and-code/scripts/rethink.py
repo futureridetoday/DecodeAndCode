@@ -5,7 +5,7 @@ O `rethink` revisa princípios, guidelines e guardrails depois de uma mudança d
 `<plan_root>/system/rethink.md`, versionado (`D-12` do plano), o que mudou e o que a pessoa decidiu
 sobre cada item: uma seção por `rethink`, uma linha por decisão. `start` abre a seção; `record`
 acrescenta a linha na hora de cada decisão, para que a conversa interrompida não perca o que já foi
-decidido (norma, seção *Rethink → O histórico*).
+decidido (codex, *Rethink*).
 
 Sem arquivo de template: o esqueleto vive em `_CONTEUDO_INICIAL`, como em `setup`. O arquivo só
 recebe acréscimo, nada o carrega em contexto e nenhum hook o lê. Toda função valida antes de

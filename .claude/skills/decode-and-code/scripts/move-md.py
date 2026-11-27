@@ -94,7 +94,7 @@ def substituir_links(conteudo: str, troca) -> str:
 
     Documentação normativa mostra caminhos como ilustração, dentro de bloco de
     código ou entre crases. Reescrevê-los corrompe o texto: o exemplo passaria
-    a mostrar o caminho de outro arquivo. A norma dev-units tem vários desses.
+    a mostrar o caminho de outro arquivo. Documento longo de regras costuma ter vários.
     """
     linhas = conteudo.split("\n")
     dentro_de_bloco = False

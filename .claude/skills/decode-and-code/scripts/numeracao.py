@@ -4,7 +4,7 @@
 Fonte única do próximo número: o plano recebe quatro dígitos sequenciais
 globais, lidos de `_planos.md`; a unidade recebe dois dígitos que recomeçam
 a cada plano, lidos do disco. Sem isso, dois planos aprovados na mesma
-semana colidiriam (norma, decisões 22 e 23).
+semana colidiriam (codex, *Numeração e nomenclatura*).
 
 Por que ler a região e não o arquivo inteiro: fora dos marcadores há prosa
 que cita número como exemplo — "0003-02" aparece no próprio `_planos.md`, no
@@ -13,7 +13,7 @@ saltaria a numeração — por isso `proximo_plano` nunca lê além da região
 `planos` devolvida por `regioes.ler_regiao`.
 
 Por que o disco decide a unidade, e não o backlog: o backlog é projeção — se
-estiver desatualizado, o disco continua correto, e a norma manda projetar o
+estiver desatualizado, o disco continua correto, e o backlog só projeta o
 que já existe nele. `proxima_unidade` por isso lista o diretório do plano em
 vez de ler o backlog.
 """
@@ -46,7 +46,7 @@ def _numeros_de_planos(miolo: str) -> list[int]:
 def proximo_plano() -> str:
     """Próximo número de plano — quatro dígitos, sequencial global.
 
-    Lê só a região `planos` de `_planos.md` (norma, decisão 24). Tabela
+    Lê só a região `planos` de `_planos.md`, que é projeção. Tabela
     vazia começa em `"0001"`. Levanta `RuntimeError` em vez de truncar em
     silêncio se o próximo número não couber em quatro dígitos.
     """

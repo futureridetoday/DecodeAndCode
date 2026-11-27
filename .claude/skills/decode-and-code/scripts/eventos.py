@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log de uso do método — plano 0018, primeiro item do ciclo de evolução da norma.
+"""Log de uso do método — plano 0018 (codex, *Registro de uso*).
 
 Mora em `<projeto>/.claude/log/`, que carrega o próprio `.gitignore` (`*`): a pasta fica fora do
 git sem que nada edite o `.gitignore` do projeto (`D-04`). Só escreve em projeto com
