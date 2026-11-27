@@ -21,8 +21,8 @@ Carregada sempre — este arquivo não declara `paths:`.
 - Strings voltadas à pessoa usuária em **pt-BR**.
 
 O nome de plano, módulo e unidade é identificador, e por isso vai em inglês; a prosa do plano segue
-em pt-BR — regra e porquê na norma, seção *Nomenclatura*
-([`modelo-dev-units.md`](../../docs/plan/system/modelo-dev-units.md)).
+em pt-BR — regra no codex, seção *Numeração e nomenclatura*
+([`rules.md`](../skills/decode-and-code/codex/rules.md)).
 
 ## Nomenclatura de arquivos e diretórios
 

@@ -2,19 +2,18 @@
 
 Versão 1.2.0 · guia de uso
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
-Guia de procedimento. As definições das camadas estão na norma
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md), seção *Camada normativa*) — aqui só o
-**como**.
+Guia de procedimento. O que princípio, guideline e guardrail são, e as três portas que os gravam,
+está no codex, seções *Princípio*, *Guideline*, *Guardrail* e *Rethink* (`dc.py codex <título>`) —
+aqui só o **como**.
 
 ## Quando criar
 
 Um princípio passa no teste que o separa de guideline: **uma equipe competente, trabalhando neste
 projeto, pode rejeitar isto?** Se a resposta é **não**, é princípio do projeto. Se é **sim**, é
 guideline — pare aqui e veja [`create-guideline.md`](create-guideline.md). O teste sem o recorte
-"neste projeto" decide outra coisa, o que viaja no plugin; os dois estão na norma, *Camada normativa
-→ Princípio*.
+"neste projeto" decide outra coisa, o que viaja no plugin; o codex, *Princípio*, traz o teste.
 
 **Teto: 5 princípios no projeto, ideal 3.** Cada um carrega em toda sessão.
 
@@ -38,8 +37,8 @@ Três portas, todas com aprovação humana:
 - **Pelo `rethink`**, depois de uma mudança de rumo do projeto ([`rethink.md`](rethink.md)).
 - **Por plano**, no passo a passo abaixo.
 
-1. **Passa pelo modelo.** Princípio é norma — entra por um plano, como unidade de tipo `norma`
-   (entrega prosa normativa), com **aprovação humana** registrada. Não se edita `principles.md`
+1. **Passa pelo modelo.** Princípio entra por um plano do tipo `rule`, com **aprovação humana**
+   registrada (o aceite do tipo `rule` é a aprovação). Não se edita `principles.md`
    direto fora das três portas.
 2. **Escreva a seção** no formato das que já existem:
    - `## <Nome do princípio>`
@@ -48,7 +47,7 @@ Três portas, todas com aprovação humana:
    - **Na prática:** (opcional) o que ele proíbe ou obriga em casos concretos.
 3. **Atualize a `description` do frontmatter** se o novo princípio muda o resumo — ela é o texto
    que o modelo lê para saber o que o arquivo carrega.
-4. **Anti-drift.** Não repita o que a norma ou uma guideline já diz. O princípio referencia; não
+4. **Anti-drift.** Não repita o que o codex ou uma guideline já diz. O princípio referencia; não
    copia.
 
 ## Como editar
@@ -67,7 +66,7 @@ volta. Arquivar **move, nunca apaga**: planos antigos podem citar o item. O moti
 `archived_by` é o `git config user.name`. O nome arquivado fica **reservado** — criar outro item com
 ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não resolvidas:` com
 "arquivada em <data> por <quem>: <motivo>". Para trazer de volta, com o mesmo nome:
-`dc.py restore principle "<nome>"`, que respeita o teto e o `lint_rule`. Norma, *Camada normativa → Editar e arquivar*.
+`dc.py restore principle "<nome>"`, que respeita o teto e o `lint_rule`. Codex, *Rethink* (editar e arquivar).
 
 ## Como validar
 
@@ -89,8 +88,8 @@ ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não res
 - **Não criar arquivo novo** em `.claude/rules/` para um princípio — ele carregaria como rule
   independente sem `paths:`; o lugar é uma seção em `principles.md`.
 - **Não colocar `paths:`** — com escopo de arquivo, deixa de ser princípio.
-- **Não editar `principles.md` fora das três portas** — plano aprovado, setup ou `rethink` —, porque é norma, e
-  norma tem gate humano.
+- **Não editar `principles.md` fora das três portas** — plano `rule` aprovado, setup ou `rethink` —, porque
+  princípio tem gate humano.
 - **Nada específico de um projeto que instala vira princípio do método.** O `principles.md` deste
   repositório é a instância dele; um projeto que instala escreve os seus (o mecanismo viaja, o
   conteúdo não).

@@ -2,9 +2,9 @@
 
 Versão 1.1.0 · hooks (4)
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
-> A norma de descrição de recurso do AmFlow não cobre `hook` — este documento descreve os quatro
+> O formato de descrição de recurso não cobre `hook` — este documento descreve os quatro
 > a partir dos próprios arquivos, para completar o inventário. Não há nada para o usuário invocar
 > aqui: os hooks rodam sozinhos, no harness. Três não custam contexto do modelo; o `session_start`
 > custa uma linha, e só quando o huddle está atrasado.
@@ -23,7 +23,7 @@ skill sem decidir nada por conta própria:
 
 ## Problema que resolve
 
-Três coisas que o método precisa e que o modelo não vê sozinho: **a norma e as guidelines ativas
+Três coisas que o método precisa e que o modelo não vê sozinho: **as rules e as guidelines ativas
 carregaram mesmo?**, **uma chamada de ferramenta violou um
 guardrail do projeto?**, e **o huddle da pessoa está atrasado?**. Os hooks tornam isso observável e, no caso do guardrail, exigível — sem
 gastar contexto, porque o Claude Code descarta o `systemMessage` desses eventos e o canal real é
@@ -42,8 +42,8 @@ devolve `None` e nada é escrito.
 ## O que vai no pacote
 
 Dos quatro, **viajam três**: `pre_tool_use` (o guardrail), `instructions_loaded` (o log do controle
-de três estados da norma, seção *Validar a ativação*) e `session_start` (o lembrete do huddle,
-seção *Huddle*). `subagent_start` fica **só
+de três estados, [`activation.md`](../maintenance/activation.md)) e `session_start` (o lembrete do huddle,
+codex, seção *Huddle*). `subagent_start` fica **só
 neste repositório**, no `settings.json` daqui (`D-02` e `P-05` do plano `apply-plugin-review`):
 anuncia por stderr, nada chega ao modelo, e não há registro de projeto que instala o plugin usando
 o controle de três estados. `empacotar._EVENTOS_DO_PACOTE` é a única lista; quem quiser o quarto
@@ -55,10 +55,11 @@ Não se usa diretamente. Uma vez o plugin instalado e habilitado, os três que v
 sozinhos (neste repositório, os quatro). O que o usuário faz com a saída deles:
 
 - **Ler o log de ativação** — `.claude/log/eventos.jsonl` do projeto, classe `ativacao`, com o
-  `session_id` — para conferir que a norma e as guidelines certas carregaram.
+  `session_id` — para conferir que as rules e as guidelines certas carregaram.
   `activation_notice.relatorio(<log>, <session_id>)` devolve o veredito por linha (escopo não
   respeitado, guideline que continua carregando fora de escopo, colisão entre rules com `paths:`).
-  O mesmo log guarda os bloqueios do `pre_tool_use`; a norma, seção *Log de uso*, diz o resto.
+  O mesmo log guarda os bloqueios do `pre_tool_use`;
+  [`skills-and-scripts.md`](../maintenance/skills-and-scripts.md), seção *Log de uso*, diz o resto.
 - **Escrever `.claude/guardrails.json`** no projeto que instala, para o `pre_tool_use` ter o que
   aplicar — o plugin carrega só o mecanismo, nunca as regras.
 

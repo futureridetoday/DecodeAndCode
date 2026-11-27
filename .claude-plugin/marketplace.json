@@ -15,13 +15,13 @@
         "url": "https://github.com/futureridetoday/DecodeAndCode/releases/download/v2.4.0/decode-and-code-2.4.0.zip",
         "sha256": "8847a7ac97f771bdf4e3a86d0903141084a695a5bda2b7bd6e64bd1562f5ea6d"
       },
-      "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
+      "description": "O método decode-and-code: o codex, o workflow decode → revisão → derive → code, e os princípios, guidelines e guardrails de cada projeto",
       "version": "2.4.0",
       "author": {
         "name": "Future Ride Today"
       },
       "repository": "https://github.com/futureridetoday/DecodeAndCode",
-      "keywords": ["metodo", "planejamento", "dev-units", "cold-start"]
+      "keywords": ["metodo", "planejamento", "codex", "cold-start"]
     }
   ]
 }

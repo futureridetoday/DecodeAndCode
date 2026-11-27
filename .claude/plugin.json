@@ -1,7 +1,7 @@
 {
   "name": "decode-and-code",
   "displayName": "Decode and Code",
-  "description": "A norma em camadas (princípio, guideline, guardrail), o porte de plano, e o ciclo plano → unidade → cold-start do método decode-and-code",
+  "description": "O método decode-and-code: o codex, o workflow decode → revisão → derive → code, e os princípios, guidelines e guardrails de cada projeto",
   "version": "2.4.0",
   "author": {
     "name": "Future Ride Today"

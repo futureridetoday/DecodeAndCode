@@ -2,11 +2,11 @@
 
 Versão 1.1.0 · guia de uso
 
-[← Como usar o Decode And Code](../../README.md#como-usar-o-decode-and-code)
+[← Recursos](../../README.md#recursos)
 
-Guia de procedimento. Definições na norma
-([`modelo-dev-units.md`](../plan/system/modelo-dev-units.md), seção *Camada normativa*) — aqui só o
-**como**.
+Guia de procedimento. O que princípio, guideline e guardrail são, e as três portas que os gravam,
+está no codex, seções *Princípio*, *Guideline*, *Guardrail* e *Rethink* (`dc.py codex <título>`) —
+aqui só o **como**.
 
 ## Quando criar
 
@@ -81,7 +81,7 @@ Arquivar **move, nunca apaga**: planos antigos podem citar o item. O motivo vai 
 ele sai `1` —, e a unidade que cita o arquivado passa a listá-lo em `Não resolvidas:` com
 "arquivada em <data> por <quem>: <motivo>". Para trazer de volta, com o mesmo nome:
 `dc.py restore guardrail <nome>`, com um par novo pelo stdin, o JSON `{proibido, permitido}`: a
-regra só volta depois de se provar por ele. Norma, *Camada normativa → Editar e arquivar*.
+regra só volta depois de se provar por ele. Codex, *Rethink* (editar e arquivar).
 
 ## Como validar
 
@@ -89,7 +89,7 @@ regra só volta depois de se provar por ele. Norma, *Camada normativa → Editar
 - `dc.py lint-guardrails` — o arquivo inteiro, inclusive regra escrita à mão: JSON válido, as
   quatro chaves com texto, regex que compila, `nome` único. Regra malformada faz o guardrail
   **falhar aberto** (libera tudo), com aviso em stderr, por construção: guardrail que trava o
-  trabalho por defeito próprio é o obstáculo que a norma manda evitar.
+  trabalho por defeito próprio é obstáculo, não proteção.
 - Numa sessão real, disparar a chamada proibida e ver a recusa com o `nome` da regra no motivo.
 
 ## Onde fica registrado
