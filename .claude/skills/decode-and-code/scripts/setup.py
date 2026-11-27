@@ -19,7 +19,7 @@ from pathlib import Path
 import lib
 import regioes
 
-TIPOS = ("guideline", "guardrail", "princípio")
+TIPOS = ("guideline", "guardrail", "princípio", "padrão de código", "recurso")
 ORIGENS = ("stack", "decisão do time", "existente", "proposto")
 RESULTADOS = ("aceita", "rejeitada", "existente")
 

@@ -798,6 +798,52 @@ def _setup_perfil(args: argparse.Namespace) -> int:
     return OK
 
 
+def _foundation(args: argparse.Namespace) -> int:
+    """Imprime a foundation do projeto, ou diz que ela ainda não existe."""
+    import foundation
+
+    alvo = foundation.caminho()
+    if not alvo.is_file():
+        print(f"sem foundation: {alvo}")
+        return OK
+    print(alvo.read_text(encoding="utf-8"), end="")
+    return OK
+
+
+def _foundation_padrao(args: argparse.Namespace) -> int:
+    import foundation
+
+    texto = "" if sys.stdin.isatty() else sys.stdin.read()
+    gravou = foundation.escrever_padrao(texto)
+    print(f"padrão de código {'gravado' if gravou else 'sem mudança'}: {foundation.caminho()}")
+    return OK
+
+
+def _foundation_recurso(args: argparse.Namespace) -> int:
+    import foundation
+
+    dados = _ler_json_do_stdin("foundation-recurso", foundation.CAMPOS_DO_RECURSO)
+    try:
+        foundation.registrar_recurso(dados)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"recurso no mapa: {dados['nome']}")
+    return OK
+
+
+def _foundation_retirar(args: argparse.Namespace) -> int:
+    import foundation
+
+    try:
+        foundation.retirar_recurso(args.nome)
+    except ValueError as erro:
+        print(erro)
+        return REPROVADO
+    print(f"recurso retirado do mapa: {args.nome}")
+    return OK
+
+
 def _setup_registrar(args: argparse.Namespace) -> int:
     import setup
 
@@ -875,6 +921,16 @@ def _parser() -> argparse.ArgumentParser:
         return p
 
     p = comando("validar-nome", "valida a sintaxe de um nome de plano ou unidade (1 se inválido)", _validar_nome)
+    p.add_argument("nome")
+
+    comando("foundation", "imprime a foundation do projeto (padrão de código e mapa de recursos)", _foundation)
+    comando("foundation-padrao", "grava o padrão de código da foundation, lido do stdin", _foundation_padrao)
+    comando(
+        "foundation-recurso",
+        "inclui ou atualiza um recurso no mapa da foundation, JSON no stdin (1 se fora do vocabulário)",
+        _foundation_recurso,
+    )
+    p = comando("foundation-retirar", "tira um recurso do mapa da foundation (1 se não está lá)", _foundation_retirar)
     p.add_argument("nome")
 
     p = comando("bootstrap", "cria a estrutura mínima do método num projeto, sem sobrescrever", _bootstrap)
