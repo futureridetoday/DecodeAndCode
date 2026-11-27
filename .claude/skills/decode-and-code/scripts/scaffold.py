@@ -37,10 +37,13 @@ ela nunca ganharia companhia, porque o porte não decompõe nada. Só o grande r
 pai com `mkdir(parents=True, exist_ok=True)` — nenhum `mkdir` extra é necessário para o caso
 sem subpasta.
 
-`concorrentes` é a leitura da mesma tabela que `_linha_planos_md` escreve, usada pelo modo `review`
-antes da aprovação (`dc.py concorrencia`). Mora aqui porque o formato da linha e a coluna de
-situação são decididos neste módulo — ler e escrever a tabela em arquivos diferentes é o que
-faria os dois divergirem em silêncio.
+**Formato 2** (codex, *Raiz dos planos*, subparte 2.2.05): o plano vai para a raiz dos planos, sem
+pasta por parte do sistema — o pequeno como `<NNNN>-<nome>.md`, o médio e o grande como
+`<NNNN>-<nome>/<NNNN>-<nome>.md` — e `core` é campo opcional. O que está acima, com `core` como
+pasta, vale para o plano do formato 1 (codex, *Plano anterior ao redesign*).
+
+A concorrência entre planos não é medida aqui: o codex a define por comportamento, que script não
+mede, e a revisão a confere por julgamento (K-07).
 """
 
 from __future__ import annotations
@@ -97,65 +100,22 @@ def _mover(origem: Path, destino: Path) -> None:
 
 
 def _linha_planos_md(
-    numero: str, nome: str, core: str, module: str | None, alvo: Path, approved_at: str
+    numero: str, nome: str, core: str | None, module: str | None, alvo: Path, approved_at: str
 ) -> str:
     href = alvo.relative_to(lib.plan_root()).as_posix()
     return (
-        f"| {numero} | [{nome}]({href}) | {core} | {module or ''} | — | "
+        f"| {numero} | [{nome}]({href}) | {core or '—'} | {module or ''} | — | "
         f"em desenvolvimento | {approved_at} |\n"
     )
 
 
 def _registrar_planos_md(
-    numero: str, nome: str, core: str, module: str | None, alvo: Path, approved_at: str
+    numero: str, nome: str, core: str | None, module: str | None, alvo: Path, approved_at: str
 ) -> None:
     caminho = lib.planos_md()
     miolo = regioes.ler_regiao(caminho, "planos")
     linha = _linha_planos_md(numero, nome, core, module, alvo, approved_at)
     regioes.escrever_regiao(caminho, "planos", (miolo or "") + linha)
-
-
-_SITUACAO_ATIVA = "em desenvolvimento"
-
-
-def concorrentes(plano: Path) -> list[str] | None:
-    """Linhas de `_planos.md` em desenvolvimento no mesmo core **ou** no mesmo módulo de `plano`.
-
-    Lê `core`/`module` do frontmatter do plano e varre a região `planos` — a mesma que `numeracao`
-    lê — por linha de dado cuja coluna *Situação* é `em desenvolvimento` e cuja coluna *Core* ou
-    *Módulo* coincide (norma, *Avaliação de escopo*). Devolve a linha inteira, como está na tabela:
-    é a evidência que o achado cita. Lista vazia quando nada colide.
-
-    **`None` quando o plano não declara `core`**: sem ele a concorrência é *não verificável*, que
-    não é o mesmo que *sem conflito* — `[]` e `None` não se confundem. Módulo ausente só desliga o
-    critério de módulo; o de core continua valendo.
-
-    Levanta `ValueError` se a região `planos` não existe em `_planos.md`.
-    """
-    core = regioes.ler_campo(plano, "core")
-    if _campo_vazio(core):
-        return None
-    core = core.strip(" \t\"'")
-    module = regioes.ler_campo(plano, "module")
-    module = "" if _campo_vazio(module) else module.strip(" \t\"'")
-
-    caminho = lib.planos_md()
-    miolo = regioes.ler_regiao(caminho, "planos")
-    if miolo is None:
-        raise ValueError(f"região 'planos' ausente em {caminho}")
-
-    achadas = []
-    for linha in miolo.splitlines():
-        linha = linha.strip()
-        if not numeracao.PADRAO_PRIMEIRA_COLUNA.match(linha):
-            continue
-        # # | Plano | Core | Módulo | Origem | Situação | Aprovado
-        colunas = [c.strip() for c in linha.strip("|").split("|")]
-        if len(colunas) < 6 or colunas[5] != _SITUACAO_ATIVA:
-            continue
-        if colunas[2] == core or (module and colunas[3] == module):
-            achadas.append(linha)
-    return achadas
 
 
 def aprovar(plano: Path, dry_run: bool = False) -> Path:
@@ -181,9 +141,12 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if _ja_aprovado(plano):
         return plano.resolve()
 
+    versao = lib.formato(plano)
     core = regioes.ler_campo(plano, "core")
     if _campo_vazio(core):
-        raise ValueError(f"plano não declara 'core' — {plano}")
+        if versao == lib.FORMATO_ANTERIOR:
+            raise ValueError(f"plano não declara 'core' — {plano}")
+        core = None  # formato 2: a parte do sistema é campo opcional, nunca pasta
 
     plan_size = regioes.ler_campo(plano, "plan_size")
     if _campo_vazio(plan_size):
@@ -198,7 +161,7 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if _campo_vazio(plan_type):
         raise ValueError(f"plano não declara 'plan_type' — {plano}")
     plan_type = plan_type.strip(" \t\"'")
-    tipos = lib.PLAN_TYPES_POR_FORMATO[lib.formato(plano)]
+    tipos = lib.PLAN_TYPES_POR_FORMATO[versao]
     if plan_type not in tipos:
         raise ValueError(
             f"plan_type fora do vocabulário {tipos} — {plan_type!r} em {plano}"
@@ -225,10 +188,17 @@ def aprovar(plano: Path, dry_run: bool = False) -> Path:
     if motivos:
         raise ValueError(f"nome de plano inválido {nome!r} — {'; '.join(motivos)}")
 
-    if plan_size == "grande":
-        alvo = lib.core_dir(core) / f"{numero}-{nome}" / f"{numero}-{nome}.md"
+    if versao == lib.FORMATO_ATUAL:
+        # codex, *Raiz dos planos*: todos juntos na raiz; o pequeno é arquivo, médio e grande, pasta
+        base = lib.plan_root()
+        pasta = plan_size in ("médio", "grande")
     else:
-        alvo = lib.core_dir(core) / f"{numero}-{nome}.md"
+        base = lib.core_dir(core)
+        pasta = plan_size == "grande"
+    if pasta:
+        alvo = base / f"{numero}-{nome}" / f"{numero}-{nome}.md"
+    else:
+        alvo = base / f"{numero}-{nome}.md"
     if alvo.exists():
         raise FileExistsError(f"alvo já existe — {alvo}")
 

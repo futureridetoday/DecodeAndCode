@@ -16,8 +16,8 @@ comando que a liberação de permissão casa, e o caminho dele não leva `..` qu
 `TestAtalhoDeSkill` confere que os quatro são idênticos e que repassam argumentos, stdin e código de
 saída — sempre a partir do pacote.
 
-`scaffold.concorrentes` tem a classe própria `TestConcorrentes`, chamada direto com `plan_root`
-trocado por mock — como `test_scaffold.py`.
+A concorrência entre planos saiu do script (K-07): o codex a define por comportamento, e a revisão
+a confere por julgamento.
 """
 
 from __future__ import annotations
@@ -45,7 +45,6 @@ import verificacao
 
 SUBCOMANDOS = (
     "validar-nome",
-    "concorrencia",
     "bootstrap",
     "aprovar",
     "proxima-unidade",
@@ -155,11 +154,6 @@ approved_at: 2026-10-15
 """
 
 _RUNNER_STUB = "#!/bin/sh\necho 'Ran 1 test stub'\necho OK\nexit {codigo}\n"
-
-_LINHA_BUILDER = (
-    "| 0001 | [outro](builder/0001-outro/0001-outro.md) | builder | outro"
-    " | — | em desenvolvimento | 2026-07-01 |\n"
-)
 
 
 class _ProjetoCase(unittest.TestCase):
@@ -359,35 +353,6 @@ class TestBootstrap(_ProjetoCase):
         r = self.dc("bootstrap", str(self.projeto / "nao-existe"))
         self.assertEqual(r.returncode, 2)
         self.assertIn("projeto não existe", r.stderr)
-        self.assertSemTraceback(r)
-
-
-class TestConcorrencia(_ProjetoCase):
-    def _planos_md(self, *linhas: str) -> None:
-        fixtures.planos_md(self.raiz_planos, linhas=list(linhas))
-
-    def test_conflito_e_codigo_1_com_a_linha_inteira(self):
-        self.bootstrap()
-        self._planos_md(_LINHA_BUILDER)
-        plano = self.plano_no_inbox(core="builder", module="outro-modulo")
-        r = self.dc("concorrencia", str(plano))
-        self.assertEqual(r.returncode, 1, r.stderr)
-        self.assertEqual(r.stdout.splitlines(), [_LINHA_BUILDER.strip()])
-
-    def test_sem_conflito_e_codigo_0(self):
-        self.bootstrap()
-        self._planos_md(_LINHA_BUILDER)
-        plano = self.plano_no_inbox(core="hub", module="outro-modulo")
-        r = self.dc("concorrencia", str(plano))
-        self.assertEqual((r.returncode, r.stdout), (0, "sem conflito\n"), r.stderr)
-
-    def test_plano_sem_core_e_nao_verificavel_com_codigo_1(self):
-        self.bootstrap()
-        self._planos_md(_LINHA_BUILDER)
-        plano = self.plano_no_inbox(core=None)
-        r = self.dc("concorrencia", str(plano))
-        self.assertEqual(r.returncode, 1, r.stderr)
-        self.assertIn("não verificável", r.stdout)
         self.assertSemTraceback(r)
 
 
@@ -1561,91 +1526,6 @@ class TestVerificarComSaida(unittest.TestCase):
             estado, _, saida = verificacao.verificar_com_saida(self.unidade, dry_run=True)
         self.assertEqual(estado, "spec")
         self.assertIn("timeout", saida)
-
-
-class TestConcorrentes(unittest.TestCase):
-    """`scaffold.concorrentes` direto — a regra do `review-plan`, passo 1."""
-
-    def setUp(self):
-        self._tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self._tmp.cleanup)
-        self.raiz = Path(self._tmp.name).resolve()
-        patcher = mock.patch.object(lib, "plan_root", return_value=self.raiz)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def _planos_md(self, *linhas: str) -> None:
-        fixtures.planos_md(self.raiz, linhas=list(linhas))
-
-    def _plano(self, *, core: str | None, module: str | None) -> Path:
-        texto = "---\n"
-        if core is not None:
-            texto += f"core: {core}\n"
-        if module is not None:
-            texto += f"module: {module}\n"
-        texto += "---\n\n# plano\n"
-        alvo = self.raiz / "plano.md"
-        alvo.write_text(texto, encoding="utf-8")
-        return alvo
-
-    @staticmethod
-    def _linha(numero: str, core: str, modulo: str, situacao: str = "em desenvolvimento") -> str:
-        return (
-            f"| {numero} | [x](x/{numero}-x.md) | {core} | {modulo} | — | {situacao} | 2026-07-01 |\n"
-        )
-
-    def test_conflito_no_core(self):
-        linha = self._linha("0001", "builder", "outro")
-        self._planos_md(linha, self._linha("0002", "hub", "mcp"))
-        achadas = scaffold.concorrentes(self._plano(core="builder", module="novo"))
-        self.assertEqual(achadas, [linha.strip()])
-
-    def test_conflito_no_modulo_de_outro_core(self):
-        linha = self._linha("0002", "hub", "mcp")
-        self._planos_md(self._linha("0001", "builder", "outro"), linha)
-        achadas = scaffold.concorrentes(self._plano(core="cortex", module="mcp"))
-        self.assertEqual(achadas, [linha.strip()])
-
-    def test_conflito_nos_dois_devolve_cada_linha_uma_vez(self):
-        a = self._linha("0001", "builder", "mcp")
-        b = self._linha("0002", "hub", "mcp")
-        self._planos_md(a, b)
-        achadas = scaffold.concorrentes(self._plano(core="builder", module="mcp"))
-        self.assertEqual(achadas, [a.strip(), b.strip()])
-
-    def test_sem_conflito_devolve_lista_vazia(self):
-        self._planos_md(self._linha("0001", "hub", "mcp"))
-        achadas = scaffold.concorrentes(self._plano(core="builder", module="novo"))
-        self.assertEqual(achadas, [])
-
-    def test_plano_ja_concluido_no_mesmo_core_nao_conta(self):
-        self._planos_md(self._linha("0001", "builder", "mcp", situacao="concluído"))
-        achadas = scaffold.concorrentes(self._plano(core="builder", module="mcp"))
-        self.assertEqual(achadas, [])
-
-    def test_modulo_vazio_nao_casa_com_modulo_vazio(self):
-        self._planos_md(self._linha("0001", "hub", ""))
-        achadas = scaffold.concorrentes(self._plano(core="builder", module=None))
-        self.assertEqual(achadas, [])
-
-    def test_plano_sem_core_e_nao_verificavel(self):
-        self._planos_md(self._linha("0001", "builder", "mcp"))
-        self.assertIsNone(scaffold.concorrentes(self._plano(core=None, module="mcp")))
-
-    def test_core_vazio_com_aspas_e_nao_verificavel(self):
-        self._planos_md(self._linha("0001", "builder", "mcp"))
-        self.assertIsNone(scaffold.concorrentes(self._plano(core='""', module="mcp")))
-
-    def test_core_com_aspas_casa_com_o_core_sem_aspas(self):
-        linha = self._linha("0001", "builder", "outro")
-        self._planos_md(linha)
-        achadas = scaffold.concorrentes(self._plano(core='"builder"', module="novo"))
-        self.assertEqual(achadas, [linha.strip()])
-
-    def test_regiao_planos_ausente_levanta_value_error(self):
-        (self.raiz / "_planos.md").write_text("# sem região\n", encoding="utf-8")
-        with self.assertRaises(ValueError):
-            scaffold.concorrentes(self._plano(core="builder", module="mcp"))
 
 
 if __name__ == "__main__":

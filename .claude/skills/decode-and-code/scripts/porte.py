@@ -15,6 +15,9 @@ daria outro número sobre o mesmo plano.
 "ausente cai no grande") em vez de importá-la: `backlog.py` importa este módulo para chamar
 `registrar` na transição, e o inverso criaria ciclo.
 
+No formato 2 (codex, *Porte*), o médio tem uma unidade e se mede como o grande, e o pequeno conta
+as tarefas do plano; no formato 1 vale a regra de antes.
+
 `Linhas alteradas` só tenta git quando há arquivos declarados (D-19 do plano) — fora do grande a
 coluna sai `—`, sem disparar `subprocess`. Dentro do grande, o cálculo primeiro compara o caminho
 do plano contra `lib.repo_root()`: plano fora do repositório — todo plano sintético de teste, sob
@@ -235,10 +238,14 @@ def medir(alvo: Path) -> dict:
     dir_plano = arquivo_do_plano.parent
 
     plan_size = _plan_size(arquivo_do_plano)
+    versao = lib.formato(arquivo_do_plano)
 
-    if plan_size == "pequeno":
+    if plan_size == "pequeno" and versao == lib.FORMATO_ATUAL:
+        # formato 2: o pequeno tem as tarefas no plano, e nenhuma unidade (codex, *Porte*)
+        quantidade, arquivos = _contar_tarefas(arquivo_do_plano), None
+    elif plan_size == "pequeno":
         quantidade, arquivos = None, None
-    elif plan_size == "médio":
+    elif plan_size == "médio" and versao == lib.FORMATO_ANTERIOR:
         quantidade, arquivos = _contar_tarefas(arquivo_do_plano), None
     else:
         unidades = _listar_unidades(dir_plano)

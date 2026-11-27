@@ -87,7 +87,7 @@ def _colisao_em(pasta: Path, nome: str) -> Path | None:
     return None
 
 
-def ha_colisao(nome: str, core: str, module: str | None = None) -> Path | None:
+def ha_colisao(nome: str, core: str | None, module: str | None = None) -> Path | None:
     """Varre o alvo por um nome já em uso — o caminho colidente, ou None.
 
     Sem `module`, colide como nome de **plano**: um arquivo já proposto em
@@ -96,10 +96,13 @@ def ha_colisao(nome: str, core: str, module: str | None = None) -> Path | None:
     como nome de **unidade**: um arquivo já existente dentro da pasta desse
     módulo (`01-handler-auth.md` → `handler-auth`).
 
+    `core` `None` é o formato 2 (codex, *Raiz dos planos*): sem pasta por parte
+    do sistema, o alvo é a raiz dos planos, onde ficam o plano e a pasta dele.
+
     Levanta `ValueError` se `core` não existir em disco — único caso em que
     este módulo levanta.
     """
-    alvo_core = lib.core_dir(core)
+    alvo_core = lib.plan_root() if core is None else lib.core_dir(core)
     if not alvo_core.is_dir():
         raise ValueError(f"core {core!r} não existe em {alvo_core}")
 
