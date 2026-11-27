@@ -54,7 +54,10 @@ Você executa o modo `code`, sem o histórico da conversa. `plan_root` vem do `c
 
 Só quando o usuário pediu, com estas palavras: rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar-entrega <alvo> --por "<nome dele no git>"` e devolva a
-saída. Recusa (código 2) volta ao usuário com o motivo. Nada mais neste modo.
+saída. Recusa (código 2) volta ao usuário com o motivo. Se esta aprovação fecha o plano e a proposta
+declara quando conferir a hipótese, abra
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir revisitar --autor Claude`, com o plano e a data no
+stdin. Nada mais neste modo.
 
 ## `<unidade>` ou `<plano pequeno>`
 
