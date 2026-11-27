@@ -61,6 +61,13 @@ sugestão, as duas edições e os formatos de entrada dos comandos — *JSON pel
 
 ## Etapas
 
+**Migração, antes de tudo.** Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" migrar`. Se ele listar o que o
+método anterior gravou no projeto, conduza cada item com o sim da pessoa: a cópia da norma, por
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" migrar --aplicar norma`; o esqueleto antigo do huddle, por
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" migrar --aplicar huddle`. Os planos listados não se tocam: diga
+que cada um se atualiza quando voltar à revisão, ao derive ou ao code. Com o setup já concluído
+(`completed_at` em `<plan_root>/system/setup.md`), a skill encerra aqui.
+
 **0 — Pré-condições.** Confirme que o setup é desejado agora; se não for, encerre. Proponha
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap`: ele cria só o que falta e nunca sobrescreve. Depois rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-escopo`. A saída tem duas linhas: `habilitado` diz se o plugin
@@ -150,7 +157,7 @@ stdin, uma chamada por entrada. A mensagem final passa por
 Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do
 projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem
 trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `codex`,
-`bootstrap`, `setup-escopo`, `setup-iniciar`, `descobrir`, `setup-perfil`, `setup-decididas`,
+`migrar`, `bootstrap`, `setup-escopo`, `setup-iniciar`, `descobrir`, `setup-perfil`, `setup-decididas`,
 `setup-registrar`, `criar-principio`, `foundation-padrao`, `foundation-recurso`, `criar-guideline`,
 `adicionar-guardrail`, `huddle-migrar`, `huddle-iniciar`, `explicar`, `setup-concluir`, `huddle-fecho`,
 `huddle-abrir` e `huddle-lint-relatorio`.

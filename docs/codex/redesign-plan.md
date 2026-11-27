@@ -336,7 +336,8 @@ levantar cada consumidor e depois troca um por vez.
   projeto sem a cópia e sem nada do que o mapa lista, nenhum aviso.
 - **Como verificar:** o teste.
 - **Onde roda:** aninhada.
-- **Estado:** pendente.
+- **Estado:** concluída em 2026-11-27; o que foi feito e o que este repositório ainda tem a migrar
+  estão no mapa, *Registro da migração*.
 
 ## Fechamento — Verificação final
 
