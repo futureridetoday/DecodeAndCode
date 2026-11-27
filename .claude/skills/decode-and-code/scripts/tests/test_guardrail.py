@@ -3,7 +3,7 @@
 
 O critério de aceite pede duas coisas de naturezas diferentes, e a suíte separa por classe.
 `TestHookReal` roda `.claude/hooks/pre_tool_use.py` de verdade, via subprocesso com stdin/stdout,
-contra a regra real de `.claude/guardrails.json` — é o oráculo que a norma pede para esta unidade:
+contra a regra real de `.claude/guardrails.json` — é o oráculo que esta unidade pede:
 "o hook recusa o caso proibido e deixa passar o permitido", não só a função interna. Os quatro
 casos são os de `## Fixtures` na unidade, com a procedência que ela documenta: o primeiro é
 verbatim de um incidente real do AmFlow; os outros três são autorais, porque o acervo não
@@ -239,7 +239,7 @@ class TestHookInstalado(unittest.TestCase):
     def test_sem_claude_project_dir_libera_em_vez_de_travar(self):
         """Documenta o fallback: sem a variável, `Path("") / ...` some no cwd — falha aberta,
         não trava o hook. Não é o caso normal (a doc oficial diz a variável sempre chega a um
-        processo de hook), mas a norma pede falha aberta mesmo no caso que não deveria acontecer.
+        processo de hook), mas o guardrail falha aberto mesmo no caso que não deveria acontecer.
         """
         resultado = self._rodar(None)
         self.assertEqual(resultado.returncode, 0)

@@ -107,7 +107,7 @@ TOPOLOGIA = {
         "context": None,
         "allowed-tools": ALLOWED_TOOLS,
     },
-    # Plano 0020, tarefa 8: o rethink revisa a norma depois de uma mudança de rumo. Só a pessoa o
+    # Plano 0020, tarefa 8: o rethink revisa o que o projeto definiu depois de uma mudança de rumo. Só a pessoa o
     # invoca (`D-07`), como o huddle; sem `context`, pela mesma razão do setup.
     "rethink": {
         "modo": "rethink",

@@ -139,7 +139,7 @@ class TestCamposDeAprovacaoAusentesOuInvalidos(_BaseComRaizTemporaria):
         self._assert_recusa_sem_escrever(plano, "approved_at")
 
     def test_dry_run_tambem_recusa_antes_de_escrever(self):
-        """O ramo que a unidade, o docstring de `aprovar` e a norma afirmam, e que nenhum caso cobria.
+        """O ramo que a unidade e o docstring de `aprovar` afirmam, e que nenhum caso cobria.
 
         `approved_at` é a **última** das checagens novas, imediatamente antes do retorno de
         `dry_run`: se ela recusa aqui, as anteriores recusam também. Escrito na revisão de

@@ -2,7 +2,7 @@
 """Testes de arquivar, restaurar e substituir princípio e guideline — plano 0020, tarefa 3.
 
 Cada teste roda contra uma raiz sintética (`tempfile`), passada explicitamente — nunca contra o
-`.claude/` real do repositório. O oráculo é o da norma, *Camada normativa → Editar e arquivar*:
+`.claude/` real do repositório. O oráculo é o do codex, *Rethink* (editar e arquivar):
 arquivar move com três campos e não perde byte; o nome arquivado fica reservado; `restore` só
 devolve o que passa de novo no escritor; `replace` valida a versão nova antes de tirar a antiga.
 """

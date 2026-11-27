@@ -4,7 +4,7 @@
 Transforma um plano aprovado no `_inbox` em estrutura permanente numa operação só: monta o alvo
 `<core>/<NNNN>-<nome>/<NNNN>-<nome>.md`, delega a movimentação a `move-md.py` — que já
 reescreve os links nas duas direções, resolve symlink e ignora bloco de código — e registra
-`plan_id`/`status` no plano e a linha correspondente em `_planos.md` (norma, decisão D-04 do plano).
+`plan_id`/`status` no plano e a linha correspondente em `_planos.md` (decisão D-04 do plano 0002).
 
 Move primeiro, escreve o frontmatter depois: se a movimentação falhar, o plano continua íntegro no
 `_inbox` e a operação é retomável; o inverso deixaria um plano marcado como aprovado sem nunca ter
@@ -26,9 +26,7 @@ O `<nome>` do alvo é o nome do próprio arquivo do plano (decisão 19 — o pla
 do `_inbox`), não o campo `module` do frontmatter: os dois costumam coincidir quando o plano cria o
 módulo, mas nada garante que sejam o mesmo valor.
 
-`block` não é lido: a fórmula do alvo desta unidade usa só `core` e `<nome>`. A norma prevê bloco
-como pasta numerada dentro do módulo (`hub/0001-mcp/0005-oauth/`), forma que exigiria outro alvo —
-plano que cria bloco fica fora do que esta unidade cobre (lacuna L-08 do plano).
+`block` não é lido: a fórmula do alvo usa só `core` e `<nome>` no formato 1, e só `<nome>` no 2.
 
 O alvo ramifica por `plan_size` (unidade 0001-14): pequeno e médio vão direto para
 `<core>/<NNNN>-<nome>.md`, sem subpasta — pasta para um arquivo só é custo puro, e no pequeno

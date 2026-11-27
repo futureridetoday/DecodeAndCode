@@ -20,13 +20,11 @@ compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; o
 pacote. O `P-06` converte o único agent na skill `intake`, hoje `decode` (`D-03`): o pacote passa a ter quatro
 skills e nenhum `agents/`.
 
-A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
-de graça — mora dentro da skill desde a `0004-04`, e `_copiar_skill` já copia a árvore inteira —,
-então o caso que prova isso é contra o **repositório real** (`TestPacoteRealEstaLimpo`), não
-fixture: é exatamente o arquivo que faltava quando `scaffold` morria no import. A norma tem fonte e
-destino próprios (`docs/plan/system/modelo-dev-units.md` → `reference/`, dentro da skill do
-pacote), e por isso `_montar_fonte` ganha o arquivo no caminho real que `empacotar._fontes` agora
-declara.
+A `0004-04` acrescentou o `move-md` ao que `construir` leva. Ele viaja de graça — mora dentro da
+skill, e `_copiar_skill` já copia a árvore inteira —, então o caso que prova isso é contra o
+**repositório real** (`TestPacoteRealEstaLimpo`), não fixture. A norma, que a `0004-04` também
+levava para `reference/`, saiu do pacote na parte 2.3 do redesign: o método é o codex, que viaja na
+pasta compartilhada e nunca é copiado ao projeto.
 
 O `P-05` enxuga o pacote: os scripts de desenvolvimento (`empacotar`, `reconciliar` e `lint_skill`;
 o lint de agent saiu com o agent, no `P-06`) e o hook `SubagentStart` ficam só neste repositório
@@ -138,10 +136,6 @@ def _montar_fonte(raiz: Path) -> None:
 
     guardrails = raiz / ".claude" / "guardrails.json"
     guardrails.write_text(json.dumps({"rules": []}), encoding="utf-8")
-
-    docs = raiz / "docs" / "plan" / "system"
-    docs.mkdir(parents=True, exist_ok=True)
-    (docs / "modelo-dev-units.md").write_text("# norma — mecanismo sintético\n", encoding="utf-8")
 
 
 def _chaves_de_topo(skill_md: str) -> set[str]:
@@ -344,50 +338,17 @@ class TestConstruir(_BaseComFonteSintetica):
             empacotar.construir(self.destino)
         self.assertFalse(self.destino.exists())
 
-    def test_norma_entra_em_reference_dentro_da_skill(self):
-        """`0004-04` — `construir` leva a norma-mecanismo para `reference/`, ao lado da skill."""
+    def test_pacote_nao_tem_reference_nem_norma(self):
+        """Parte 2.3 do redesign: a norma saiu do pacote; nada vai para `reference/`."""
         empacotar.construir(self.destino)
-        alvo = self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
-        self.assertTrue(alvo.is_file())
-        self.assertEqual(alvo.read_text(encoding="utf-8"), "# norma — mecanismo sintético\n")
-
-    def test_link_relativo_reescrito_aponta_para_a_tag_da_versao(self):
-        """Plano `0021`, `D-01` e `L-01` — URL presa à tag do `plugin.json`, com o fragmento mantido."""
-        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").write_text(
-            "O guia é [`x.md`](../../recursos/x.md#secao), e [fora](https://exemplo.org/y.md) fica.\n",
-            encoding="utf-8",
-        )
-        empacotar.construir(self.destino)
-        texto = (self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md").read_text(
-            encoding="utf-8"
-        )
-        repo = lib.config()["marketplace"]["source"]["repo"]
-        self.assertIn(f"[`x.md`](https://github.com/{repo}/blob/v1.0.0/docs/recursos/x.md#secao)", texto)
-        self.assertIn("[fora](https://exemplo.org/y.md)", texto)
-
-    def test_link_dentro_de_bloco_de_codigo_passa_intacto(self):
-        """Plano `0021` — link em bloco cercado é exemplo, e chega igual."""
-        bloco = "```markdown\n| [0007-01](01-handler-auth.md) | Handler | `verified` |\n```\n"
-        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").write_text(bloco, encoding="utf-8")
-        empacotar.construir(self.destino)
-        texto = (self.destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertEqual(texto, bloco)
+        self.assertFalse((self.destino / "skills" / "decode-and-code" / "reference").exists())
+        self.assertEqual(list(self.destino.rglob("modelo-dev-units.md")), [])
 
     def test_move_md_viaja_dentro_do_scripts_da_skill(self):
         """`0004-04` — o `move-md` mora na skill e `_copiar_skill` já o leva, sem função própria."""
         empacotar.construir(self.destino)
         alvo = self.destino / "skills" / "decode-and-code" / "scripts" / "move-md.py"
         self.assertTrue(alvo.is_file())
-
-    def test_fonte_norma_ausente_levanta_antes_de_escrever(self):
-        (self.raiz / "docs" / "plan" / "system" / "modelo-dev-units.md").unlink()
-
-        with self.assertRaises(FileNotFoundError):
-            empacotar.construir(self.destino)
-        self.assertFalse(self.destino.exists())
-
 
 class TestSoCamposOficiais(unittest.TestCase):
     """`P-10` — o mecanismo que tira do frontmatter o que a documentação oficial não lista."""
@@ -601,35 +562,37 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertFalse((destino / "agents").exists())
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_norma_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
-        """Critério de aceite da `0004-04` — contra o repositório real, não fixture (`L-31`)."""
+    def test_codex_e_move_md_presentes_no_pacote_real_e_verificar_continua_limpo(self):
+        """Contra o repositório real (`L-31`): o codex e o `move-md` viajam, e a norma não."""
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            norma = destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
-            move_md = destino / "skills" / "decode-and-code" / "scripts" / "move-md.py"
-            self.assertTrue(norma.is_file())
-            self.assertTrue(move_md.is_file())
-            self.assertIn("Modelo dev-units", norma.read_text(encoding="utf-8"))
+            compartilhada = destino / "skills" / "decode-and-code"
+            self.assertTrue((compartilhada / "codex" / "stages.md").is_file())
+            self.assertTrue((compartilhada / "scripts" / "move-md.py").is_file())
+            self.assertFalse((compartilhada / "reference").exists())
             self.assertEqual(empacotar.verificar(destino), [])
 
-    def test_norma_empacotada_nao_tem_link_relativo(self):
-        """Plano `0021` — contra o repositório real: a norma vai para `reference/` e, depois, para
-        `<plan_root>/system/` do projeto que instala, e link relativo não resolve em nenhum dos dois."""
+    def test_texto_do_metodo_no_pacote_nao_tem_link_relativo(self):
+        """Plano `0021`, agora sobre o que o pacote leva de texto do método: codex, procedimentos e
+        módulos. Link relativo para fora da pasta compartilhada não resolve em quem instala."""
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            norma = destino / "skills" / "decode-and-code" / "reference" / "modelo-dev-units.md"
-            fora_de_bloco = empacotar._sem_blocos_de_codigo(norma.read_text(encoding="utf-8"))
-            relativos = [
-                alvo
-                for alvo in empacotar._LINK_RE.findall(fora_de_bloco)
-                if not alvo.startswith(("http://", "https://", "mailto:", "#"))
-            ]
-            self.assertEqual(relativos, [])
-            self.assertEqual(empacotar.verificar(destino), [])
+            compartilhada = destino / "skills" / "decode-and-code"
+            textos = [p for d in ("codex", "procedures", "modules") for p in (compartilhada / d).rglob("*.md")]
+            self.assertTrue(textos)
+            for arquivo in textos:
+                fora_de_bloco = empacotar._sem_blocos_de_codigo(arquivo.read_text(encoding="utf-8"))
+                relativos = [
+                    alvo
+                    for alvo in empacotar._LINK_RE.findall(fora_de_bloco)
+                    if not alvo.startswith(("http://", "https://", "mailto:", "#"))
+                ]
+                with self.subTest(arquivo=arquivo.name):
+                    self.assertEqual(relativos, [])
 
     def test_hooks_json_gerado_cita_o_plugin_root_entre_aspas(self):
         """`P-08` — contra o `settings.json` real (`L-31`), sem precisar do `claude`.

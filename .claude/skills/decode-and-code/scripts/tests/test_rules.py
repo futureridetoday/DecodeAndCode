@@ -60,13 +60,15 @@ class TestPrinciplesReal(unittest.TestCase):
         self.assertNotIn("solução mínima", corpo)
 
     def test_fluxo_tem_tres_estagios_e_dois_gates(self):
-        # O fluxo mora na norma desde a L-07 do plano apply-plugin-review: é mecanismo e viaja com o plugin.
-        corpo = (lib.repo_root() / "docs" / "plan" / "system" / "modelo-dev-units.md").read_text(encoding="utf-8")
+        # O fluxo é mecanismo e viaja com o plugin: mora no codex (Fluxo de decodificação e Decode).
+        import normas
+
+        corpo = normas.secao_do_codex("Fluxo de decodificação")[1] + normas.secao_do_codex("Decode")[1]
         for estagio in ("Clarificar", "Evitar", "Reduzir"):
             with self.subTest(estagio=estagio):
                 self.assertIn(estagio, corpo)
-        self.assertIn("A — necessidade real", corpo)
-        self.assertIn("B — mínimo viável", corpo)
+        self.assertIn("A, necessidade real", corpo)
+        self.assertIn("B, mínimo viável", corpo)
         # Os Gates 1-5 são de outro domínio, e o plano os recusou — não podem entrar.
         for numerico in ("Gate 1", "Gate 2", "Gate 3", "Gate 4", "Gate 5"):
             with self.subTest(gate_numerico=numerico):

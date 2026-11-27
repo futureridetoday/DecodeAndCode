@@ -82,13 +82,14 @@ UNIT_TYPES_POR_FORMATO = {
 # Os dois nomes do tipo aceito pela aprovação, um por formato.
 TIPOS_DE_APROVACAO = ("norma", "rule")
 
-# Os modos da norma, uma skill por modo — quem o prompt de orquestração cita (`handoff`).
+# As etapas do workflow depois da proposta, uma skill por etapa (codex, *Workflow*).
 MODOS = ("review-plan", "derive", "code")
 
-# As skills que viajam no pacote (`empacotar`): os três modos, o `decode`, que antecede o ciclo, o
-# `huddle`, que conduz a conversa da pessoa (plano 0008), o `setup`, que conduz o primeiro uso
-# (plano 0009), e o `rethink`, que revisa a norma depois de uma mudança de rumo (plano 0020) — sete
-# skills, e as quatro últimas não são modo da norma. Acrescentar skill é editar só aqui.
+# As skills do núcleo, que viajam no pacote (`empacotar`): as três etapas, o `decode`, que abre o
+# workflow, o `huddle`, que conduz a conversa da pessoa (plano 0008), o `setup`, que conduz o
+# primeiro uso (plano 0009), e o `rethink`, que revisa o que o projeto definiu depois de uma
+# mudança de rumo (plano 0020). As skills dos módulos vêm de `skills_do_pacote`. Acrescentar skill
+# ao núcleo é editar só aqui.
 SKILLS = MODOS + ("decode", "huddle", "setup", "rethink")
 
 _config_cache: dict | None = None

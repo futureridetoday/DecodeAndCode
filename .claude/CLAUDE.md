@@ -33,7 +33,7 @@ Plugin Claude Code que empacota o método **decode-and-code**. O método é o co
 code —, os artefatos, as regras e os princípios, guidelines e guardrails que cada projeto define.
 
 Origem: a skill `dev-units` do AmFlow, medida funcionando — 15 de 15 unidades executadas por Sonnet
-em sessões novas, sem uma pergunta sobre conteúdo de unidade. Os **scripts e testes migraram**; a
+em sessões novas, sem uma pergunta sobre conteúdo de unidade. Os **scripts e testes migraram**; o
 método nasce aqui, sem as premissas do AmFlow.
 
 ## Arquitetura

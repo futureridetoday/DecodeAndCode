@@ -297,7 +297,7 @@ class TestAtalhoDeSkill(_ProjetoCase):
         r = self._atalho("review-plan", "bootstrap")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn(str(self.raiz_planos / "_planos.md"), r.stdout.splitlines())
-        self.assertTrue((self.raiz_planos / "system" / "modelo-dev-units.md").is_file())
+        self.assertTrue((self.raiz_planos / "_inbox").is_dir())
 
     def test_repassa_o_stdin(self):
         dir_plano = self.aprovar()
@@ -344,7 +344,7 @@ class TestBootstrap(_ProjetoCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         criados = r.stdout.splitlines()
         self.assertIn(str(self.raiz_planos / "_planos.md"), criados)
-        self.assertIn(str(self.raiz_planos / "system" / "modelo-dev-units.md"), criados)
+        self.assertIn(str(self.raiz_planos / "_inbox"), criados)
         for caminho in criados:
             self.assertTrue(Path(caminho).exists(), caminho)
 

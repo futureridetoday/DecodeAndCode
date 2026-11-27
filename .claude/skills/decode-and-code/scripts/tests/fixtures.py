@@ -355,7 +355,7 @@ def plano(
     `## Independência` e a região de backlog — os três blocos que `lint_plano.lint` varia por
     porte. Default (`False`, `False`, `True`) reproduz o texto de antes desses três parâmetros
     existirem; para montar um plano bem formado num porte específico, quem chama passa a
-    combinação que a tabela de portes da norma pede — ex. `plan_size="grande"`, `previstas=1`,
+    combinação que o porte pede (formato 1) — ex. `plan_size="grande"`, `previstas=1`,
     `independencia=True`.
 
     `format_version`, quando dado, entra no frontmatter logo depois de `plan_type`; `None` (o

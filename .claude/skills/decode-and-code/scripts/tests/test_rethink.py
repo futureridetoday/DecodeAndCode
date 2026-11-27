@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Testes de `rethink` — o histórico do `rethink`, plano 0020, tarefa 6.
 
-Projeto sintético em `tempfile`. O oráculo é o da norma, seção *Rethink → O histórico*: `start`
+Projeto sintético em `tempfile`. O oráculo é o do codex, *Rethink*: `start`
 cria o arquivo com o esqueleto se faltar e abre uma seção com o que mudou; `record` acrescenta uma
 linha com decisão de vocabulário fechado e recusa, sem escrever, valor fora dele ou motivo vazio
 onde ele é exigido.
