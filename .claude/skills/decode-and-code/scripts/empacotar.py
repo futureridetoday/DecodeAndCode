@@ -93,7 +93,8 @@ _DESTINO_DEFAULT = "dist/decode-and-code"
 
 _MANIFESTO_RELATIVO = Path(".claude-plugin") / "plugin.json"
 
-# As skills que viajam são as de `lib.SKILLS` — lista explícita, nunca `.claude/skills/*`: uma skill
+# As skills que viajam são as de `lib.skills_do_pacote()` — as do núcleo e as que cada módulo presente
+# declara; lista explícita, nunca `.claude/skills/*`: uma skill
 # de desenvolvimento deste repositório não pode vazar para quem instala (`P-03`, `D-01`). A pasta
 # compartilhada não é skill (não tem `SKILL.md`): guarda `scripts/`, `config.json` e, no pacote,
 # `reference/`, e as quatro a citam por `${CLAUDE_SKILL_DIR}/../decode-and-code/`.
@@ -106,13 +107,18 @@ def _resolver_destino(destino: Path | str) -> Path:
     return destino if destino.is_absolute() else (lib.repo_root() / destino)
 
 
+def _skills_do_pacote(skills: Path) -> tuple[str, ...]:
+    """As skills do núcleo e as dos módulos presentes na pasta compartilhada da fonte."""
+    return lib.skills_do_pacote(skills / _PASTA_COMPARTILHADA / "modules")
+
+
 def _fontes() -> dict[str, Path]:
     raiz = lib.repo_root()
     skills = raiz / ".claude" / "skills"
     return {
         "manifesto": raiz / ".claude" / "plugin.json",
         "compartilhada": skills / _PASTA_COMPARTILHADA,
-        **{f"skill {nome}": skills / nome for nome in lib.SKILLS},
+        **{f"skill {nome}": skills / nome for nome in _skills_do_pacote(skills)},
         "hooks": raiz / ".claude" / "hooks",
         "settings": raiz / ".claude" / "settings.json",
         "norma": raiz / "docs" / "plan" / "system" / "modelo-dev-units.md",
@@ -146,7 +152,7 @@ def construir(destino: Path | str = _DESTINO_DEFAULT) -> list[Path]:
 
     escritos: list[Path] = [_copiar_manifesto(fontes["manifesto"], destino)]
     escritos.extend(_copiar_skill(fontes["compartilhada"], destino))
-    for nome in lib.SKILLS:
+    for nome in _skills_do_pacote(fontes["compartilhada"].parent):
         escritos.extend(_copiar_skill(fontes[f"skill {nome}"], destino))
     escritos.append(_copiar_norma(fontes["norma"], destino, nome_plugin, manifesto["version"]))
     escritos.extend(_copiar_hooks(fontes["hooks"], destino, scripts_dos_hooks))

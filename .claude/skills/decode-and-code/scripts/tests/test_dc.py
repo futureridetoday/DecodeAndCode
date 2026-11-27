@@ -46,6 +46,7 @@ import verificacao
 SUBCOMANDOS = (
     "validar-nome",
     "codex",
+    "modulos",
     "entrada-code",
     "aprovar-entrega",
     "bootstrap",

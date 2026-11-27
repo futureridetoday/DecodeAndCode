@@ -55,7 +55,8 @@ O que vale em cada passo está no codex; leia as seções pelo título com
 1. **Chão:** `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap` (idempotente).
 2. **Entrada.** Junte os blocos num pedido único. Declare o tipo com o motivo e proponha o objetivo
    numa frase; pergunte o que faltar, numa rodada só, e espere a confirmação dos dois. Um insight
-   sem plano termina aqui, registrado no huddle se o usuário quiser.
+   sem plano termina aqui, registrado no huddle se o usuário quiser. Se o tipo tem workflow próprio
+   (`python3 "${CLAUDE_SKILL_DIR}/dc.py" modulos` lista os tipos e a skill de cada um), siga por ela.
 3. **Contexto do projeto.** Leia a foundation (`<plan_root>/system/foundation.md`, se existir), as
    rules em `.claude/rules/`, `.claude/guardrails.json` e o mapa de recursos. Recurso entra pelo
    nome, nunca copiado.

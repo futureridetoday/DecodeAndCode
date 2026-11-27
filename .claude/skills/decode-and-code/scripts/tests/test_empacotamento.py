@@ -587,7 +587,7 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
             self.assertTrue((compartilhada / "scripts").is_dir())
             self.assertTrue((compartilhada / "config.json").is_file())
             self.assertEqual(
-                {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *NOMES_DAS_SKILLS}
+                {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *lib.skills_do_pacote()}
             )
 
     def test_pacote_real_tem_o_decode_e_nenhum_agent(self):

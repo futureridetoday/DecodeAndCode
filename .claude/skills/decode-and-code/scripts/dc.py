@@ -672,6 +672,18 @@ def _imprimir_secao_do_codex(titulo: str) -> None:
     print()
 
 
+def _modulos(args: argparse.Namespace) -> int:
+    """Uma linha por módulo presente: o nome, os tipos de plano com workflow próprio e as skills."""
+    import lib
+
+    modulos = lib.modulos()
+    for m in modulos:
+        print(f"{m['name']} {m['version']}: tipos {', '.join(m['plan_types'])} → skill {', '.join(m['skills'])}")
+    if not modulos:
+        print("nenhum módulo")
+    return OK
+
+
 def _codex(args: argparse.Namespace) -> int:
     """Imprime as seções do codex pelo título exato, na ordem pedida — o que cada skill lê do método."""
     for titulo in args.titulos:
@@ -1035,6 +1047,8 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--desde", help="padrão: last_huddle, ou created")
 
     comando("huddle-fecho", "imprime a seção Huddle do codex: quando registrar e o fecho", _huddle_fecho)
+
+    comando("modulos", "lista os módulos presentes, com os tipos de plano e as skills de cada um", _modulos)
 
     p = comando("codex", "imprime seções do codex pelo título exato (2 se um título não existe)", _codex)
     p.add_argument("titulos", nargs="+", metavar="título")

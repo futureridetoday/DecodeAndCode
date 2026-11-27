@@ -1,0 +1,10 @@
+{
+  "name": "fix",
+  "version": "1.0.0",
+  "core_format": 2,
+  "plan_types": ["fix"],
+  "skills": ["diagnose"],
+  "plan_sections": {
+    "fix": ["Objetivo", "Defeito", "Correção", "Como verificar", "Recursos"]
+  }
+}

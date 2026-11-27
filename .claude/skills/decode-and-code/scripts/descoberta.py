@@ -137,7 +137,7 @@ def _recursos(projeto: Path) -> list[dict]:
     achados = [
         _recurso("skill", arquivo, arquivo.parent.name)
         for arquivo in sorted(claude.glob("skills/*/SKILL.md"))
-        if arquivo.parent.name not in lib.SKILLS
+        if arquivo.parent.name not in lib.skills_do_pacote()
     ]
     dir_commands = claude / "commands"
     achados += [
