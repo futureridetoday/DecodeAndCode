@@ -82,8 +82,8 @@ def relatorio(caminho_log: Path, sessao: str | None = None) -> list[str]:
     quando dada; ou, como antes, um arquivo de texto com um anúncio por linha. Levanta
     `FileNotFoundError` se `caminho_log` não existir — comportamento nativo de `Path.read_text`.
     Linha que não casa o formato de `anunciar_instructions_loaded` entra marcada como ilegível,
-    nunca derruba a leitura das demais. Só leitura: sinaliza os três casos da norma, seção
-    *Validar a ativação*, nunca corrige nada que encontrar.
+    nunca derruba a leitura das demais. Só leitura: sinaliza os três casos de
+    `docs/maintenance/activation.md`, nunca corrige nada que encontrar.
     """
     texto = Path(caminho_log).read_text(encoding="utf-8")
     if Path(caminho_log).suffix == ".jsonl":
@@ -112,7 +112,7 @@ def relatorio(caminho_log: Path, sessao: str | None = None) -> list[str]:
 
 
 def _veredito(caminho: str, motivo: str, colididos: set[str]) -> str:
-    """Os três sinais da norma — nenhum, um ou vários, concatenados; `'ok'` quando nenhum aplica."""
+    """Os três sinais da validação da ativação — nenhum, um ou vários, concatenados; `'ok'` quando nenhum aplica."""
     sinais = []
     if motivo == "session_start" and _paths_do_arquivo(caminho) is not None:
         sinais.append("rule com paths: carregada por session_start — escopo não respeitado")

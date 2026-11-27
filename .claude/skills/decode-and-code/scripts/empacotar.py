@@ -17,7 +17,7 @@ AmFlow) e `lint_skill.py` não são importados por script de runtime nem por hoo
 (`_SCRIPTS_DE_DESENVOLVIMENTO`). Dos quatro hooks do `settings.json` viajam três,
 `PreToolUse`, `InstructionsLoaded` e `SessionStart` (`_EVENTOS_DO_PACOTE`): `SubagentStart` e
 `InstructionsLoaded` são hooks de anúncio, e nenhum chega ao modelo; não há registro de projeto que
-instala o plugin usando o controle de três estados da norma (*Validar a ativação*). O
+instala o plugin usando o controle de três estados (`docs/maintenance/activation.md`). O
 `InstructionsLoaded` fica por ser o log desse controle, e o `SubagentStart` continua no
 `settings.json` deste repositório. O `PreToolUse` fica porque é o guardrail, e o `SessionStart` porque é o lembrete do huddle
 (plano 0008).

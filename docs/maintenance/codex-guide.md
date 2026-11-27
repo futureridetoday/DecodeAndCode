@@ -203,6 +203,10 @@ Decidido em 2026-11-25.
 - **O que guarda:** este guia; o contrato de módulo e o núcleo
   (itens 34 e 58); o empacotamento, a release e quem mantém o plugin (item 61); a migração (item 42);
   e o conteúdo da norma que só serve a quem mantém o plugin, conforme o mapa da 2.1.
+- **Arquivos:** [`activation.md`](activation.md), a validação da ativação de guidelines e
+  guardrails; [`packaging.md`](packaging.md), o empacotamento, a reconciliação, o bootstrap e o ciclo
+  instalado; [`skills-and-scripts.md`](skills-and-scripts.md), a fronteira entre skill e script, os
+  modelos, os esqueletos sem template e o porquê do log de uso e do porte medido.
 - **README:** as seções de manutenção — *Como este repositório se relaciona com o pacote* e
   *Procedimento de release* (`README.md:215`, `:228`) — passam para lá na fase 2, como um consumidor
   do mapa da 2.1, e o README fica com um link.
