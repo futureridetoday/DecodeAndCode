@@ -370,6 +370,26 @@ def _marcadores_instancia() -> tuple[str, ...]:
     return (lib.repo_root().name,)
 
 
+# Nomes de outros projetos onde o método foi medido ou de onde veio (K-15 do mapa da migração;
+# `redesign-brief.md`, restrição "Nada específico de projeto viaja"). Mora aqui, num script que não
+# viaja, e não no `config.json`, que viaja: a lista no pacote seria o próprio vazamento que ela
+# procura. Comparação sem caixa, porque o nome aparece também em minúsculas.
+_MARCAS_DE_OUTROS_PROJETOS = ("AmFlow", "CortexMachine")
+
+
+def _marcas_de_outros_projetos(destino: Path) -> list[str]:
+    """Um problema por arquivo do pacote que cita um nome de `_MARCAS_DE_OUTROS_PROJETOS`."""
+    problemas = []
+    for arquivo in sorted(destino.rglob("*")):
+        if not arquivo.is_file():
+            continue
+        texto = _texto(arquivo).lower()
+        for marca in _MARCAS_DE_OUTROS_PROJETOS:
+            if marca.lower() in texto:
+                problemas.append(f"{arquivo.relative_to(destino)}: dado de outro projeto, {marca!r}")
+    return problemas
+
+
 def _ancora_de_projeto(destino: Path) -> list[str]:
     """`${CLAUDE_PROJECT_DIR}` (forma de placeholder, com `${...}`) dentro de `hooks/` — onde a
     âncora errada quebra de verdade: um hook cujo comando não passou pela troca de
@@ -431,6 +451,7 @@ def verificar(destino: Path | str = _DESTINO_DEFAULT) -> list[str]:
         for marcador in marcadores:
             if marcador in texto:
                 problemas.append(f"{arquivo.relative_to(destino)}: ocorrência de {marcador!r}")
+    problemas.extend(_marcas_de_outros_projetos(destino))
     problemas.extend(_ancora_de_projeto(destino))
     return problemas
 

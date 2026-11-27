@@ -990,3 +990,28 @@ class TestMaterializar(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestMarcasDeOutrosProjetos(unittest.TestCase):
+    """K-15: o pacote não leva dado de outro projeto, nem em minúsculas; a lista não viaja."""
+
+    def test_marca_plantada_reprova_e_o_pacote_real_aprova(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+            self.assertEqual(empacotar._marcas_de_outros_projetos(destino), [])
+            plantado = destino / "skills" / "decode-and-code" / "scripts" / "plantado.py"
+            plantado.write_text("# medido no amflow\n", encoding="utf-8")
+            problemas = empacotar.verificar(destino)
+        self.assertEqual(
+            problemas, ["skills/decode-and-code/scripts/plantado.py: dado de outro projeto, 'AmFlow'"]
+        )
+
+    def test_a_lista_nao_viaja(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = Path(tmp) / "pkg"
+            empacotar.construir(destino)
+            self.assertFalse((destino / "skills" / "decode-and-code" / "scripts" / "empacotar.py").exists())
+            config = (destino / "skills" / "decode-and-code" / "config.json").read_text(encoding="utf-8")
+        for marca in empacotar._MARCAS_DE_OUTROS_PROJETOS:
+            self.assertNotIn(marca.lower(), config.lower())
