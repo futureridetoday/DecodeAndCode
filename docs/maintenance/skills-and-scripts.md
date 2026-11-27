@@ -58,7 +58,7 @@ oráculo determinístico, e oráculo é código — conforme *Código vs. Instru
 ## Modelos
 
 **Sonnet é o padrão no `implement`.** O `review` e o `derive` pedem julgamento denso — Opus. **Cada
-skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive`, `intake` e `huddle` em `opus`,
+skill declara o seu no `model:` do frontmatter:** `review-plan`, `derive`, `decode`, `huddle`, `setup` e `rethink` em `opus`,
 `implement` em `sonnet`.
 
 Medido em 2026-10-15 (Claude Code 2.1.300, pacote carregado com `claude -p --plugin-dir`): sem
@@ -74,9 +74,10 @@ campos de skill.
 **O gate de agent abriu, e o ciclo voltou a viver em skills.** A skill existe desde **2026-07-26**,
 e o requisito de troca automática por modo — não mais conveniência — foi declarado pelo humano em
 **2026-08-22**, a partir de uso diário; o agent deixou de estar fora de escopo. Com a troca
-declarada na skill, o ciclo não precisa de agent, e o intake (antes de o plano nascer) também não:
-a skill `intake` isola o contexto com `context: fork`, como um agent faria (`D-03` do plano
-`apply-plugin-review`), e o método fica sem agent. O que um agent é aqui:
+declarada na skill, o ciclo não precisa de agent, e o método fica sem agent. O `decode`, que antes
+se chamava `intake` e isolava o contexto com `context: fork` (`D-03` do plano `apply-plugin-review`),
+roda na sessão desde a subparte 2.2.06 do redesign: conversa com o usuário até a aprovação da
+proposta, e a ferramenta de perguntas não existe em fork. O que um agent é aqui:
 **papel e processo, nunca o método** — ele **declara** a skill em `skills:`, que é a ponte para o
 método chegar sem ser reescrito dentro do próprio prompt; quem decide `model:` e `tools:` é quem o
 instancia.
@@ -85,8 +86,8 @@ instancia.
 > curto **resolve**: o debug log mostra `Preloaded skill`, e o agent recebe o corpo da skill com o
 > caminho absoluto dos scripts, fora do checkout. Numa skill de plugin, o inverso: `agent:` com nome
 > curto de agent do próprio plugin **não resolve** — cai no padrão, sem aviso —, e só o nome com
-> namespace (`plugin:agent`) resolve; por isso as skills com `context: fork` (`implement` e
-> `intake`) declaram `general-purpose`. Que a skill carregue, ou o nome resolva, é comportamento de
+> namespace (`plugin:agent`) resolve; por isso a skill com `context: fork` (`implement`)
+> declara `general-purpose`. Que a skill carregue, ou o nome resolva, é comportamento de
 > sessão, e só a medição o mostra.
 
 ## Divisão de responsabilidade

@@ -17,7 +17,7 @@ instância; é a `L-28` num lugar novo, e a guideline `scripts.md` já normatiza
 
 O `P-03` troca a skill única por três (`review-plan`, `derive`, `implement`) mais a pasta
 compartilhada `decode-and-code/`, que guarda os scripts e não tem `SKILL.md`; os comandos saem do
-pacote. O `P-06` converte o único agent na skill `intake` (`D-03`): o pacote passa a ter quatro
+pacote. O `P-06` converte o único agent na skill `intake`, hoje `decode` (`D-03`): o pacote passa a ter quatro
 skills e nenhum `agents/`.
 
 A `0004-04` acrescenta a norma-mecanismo e o `move-md` ao que `construir` leva. O `move-md` viaja
@@ -298,7 +298,7 @@ class TestConstruir(_BaseComFonteSintetica):
         self.assertFalse(self.destino.exists())
 
     def test_pacote_nao_tem_agents_nem_quando_a_fonte_tem(self):
-        """`P-06` — o único agent virou a skill `intake`; o pacote não copia agent de lugar nenhum."""
+        """`P-06` — o único agent virou a skill `intake`, hoje `decode`; o pacote não copia agent de lugar nenhum."""
         agents = self.raiz / ".claude" / "agents"
         agents.mkdir()
         (agents / "qualquer.md").write_text("# agent que não viaja\n", encoding="utf-8")
@@ -590,14 +590,14 @@ class TestPacoteRealEstaLimpo(unittest.TestCase):
                 {p.name for p in (destino / "skills").iterdir()}, {"decode-and-code", *NOMES_DAS_SKILLS}
             )
 
-    def test_pacote_real_tem_o_intake_e_nenhum_agent(self):
-        """`P-06` e `D-03` — o `intake` viaja como skill, com o atalho `dc.py`; não há `agents/`."""
+    def test_pacote_real_tem_o_decode_e_nenhum_agent(self):
+        """`P-06` e `D-03` — o `decode` viaja como skill, com o atalho `dc.py`; não há `agents/`."""
         with tempfile.TemporaryDirectory() as tmp:
             destino = Path(tmp) / "pkg"
             empacotar.construir(destino)
 
-            self.assertTrue((destino / "skills" / "intake" / "SKILL.md").is_file())
-            self.assertTrue((destino / "skills" / "intake" / "dc.py").is_file())
+            self.assertTrue((destino / "skills" / "decode" / "SKILL.md").is_file())
+            self.assertTrue((destino / "skills" / "decode" / "dc.py").is_file())
             self.assertFalse((destino / "agents").exists())
             self.assertEqual(empacotar.verificar(destino), [])
 
