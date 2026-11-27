@@ -65,7 +65,7 @@ Os dois gates são os da norma (*Os dois gates*) — esta seção descreve só o
 6. **Gate de saída** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" verificar <unidade>`; teste falhando, a unidade não transiciona para `verified`.
 7. **Projetar o backlog** do plano com `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`.
 8. **Relatar** o que foi feito — se algo da unidade estava insuficiente, dizer o quê, incluindo as linhas `Não resolvidas:` do passo 3; a correção é da unidade, nunca do executor.
-9. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime os gatilhos e o momento da norma (*Huddle*). O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
+9. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime a seção *Huddle* do codex. O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
 
 > **Se o executor precisou perguntar, a unidade falhou.** O teste é empírico e barato, e a
 > insuficiência volta para quem deriva — nunca é resolvida por conta própria em execução.

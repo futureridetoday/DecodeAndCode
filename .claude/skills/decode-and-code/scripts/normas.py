@@ -187,6 +187,35 @@ def secoes(arquivo: Path, nomes: tuple[str, ...]) -> list[tuple[str, str]]:
     return achados
 
 
+def codex_dir() -> Path:
+    """A pasta do codex, na pasta compartilhada das skills — a mesma no checkout e no pacote."""
+    return Path(__file__).resolve().parent.parent / "codex"
+
+
+def procedimentos_dir() -> Path:
+    """A pasta dos procedimentos compartilhados entre skills, ao lado do codex e fora dele."""
+    return Path(__file__).resolve().parent.parent / "procedures"
+
+
+def secao_do_codex(titulo: str, pasta: Path | None = None) -> tuple[Path, str]:
+    """`(arquivo, trecho)` da seção `## <titulo>` do codex — título exato, que no codex é único.
+
+    O trecho vai do título até a próxima seção de mesmo nível. Levanta `ValueError` nomeando o
+    título quando nenhum capítulo o tem: o codex nunca é copiado ao projeto (codex, *Restrição
+    fundamental*), e quem lê é o pacote, então a falta é defeito do pacote, não do projeto.
+    """
+    pasta = pasta or codex_dir()
+    for capitulo in sorted(pasta.glob("*.md")):
+        linhas = capitulo.read_text(encoding="utf-8").split("\n")
+        for i, linha in enumerate(linhas):
+            if linha.rstrip() == f"## {titulo}":
+                fim = next(
+                    (j for j in range(i + 1, len(linhas)) if linhas[j].startswith("## ")), len(linhas)
+                )
+                return capitulo, "\n".join(linhas[i:fim]).rstrip()
+    raise ValueError(f"seção ausente no codex ({pasta}): {titulo}")
+
+
 class Aplicavel(NamedTuple):
     """Uma guideline cujo `paths:` casa um arquivo da unidade: a linha pronta, ou o aviso de por que não."""
 
