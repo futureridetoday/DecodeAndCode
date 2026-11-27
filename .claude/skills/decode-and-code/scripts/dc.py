@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -407,8 +408,8 @@ def _lint_guardrails(args: argparse.Namespace) -> int:
 
 # Huddle por pessoa — plano 0008, T4. Todos resolvem o arquivo de quem está na sessão.
 
-# Prefixos das subseções da seção *Huddle* que o `huddle-fecho` imprime (gatilhos e momento).
-_SECOES_DO_FECHO = ("Despejo", "Momento")
+# A seção do codex que o `huddle-fecho` imprime: os gatilhos de quando registrar e o fecho da etapa.
+_SECOES_DO_FECHO = ("Huddle",)
 
 
 def _pessoa() -> tuple[Path, str, Path]:
@@ -633,60 +634,56 @@ def _huddle_pauta(args: argparse.Namespace) -> int:
 
 
 def _huddle_fecho(args: argparse.Namespace) -> int:
-    """Imprime as subseções de gatilhos e de momento da seção *Huddle*: da norma do projeto, ou da
-    do pacote quando a do projeto é anterior a elas (`L-05`), na ordem de `bootstrap._fonte_norma`."""
-    import bootstrap
-    import lib
-    import normas
-
-    candidatas = [lib.plan_root() / "system" / "modelo-dev-units.md"]
-    try:
-        candidatas.append(bootstrap._fonte_norma())
-    except FileNotFoundError:
-        pass
-    for norma in candidatas:
-        achados = [normas._buscar(norma, nome) for nome in _SECOES_DO_FECHO]
-        if all(isinstance(a, tuple) for a in achados):
-            for titulo, trecho in achados:
-                print(f"### {os.path.relpath(norma)} § {titulo}")
-                print(trecho)
-                print()
-            return OK
-    raise ValueError(f"seções {_SECOES_DO_FECHO} não encontradas em {[str(c) for c in candidatas]}")
+    """Imprime a seção *Huddle* do codex do pacote — quando Claude registra e o que declara no fim
+    da etapa. O codex nunca é copiado ao projeto (K-12), então a fonte é sempre o pacote."""
+    for titulo in _SECOES_DO_FECHO:
+        _imprimir_secao_do_codex(titulo)
+    return OK
 
 
-# Prefixos das seções da norma que sustentam o princípio Decode → Code, para o `explicar`.
-_SECOES_DO_METODO = (
-    "Antes do plano",
-    "O que cada porte carrega",
-    "Cold-start é o critério de suficiência da unidade",
-    "Skills `review-plan`, `derive` e `implement`",
-)
+# Seções do codex que explicam o método por inteiro, para o `explicar` sem argumento.
+_SECOES_DO_METODO = ("Workflow", "Decode", "Porte", "Cold-start")
 
-# `explicar <seção>`: as que o setup lia com `sed`/`grep` na norma (M4 do `0013`).
+# `explicar <seção>`: as seções do codex que o setup, o rethink e o huddle leem, pelo título.
 _SECOES_AVULSAS = {
-    "huddle": "Huddle",
-    "camada-normativa": "Camada normativa",
-    # O que o setup e o `rethink` compartilham (plano 0020, `D-07`, `L-06`).
-    "conversa": "Conversa de uma sugestão",
-    # O `rethink` lê o próprio fluxo e o critério de sugestão do setup (plano 0020, tarefa 8).
-    "rethink": "Rethink",
-    "setup": "Setup",
+    "huddle": ("Huddle",),
+    "camada-normativa": ("Princípio", "Guideline", "Guardrail"),
+    "rethink": ("Rethink",),
+    "setup": ("Setup",),
+}
+
+# `explicar <nome>` que imprime um procedimento compartilhado, e não o codex (K-13).
+_PROCEDIMENTOS = {
+    # O que o setup, o rethink e o huddle compartilham (plano 0020, `D-07`, `L-06`).
+    "conversa": "suggestion-conversation.md",
 }
 
 
-def _explicar(args: argparse.Namespace) -> int:
-    """Imprime, da norma do método (`bootstrap._fonte_norma`), as seções que explicam Decode → Code,
-    ou só a seção nomeada em `secao`."""
-    import bootstrap
+def _imprimir_secao_do_codex(titulo: str) -> None:
     import normas
 
-    norma = bootstrap._fonte_norma()
-    nomes = (_SECOES_AVULSAS[args.secao],) if args.secao else _SECOES_DO_METODO
-    for titulo, trecho in normas.secoes(norma, nomes):
-        print(f"### {os.path.relpath(norma)} § {titulo}")
-        print(trecho)
+    capitulo, trecho = normas.secao_do_codex(titulo)
+    print(f"### codex/{capitulo.name} § {titulo}")
+    print(trecho)
+    print()
+
+
+def _explicar(args: argparse.Namespace) -> int:
+    """Imprime, do codex do pacote, as seções que explicam Decode → Code, a seção nomeada em
+    `secao`, ou o procedimento compartilhado com esse nome."""
+    import normas
+
+    if args.secao in _PROCEDIMENTOS:
+        arquivo = normas.procedimentos_dir() / _PROCEDIMENTOS[args.secao]
+        texto = arquivo.read_text(encoding="utf-8")
+        corpo = re.sub(r"\A---\n.*?\n---\n", "", texto, count=1, flags=re.S).strip()
+        print(f"### procedures/{arquivo.name}")
+        print(corpo)
         print()
+        return OK
+    nomes = _SECOES_AVULSAS[args.secao] if args.secao else _SECOES_DO_METODO
+    for titulo in nomes:
+        _imprimir_secao_do_codex(titulo)
     return OK
 
 
@@ -1018,14 +1015,14 @@ def _parser() -> argparse.ArgumentParser:
     p = comando("huddle-pauta", "abertas da pessoa e commits desde o último huddle", _huddle_pauta)
     p.add_argument("--desde", help="padrão: last_huddle, ou created")
 
-    comando("huddle-fecho", "imprime os gatilhos e o momento do huddle, da norma", _huddle_fecho)
+    comando("huddle-fecho", "imprime a seção Huddle do codex: quando registrar e o fecho", _huddle_fecho)
 
     p = comando(
         "explicar",
-        "imprime, da norma, as seções que sustentam o método Decode → Code, ou só a seção nomeada",
+        "imprime, do codex, as seções que explicam o método, a seção nomeada ou o procedimento",
         _explicar,
     )
-    p.add_argument("secao", nargs="?", choices=sorted(_SECOES_AVULSAS))
+    p.add_argument("secao", nargs="?", choices=sorted({*_SECOES_AVULSAS, *_PROCEDIMENTOS}))
 
     comando("huddle-lint", "valida o arquivo de huddle da pessoa (1 se tem problema)", _huddle_lint)
 

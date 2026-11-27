@@ -1251,28 +1251,22 @@ class TestHuddle(_ProjetoCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("H-01", r.stdout)
 
-    def test_fecho_imprime_despejo_e_momento_da_norma(self):
-        r = self.dc("huddle-fecho")
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("Despejo", r.stdout)
-        self.assertIn("Momento", r.stdout)
-        self.assertIn("entradas novas no huddle", r.stdout)
-
-    def test_fecho_cai_para_a_norma_do_pacote_quando_a_do_projeto_e_anterior(self):
-        """L-05: a norma materializada antes do 0008 não tem os títulos — vale a do pacote."""
+    def test_fecho_imprime_o_huddle_do_codex_mesmo_com_a_norma_antiga_no_projeto(self):
+        """K-12: a fonte é o codex do pacote; a norma copiada ao projeto não é lida."""
         norma = self.raiz_planos / "system" / "modelo-dev-units.md"
+        norma.parent.mkdir(parents=True, exist_ok=True)
         norma.write_text("# Norma antiga\n\n## Huddle\n\nSem as subseções.\n", encoding="utf-8")
         r = self.dc("huddle-fecho")
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("Despejo", r.stdout)
-        self.assertNotIn(os.path.relpath(norma, self.projeto), r.stdout)
+        self.assertIn("§ Huddle", r.stdout)
+        self.assertNotIn("Sem as subseções", r.stdout)
 
-    def test_explicar_imprime_os_quatro_titulos_da_norma(self):
+    def test_explicar_imprime_as_secoes_do_metodo_do_codex(self):
         r = self.dc("explicar")
         self.assertEqual(r.returncode, 0, r.stderr)
-        for titulo in ("Antes do plano", "O que cada porte carrega", "Cold-start é o critério", "Skills `review-plan`"):
+        for titulo in ("Workflow", "Decode", "Porte", "Cold-start"):
             with self.subTest(titulo=titulo):
-                self.assertIn(titulo, r.stdout)
+                self.assertIn(f"§ {titulo}", r.stdout)
 
     def test_lint_do_arquivo_da_pessoa(self):
         self.dc("huddle-iniciar")
