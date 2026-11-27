@@ -29,9 +29,9 @@ o codex; a fase 2 migra para ele, um por vez, tudo o que hoje consome a norma. O
 do [inventário atômico](atomic-inventory.md) e do [brief](redesign-brief.md); este plano diz como
 chegar lá e não repete o que eles dizem.
 
-**Estado:** escrito em 2026-11-25; as partes 1.1 e 1.2 foram autorizadas e concluídas em
-2026-11-25, a 1.3 e a 1.4, concluídas em 2026-11-26, o que fecha a fase 1. Antes da fase 2, o codex
-passa por teste e avaliação com a pessoa (D-11); nenhuma parte da fase 2 começa sem a aprovação dela.
+**Estado:** escrito em 2026-11-25; a fase 1 fechou em 2026-11-26 e a fase 2 em 2026-11-27 (PRs #69 a
+#88), com o teste ponta a ponta feito. O relatório da verificação final está no *Fechamento* e
+aguarda a aprovação da pessoa; a release fica para depois dela.
 
 **Convenções:** "item NN" é o item NN do inventário; os caminhos partem da raiz do repositório.
 
@@ -351,7 +351,43 @@ levantar cada consumidor e depois troca um por vez.
   aprovação final da pessoa.
 - **Como verificar:** cada *Como verificar* da tabela, executado.
 - **Onde roda:** esta sessão.
-- **Estado:** pendente.
+- **Estado:** relatório entregue em 2026-11-27, logo abaixo; aguarda a aprovação final da pessoa.
+
+### Relatório da verificação final
+
+Executado em 2026-11-27, sobre o `dev` depois do PR #88. Cada linha é uma restrição da tabela do
+brief (`redesign-brief.md:194-204`), com o que se executou para verificá-la.
+
+| Restrição | O que se executou | Resultado |
+|---|---|---|
+| Renomear | busca por `intake` e `implement` em skills, rules, hooks e `docs/recursos/`; a do 2.1 refeita no código | nenhum uso; sobram o tipo `norma` do formato 1 (aceito só em plano sem versão, K-02), o módulo e o comando `normas` (sentido G) e menções históricas, todos registrados no mapa (2.3) |
+| Não refazer o plugin | `scripts/test-python.sh` | 1097 testes verdes. Testes mudaram onde o comportamento mudou de propósito pelo codex: teto de passos (D-06), handoff, bootstrap sem a cópia, `concorrencia` removido (K-07) — cada um no *Registro da migração* |
+| Codex à prova de futuro | `lint_codex.py estrutura` e `dependencia`, núcleo e módulo juntos | ok nos dois |
+| DC otimizado para Claude | linhas de cada `SKILL.md`; caracteres das `description` | o maior tem 162 linhas (limite 500); as nove descrições somam 4412 caracteres; o codex só entra quando a skill o pede por título (`dc.py codex`) |
+| O projeto não altera o codex | leitura do `bootstrap` e do `empacotar`; `TestIniciarNaoCopiaOMetodo`; projetos de prova | nenhum comando copia o método; `system/` do projeto recém-criado fica vazio; o codex vive só no pacote |
+| Decode segue Clean Architecture | o guia (1.1) e o lint de dependência | o codex não depende de mecanismo; no projeto, Clean Architecture entra como guideline (codex, *Guideline*); nenhum script pediu a refatoração |
+| Uma fonte por fato | `lint_codex.py repeticao` sobre as skills | ok, sem nenhuma repetição conhecida: as 3 da 1.4 saíram nas subpartes de decode, setup e rethink |
+| Nada específico de projeto viaja | `empacotar.construir` + `verificar` + `validar` | limpos; a auditoria procura também nomes de outros projetos (K-15) e achou um caso real, corrigido |
+| Módulo plug and play | `test_modulos.py`, *TestNucleoSemModulo*; build de um repositório sem `modules/` | o núcleo roda com a pasta de módulos vazia; o empacotamento de fonte sem módulo passa |
+
+**Inventário.** Os 65 itens seguem cobertos: os 57 que o guia manda ao codex existem, cada um no
+capítulo que o guia diz (conferido por script contra `normas.secao_do_codex`); os 4 do guia estão no
+guia; os 4 da manutenção estão em `docs/maintenance/` (módulo e núcleo em `modules.md`; migração e
+quem mantém em `release.md`).
+
+**Teste ponta a ponta.** O plugin construído rodou com as skills reais (`claude -p --plugin-dir`) em
+projetos de prova descartáveis: um pequeno (decode → revisão → code → aprovação), um médio (decode →
+revisão → derive → code da unidade → aprovação, com handoff e porte medido) e uma correção
+(diagnose → code com o teste vermelho registrado → aprovação), mais a migração de um projeto com a
+cópia da norma, pelo hook e pelo `dc.py` do pacote. A primeira rodada achou dois defeitos e a
+segunda mais dois, corrigidos nos PRs #87 e #88, e a rodada seguinte passou.
+
+**O que não foi coberto.** As skills que conversam pela ferramenta de perguntas — `setup`,
+`rethink` e `huddle` — não rodam em sessão não interativa; o que fazem por script tem teste
+(foundation, migração, `planos-que-citam`, esqueleto do huddle), mas a conversa delas não foi
+exercida de ponta a ponta. Neste repositório, `dc.py migrar` lista os dois huddles com o esqueleto
+antigo, um de cada pessoa, e nada foi aplicado sem o sim dos donos. A release não foi publicada nem
+teve a versão trocada.
 
 ## Checagens antes de aprovar
 

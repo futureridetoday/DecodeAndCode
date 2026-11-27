@@ -9,8 +9,8 @@ tags: [codex, correcao, modulo]
 # history
 author: Bortoli
 created: 2026-11-26
-status: draft
-version: 0.3.0
+status: stable
+version: 1.0.0
 updated: ""
 
 # system

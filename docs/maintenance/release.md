@@ -61,3 +61,11 @@ qualquer cliente sem token.
 4. Promover `dev` → `main` (merge, sem force) e push
 5. Em `main`: `gh release create v<versão> decode-and-code-<versão>.zip --target main --title "Decode and Code <versão>" --notes "…"`
 6. `/plugin marketplace update future-ride-today` — e os usuários rodam a atualização do README
+
+## Migração dos projetos entre versões do método
+
+Quando uma versão muda o que o DC grava no projeto, quem a instala recebe o aviso na abertura da
+sessão, e o `setup` conduz a migração, item por item, com o sim da pessoa. A do redesign (norma →
+codex) é `dc.py migrar`: lista a cópia da norma, o esqueleto antigo do huddle e os planos abertos
+que a citam; `--aplicar norma` e `--aplicar huddle` fazem as duas mudanças que pedem o sim, e os
+planos só se listam (`migracao.py`, parte 2.4 do plano do redesign).
