@@ -52,6 +52,7 @@ Este arquivo é a **fonte da numeração**: o script lê o maior número em uso 
 | 0021 | [fix-packaged-norm-links](model/0021-fix-packaged-norm-links.md) | model | fix-packaged-norm-links | — | concluído | 2026-11-23 |
 | 0022 | [persona-spike](model/0022-persona-spike.md) | model | persona-spike | — | concluído | 2026-11-23 |
 | 0023 | [persona-ablation-spike](model/0023-persona-ablation-spike.md) | model | persona-ablation-spike | — | concluído | 2026-11-23 |
+| 0024 | [add-prd-large-proposal](0024-add-prd-large-proposal.md) | — |  | — | concluído | 2026-11-28 |
 <!-- planos:end -->
 
 > A **situação** é projetada a partir do estado das unidades — `em desenvolvimento` enquanto houver

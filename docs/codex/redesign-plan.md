@@ -351,7 +351,12 @@ levantar cada consumidor e depois troca um por vez.
   aprovação final da pessoa.
 - **Como verificar:** cada *Como verificar* da tabela, executado.
 - **Onde roda:** esta sessão.
-- **Estado:** relatório entregue em 2026-11-27, logo abaixo; aguarda a aprovação final da pessoa.
+- **Estado:**
+  - relatório entregue em 2026-11-27, logo abaixo;
+  - teste final numa cópia do AmFlow em 2026-11-28 ([`teste-final-amflow.md`](teste-final-amflow.md) e
+    [relatório](teste-final-amflow-relatorio.md)), com os 11 erros corrigidos no #90;
+  - plano `0024-add-prd-large-proposal` concluído, o primeiro do DC 3.0 sobre ele mesmo;
+  - aguarda a aprovação final da pessoa e a release.
 
 ### Relatório da verificação final
 

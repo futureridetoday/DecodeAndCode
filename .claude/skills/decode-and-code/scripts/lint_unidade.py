@@ -38,6 +38,7 @@ import re
 from pathlib import Path
 
 import lib
+import lint_plano
 import regioes
 
 CAMPOS_FRONTMATTER = ("unit_id", "unit_type", "core", "module", "state")
@@ -96,7 +97,28 @@ def lint(unidade: Path) -> list[str]:
     problemas.extend(_checar_arquivos(corpo))
     problemas.extend(_checar_ultimo_resultado(corpo))
     problemas.extend(_checar_normas(unidade, corpo))
+    if atual:
+        problemas.extend(_checar_restricoes_citadas(unidade, corpo))
     return problemas
+
+
+def _checar_restricoes_citadas(unidade: Path, corpo: str) -> list[str]:
+    """Cada `R-NN` citado na unidade de um plano grande existe na proposta do plano (D-05).
+
+    Só confere quando o plano da pasta é grande do formato 2; fora disso a unidade não é checada."""
+    plano = unidade.parent / f"{unidade.parent.name}.md"
+    if plano == unidade or not plano.is_file():
+        return []
+    try:
+        grande = (regioes.ler_campo(plano, "plan_size") or "").strip(" \t\"'") == "grande"
+        atual = lib.formato(plano) == lib.FORMATO_ATUAL
+    except ValueError:
+        return []
+    if not (grande and atual):
+        return []
+    declaradas = lint_plano.restricoes_declaradas(plano)
+    citadas = sorted({f"R-{n}" for n in lint_plano._CITACAO_RE.findall(corpo)})
+    return [f"{r} citada na unidade e não declarada na proposta do plano" for r in citadas if r not in declaradas]
 
 
 def _corpo(texto: str) -> str:

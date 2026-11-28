@@ -60,7 +60,8 @@ aceite da entrega exigem.
     derive. Pode ter mais de uma história.
   - Médio: uma entrega que pede sessão nova; 1 unidade, com derive.
   - Grande: duas ou mais entregas, em sequência; uma unidade por entrega, com derive e teste do plano
-    inteiro.
+    inteiro. A proposta carrega as três seções do grande (*Proposta*) e o lint confere que cada
+    `R-NN` tem dono.
   - Primeiro se contam as entregas; depois, se a entrega única cabe na sessão. Na dúvida, vale o
     menor.
 - **Quando falha:** plano sem porte não é aprovado.
@@ -130,7 +131,8 @@ Claude, Usuário.
 - **Quando vale:** só no grande, depois que todas as unidades forem concluídas. No pequeno e no
   médio, o teste da entrega já cobre o plano inteiro.
 - **O que exige:** Claude ou o usuário testa o plano inteiro antes da aprovação final, contra um
-  critério que o plano técnico declara.
+  critério que o plano técnico declara em `## Teste do plano inteiro`. O critério sai das fases de
+  entrega e dos `R-NN` que nenhuma unidade cobre.
 - **Quando falha:** o que falhou vira lacuna da unidade que o causa, e o trabalho volta ao code dela.
 
 **Ver também:** Teste, Porte, Aprovação, Entrega, Plano técnico, Lacuna.

@@ -79,6 +79,15 @@ anterior ao redesign.
   - É escrita para o usuário, não para quem executa: o detalhe técnico entra só quando muda a
     decisão dele.
   - O usuário a aprova (P2), e só então vem a revisão, que a transforma em plano técnico.
+  - No grande, a proposta ganha três seções `###` dentro de `## Proposta`, curtas, de uma linha por
+    item: *Métricas de sucesso*, com o valor atual, o alvo e como se mede; *Requisitos não funcionais
+    e restrições*, cada item com o identificador `R-NN`, numerado por plano; e *Fases de entrega*, a
+    ordem em que o usuário passa a ver valor e o que consegue fazer ao fim de cada fase. A métrica
+    mede o resultado depois da entrega e não se confunde com o teste do plano inteiro; a ordem de
+    execução continua no `## Depende de` de cada unidade.
+  - A crítica de Marty Cagan (*Inspired*) ao PRD vale quando ele substitui a discovery. Aqui não
+    substitui: a proposta sai do fluxo de decodificação e dos gates A e B, e o PRD é só a forma de
+    escrever.
 
 **Ver também:** Decode, Revisão, Plano técnico, Hipótese, MVP, Os quatro riscos, Referência de
 produto, Aprovação.
@@ -90,7 +99,10 @@ produto, Aprovação.
 - **Contém:** as histórias com os critérios de aceite, o porte, a independência declarada, as
   decisões e os riscos técnicos, e as tarefas ou unidades que o porte pede.
 - **Quem cria:** Claude, na revisão (P3), a partir da proposta aprovada.
-- **Regras:** o usuário o aprova em P4; o derive, no médio e no grande, só vem depois.
+- **Regras:**
+  - O usuário o aprova em P4; o derive, no médio e no grande, só vem depois.
+  - No grande, cada história indica a sua fase de entrega, e o plano declara `## Teste do plano
+    inteiro`, com o critério que sai das fases e dos `R-NN` que nenhuma unidade cobre.
 
 **Ver também:** Proposta, Revisão, Derive, Porte, História, Critério de aceite, Tarefa, Unidade,
 Aprovação.

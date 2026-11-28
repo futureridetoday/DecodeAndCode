@@ -52,3 +52,4 @@ dependencies: []
 | [0021-fix-packaged-norm-links](../model/0021-fix-packaged-norm-links.md) | pequeno | — | não declarado | — | 2026-11-23 |
 | [0022-persona-spike](../model/0022-persona-spike.md) | pequeno | — | não declarado | — | 2026-11-23 |
 | [0023-persona-ablation-spike](../model/0023-persona-ablation-spike.md) | pequeno | — | não declarado | — | 2026-11-24 |
+| [0024-add-prd-large-proposal](../0024-add-prd-large-proposal.md) | pequeno | 8 | não declarado | — | 2026-11-28 |

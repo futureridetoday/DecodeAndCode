@@ -66,7 +66,7 @@ O que vale em cada passo está no codex; leia as seções pelo título com
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`. Frontmatter: `plan_id: ""`,
    `status: draft`, `plan_type`, `format_version: 2`, `plan_size: ""`, `approved_by: ""`,
    `approved_at: ""` e, se o pedido for de uma parte do sistema, `core`. Corpo: `## Objetivo`,
-   `## Proposta`, com as partes que a seção `Proposta` do codex lista, e `## Recursos`, a tabela `| Recurso | Tipo | Onde entra |` ou a frase de
+   `## Proposta`, com as partes que a seção `Proposta` do codex lista (no apetite grande, as do grande), e `## Recursos`, a tabela `| Recurso | Tipo | Onde entra |` ou a frase de
    que não há nenhum.
 5. **Gate B para recurso do Claude Code.** Quando o pedido é criar ou automatizar algo no Claude
    Code, o mínimo viável é o primeiro degrau que resolve: nada (o que existe falha por outro
