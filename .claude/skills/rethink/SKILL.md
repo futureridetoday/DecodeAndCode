@@ -56,6 +56,8 @@ sai `1` volta para a pessoa com o motivo, e o fluxo continua do item em que paro
 **Toda pergunta vai pela ferramenta de perguntas, inclusive a aberta**: exemplos como opções, e o texto
 livre como saída. Não encerre o turno antes do passo 5. Pergunta em prosa encerra o turno, e no turno
 seguinte a liberação do `allowed-tools` não vale mais: cada comando do `dc.py` volta a pedir permissão.
+Sem a ferramenta de perguntas, peça a resposta como `/decode-and-code:rethink <resposta>`, que carrega
+a skill de novo.
 
 ## Passos
 

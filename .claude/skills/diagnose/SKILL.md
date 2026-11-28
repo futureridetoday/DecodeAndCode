@@ -63,7 +63,8 @@ leia pelo título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, n
    `## Correção` (o que muda), `## Como verificar` (o critério e o teste), `## Recursos` e
    `## Tarefas` com uma tarefa: escrever o teste, rodá-lo vermelho e guardar a saída para o
    relatório, corrigir, rodá-lo verde. Rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>`.
-4. **Aprovação (C2).** Mostre o plano mínimo. No sim, preencha `approved_by` e `approved_at` e rode
+4. **Aprovação (C2).** Mostre o plano mínimo. Peça a resposta como `/decode-and-code:diagnose <resposta>`: a liberação do
+   `allowed-tools` só vale no turno em que a skill carrega, e o sim roda comandos do `dc.py`. No sim, preencha `approved_by` e `approved_at` e rode
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar <plano>`: o plano recebe o número. Recomende
    `/decode-and-code:code <caminho>` (C3 e C4) e, depois do teste, `/decode-and-code:code aprovar
    <caminho>`, a aprovação final. Na recusa, refaça com a objeção ou encerre.

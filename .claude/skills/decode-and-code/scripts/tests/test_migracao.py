@@ -113,6 +113,60 @@ class TestPlanosAbertos(_ProjetoAntigo):
         )
 
 
+class TestHuddleComTextoProprio(_ProjetoAntigo):
+    """E-03 do teste final do DC 3.0: o huddle real citava a norma com outro texto, que nenhum par
+    de `ESQUELETO_ANTERIOR` casa — a troca só mexeu no frontmatter, e o link para a cópia apagada
+    ficou, sem que o `migrar` seguinte o listasse."""
+
+    TRECHO = (
+        "Formato, tipos e gatilhos: [`modelo-dev-units.md`](modelo-dev-units.md), seção *Huddle — fila do que\n"
+        "ainda não foi decidido*. Aqui não se duplica a norma; aqui se usa.\n"
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.gravar_o_que_o_metodo_anterior_gravava()
+        texto = self.arquivo.read_text(encoding="utf-8")
+        self.arquivo.write_text(texto + "\n" + self.TRECHO, encoding="utf-8")
+
+    def test_a_citacao_que_sobra_continua_pendente_e_aparece_com_a_linha(self):
+        migracao.aplicar(self.projeto, "huddle")
+        self.assertEqual(migracao.pendencias(self.projeto).huddles, [self.arquivo])
+        linhas = migracao.citacoes(self.arquivo)
+        self.assertEqual(len(linhas), 1)
+        numero, texto = linhas[0]
+        self.assertIn("modelo-dev-units", texto)
+        self.assertIn("modelo-dev-units", self.arquivo.read_text(encoding="utf-8").splitlines()[numero - 1])
+
+    def test_aplicar_de_novo_nao_toca_o_que_nao_sabe_trocar(self):
+        migracao.aplicar(self.projeto, "huddle")
+        antes = self.arquivo.read_bytes()
+        self.assertEqual(migracao.aplicar(self.projeto, "huddle"), [])
+        self.assertEqual(self.arquivo.read_bytes(), antes)
+
+
+class TestAvisoSoPeloQueAMigracaoResolve(_ProjetoAntigo):
+    """E-01: com a norma e o huddle migrados, os rascunhos que citam a norma só se atualizam na
+    revisão — o aviso de abertura não pode mandar ao setup por causa deles."""
+
+    def test_so_planos_abertos_nao_geram_aviso(self):
+        self.gravar_o_que_o_metodo_anterior_gravava()
+        migracao.aplicar(self.projeto, "norma")
+        migracao.aplicar(self.projeto, "huddle")
+        self.assertTrue(migracao.pendencias(self.projeto).planos)
+        self.assertIsNone(self.saida())
+
+    def test_sem_setup_com_a_copia_o_aviso_fala_de_migracao(self):
+        """O projeto do teste final usava o método há meses sem `setup.md`: o aviso dizia só "setup pendente"."""
+        self.gravar_o_que_o_metodo_anterior_gravava()
+        self.setup_md = self.projeto / "docs" / "plan" / "system" / "setup.md"
+        self.setup_md.unlink()
+        saida = self.saida()
+        self.assertIn("/decode-and-code:setup", saida["systemMessage"])
+        self.assertIn("método anterior", saida["systemMessage"])
+        self.assertIn("migração", saida["hookSpecificOutput"]["additionalContext"])
+
+
 class TestProjetoLimpo(_ProjetoAntigo):
     def test_sem_nada_do_metodo_anterior_nenhum_aviso(self):
         self.assertTrue(migracao.pendencias(self.projeto).vazias())

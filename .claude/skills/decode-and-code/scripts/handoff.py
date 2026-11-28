@@ -48,13 +48,14 @@ _SITUACAO = {"verified": "verificada"}
 _ESQUELETO_ATUAL = """\
 # Handoff — plano {plano}
 
-Este arquivo leva o plano a uma sessão nova e conduz o code das unidades, uma por vez, na ordem da
-fila. É projeção: o derive o regera, e edição à mão se perde.
+Este arquivo leva o plano a uma sessão nova e conduz o code das unidades, cada uma na sua sessão,
+pela fila. É projeção: o derive o regera, e edição à mão se perde.
 
 ## Como executar cada unidade
 
-`/decode-and-code:code <unidade>`, uma por vez, na ordem da fila. A próxima só começa depois de o
-usuário aprovar a entrega da anterior (P7). {fecho}
+`/decode-and-code:code <unidade>`, cada uma na sua sessão. Uma unidade só começa depois de o usuário
+aprovar a entrega das unidades que ela cita em `## Depende de` (P7); as que não dependem uma da
+outra podem rodar em paralelo. {fecho}
 
 ## O que a sessão de cada unidade lê
 

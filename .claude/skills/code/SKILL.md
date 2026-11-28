@@ -47,13 +47,13 @@ source: local
 Pedido: $ARGUMENTS
 
 Você executa o modo `code`, sem o histórico da conversa. `plan_root` é o que `python3 "${CLAUDE_SKILL_DIR}/dc.py" raiz` imprime; os scripts ficam em `${CLAUDE_SKILL_DIR}/../decode-and-code/scripts/`, e nada dali se lê, só se roda pelo `dc.py`. Os subcomandos do `dc.py` recebem
-**caminho**: se vier o id `NNNN-nn`, ache o arquivo com Glob `<plan_root>/**/NNNN-*/nn-*.md`.
+o caminho da unidade ou o id `NNNN-nn`, que o `dc.py` resolve.
 
 ## `aprovar <alvo>`
 
 Só quando o usuário pediu, com estas palavras: rode
-`python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar-entrega <alvo> --por "<nome dele no git>"` e devolva a
-saída. Recusa (código 2) volta ao usuário com o motivo. Se esta aprovação fecha o plano e a proposta
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar-entrega <alvo>` e devolva a saída: quem aprova é o
+`user.name` do git do projeto, e `--por "<nome>"` só entra se o usuário disser outro nome. Recusa (código 2) volta ao usuário com o motivo. Se esta aprovação fecha o plano e a proposta
 declara quando conferir a hipótese, abra
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir revisitar --autor Claude`, com o plano e a data no
 stdin. Nada mais neste modo.

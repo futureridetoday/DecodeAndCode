@@ -449,6 +449,59 @@ class TestLintUnidade(_ProjetoCase):
         self.assertSemTraceback(r)
 
 
+class TestIdDeUnidade(_ProjetoCase):
+    """E-10 do teste final do DC 3.0: o `code` recebe `NNNN-nn` e achava o arquivo por Glob, que a
+    sessão não tinha. O `dc.py` resolve o id."""
+
+    def test_id_vira_o_caminho_da_unidade(self):
+        dir_plano = self.aprovar()
+        unidade = self.unidade(dir_plano)
+        pelo_caminho = self.dc("verificar", str(unidade), "--dry-run")
+        pelo_id = self.dc("verificar", f"{dir_plano.name[:4]}-01", "--dry-run")
+        self.assertEqual((pelo_id.returncode, pelo_id.stdout), (pelo_caminho.returncode, pelo_caminho.stdout))
+
+    def test_id_sem_unidade_e_codigo_2_sem_traceback(self):
+        self.bootstrap()
+        r = self.dc("entrada-code", "9999-01")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("9999-01", r.stderr)
+        self.assertSemTraceback(r)
+
+
+class TestAprovarEntregaSemPor(_ProjetoCase):
+    """E-09: sem `--por`, quem aprova é o `user.name` do git do projeto."""
+
+    def test_usa_o_nome_do_git(self):
+        import re as _re
+
+        from test_formato_derive import UNIDADE
+
+        self.bootstrap()
+        for args in (["init", "-q"], ["config", "user.name", "Ana Lima"]):
+            subprocess.run(["git", *args], cwd=self.projeto, check=True, capture_output=True)
+        dir_plano = self.raiz_planos / "0001-add-algo"
+        dir_plano.mkdir()
+        (dir_plano / "0001-add-algo.md").write_text(
+            "---\nplan_id: \"0001\"\nstatus: approved\nplan_size: grande\nplan_type: feature\n"
+            "format_version: 2\n---\n\n# add-algo\n\n## Backlog\n\n<!-- backlog:start -->\n<!-- backlog:end -->\n",
+            encoding="utf-8",
+        )
+        planos = self.raiz_planos / "_planos.md"
+        planos.write_text(
+            "<!-- planos:start -->\n| # | Plano | Core | Módulo | Origem | Situação | Aprovado |\n"
+            "|---|---|---|---|---|---|---|\n| 0001 | [add-algo](0001-add-algo/0001-add-algo.md) | — | | — "
+            "| em desenvolvimento | 2026-11-27 |\n<!-- planos:end -->\n",
+            encoding="utf-8",
+        )
+        texto = _re.sub(r"(?m)^unit_type: .*$", "unit_type: rule", UNIDADE)
+        texto = _re.sub(r"(?m)^test: .*$", 'test: ""', texto)
+        unidade = dir_plano / "01-algo.md"
+        unidade.write_text(texto, encoding="utf-8")
+        r = self.dc("aprovar-entrega", "0001-01")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("approved_by: Ana Lima", unidade.read_text(encoding="utf-8"))
+
+
 class TestLintPlano(_ProjetoCase):
     """`lint-plano` — o que o `decode` roda sobre a proposta que grava no `_inbox` (`P-06`)."""
 
@@ -1131,7 +1184,7 @@ class TestSetupEscopo(_ProjetoCase):
     def test_sem_aplicar_mostra_o_estado_e_nao_escreve(self):
         r = self.dc("setup-escopo")
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("habilitado: false", r.stdout)
+        self.assertIn("habilitado: ausente", r.stdout)
         self.assertIn("marketplace: false", r.stdout)
         self.assertFalse(self.settings.exists())
 

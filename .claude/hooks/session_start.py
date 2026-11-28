@@ -41,7 +41,27 @@ def _setup_pendente(projeto: Path) -> bool:
     return not huddle._campo_sem_aspas(arquivo, "completed_at")
 
 
-def _aviso_setup() -> dict:
+def _aviso_setup(projeto: Path) -> dict:
+    try:
+        anterior = migracao.aviso_pendente(projeto)
+    except Exception:
+        anterior = False
+    if anterior:
+        # Projeto que já usava o método antes do setup existir (E-01 do teste final do DC 3.0).
+        return {
+            "systemMessage": (
+                "Este projeto usa o método anterior do decode-and-code, que trocou a norma pelo codex. "
+                "Rode /decode-and-code:setup: ele começa pela migração, item por item, com o seu sim."
+            ),
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": (
+                    "O projeto tem o que o método anterior gravou (dc.py migrar lista) e ainda não fez o "
+                    "setup. Proponha /decode-and-code:setup, que começa pela migração; nada se apaga "
+                    "sem o sim da pessoa."
+                ),
+            },
+        }
     return {
         "systemMessage": "Setup do decode-and-code pendente neste projeto. Rode /decode-and-code:setup.",
         "hookSpecificOutput": {
@@ -85,13 +105,13 @@ def _aviso_huddle(projeto: Path, hoje: date) -> tuple[str, str] | None:
 
 def _aviso_migracao(projeto: Path) -> tuple[str, str] | None:
     """O que o projeto ainda tem do método anterior ao codex (parte 2.4 do redesign), ou `None`."""
-    if migracao.pendencias(projeto).vazias():
+    if not migracao.aviso_pendente(projeto):
         return None
     return (
         "O decode-and-code trocou a norma pelo codex, e este projeto ainda tem o que o método anterior "
         "gravou. Rode /decode-and-code:setup para migrar, item por item, com o seu sim.",
-        "O projeto tem pendências da migração para o codex (dc.py migrar as lista): a cópia da norma, o "
-        "esqueleto antigo do huddle ou planos abertos que a citam. Proponha /decode-and-code:setup, "
+        "O projeto tem pendências da migração para o codex (dc.py migrar as lista): a cópia da norma ou "
+        "um huddle que ainda a cita. Proponha /decode-and-code:setup, "
         "que conduz a migração; nada se apaga sem o sim da pessoa.",
     )
 
@@ -116,7 +136,7 @@ def aviso(projeto: Path, hoje: date) -> dict | None:
     do log saem juntos, cada um quando há o que dizer.
     """
     if _setup_pendente(projeto):
-        return _aviso_setup()
+        return _aviso_setup(projeto)
     try:
         parte_huddle = _aviso_huddle(projeto, hoje)
     except Exception:

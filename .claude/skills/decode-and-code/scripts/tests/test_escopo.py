@@ -43,18 +43,18 @@ class TestConfig(_Case):
 
 class TestEstado(_Case):
     def test_sem_settings_nada_habilitado(self):
-        self.assertEqual(escopo.estado(self.projeto), {"habilitado": False, "marketplace": False})
+        self.assertEqual(escopo.estado(self.projeto), {"habilitado": "ausente", "marketplace": False})
         self.assertFalse(self.settings.exists())
 
     def test_reflete_o_que_esta_no_arquivo(self):
         self.escrever(json.dumps({"enabledPlugins": {self.chave: True}}))
-        self.assertEqual(escopo.estado(self.projeto), {"habilitado": True, "marketplace": False})
+        self.assertEqual(escopo.estado(self.projeto), {"habilitado": "true", "marketplace": False})
         self.escrever(json.dumps({"extraKnownMarketplaces": {self.mk["name"]: {"source": {}}}}))
-        self.assertEqual(escopo.estado(self.projeto), {"habilitado": False, "marketplace": True})
+        self.assertEqual(escopo.estado(self.projeto), {"habilitado": "ausente", "marketplace": True})
 
-    def test_plugin_false_nao_conta_como_habilitado(self):
+    def test_plugin_false_aparece_como_false_e_nao_como_ausente(self):
         self.escrever(json.dumps({"enabledPlugins": {self.chave: False}}))
-        self.assertFalse(escopo.estado(self.projeto)["habilitado"])
+        self.assertEqual(escopo.estado(self.projeto)["habilitado"], "false")
 
     def test_json_invalido_levanta(self):
         self.escrever("{ quebrado")
@@ -100,10 +100,12 @@ class TestHabilitar(_Case):
         self.assertIn("m", dados["extraKnownMarketplaces"])
         self.assertIn(self.mk["name"], dados["extraKnownMarketplaces"])
 
-    def test_plugin_false_passa_a_true(self):
+    def test_plugin_false_fica_false(self):
+        """E-06: no teste final, o `false` desligava a versão instalada; trocá-lo a reativaria."""
         self.escrever(json.dumps({"enabledPlugins": {self.chave: False}}))
-        self.assertTrue(escopo.habilitar(self.projeto))
-        self.assertTrue(self.ler()["enabledPlugins"][self.chave])
+        self.assertTrue(escopo.habilitar(self.projeto))  # acrescentou o marketplace
+        self.assertIs(self.ler()["enabledPlugins"][self.chave], False)
+        self.assertFalse(escopo.habilitar(self.projeto))
 
     def test_json_invalido_ou_raiz_nao_objeto_levanta_e_nao_muda_o_arquivo(self):
         for texto in ("{ quebrado", "[1, 2]"):

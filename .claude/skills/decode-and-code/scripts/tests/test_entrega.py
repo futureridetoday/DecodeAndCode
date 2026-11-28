@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Testes do gate de entrada do code e da aprovação da entrega — subparte 2.2.09 (K-06).
 
-Codex, *Code*: a próxima unidade só começa depois da aprovação da anterior. *Aprovação*: cada
+Codex, *Code*: uma unidade só começa depois da aprovação das unidades de que depende (`## Depende de`). *Aprovação*: cada
 entrega é aprovada com o teste (P7); no pequeno, a aprovação da entrega única é a final.
 """
 
@@ -41,8 +41,9 @@ class _Plano(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
 
-    def unidade(self, nn: str, **campos: str) -> Path:
+    def unidade(self, nn: str, depende: str = "nada", **campos: str) -> Path:
         texto = UNIDADE.replace("unit_id: 0001-01", f"unit_id: 0001-{nn}")
+        texto = texto.replace("## Depende de\n\nnada\n", f"## Depende de\n\n{depende}\n")
         for chave, valor in campos.items():
             texto = re.sub(rf"(?m)^{chave}: .*$", f"{chave}: {valor}", texto)
         caminho = self.dir_plano / f"{nn}-algo.md"
@@ -54,14 +55,39 @@ class TestEntrada(_Plano):
     def test_primeira_unidade_pode_comecar(self) -> None:
         self.assertEqual(entrega.entrada(self.unidade("01")), [])
 
-    def test_segunda_espera_a_aprovacao_da_primeira(self) -> None:
+    def test_segunda_espera_a_aprovacao_da_que_ela_cita(self) -> None:
         self.unidade("01", state="verified")
-        problemas = entrega.entrada(self.unidade("02"))
-        self.assertEqual(problemas, ["a unidade anterior 0001-01 ainda não teve a entrega aprovada (P7)"])
+        problemas = entrega.entrada(self.unidade("02", depende="- `0001-01` — o contrato X"))
+        self.assertEqual(
+            problemas, ["a unidade 0001-01, de que esta depende, ainda não teve a entrega aprovada (P7)"]
+        )
 
-    def test_com_a_anterior_aprovada_pode_comecar(self) -> None:
+    def test_com_a_dependencia_aprovada_pode_comecar(self) -> None:
         self.unidade("01", state="verified", approved_by="Ana", approved_at="2026-11-27")
-        self.assertEqual(entrega.entrada(self.unidade("02")), [])
+        self.assertEqual(entrega.entrada(self.unidade("02", depende="- `0001-01` — o contrato X")), [])
+
+    def test_sem_dependencia_corre_em_paralelo(self) -> None:
+        """E-02 do teste final do DC 3.0: o handoff mandou abrir a 01 e a 03 juntas, e o gate, que
+        exigia toda unidade de número menor, recusou a 03."""
+        self.unidade("01")
+        self.unidade("02", depende="- `0001-01`")
+        self.assertEqual(entrega.entrada(self.unidade("03")), [])
+
+    def test_so_as_dependencias_citadas_contam(self) -> None:
+        self.unidade("01", state="verified", approved_by="Ana", approved_at="2026-11-27")
+        self.unidade("02")
+        self.unidade("03")
+        problemas = entrega.entrada(self.unidade("04", depende="- `0001-01` e `0001-03`"))
+        self.assertEqual(
+            problemas, ["a unidade 0001-03, de que esta depende, ainda não teve a entrega aprovada (P7)"]
+        )
+
+    def test_dependencia_que_nao_existe_no_plano(self) -> None:
+        problemas = entrega.entrada(self.unidade("02", depende="- `0001-07`"))
+        self.assertEqual(problemas, ["## Depende de cita 0001-07, que não é unidade deste plano"])
+
+    def test_outro_plano_nao_entra_no_gate(self) -> None:
+        self.assertEqual(entrega.entrada(self.unidade("01", depende="- `0002-03`, plano já concluído")), [])
 
     def test_arquivo_que_nao_e_unidade_nem_plano_pequeno(self) -> None:
         problemas = entrega.entrada(self.dir_plano / "0001-add-algo.md")

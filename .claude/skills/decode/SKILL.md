@@ -60,7 +60,8 @@ O que vale em cada passo está no codex; leia as seções pelo título com
 3. **Contexto do projeto.** Leia a foundation (`<plan_root>/system/foundation.md`, se existir), as
    rules em `.claude/rules/`, `.claude/guardrails.json` e o mapa de recursos. Recurso entra pelo
    nome, nunca copiado.
-4. **Proposta (P1).** Rode o fluxo de decodificação nos três papéis e escreva
+4. **Proposta (P1).** Se o pedido retoma um rascunho sem `format_version` no `_inbox`, leia antes
+   `Plano anterior ao redesign`. Rode o fluxo de decodificação nos três papéis e escreva
    `<plan_root>/_inbox/<nome>.md`: nome pela regra de `Numeração e nomenclatura`, conferido com
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`. Frontmatter: `plan_id: ""`,
    `status: draft`, `plan_type`, `format_version: 2`, `plan_size: ""`, `approved_by: ""`,
@@ -73,7 +74,8 @@ O que vale em cada passo está no codex; leia as seções pelo título com
    (só com contexto isolado). Schema em dúvida se confere em code.claude.com.
 6. **Gates.** Escreva em `## Gates` a resposta ao A e ao B, com o que o B cortou. Se um falha,
    refaça a proposta ou proponha encerrar o plano.
-7. **Aprovação (P2).** Mostre a proposta e pergunte. No sim, acrescente `## Aprovação da proposta`
+7. **Aprovação (P2).** Mostre a proposta e pergunte. Peça a resposta como `/decode-and-code:decode <resposta>`: a liberação do
+   `allowed-tools` só vale no turno em que a skill carrega, e o sim roda comandos do `dc.py`. No sim, acrescente `## Aprovação da proposta`
    com quem aprovou e a data, e recomende a revisão: `/decode-and-code:review-plan <caminho>`. Na
    recusa, refaça com a objeção ou encerre.
 8. **Fecho:** `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho`; o que ficou aberto vai por

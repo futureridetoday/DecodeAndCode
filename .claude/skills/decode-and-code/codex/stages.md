@@ -121,7 +121,8 @@ histórico da conversa; só existe no médio e no grande.
   derivadas.
 - **Regras:**
   - Dá a cada unidade o que a Definition of Ready pede.
-  - Declara em cada unidade o que ela espera das anteriores: nomes, contratos e arquivos.
+  - Declara em cada unidade de que unidades ela depende, pelo identificador, e o que espera delas:
+    nomes, contratos e arquivos.
   - Confere se os recursos do projeto citados ainda existem.
 
 **Ver também:** Unidade, Definition of Ready, Cold-start, Handoff, Lacuna, Padrão de código,
@@ -140,8 +141,8 @@ Guideline, Tabela de recursos do plano, Aprovação.
 - **Gate de saída:** o teste da entrega e a aprovação do usuário (P7).
 - **Regras:**
   - No pequeno, as tarefas rodam na mesma sessão.
-  - No médio e no grande, cada unidade roda na sua sessão nova, na ordem do handoff, e a próxima só
-    começa depois da aprovação da anterior.
+  - No médio e no grande, cada unidade roda na sua sessão nova e só começa depois da aprovação das
+    unidades de que depende; as que não dependem uma da outra podem rodar em paralelo.
   - Se a entrega anterior divergiu do que a unidade espera, a unidade é ajustada antes de rodar; o
     ajuste que muda o critério ou o escopo segue a Lacuna.
   - Usa os recursos do projeto, o padrão de código e as guidelines dos caminhos que toca.

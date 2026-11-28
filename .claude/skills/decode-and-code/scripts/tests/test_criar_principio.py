@@ -62,6 +62,19 @@ class TestGravacao(_Base):
         self.assertTrue(texto.startswith(original))
         self.assertIn("## North star", texto)
 
+    def test_entra_antes_da_fonte(self):
+        """E-07 do teste final do DC 3.0: o princípio novo caía depois de `## Fonte`."""
+        self.escrever_rule("principles.md", (
+            "---\nname: principles\ndescription: Do time.\n---\n\n# Princípios\n\n"
+            "## Antigo\n\n**Enunciado:** a.\n\n**Teste:** b.\n\n## Fonte\n\nDe onde veio.\n"
+        ))
+        self.criar()
+        texto = self.alvo.read_text(encoding="utf-8")
+        self.assertLess(texto.index("## Antigo"), texto.index("## North star"))
+        self.assertLess(texto.index("## North star"), texto.index("## Fonte"))
+        self.assertTrue(texto.endswith("## Fonte\n\nDe onde veio.\n"))
+        self.assertEqual(rules.lint_rule(self.alvo), [])
+
     def test_descricao_vale_so_na_criacao(self):
         self.criar(descricao="Principles of the project.")
         self.assertEqual(regioes.ler_campo(self.alvo, "description"), '"Principles of the project."')
