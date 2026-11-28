@@ -28,6 +28,13 @@ import scaffold
 CABECALHO = "| # | Plano | Core | Módulo | Origem | Situação | Aprovado |\n|---|---|---|---|---|---|---|\n"
 
 
+PROPOSTA_GRANDE = (
+    "### Métricas de sucesso\n\n- uma métrica\n\n"
+    "### Requisitos não funcionais e restrições\n\n- **R-01** uma restrição\n\n"
+    "### Fases de entrega\n\n- uma fase"
+)
+
+
 def _texto(
     plan_size: str,
     *,
@@ -49,6 +56,7 @@ def _texto(
     linhas += ["---", "", "# exemplo", ""]
     secoes = {
         "Objetivo": "Uma frase.",
+        **({"Proposta": PROPOSTA_GRANDE, "Teste do plano inteiro": "O critério."} if plan_size == "grande" else {}),
         "Histórias": "Como quem usa, quero algo, para um fim.",
         "Independência": "Um plano só: sem a parte A, a B não serve.",
         "Recursos": "Nenhum recurso do projeto.",

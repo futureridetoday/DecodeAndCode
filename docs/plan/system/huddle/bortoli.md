@@ -41,6 +41,16 @@ Num worktree, os scripts chamados pelas skills do checkout principal leem o esta
 
 Evidência: revisão: persona-ablation-spike
 
+### H-03 · `divergência` · 2026-11-28 · Claude
+
+O codex exige o teste do plano inteiro (P8) no grande antes da aprovação final (rules.md, Teste do plano inteiro; Aprovação, item 5), mas nenhuma skill nem script o conduz: o lint não pede o critério, e o aprovar-entrega fecha o grande na aprovação da última unidade (entrega.py). A proposta add-prd-large-proposal só faz o plano técnico declarar o critério e deixa a execução para um plano fix próprio.
+
+Evidência: revisão: decode de add-prd-large-proposal, 2026-11-28
+
+### H-04 · `revisitar` · 2026-11-28 · Claude
+
+Plano 0024-add-prd-large-proposal, aprovado em 2026-11-28. Conferir a hipótese depois dos dois próximos planos grandes: toda R-NN com dono na aprovação das unidades (P5) e nenhuma restrição reposta pelo usuário numa recusa do P2 ou do P4. Registrar também que o code do 0024 escreveu o código antes do teste e provou o vermelho por reversão.
+
 ## Fechadas
 
 | # | Tipo | Fechada em | Destino |

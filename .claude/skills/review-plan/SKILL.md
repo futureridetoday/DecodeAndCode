@@ -64,6 +64,8 @@ memória. Comece por `Revisão`, `Plano técnico`, `História`, `Critério de ac
    - `## Decisões e riscos` — as decisões técnicas e os riscos; nenhuma em aberto;
    - pelo porte: `## Tarefas`, como checklist `- [ ]`, no pequeno; `## Unidades`, tabela
      `| # | Unidade | Entrega | Histórias |`, uma linha numerada por unidade, nos portes com unidade.
+   No grande, siga `Plano técnico` e `Revisão` quanto à fase das histórias, ao teste do plano
+   inteiro e ao acréscimo à proposta.
    Preencha `plan_size`. No pequeno, sem unidade para levar o teste, a revisão o declara no plano: acrescente
    ao frontmatter `test: <caminho do teste>` (vazio no tipo `rule`), `state: spec` e
    `verified_at: ""`. O que o tipo pede que a revisão confira está em `Tipo`.

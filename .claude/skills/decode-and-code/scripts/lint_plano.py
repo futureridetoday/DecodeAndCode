@@ -25,6 +25,7 @@ import re
 from pathlib import Path
 
 import lib
+import porte
 import regioes
 
 
@@ -129,7 +130,71 @@ def _checar_formato_atual(plano: Path, corpo: str, plan_size: str) -> list[str]:
         problemas.append(f"médio tem exatamente 1 unidade; '## Unidades' tem {previstas}")
     elif plan_size == "grande" and previstas < 2:
         problemas.append(f"grande tem duas ou mais unidades; '## Unidades' tem {previstas}")
+    if plan_size == "grande":
+        problemas.extend(_checar_prd_do_grande(plano, corpo))
     return problemas
+
+
+# Seções `###` que a proposta do grande carrega dentro de `## Proposta` (codex, *Proposta*).
+SECOES_DA_PROPOSTA_GRANDE = ("Métricas de sucesso", "Requisitos não funcionais e restrições", "Fases de entrega")
+SECAO_DE_RESTRICOES = SECOES_DA_PROPOSTA_GRANDE[1]
+
+_RESTRICAO_RE = re.compile(r"(?m)^\s*-\s*\**R-(\d{2})\b")
+_CITACAO_RE = re.compile(r"\bR-(\d{2})\b")
+
+
+def _secao_h2(corpo: str, nome: str) -> str | None:
+    """Conteúdo de `## nome` até o próximo `## ` — `None` se ausente."""
+    m = re.search(rf"(?ms)^##\s+{re.escape(nome)}\s*$\n(.*?)(?=^##\s|\Z)", corpo)
+    return m.group(1) if m else None
+
+
+def _subsecao(texto: str, titulo: str) -> str | None:
+    """Conteúdo de `### titulo` até o próximo `###` ou `##` — `None` se ausente."""
+    m = re.search(rf"(?ms)^###\s+{re.escape(titulo)}\s*$\n(.*?)(?=^#{{2,3}}\s|\Z)", texto)
+    return m.group(1) if m else None
+
+
+def restricoes_declaradas(plano: Path) -> set[str]:
+    """Os `R-NN` declarados em `### Requisitos não funcionais e restrições` de `## Proposta`."""
+    proposta = _secao_h2(_corpo(plano.read_text(encoding="utf-8")), "Proposta") or ""
+    secao = _subsecao(proposta, SECAO_DE_RESTRICOES) or ""
+    return {f"R-{n}" for n in _RESTRICAO_RE.findall(secao)}
+
+
+def _checar_prd_do_grande(plano: Path, corpo: str) -> list[str]:
+    """As três seções da proposta, o teste do plano inteiro e o dono de cada `R-NN` (codex, *Proposta*)."""
+    proposta = _secao_h2(corpo, "Proposta")
+    problemas = []
+    for titulo in SECOES_DA_PROPOSTA_GRANDE:
+        if proposta is None or _subsecao(proposta, titulo) is None:
+            problemas.append(f"grande exige '### {titulo}' dentro de '## Proposta'")
+    teste = _secao_h2(corpo, "Teste do plano inteiro")
+    if teste is None:
+        problemas.append("grande exige '## Teste do plano inteiro'")
+    problemas.extend(_checar_donos(plano, teste or ""))
+    return problemas
+
+
+def _checar_donos(plano: Path, teste_inteiro: str) -> list[str]:
+    """Cada `R-NN` declarado tem dono: o critério de uma unidade ou o teste do plano inteiro.
+
+    Só roda com o plano em `<NNNN-nome>/<NNNN-nome>.md` e unidades na pasta; antes do derive não há o
+    que conferir."""
+    if plano.name != f"{plano.parent.name}.md":
+        return []
+    unidades = porte._listar_unidades(plano.parent)
+    if not unidades:
+        return []
+    donos = set(_CITACAO_RE.findall(teste_inteiro))
+    for unidade in unidades:
+        criterio = _secao_h2(_corpo(unidade.read_text(encoding="utf-8")), "Critério de aceite") or ""
+        donos.update(_CITACAO_RE.findall(criterio))
+    return [
+        f"{r} não tem dono: nenhum '## Critério de aceite' de unidade nem '## Teste do plano inteiro' a cita"
+        for r in sorted(restricoes_declaradas(plano))
+        if r[2:] not in donos
+    ]
 
 
 def _checar_tipo(plano: Path) -> list[str]:

@@ -66,7 +66,8 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
    `Critério de aceite`, `Tarefas` (lista), `Arquivos` (tabela com os caminhos entre crases),
    `Guidelines`, `Recursos`, `Decisões e lacunas` e `Depende de` — nomes, contratos e arquivos que
    ela espera das unidades de que depende, cada uma citada pelo `unit_id` (o gate do `code` lê esses ids), ou `nada`. O `test:` aponta o arquivo do teste mesmo antes de ele
-   existir. O que o tipo do plano pede no aceite está em `Tipo`.
+   existir. O que o tipo do plano pede no aceite está em `Tipo`. No grande, os `R-NN` do critério
+   seguem `Derive`.
 3. **Guidelines.** Com a tabela `Arquivos` escrita, rode
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" guidelines-aplicaveis <unidade>` e ponha cada linha que ele
    devolver na tabela `| Guideline | Onde |` de `## Guidelines`, mais o padrão de código da
@@ -75,7 +76,7 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
 4. **Recursos.** Confira que cada recurso de `## Recursos` do plano ainda existe no projeto; um que
    sumiu é lacuna do plano.
 5. **Lint.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-unidade <unidade>...` em cada unidade; corrija
-   ali o que ele apontar.
+   ali o que ele apontar. No grande, termine com `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>`.
 6. **Backlog.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" projetar-backlog <dir_plano>`.
 7. **Handoff.** `python3 "${CLAUDE_SKILL_DIR}/dc.py" handoff <dir_plano>` grava `_handoff.md`,
    lendo do stdin as seções `## Fila`, `## Pendências` e `## Sugestão` (seção ausente é erro), por
@@ -90,7 +91,7 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
 > **O handoff e o backlog são projeção.** Cada `derive` os regera, e edição à mão se perde. O
 > prefixo `_` mantém o handoff fora do padrão `NN-*.md` que conta unidades.
 
-Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `codex`, `proxima-unidade`, `guidelines-aplicaveis`, `lint-unidade`, `projetar-backlog`, `handoff`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
+Composição via `dc.py` — ponto de entrada único, o que o `allowed-tools` libera; rode-o do diretório do projeto. **Rode o comando exatamente como está escrito** — sem variável de shell, sem tirar as aspas e sem trocar o caminho —, porque a liberação de permissão casa o texto do comando. Subcomandos: `codex`, `proxima-unidade`, `guidelines-aplicaveis`, `lint-unidade`, `lint-plano`, `projetar-backlog`, `handoff`, `huddle-fecho`, `huddle-abrir` e `huddle-lint-relatorio`.
 
 ## Fora do escopo
 

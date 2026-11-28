@@ -77,7 +77,7 @@ conceitual.
   - B, mínimo viável: é a menor versão que resolve, com o que fica de fora declarado.
 - **Regras:**
   - A proposta tem o tamanho do pedido: num pedido pequeno, hipótese, MVP e riscos cabem numa linha
-    cada.
+    cada. Quando o apetite é grande, escreve também as seções que a *Proposta* pede para o grande.
   - Decodifica com o mindset de produto, apoiado nas referências de produto, e com o fluxo de
     decodificação como base.
   - Usa o que o projeto já tem: a foundation, os princípios, as guidelines, os guardrails e os
@@ -104,6 +104,9 @@ Fluxo de decodificação, Papel, Foundation, Recurso do projeto, Tabela de recur
   - Fecha cada decisão em aberto, ou a declara fora de escopo.
   - Abre cada fonte técnica da proposta e confere que existe e serve.
   - Quando o porte diverge do apetite da proposta, mostra a diferença ao usuário na aprovação (P4).
+  - Quando mede grande e a proposta não tem as seções do grande, escreve-as com a primeira linha
+    `*Acrescentada na revisão (P3).*` e as aponta na pergunta do P4.
+  - No grande, indica a fase de cada história e declara o teste do plano inteiro (*Plano técnico*).
   - Quebra o trabalho em tarefas e define o porte.
 
 **Ver também:** Plano técnico, História, Critério de aceite, Tarefa, Unidade, Porte, Independência
@@ -124,6 +127,8 @@ histórico da conversa; só existe no médio e no grande.
   - Declara em cada unidade de que unidades ela depende, pelo identificador, e o que espera delas:
     nomes, contratos e arquivos.
   - Confere se os recursos do projeto citados ainda existem.
+  - No grande, cita no critério de aceite de cada unidade os `R-NN` de que ela cuida; o `R-NN` que
+    nenhuma unidade cita fica com o teste do plano inteiro.
 
 **Ver também:** Unidade, Definition of Ready, Cold-start, Handoff, Lacuna, Padrão de código,
 Guideline, Tabela de recursos do plano, Aprovação.

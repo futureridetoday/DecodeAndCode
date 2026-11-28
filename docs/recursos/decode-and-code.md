@@ -29,11 +29,12 @@ exceção. Cada skill lê do codex, pelo título, as seções que valem para ela
 
 - **`review-plan <plano>`** (Opus) — escreve, abaixo da proposta aprovada, as histórias, a
   independência, as decisões e os riscos, e as tarefas (pequeno) ou a tabela de unidades (médio e
-  grande); confere fontes, recursos e concorrência; roda `validar-nome` e `lint-plano`. Na
+  grande); no grande, também a fase de cada história e o `## Teste do plano inteiro`; confere fontes,
+  recursos e concorrência; roda `validar-nome` e `lint-plano`. Na
   aprovação do usuário (P4), roda `aprovar`: o plano recebe número e vai para a raiz dos planos.
 - **`derive <plano>`** (Opus, só por invocação explícita) — no médio e no grande, escreve uma
   unidade por linha de `## Unidades`, com os blocos da Definition of Ready, cita as guidelines dos
-  caminhos (`guidelines-aplicaveis`), linta (`lint-unidade`), projeta o backlog e grava o
+  caminhos (`guidelines-aplicaveis`), linta (`lint-unidade`, e `lint-plano` no grande, que confere o dono de cada `R-NN`), projeta o backlog e grava o
   `_handoff.md`. O usuário aprova as unidades juntas.
 - **`code <unidade>`** (Sonnet, em fork, sem o histórico) — `entrada-code` confere a unidade e a
   aprovação das unidades que ela cita em `## Depende de`; escreve o teste e o código pelo critério de aceite; `verificar` projeta o
