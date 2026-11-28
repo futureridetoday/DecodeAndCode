@@ -27,7 +27,7 @@ isso é julgamento, fora do alcance de regex.
 **Formato 2** (codex, *Definition of Ready*; subparte 2.2.08): a unidade traz os blocos de
 `BLOCOS_DO_FORMATO_ATUAL` — a história, o critério de aceite (com o teste no `test:`), as tarefas,
 os arquivos, as guidelines dos caminhos, os recursos, as decisões e lacunas que valem para ela e o
-que espera das anteriores. `core` e `module` deixam de ser exigidos: não há pasta por parte do
+que espera das unidades de que depende. `core` e `module` deixam de ser exigidos: não há pasta por parte do
 sistema. O teto de passos sai (D-06 do plano do redesign): a unidade não tem limite de tarefas. O
 formato 1 segue com os blocos de antes, também sem o teto.
 """

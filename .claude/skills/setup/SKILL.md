@@ -53,6 +53,8 @@ sugestão em que parou.
 **Toda pergunta vai pela ferramenta de perguntas, inclusive a aberta**: exemplos como opções, e o texto
 livre como saída. Não encerre o turno antes da etapa 7. Pergunta em prosa encerra o turno, e no turno
 seguinte a liberação do `allowed-tools` não vale mais: cada comando do `dc.py` volta a pedir permissão.
+Sem a ferramenta de perguntas, peça a resposta como `/decode-and-code:setup <resposta>`, que carrega
+a skill de novo.
 
 Antes da etapa 1, rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" explicar conversa`: as opções de cada
 sugestão, as duas edições e os formatos de entrada dos comandos — *JSON pelo stdin*, *Padrões de
@@ -70,8 +72,9 @@ que cada um se atualiza quando voltar à revisão, ao derive ou ao code. Com o s
 **0 — Pré-condições.** Confirme que o setup é desejado agora; se não for, encerre. Proponha
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" bootstrap`: ele cria só o que falta e nunca sobrescreve. Depois rode
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-escopo`. A saída tem duas linhas: `habilitado` diz se o plugin
-está em `enabledPlugins` do `.claude/settings.json`, e `marketplace`, se o marketplace está em
-`extraKnownMarketplaces`. Com alguma `false`, proponha
+está em `enabledPlugins` do `.claude/settings.json` (`true`, `false` ou `ausente`), e `marketplace`, se o
+marketplace está em `extraKnownMarketplaces`. `habilitado: false` é escolha do projeto, que o setup não
+troca. Com `habilitado: ausente` ou `marketplace: false`, proponha
 `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-escopo --aplicar`, que acrescenta só o que falta, e aplique com
 o sim. Explique que a habilitação commitada não baixa o plugin: cada pessoa o instala uma vez por clone.
 
@@ -125,7 +128,9 @@ que uma escrita contém, por regex — pergunte pelas decisões e procure-as no 
 proposta inteira e grave só depois do **Aprovar**: guideline, o JSON `{nome, descricao, paths, corpo}`
 para `python3 "${CLAUDE_SKILL_DIR}/dc.py" criar-guideline` (com `aguardando: true` se o caminho ainda
 não existe); guardrail, o JSON `{regra, proibido, permitido}` para
-`python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`.
+`python3 "${CLAUDE_SKILL_DIR}/dc.py" adicionar-guardrail`. Se a gravação esbarrar num guardrail ou num
+erro e a proposta precisar mudar, a versão mudada volta à pessoa antes de gravar: o sim vale para o
+texto que ela viu.
 
 Cada resultado das etapas 3 a 6 vai para `python3 "${CLAUDE_SKILL_DIR}/dc.py" setup-registrar`, com o
 JSON `{chave, tipo, origem, resultado, detalhe}`, em vocabulário fechado — valor fora dele sai `1`:

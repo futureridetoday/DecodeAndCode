@@ -191,7 +191,7 @@ def formatar(resultado: dict) -> str:
         recursos.append("(nenhum)")
     e = resultado["existentes"]
     fim = recursos + ["", "## Já existe"]
-    for rotulo, chave in (("Guidelines", "guidelines"), ("Princípios", "principios"), ("Guardrails", "guardrails")):
+    for rotulo, chave in (("Guidelines", "guidelines"), ("Rules que carregam sempre", "principios"), ("Guardrails", "guardrails")):
         fim.append(f"{rotulo}: {', '.join(e[chave]) if e[chave] else '(nenhum)'}")
     if e["aviso"]:
         fim.append(f"Aviso: {e['aviso']}")

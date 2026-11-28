@@ -36,7 +36,7 @@ exceção. Cada skill lê do codex, pelo título, as seções que valem para ela
   caminhos (`guidelines-aplicaveis`), linta (`lint-unidade`), projeta o backlog e grava o
   `_handoff.md`. O usuário aprova as unidades juntas.
 - **`code <unidade>`** (Sonnet, em fork, sem o histórico) — `entrada-code` confere a unidade e a
-  aprovação da anterior; escreve o teste e o código pelo critério de aceite; `verificar` projeta o
+  aprovação das unidades que ela cita em `## Depende de`; escreve o teste e o código pelo critério de aceite; `verificar` projeta o
   estado. Para e propõe o ajuste (lacuna) quando a unidade não basta, e antes de ação irreversível.
   No pequeno, executa as tarefas do plano. `code aprovar <alvo>` grava a aprovação do usuário (P7)
   por `aprovar-entrega`.

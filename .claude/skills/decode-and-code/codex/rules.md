@@ -147,7 +147,7 @@ digital.
   - as guidelines desses caminhos e o padrão de código, citados pelo nome;
   - os recursos do projeto que usa, pelo nome;
   - as decisões e as lacunas do plano que valem para ela;
-  - o que espera das unidades anteriores.
+  - as unidades de que depende, pelo identificador, e o que espera delas.
 - **Quando falha:** a unidade não vai à aprovação das unidades derivadas.
 
 **Ver também:** Derive, Unidade, História, Critério de aceite, Cold-start, Guideline, Padrão de
@@ -234,7 +234,10 @@ execução.
 - **O que exige:**
   - É lido pela regra anterior e fica onde está, mesmo dentro de uma pasta por parte do sistema.
   - Só é atualizado quando o usuário quer revisá-lo, derivá-lo ou codá-lo.
+  - O rascunho no `_inbox` que já foi além da proposta volta pelo decode: as decisões, as lacunas
+    decididas, as restrições e o oráculo dele passam para a proposta, e nada do que vale fica só no
+    histórico do git.
   - Continua com o tipo `norma`, que no formato novo se chama `rule`.
   - Os links de planos fechados para a regra anterior ficam como registro.
 
-**Ver também:** Plano, Raiz dos planos, Tipo, Usuário, Revisão, Derive, Code.
+**Ver também:** Plano, Raiz dos planos, Tipo, Usuário, Decode, Revisão, Derive, Code.

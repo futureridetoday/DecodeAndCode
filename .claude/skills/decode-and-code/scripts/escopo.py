@@ -41,29 +41,39 @@ def _secao(dados: dict, chave: str, arquivo: Path) -> dict:
 
 
 def estado(projeto: Path) -> dict:
-    """`{"habilitado", "marketplace"}` — o que já está no `settings.json` do projeto."""
+    """`{"habilitado", "marketplace"}` — o que já está no `settings.json` do projeto.
+
+    `habilitado` tem três valores: `"true"`, `"false"` e `"ausente"`. O `false` presente é escolha
+    de quem mantém o projeto, e no teste final do DC 3.0 (E-06) a saída booleana o confundia com a
+    chave ausente — e o `--aplicar` o trocava por `true`.
+    """
     arquivo = _arquivo(projeto)
     dados = _ler(arquivo)
     mk = lib.config()["marketplace"]
     chave = f"{mk['plugin']}@{mk['name']}"
     return {
-        "habilitado": _secao(dados, "enabledPlugins", arquivo).get(chave) is True,
+        "habilitado": {True: "true", False: "false", None: "ausente"}.get(
+            _secao(dados, "enabledPlugins", arquivo).get(chave), "ausente"
+        ),
         "marketplace": mk["name"] in _secao(dados, "extraKnownMarketplaces", arquivo),
     }
 
 
 def habilitar(projeto: Path) -> bool:
-    """Escreve a habilitação; `True` se escreveu, `False` se já estava tudo lá."""
+    """Acrescenta o que falta; `True` se escreveu, `False` se não havia o que acrescentar.
+
+    Só acrescenta: a chave do plugin com `false` fica como está (E-06).
+    """
     arquivo = _arquivo(projeto)
     dados = _ler(arquivo)
     mk = lib.config()["marketplace"]
     chave = f"{mk['plugin']}@{mk['name']}"
     plugins = _secao(dados, "enabledPlugins", arquivo)
     marketplaces = _secao(dados, "extraKnownMarketplaces", arquivo)
-    if plugins.get(chave) is True and mk["name"] in marketplaces:
+    if chave in plugins and mk["name"] in marketplaces:
         return False
 
-    dados["enabledPlugins"] = {**plugins, chave: True}
+    dados["enabledPlugins"] = {**plugins, chave: plugins.get(chave, True)}
     dados["extraKnownMarketplaces"] = {**marketplaces, mk["name"]: marketplaces.get(mk["name"], {"source": mk["source"]})}
     arquivo.parent.mkdir(parents=True, exist_ok=True)
     arquivo.write_text(json.dumps(dados, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

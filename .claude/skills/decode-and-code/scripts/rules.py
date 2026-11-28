@@ -340,9 +340,15 @@ def criar_principio(
 
 
 def _anexar_secao(destino: Path, secao: str, descricao: str = "") -> str:
-    """Texto de `destino` com `secao` no fim — com o frontmatter padrão se o arquivo falta."""
+    """Texto de `destino` com `secao` depois do último princípio — antes de `## Fonte`, quando o
+    arquivo a tem (E-07 do teste final do DC 3.0: o princípio novo caía depois da fonte) — ou no fim;
+    com o frontmatter padrão se o arquivo falta."""
     if destino.exists():
         atual = destino.read_text(encoding="utf-8").rstrip("\n") + "\n"
+        fonte = re.search(r"(?m)^## Fonte\s*$", atual)
+        if fonte:
+            antes = atual[: fonte.start()].rstrip("\n") + "\n"
+            return antes + "\n" + secao + "\n" + atual[fonte.start():]
     else:
         descricao = descricao.strip() or _DESCRICAO_PRINCIPIOS
         atual = (

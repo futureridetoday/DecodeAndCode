@@ -172,13 +172,31 @@ def _entrada_code(args: argparse.Namespace) -> int:
     return REPROVADO if problemas else OK
 
 
+def _nome_no_git() -> str:
+    """`git config user.name` do projeto, para quem aprova sem `--por`.
+
+    O `code aprovar` mandava passar o nome do git, e o `allowed-tools` só libera o `dc.py`: a leitura
+    do nome foi negada duas vezes no teste final do DC 3.0 (E-09). Vazio levanta `ValueError`.
+    """
+    import subprocess
+
+    import lib
+
+    nome = subprocess.run(
+        ["git", "config", "user.name"], cwd=lib.repo_root(), capture_output=True, text=True
+    ).stdout.strip()
+    if not nome:
+        raise ValueError("sem 'user.name' no git — passe --por, ou configure: git config user.name \"Seu Nome\"")
+    return nome
+
+
 def _aprovar_entrega(args: argparse.Namespace) -> int:
     """Grava a aprovação (P7) e projeta o backlog do plano, para a situação em `_planos.md` refletir
     o fecho na hora — o teste ponta a ponta mostrou o plano aprovado ainda "em desenvolvimento"."""
     import backlog
     import entrega
 
-    alvo = entrega.aprovar(Path(args.alvo), args.por, args.data)
+    alvo = entrega.aprovar(Path(args.alvo), args.por or _nome_no_git(), args.data)
     print(alvo)
     plano = alvo if entrega._e_plano_pequeno(alvo) else alvo.parent
     _, situacao = backlog.projetar(plano)
@@ -770,10 +788,13 @@ def _setup_escopo(args: argparse.Namespace) -> int:
     projeto = lib.repo_root()
     if args.aplicar:
         escreveu = escopo.habilitar(projeto)
-        print("habilitado" if escreveu else "já estava habilitado")
+        if escopo.estado(projeto)["habilitado"] == "false":
+            print("habilitado: false mantido — o projeto desligou o plugin; o setup não troca essa escolha")
+        else:
+            print("habilitado" if escreveu else "já estava habilitado")
         return OK
     estado = escopo.estado(projeto)
-    print(f"habilitado: {str(estado['habilitado']).lower()}")
+    print(f"habilitado: {estado['habilitado']}")
     print(f"marketplace: {str(estado['marketplace']).lower()}")
     return OK
 
@@ -876,6 +897,13 @@ def _planos_que_citam(args: argparse.Namespace) -> int:
     return OK
 
 
+def _imprimir_citacoes(migracao, projeto: Path, motivo: str) -> None:
+    """Depois da troca do huddle, o que ela não alcançou, com o lugar exato (E-03)."""
+    for arquivo in migracao.pendencias(projeto).huddles:
+        for numero, linha in migracao.citacoes(arquivo):
+            print(f"huddle: {os.path.relpath(arquivo, projeto)}:{numero} — {motivo}: {linha.strip()}")
+
+
 def _migrar(args: argparse.Namespace) -> int:
     """Sem `--aplicar`, lista o que o projeto ainda tem do método anterior; com ele, aplica um item."""
     import lib
@@ -888,12 +916,16 @@ def _migrar(args: argparse.Namespace) -> int:
             print(f"{args.aplicar}: {os.path.relpath(caminho, projeto)}")
         if not tocados:
             print(f"{args.aplicar}: nada a fazer")
+        if args.aplicar == "huddle":
+            _imprimir_citacoes(migracao, projeto, "ainda cita a norma com texto próprio; editar à mão")
         return OK
     p = migracao.pendencias(projeto)
     if p.norma:
         print(f"norma: {os.path.relpath(p.norma, projeto)} — cópia do método anterior; apagar com o sim")
     for arquivo in p.huddles:
         print(f"huddle: {os.path.relpath(arquivo, projeto)} — esqueleto que cita a norma; trocar com o sim")
+        for numero, linha in migracao.citacoes(arquivo):
+            print(f"  linha {numero}: {linha.strip()}")
     for arquivo in p.planos:
         print(f"plano: {os.path.relpath(arquivo, projeto)} — cita a norma; atualiza na revisão, no derive ou no code")
     if p.vazias():
@@ -1044,7 +1076,7 @@ def _parser() -> argparse.ArgumentParser:
         _aprovar_entrega,
     )
     p.add_argument("alvo")
-    p.add_argument("--por", required=True, help="quem aprova: o usuário")
+    p.add_argument("--por", help="quem aprova: o usuário; padrão, o user.name do git do projeto")
     p.add_argument("--data", help="padrão: hoje")
 
     p = comando("verificar", "roda o teste da unidade e projeta state/verified_at (1 se não verified, mostrando a saída do teste)", _verificar)
@@ -1248,6 +1280,27 @@ def _registrar(lista: list[str], codigo: int, saida: str, args: argparse.Namespa
         pass
 
 
+_ID_UNIDADE_RE = re.compile(r"^(\d{4})-(\d{2})$")
+
+
+def _resolver_id(valor: str) -> str:
+    """`NNNN-nn` vira o caminho da unidade; qualquer outro valor passa como veio.
+
+    O `code` recebe o id e precisava achar o arquivo por Glob, ferramenta que a sessão do teste final
+    do DC 3.0 não tinha (E-10). Id sem unidade, ou com mais de uma, levanta `ValueError` — vira
+    código 2 com a mensagem, pelo contrato do `main`.
+    """
+    m = _ID_UNIDADE_RE.match(valor)
+    if not m:
+        return valor
+    import lib
+
+    achadas = sorted(lib.plan_root().glob(f"**/{m[1]}-*/{m[2]}-*.md"))
+    if len(achadas) != 1:
+        raise ValueError(f"o id {valor} casa {len(achadas)} unidades em {lib.plan_root()}; passe o caminho")
+    return str(achadas[0])
+
+
 def main(argv: list[str] | None = None) -> int:
     lista = list(sys.argv[1:] if argv is None else argv)
     try:
@@ -1257,6 +1310,9 @@ def main(argv: list[str] | None = None) -> int:
             _registrar(lista, ERRO, f"erro de uso do argparse: dc.py {' '.join(lista)}", None)
         raise
     try:
+        for campo in ("alvo", "unidade"):
+            if isinstance(getattr(args, campo, None), str):
+                setattr(args, campo, _resolver_id(getattr(args, campo)))
         codigo = args.handler(args)
     except Exception as erro:  # contrato: exceção vira código 2 e mensagem, nunca traceback
         print(f"erro: {type(erro).__name__}: {erro}", file=sys.stderr)

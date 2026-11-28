@@ -48,9 +48,22 @@ def _arquivos_de_huddle(raiz: Path) -> list[Path]:
     return arquivos + ([unico] if unico.is_file() else [])
 
 
+def citacoes(arquivo: Path) -> list[tuple[int, str]]:
+    """As linhas de `arquivo` que ainda citam a cópia da norma, como `(número, texto)`.
+
+    É o que sobra quando o huddle foi escrito com texto próprio, que nenhum par de
+    `huddle.ESQUELETO_ANTERIOR` casa (E-03 do teste final do DC 3.0): a troca automática não o
+    alcança, e quem edita é a pessoa — por isso a lista mostra o lugar exato.
+    """
+    nome = NOME_DA_COPIA.removesuffix(".md")
+    linhas = Path(arquivo).read_text(encoding="utf-8").splitlines()
+    return [(n, linha) for n, linha in enumerate(linhas, start=1) if nome in linha]
+
+
 def _tem_esqueleto_antigo(arquivo: Path) -> bool:
+    """O huddle ainda tem um trecho antigo conhecido, ou ainda cita a norma por outro texto."""
     texto = arquivo.read_text(encoding="utf-8")
-    return any(antigo in texto for antigo, _ in huddle.ESQUELETO_ANTERIOR)
+    return any(antigo in texto for antigo, _ in huddle.ESQUELETO_ANTERIOR) or bool(citacoes(arquivo))
 
 
 def pendencias(projeto: Path) -> Pendencias:
@@ -80,9 +93,24 @@ def aplicar(projeto: Path, item: str) -> list[Path]:
         return [p.norma]
     tocados = []
     for arquivo in p.huddles:
-        texto = arquivo.read_text(encoding="utf-8")
+        antes = arquivo.read_text(encoding="utf-8")
+        texto = antes
         for antigo, novo in huddle.ESQUELETO_ANTERIOR:
             texto = texto.replace(antigo, novo)
-        arquivo.write_text(texto, encoding="utf-8")
-        tocados.append(arquivo)
+        # Citação com texto próprio não se troca: continua em `pendencias`, com as linhas por
+        # `citacoes`, até a pessoa editar.
+        if texto != antes:
+            arquivo.write_text(texto, encoding="utf-8")
+            tocados.append(arquivo)
     return tocados
+
+
+def aviso_pendente(projeto: Path) -> bool:
+    """Há o que o setup resolve: a cópia da norma ou um huddle que ainda a cita.
+
+    Os planos abertos ficam de fora de propósito (E-01 do teste final do DC 3.0): só se atualizam
+    na revisão, no derive ou no code, e um aviso de abertura por causa deles mandaria ao setup sem
+    nada que ele pudesse fazer. O `migrar` continua a listá-los.
+    """
+    p = pendencias(projeto)
+    return p.norma is not None or bool(p.huddles)

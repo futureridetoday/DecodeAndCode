@@ -75,7 +75,8 @@ memória. Comece por `Revisão`, `Plano técnico`, `História`, `Critério de ac
    - `python3 "${CLAUDE_SKILL_DIR}/dc.py" validar-nome <nome>`, com o stem do arquivo;
    - `python3 "${CLAUDE_SKILL_DIR}/dc.py" lint-plano <plano>` — cada problema se corrige antes do P4.
 6. **Aprovação (P4).** Mostre ao usuário o plano técnico e, quando porte e apetite não batem, a
-   diferença. No sim, preencha `approved_by` (o nome dele) e `approved_at` (a data) e
+   diferença. Peça a resposta como `/decode-and-code:review-plan <resposta>`: a liberação do
+   `allowed-tools` só vale no turno em que a skill carrega, e o sim roda comandos do `dc.py`. No sim, preencha `approved_by` (o nome dele) e `approved_at` (a data) e
    rode `python3 "${CLAUDE_SKILL_DIR}/dc.py" aprovar <plano>`: o plano recebe o número e vai para a
    raiz dos planos. Recomende o próximo passo: `/decode-and-code:derive <caminho>` no médio e no
    grande; o code no pequeno. Na recusa, volte ao passo 2 com a objeção, ou encerre.

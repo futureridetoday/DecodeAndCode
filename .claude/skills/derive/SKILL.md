@@ -65,7 +65,7 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
    `rule`), `verified_at: ""`, `approved_by: ""` e `approved_at: ""`, e o corpo com um `##` para cada bloco: `História`,
    `Critério de aceite`, `Tarefas` (lista), `Arquivos` (tabela com os caminhos entre crases),
    `Guidelines`, `Recursos`, `Decisões e lacunas` e `Depende de` — nomes, contratos e arquivos que
-   ela espera das anteriores, ou `nada`. O `test:` aponta o arquivo do teste mesmo antes de ele
+   ela espera das unidades de que depende, cada uma citada pelo `unit_id` (o gate do `code` lê esses ids), ou `nada`. O `test:` aponta o arquivo do teste mesmo antes de ele
    existir. O que o tipo do plano pede no aceite está em `Tipo`.
 3. **Guidelines.** Com a tabela `Arquivos` escrita, rode
    `python3 "${CLAUDE_SKILL_DIR}/dc.py" guidelines-aplicaveis <unidade>` e ponha cada linha que ele
@@ -81,7 +81,8 @@ título com `python3 "${CLAUDE_SKILL_DIR}/dc.py" codex "<Título>"`, nunca de me
    lendo do stdin as seções `## Fila`, `## Pendências` e `## Sugestão` (seção ausente é erro), por
    heredoc com o delimitador entre aspas, `<<'FIM'`. As três são julgamento seu: a ordem com as
    dependências, o que espera do usuário e por onde começar.
-8. **Aprovação das unidades.** Mostre as unidades ao usuário. No sim, acrescente ao plano
+8. **Aprovação das unidades.** Mostre as unidades ao usuário. Peça a resposta como `/decode-and-code:derive <resposta>`: a liberação do
+   `allowed-tools` só vale no turno em que a skill carrega, e o sim roda comandos do `dc.py`. No sim, acrescente ao plano
    `## Aprovação das unidades` com quem aprovou e a data, e diga que o handoff vai para uma sessão
    nova. Na recusa, ajuste as unidades com a objeção.
 9. **Fecho do huddle** — `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-fecho` imprime a seção *Huddle* do codex. O que ficou aberto entra por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-abrir <tipo> --autor Claude`, com o texto no stdin, uma chamada por entrada. Antes de enviar, a mensagem final passa por `python3 "${CLAUDE_SKILL_DIR}/dc.py" huddle-lint-relatorio`, no stdin, e termina com `entradas novas no huddle: N (H-XX, …)` — `0`, sem parênteses, quando não houve nada.
